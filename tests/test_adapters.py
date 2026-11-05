@@ -60,5 +60,24 @@ class PublicAdapterTests(unittest.TestCase):
     def test_duplicate_dst_hour_rejected(self):
         payload=self.table();payload['rows'].append(payload['rows'][0])
         with self.assertRaises(ValueError):adapters.normalize_smega_table(payload)
+    def test_explicit_per_row_offsets_distinguish_dst_hours(self):
+        payload=self.table();payload['rows']=[['Nov 1, 01:00 AM','1:20 (20–20) · 2','—']]*2
+        payload['rowUtcOffsetMinutes']=[-360,-300]
+        points=adapters.normalize_smega_table(payload)
+        self.assertEqual([p['at'] for p in points],['2026-11-01T06:00:00+00:00','2026-11-01T07:00:00+00:00'])
+        self.assertTrue(all(p['capturedAt']==payload['capturedAt'] for p in points))
+        del payload['utcOffsetMinutes']
+        self.assertEqual(adapters.normalize_smega_table(payload),points)
+    def test_invalid_per_row_offset_contract_rejected(self):
+        for offsets in [[],[-360,-300],None,'-360',[-841],[841],[-360.0],[True],['-360'],[None]]:
+            with self.subTest(offsets=offsets):
+                payload=self.table();payload['rowUtcOffsetMinutes']=offsets
+                with self.assertRaises(ValueError):adapters.normalize_smega_table(payload)
+        for offset in [-840,840]:
+            payload=self.table();payload['rowUtcOffsetMinutes']=[offset]
+            self.assertEqual(len(adapters.normalize_smega_table(payload)),2)
+    def test_ambiguous_singleton_requires_per_row_declaration(self):
+        payload=self.table();payload['displayTimeZone']='America/Chicago';payload['rows'][0][0]='Nov 1, 01:00 AM'
+        with self.assertRaisesRegex(ValueError,'per-row'):adapters.normalize_smega_table(payload)
 
 if __name__=='__main__':unittest.main()

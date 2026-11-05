@@ -9,30 +9,112 @@ w.HTMLElement.prototype.scrollIntoView=function(){};
 w.fetch=async url=>{const p=path.join(project,'dist',url);return {ok:fs.existsSync(p),status:200,json:async()=>JSON.parse(fs.readFileSync(p,'utf8'))}};
 w.AbortSignal.timeout=()=>undefined;
 w.eval(fs.readFileSync(path.join(project,'web/community.js'),'utf8'));
-w.eval(fs.readFileSync(path.join(project,'web/app.js'),'utf8')+';window.__deriveSmegaSpreads=deriveSmegaSpreads;window.__buildCashPricing=buildCashPricing;window.__categoryGauge=categoryGauge;window.__sourceHealth=sourceHealth;window.__smegaWindow=smegaWindow;window.__enhanceTables=enhanceTables;');
+w.eval(fs.readFileSync(path.join(project,'web/app.js'),'utf8')+';window.__deriveSmegaSpreads=deriveSmegaSpreads;window.__buildCashPricing=buildCashPricing;window.__categoryGauge=categoryGauge;window.__categoryScale=categoryScale;window.__sourceHealth=sourceHealth;window.__smegaWindow=smegaWindow;window.__enhanceTables=enhanceTables;window.__chartHTML=chartHTML;window.__launchPeriodFilter=launchPeriodFilter;window.__launchEvents=LAUNCH_EVENTS;');
 const click=(selector)=>{const el=w.document.querySelector(selector);assert(el,selector);el.click()};
 const until=async predicate=>{const deadline=Date.now()+1500;while(!predicate()&&Date.now()<deadline)await new Promise(r=>setTimeout(r,5));assert(predicate(),'Expected route state did not settle');};
 (async()=>{
  await new Promise(r=>setTimeout(r,30));
  const doc=w.document;
+ const published=JSON.parse(fs.readFileSync(path.join(project,'dist/data.json'),'utf8'));
+ {
+ // Launch filters use source calendar dates, preserve the source points, and intersect local ranges.
+ const period=doc.getElementById('launch-period'),launchFilter=w.__launchPeriodFilter,launchProbe=doc.createElement('div');
+ assert.equal(w.__launchEvents[0].announcedAt,'2026-10-06T18:00:00Z');assert.equal(w.__launchEvents[1].announcedAt,undefined);
+ for(const [day,founders,grand] of [['2026-10-05',false,false],['2026-10-06',true,false],['2026-10-20',true,false],['2026-10-21',false,true]]){assert.equal(launchFilter({day},'founders'),founders);assert.equal(launchFilter({at:day+'T23:59:59Z'},'grand'),grand);}
+ const launchFixture=[{name:'Daily source',color:'#87bdcf',points:['2026-10-07','2026-10-20','2026-10-21','2026-11-01'].map((day,i)=>({day,at:day+'T12:00:00Z',value:10+i}))}];
+ launchProbe.innerHTML=w.__chartHTML(launchFixture,{allTime:true,dateOnlyAxis:true,event:false});
+ assert.equal(launchProbe.querySelectorAll('circle').length,4);assert.equal(launchProbe.querySelectorAll('.launch-event').length,2);
+ assert.equal(launchProbe.querySelector('.launch-event[data-event-id="founders"]').dataset.eventDatePrecision,'day');
+ assert.equal(launchProbe.querySelector('[data-event-id="grand-launch"]').hasAttribute('data-event-at'),false);
+ assert(launchProbe.querySelector('[data-event-id="founders"] title').textContent.includes('18:00 UTC'));
+ assert([...launchProbe.querySelectorAll('.launch-event title')].every(el=>el.textContent.includes('not an intraday split')));
+ assert.equal(launchProbe.querySelector('circle').dataset.chartDate,'2026-10-07T12:00:00Z');
+ launchProbe.innerHTML=w.__chartHTML(launchFixture,{allTime:false,event:false});assert.equal(launchProbe.querySelector('[data-event-id="founders"]'),null);
+ const lateFixture=[{...launchFixture[0],points:[{at:'2026-11-01T12:00:00Z',value:30}]}];
+ launchProbe.innerHTML=w.__chartHTML(lateFixture,{allTime:true,event:false});assert.equal(launchProbe.querySelector('.launch-event'),null);
+ launchProbe.innerHTML=w.__chartHTML([{name:'Published date only',color:'#87bdcf',points:[{date:'2026-10-21',at:'2026-10-21T12:00:00Z',value:20}]}],{dateOnlyAxis:true});assert.equal(launchProbe.querySelector('circle').dataset.chartDatePrecision,'day');assert.equal(launchProbe.querySelector('circle').dataset.chartDateLabel,'2026-10-21');
+ const unchangedHeadline=doc.getElementById('main-rate').textContent,unchangedOfferStats=doc.getElementById('smega-stats').textContent;
+ period.value='founders';period.dispatchEvent(new w.Event('change'));
+ const founderPoints=[...doc.querySelectorAll('#main-chart circle[data-chart-date]')];assert(founderPoints.length>0);assert(founderPoints.every(el=>launchFilter({at:el.dataset.chartDate},'founders')));
+ assert.equal(doc.querySelector('#main-chart [data-event-id="grand-launch"]'),null);
+ assert.equal(doc.getElementById('main-rate').textContent,unchangedHeadline);assert.equal(doc.getElementById('smega-stats').textContent,unchangedOfferStats);
+ assert.equal(doc.querySelector('#smega-offer-chart svg'),null);assert(doc.getElementById('smega-offer-chart').textContent.includes('No observations'));
+ assert(doc.getElementById('volume-chart').textContent.includes('selected ranges'));
+ launchProbe.innerHTML=w.__chartHTML(lateFixture,{allTime:true});assert.equal(launchProbe.querySelector('svg'),null);
+ const volumePeriod=doc.getElementById('volume-period');volumePeriod.value='all';volumePeriod.dispatchEvent(new w.Event('change'));
+ assert(doc.querySelectorAll('#volume-chart circle[data-chart-date]').length>0);assert([...doc.querySelectorAll('#volume-chart circle')].every(el=>launchFilter({at:el.dataset.chartDate},'founders')));
+ period.value='grand';period.dispatchEvent(new w.Event('change'));assert([...doc.querySelectorAll('#main-chart circle')].every(el=>launchFilter({at:el.dataset.chartDate},'grand')));assert.equal(doc.querySelector('#main-chart [data-event-id="founders"]'),null);
+ period.value='all';period.dispatchEvent(new w.Event('change'));volumePeriod.value='7';volumePeriod.dispatchEvent(new w.Event('change'));
+ assert.equal(doc.getElementById('main-rate').textContent,unchangedHeadline);
+ const launchCopy=doc.getElementById('method-launch-context').nextElementSibling;assert(launchCopy.textContent.includes('Grand Launch time is not established'));assert(launchCopy.querySelector('a').href.startsWith('https://store.steampowered.com/news/posts/'));
+ }
+ const scopeLink=doc.querySelector('#volume-title sup a[href="#volume-scope"]');assert(scopeLink);
+ const scope=doc.getElementById('volume-scope');assert.equal(scope.getAttribute('tabindex'),'-1');
+ assert(scope.textContent.includes('Free Market shop-sale medians'));
+ for(const excluded of ['smegas','direct player-to-player trades','NPC earnings','server balances'])assert(scope.textContent.includes(excluded));
+ assert(scope.textContent.includes('does not disclose its exact sale-inference rule'));
+ scopeLink.click();await until(()=>doc.activeElement.id==='volume-scope');
+ assert.equal(doc.getElementById('view-index').hidden,false);
+ click('#volume-scope a[href="#method-meso-supply"]');await until(()=>doc.activeElement.id==='method-meso-supply');
+ assert.equal(doc.getElementById('view-method').hidden,false);
+ const supply=doc.getElementById('method-meso-supply').nextElementSibling.textContent;
+ for(const term of ['flow','stock','repeated purchases','inactive balances','faucets','sinks','velocity','confidence interval','no numerical estimate'])assert(supply.includes(term));
+ w.location.hash='#index';w.dispatchEvent(new w.Event('hashchange'));await until(()=>!doc.getElementById('view-index').hidden);
  const scenery=doc.getElementById('scenery-toggle');assert.equal(scenery.getAttribute('aria-pressed'),'false');assert.equal(doc.body.classList.contains('scenery-on'),false);
+ const sceneryPanel=doc.getElementById('scenery-options'),sceneryButtons=[...doc.querySelectorAll('button[data-scenery-mode]')],sceneryHeadline=doc.getElementById('main-rate').textContent;
+ assert.equal(scenery.getAttribute('aria-controls'),'scenery-options');assert.equal(sceneryPanel.hidden,true);assert.equal(doc.body.dataset.sceneryMode,'classic');assert.equal(sceneryButtons.length,3);
  click('#scenery-toggle');assert.equal(scenery.getAttribute('aria-pressed'),'true');assert.equal(doc.body.classList.contains('scenery-on'),true);assert.equal(w.localStorage.getItem('astra-scenery'),'on');
+ assert.equal(sceneryPanel.hidden,false);
+ for(const mode of ['classic','banner','backdrop']){click('button[data-scenery-mode="'+mode+'"]');assert.equal(doc.body.dataset.sceneryMode,mode);assert.equal(w.localStorage.getItem('astra-scenery-mode'),mode);assert.equal(sceneryButtons.filter(button=>button.getAttribute('aria-pressed')==='true').length,1);assert.equal(doc.querySelector('button[data-scenery-mode="'+mode+'"]').getAttribute('aria-pressed'),'true');assert.equal(doc.getElementById('main-rate').textContent,sceneryHeadline);}
  click('#scenery-toggle');assert.equal(scenery.getAttribute('aria-pressed'),'false');assert.equal(doc.body.classList.contains('scenery-on'),false);assert.equal(w.localStorage.getItem('astra-scenery'),'off');
+ assert.equal(sceneryPanel.hidden,true);assert.equal(doc.body.dataset.sceneryMode,'backdrop');assert.equal(w.localStorage.getItem('astra-scenery-mode'),'backdrop');
+ click('#scenery-toggle');assert.equal(doc.body.dataset.sceneryMode,'backdrop');assert.equal(sceneryPanel.hidden,false);click('#scenery-toggle');
+ const sceneryCss=fs.readFileSync(path.join(project,'web/style.css'),'utf8');assert(sceneryCss.includes('body.scenery-on[data-scenery-mode="banner"] .market-scene{background-image:url(\'assets/henesys-scenery.png\')}'));assert(sceneryCss.includes('body.scenery-on[data-scenery-mode="backdrop"]::before{background-image:url(\'assets/ellinia-scenery.png\')'));assert(sceneryCss.includes('@media(max-width:600px){.scenery-mode-buttons{grid-template-columns:1fr}'));
  assert.equal(doc.getElementById('main-rate').textContent,'17.1');
  assert.equal(doc.querySelectorAll('#basket-table tbody tr').length,50);
  assert.equal(doc.querySelectorAll('#cash-table tbody tr').length,29);
  assert.equal(doc.querySelectorAll('#category-cards .category-card').length,5);
+ for(const [i,card] of [...doc.querySelectorAll('#category-cards .category-card')].entries()){
+  const category=published.categories[i],fixed=value=>value.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+  assert.equal(card.querySelector('.category-item-count').textContent,category.count+' items');
+  assert.equal(card.querySelector('.category-average-weight').textContent,'Avg '+fixed(category.weight*100/category.count)+'%/item');
+  assert.equal(card.querySelector('.category-total-weight').textContent,fixed(category.weight*100)+'% total');
+  assert(card.querySelector('.category-weight-meta').title.includes('individual weights vary'));
+  assert(card.querySelector('.category-total-weight').parentElement.querySelector('.weight-help a[href="#method-weights"]'));
+ }
+ const categoryLegend=doc.querySelector('.category-gauge-legend');assert(doc.getElementById('category-cards').compareDocumentPosition(categoryLegend)&w.Node.DOCUMENT_POSITION_FOLLOWING);assert.equal(categoryLegend.getAttribute('role'),'note');assert(categoryLegend.textContent.includes('individual item weights vary'));assert(doc.querySelector('.category-section-heading>a[href="#basket"]'));
  assert(doc.querySelector('.cpi-card .eyebrow').textContent.includes('MPI'));
  assert(doc.getElementById('mpi-explanation').textContent.includes('56.1% higher'));assert(doc.getElementById('mpi-explanation').textContent.includes('not the amount of mesos'));
  assert(doc.querySelector('.cpi-rule').textContent.includes('Reference week = 100'));
- assert(doc.querySelector('.hero-bottom a').textContent.includes('How this value was calculated'));
+ assert(doc.querySelector('.hero-bottom a[href="#nx"]').textContent.includes('How this value was calculated'));
+ assert(doc.querySelector('.hero-bottom a[href="#method-reference-week"]').textContent.includes('Oct 21–27, 2026'));
+ const referenceHeading=doc.getElementById('method-reference-week'),referenceExplanation=referenceHeading.nextElementSibling.textContent+' '+referenceHeading.nextElementSibling.nextElementSibling.textContent;
+ for(const phrase of ['seven source-calendar dates','not seven full 24-hour intervals','individual days in that week need not equal 100','baseline stays fixed','change chart views only','neither the baseline nor the headline'])assert(referenceExplanation.includes(phrase));
+ assert([...doc.querySelectorAll('[data-reference-period]')].every(node=>node.textContent==='Oct 21–27, 2026'));
+ assert(doc.querySelector('#basket-table th a[href="#method-reference-week"]'));
+ const wolbiMethod=doc.getElementById('wolbi-note').textContent;assert(wolbiMethod.includes('Citizenship-shop supply shifted this item’s price around October 25–26. This is not economy-wide deflation.'));assert(wolbiMethod.includes('can occur if players raise crafting levels'));assert(wolbiMethod.includes('would not automatically indicate broad deflation'));
+ click('.hero-bottom a[href="#method-reference-week"]');await until(()=>doc.activeElement.id==='method-reference-week');assert.equal(doc.getElementById('view-method').hidden,false);w.location.hash='#index';w.dispatchEvent(new w.Event('hashchange'));await until(()=>!doc.getElementById('view-index').hidden);
  assert.equal(doc.querySelectorAll('#category-cards .weight-help a').length,5);
  assert([...doc.querySelectorAll('#category-cards .weight-help a')].every(a=>!a.closest('button')));
- assert(doc.querySelector('.category-gauge-legend').textContent.includes('Mint: below reference'));
- const gauge=w.__categoryGauge,probe=doc.createElement('div'),gaugeValues=[80,100,160,350];
- let lastX=-Infinity;
- for(const value of gaugeValues){probe.innerHTML=gauge(value,400);const svg=probe.querySelector('svg'),needle=probe.querySelector('.category-needle');assert.equal(Number(svg.dataset.index),value);assert.equal(Number(svg.dataset.scaleMax),400);const x=Number(needle.getAttribute('x2'));assert(x>lastX);lastX=x;assert(Math.abs(x-(70+43*Math.cos(-Math.PI+value/400*Math.PI)))<1e-9);const arc=probe.querySelector('.category-value-arc');if(value===100)assert.equal(arc,null);else assert.equal(arc.getAttribute('stroke'),value<100?'#89c6b0':'#edc471');}
+ assert(doc.querySelector('.category-gauge-legend').textContent.includes('Arc fills from 0 to the needle'));
+ assert(!doc.querySelector('.category-gauge-legend').textContent.includes('below reference'));
+ const gauge=w.__categoryGauge,scale=w.__categoryScale,probe=doc.createElement('div'),gaugeValues=[0,83,100,172,350];
+ assert.equal(scale(gaugeValues),400);assert.equal(scale([0,83,172]),200);assert.equal(scale([NaN,Infinity,-1]),200);
+ let lastX=-Infinity;const gradientIds=new Set();
+ for(const value of gaugeValues){
+  probe.innerHTML=gauge(value,400);const svg=probe.querySelector('svg'),needle=probe.querySelector('.category-needle'),arc=probe.querySelector('.category-value-arc');
+  assert.equal(Number(svg.dataset.index),value);assert.equal(Number(svg.dataset.scaleMax),400);assert.equal(probe.querySelector('.category-scale-end').textContent,'400');assert(!/NaN|Infinity/.test(svg.outerHTML));
+  const x=Number(needle.getAttribute('x2')),y=Number(needle.getAttribute('y2'));assert(x>lastX);lastX=x;assert(Math.abs(x-(70+43*Math.cos(-Math.PI+value/400*Math.PI)))<1e-9);
+  assert.equal(arc.dataset.startValue,'0');assert.equal(Number(arc.dataset.endValue),value);assert(arc.getAttribute('d').startsWith('M18 66'));assert(arc.getAttribute('stroke').startsWith('url(#category-gradient-'));
+  const gradient=probe.querySelector('linearGradient');assert.equal(gradient.getAttribute('gradientUnits'),'userSpaceOnUse');assert.equal(gradient.getAttribute('x1'),'18');assert.equal(gradient.getAttribute('x2'),'122');assert.equal(gradient.querySelector('stop').getAttribute('stop-color'),'#89c6b0');assert.equal(gradient.querySelector('stop:last-child').getAttribute('stop-color'),'#edc471');assert(!gradientIds.has(gradient.id));gradientIds.add(gradient.id);
+  if(value>0){const [ax,ay]=arc.getAttribute('d').split('A52 52 0 0 1 ')[1].split(' ').map(Number);assert(Math.abs((ax-70)/52-(x-70)/43)<1e-9);assert(Math.abs((ay-66)/52-(y-66)/43)<1e-9);}else assert.equal(arc.getAttribute('d'),'M18 66');
+  const reference=probe.querySelector('.category-reference');assert(Math.abs(Number(reference.getAttribute('x1'))-(70+46*Math.cos(-Math.PI+100/400*Math.PI)))<1e-9);
+ }
+ for(const value of [1e9,Number.MAX_VALUE]){probe.innerHTML=gauge(value);const svg=probe.querySelector('svg');assert(svg);assert(Number.isFinite(Number(svg.dataset.scaleMax)));assert(Number(svg.dataset.scaleMax)>=value);assert.equal(Number(svg.dataset.index),value);assert(!/NaN|Infinity/.test(svg.outerHTML));assert.notEqual(probe.querySelector('.category-scale-end').textContent,'200');}
+ for(const value of [NaN,Infinity,-1,undefined]){probe.innerHTML=gauge(value);assert.equal(probe.querySelector('svg'),null);assert(probe.textContent.includes('Index unavailable'));}
  assert.equal(new Set([...doc.querySelectorAll('#category-cards svg')].map(svg=>svg.dataset.scaleMax)).size,1);
+ assert([...doc.querySelectorAll('#category-cards svg')].every(svg=>Number(svg.dataset.index)<=Number(svg.dataset.scaleMax)));
+ assert.equal(doc.querySelector('#main-chart svg').textContent.includes('Wolbi supply shift'),false);assert(doc.querySelector('#main-chart [data-event-id="grand-launch"] line'));assert(Number(doc.querySelector('#main-chart [data-event-id="grand-launch"] line').getAttribute('stroke-width'))>=2);
  const sourceHealth=w.__sourceHealth,clock=Date.parse('2026-11-05T09:00:00Z'),healthy={sourceUpdatedAt:'2026-11-04T10:00:00Z',sourceStatus:{status:'unchanged',checkedAt:'2026-11-05T08:55:00Z'},intraday:[],rollingReference:{capturedAt:'2026-11-05T08:59:00Z'}};
  let health=sourceHealth(healthy,clock);assert.equal(health.daily.tone,'green');assert.equal(health.collector.tone,'green');assert.equal(health.reference.tone,'amber');assert.equal(health.intraday.tone,'amber');assert(health.intraday.state.includes('0 qualified'));
  health=sourceHealth({...healthy,sourceStatus:{...healthy.sourceStatus,status:'degraded'}},clock);assert.equal(health.collector.tone,'red');assert.equal(health.daily.tone,'amber');assert(health.collector.state.includes('last good retained'));
@@ -40,15 +122,16 @@ const until=async predicate=>{const deadline=Date.now()+1500;while(!predicate()&
  assert.equal(doc.querySelector('[data-status-key="reference"]').dataset.statusTone,'amber');assert.equal(doc.querySelector('[data-status-key="intraday"]').dataset.statusTone,'amber');assert(doc.getElementById('source-status-legend').textContent.includes('not provider guarantees'));
  const hourly=Array.from({length:26},(_,i)=>({at:new Date(Date.parse('2026-11-01T00:00:00Z')+i*3600000).toISOString(),rate:20}));
  assert.equal(w.__smegaWindow(hourly,'24').length,24);assert.equal(w.__smegaWindow(hourly,'8').length,8);assert.equal(w.__smegaWindow(hourly,'all').length,26);assert.equal(w.__smegaWindow(hourly,'24')[0].at,hourly[2].at);
- assert.equal(doc.querySelectorAll('#smega-offer-chart circle[data-chart-value]').length,48);assert.equal(doc.querySelectorAll('#smega-spread-chart circle[data-chart-value]').length,24);
- const hourlyStats=doc.getElementById('smega-stats').textContent;click('[data-smega-range="8"]');assert.equal(doc.querySelectorAll('#smega-offer-chart circle[data-chart-value]').length,16);assert.equal(doc.querySelectorAll('#smega-spread-chart circle[data-chart-value]').length,8);assert.equal(doc.getElementById('smega-stats').textContent,hourlyStats);assert(doc.getElementById('smega-history-note').textContent.includes('not summed into unique people'));click('[data-smega-range="24"]');
+ const offerInputs=published.smega.filter(p=>p.sourceUrl===published.smegaSource.sourceUrl&&p.aggregation==='source_published_hourly');
+ const verifyOfferWindow=hours=>{const end=Math.max(...offerInputs.map(p=>Date.parse(p.at))),visible=offerInputs.filter(p=>Date.parse(p.at)>end-hours*3600000&&Date.parse(p.at)<=end);const buyHours=new Set(visible.filter(p=>p.side==='buy').map(p=>p.at)),sellHours=new Set(visible.filter(p=>p.side==='sell').map(p=>p.at));assert.equal(doc.querySelectorAll('#smega-offer-chart circle[data-chart-value]').length,visible.length);assert.equal(doc.querySelectorAll('#smega-spread-chart circle[data-chart-value]').length,[...sellHours].filter(at=>buyHours.has(at)).length);};
+ verifyOfferWindow(24);
+ const hourlyStats=doc.getElementById('smega-stats').textContent;click('[data-smega-range="8"]');verifyOfferWindow(8);assert.equal(doc.getElementById('smega-stats').textContent,hourlyStats);assert(doc.getElementById('smega-history-note').textContent.includes('not summed into unique people'));click('[data-smega-range="24"]');
  const generic=doc.createElement('div');generic.id='sorting-fixture';generic.innerHTML='<table><thead><tr><th>Item</th><th>Value</th></tr></thead><tbody><tr data-id="missing"><td>Unknown</td><td>—</td></tr><tr data-id="ratio"><td><a href="#nx">Ratio item</a></td><td>1:13.5</td></tr><tr data-id="large"><td>Large item</td><td>1,200</td></tr><tr data-id="percent"><td>Percent item</td><td>8.4%</td></tr><tr data-id="precise"><td>Precise item</td><td data-sort-value="8.39">8.4%</td></tr></tbody></table>';doc.body.append(generic);w.__enhanceTables();
  const genericSort=generic.querySelector('th:nth-child(2) button');assert.equal(genericSort.type,'button');genericSort.focus();assert.equal(doc.activeElement,genericSort);genericSort.click();assert.equal(genericSort.parentElement.getAttribute('aria-sort'),'ascending');assert.equal([...generic.querySelectorAll('tbody tr')].map(r=>r.dataset.id).join(','),'precise,percent,ratio,large,missing');genericSort.click();assert.equal(genericSort.parentElement.getAttribute('aria-sort'),'descending');assert.equal([...generic.querySelectorAll('tbody tr')].map(r=>r.dataset.id).join(','),'large,ratio,percent,precise,missing');assert(generic.querySelector('a[href="#nx"]'));generic.remove();
  assert(doc.querySelector('script[src="chart-interaction.js"]'));assert(doc.querySelector('link[href="chart-interaction.css"]'));
  const chartPoint=doc.querySelector('#main-chart circle[data-chart-value]');assert(chartPoint.dataset.chartSeries);assert(chartPoint.dataset.chartDateLabel);assert.equal(chartPoint.dataset.chartDatePrecision,'day');assert.equal(chartPoint.dataset.chartUnit,'mesos per NX');assert(Number.isFinite(Number(chartPoint.dataset.chartValue)));
 
  assert(doc.getElementById('rolling-reference-card').textContent.includes('2–30 days'));
- const published=JSON.parse(fs.readFileSync(path.join(project,'dist/data.json'),'utf8'));
  assert(doc.getElementById('smega-source-card').textContent.includes(published.smega.length+' published hourly'));
  assert(doc.getElementById('comparison-card').textContent.includes('MapleStory Market buyers bid'));
  assert(doc.getElementById('comparison-card').textContent.includes('mesos.watch item medians'));
@@ -106,7 +189,8 @@ const until=async predicate=>{const deadline=Date.now()+1500;while(!predicate()&
  assert(doc.querySelector('#smega-spread-chart svg'));
  assert.equal(doc.querySelectorAll('#reported-chart circle').length,16+published.comparisons.filter(p=>p.kind==='player_report').length);
  assert(doc.getElementById('reported-history-sources').textContent.includes('day precision'));
- assert.equal(doc.querySelectorAll('#basket-table .weight-help a').length,1);
+ assert.equal(doc.querySelectorAll('#basket-table .weight-help a[href="#method-weights"]').length,1);
+ assert.equal(doc.querySelectorAll('#basket-table .weight-help a[href="#method-reference-week"]').length,1);
  assert.equal(doc.querySelectorAll('#basket-table tbody .weight-help').length,0);
  assert.equal(doc.querySelector('.footer-story p').textContent,'This page is an overnight passion project by a Mapler that is also navigating the job  market, recovering from a surgery for cancer treatment, and simultaneously trying to find an open map to farm on.');
  assert.equal(doc.querySelector('.nav-link[href="#basket"]').textContent,'The Basket 50');
@@ -154,7 +238,9 @@ const until=async predicate=>{const deadline=Date.now()+1500;while(!predicate()&
  }
  assert(doc.getElementById('view-cash-basket').textContent.includes('changing daily recorded-volume weights'));
  w.location.hash='#index';w.dispatchEvent(new w.Event('hashchange'));
- assert(doc.getElementById('smega-stats').textContent.includes('5.5'));
+ const latestPairedHour=[...new Set(offerInputs.filter(p=>p.side==='sell').map(p=>p.at))].filter(at=>offerInputs.some(p=>p.side==='buy'&&p.at===at)).sort().at(-1);
+ const latestAsk=offerInputs.find(p=>p.side==='sell'&&p.at===latestPairedHour),latestBid=offerInputs.find(p=>p.side==='buy'&&p.at===latestPairedHour);
+ assert.equal(doc.querySelector('#smega-stats [data-offer-side="gap"] strong').textContent,(latestAsk.rate-latestBid.rate).toFixed(1));
  const spreadUnit=doc.getElementById('smega-spread-unit');spreadUnit.value='percent';spreadUnit.dispatchEvent(new w.Event('change'));assert(doc.querySelector('#smega-spread-chart svg title').textContent.includes('% of midpoint'));
  assert(doc.getElementById('cpi-detail-chart').compareDocumentPosition(doc.getElementById('market-stats'))&w.Node.DOCUMENT_POSITION_FOLLOWING);
  assert.equal(doc.getElementById('quick-calculation').hidden,true);click('#quick-sell');assert.equal(doc.getElementById('quick-calculation').hidden,false);
@@ -199,11 +285,13 @@ const until=async predicate=>{const deadline=Date.now()+1500;while(!predicate()&
  w.location.hash='#method-weights';w.dispatchEvent(new w.Event('hashchange'));assert.equal(doc.getElementById('view-method').hidden,false);assert.equal(doc.activeElement.id,'method-weights');
  const images=[...doc.querySelectorAll('img')].map(img=>img.getAttribute('src'));for(const src of images)assert(fs.existsSync(path.join(project,'dist',src)),'Missing asset '+src);
  const reload=new JSDOM(fs.readFileSync(path.join(project,'web/index.html'),'utf8'),{url:'http://127.0.0.1:8765/#method-basket-size',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc});
- const restored=reload.window;restored.localStorage.setItem('astra-scenery','on');restored.scrollTo=()=>{};restored.HTMLElement.prototype.scrollIntoView=()=>{};restored.AbortSignal.timeout=()=>undefined;restored.fetch=w.fetch;
+ const restored=reload.window;restored.localStorage.setItem('astra-scenery','on');restored.localStorage.setItem('astra-scenery-mode','banner');restored.scrollTo=()=>{};restored.HTMLElement.prototype.scrollIntoView=()=>{};restored.AbortSignal.timeout=()=>undefined;restored.fetch=w.fetch;
  restored.eval(fs.readFileSync(path.join(project,'web/community.js'),'utf8'));
  restored.eval(fs.readFileSync(path.join(project,'web/app.js'),'utf8'));await new Promise(r=>setTimeout(r,30));
  assert.equal(restored.document.getElementById('scenery-toggle').getAttribute('aria-pressed'),'true');assert.equal(restored.document.body.classList.contains('scenery-on'),true);
+ assert.equal(restored.document.body.dataset.sceneryMode,'banner');assert.equal(restored.document.querySelector('button[data-scenery-mode="banner"]').getAttribute('aria-pressed'),'true');assert.equal(restored.document.getElementById('scenery-options').hidden,false);
  assert.equal(restored.document.getElementById('view-method').hidden,false);assert.equal(restored.document.activeElement.id,'method-basket-size');reload.window.close();
+ const invalidScenery=new JSDOM(fs.readFileSync(path.join(project,'web/index.html'),'utf8'),{url:'http://127.0.0.1:8765/',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc}),invalidWindow=invalidScenery.window;invalidWindow.localStorage.setItem('astra-scenery','off');invalidWindow.localStorage.setItem('astra-scenery-mode','unknown');invalidWindow.scrollTo=()=>{};invalidWindow.AbortSignal.timeout=()=>undefined;invalidWindow.fetch=w.fetch;invalidWindow.eval(fs.readFileSync(path.join(project,'web/community.js'),'utf8'));invalidWindow.eval(fs.readFileSync(path.join(project,'web/app.js'),'utf8'));await new Promise(r=>setTimeout(r,30));assert.equal(invalidWindow.document.body.dataset.sceneryMode,'classic');assert.equal(invalidWindow.document.body.classList.contains('scenery-on'),false);assert.equal(invalidWindow.document.querySelector('button[data-scenery-mode="classic"]').getAttribute('aria-pressed'),'true');assert.equal(invalidWindow.document.getElementById('scenery-options').hidden,true);invalidWindow.close();
  w.eval(fs.readFileSync(path.join(project,'web/chart-interaction.js'),'utf8'));await new Promise(r=>setTimeout(r,20));assert(doc.querySelector('#main-chart svg.chart-inspector-ready'));assert.equal(doc.querySelector('#main-chart svg').getAttribute('tabindex'),'0');assert(doc.querySelector('#main-chart .chart-inspector-toggle')||doc.querySelector('#main-chart').parentElement.querySelector('.chart-inspector-toggle'));
  assert.equal(errors.length,0,errors.join('\n'));
  console.log(JSON.stringify({basketRows:50,cashRows:29,localImageReferences:images.length,domErrors:errors.length,mainRate:doc.getElementById('main-rate').textContent,smegaRows:published.smega.length,calculators:'both directions verified',spreads:'paired / missing / crossed / source isolation / conflicts verified',timezone:'selection and persistence verified'}));

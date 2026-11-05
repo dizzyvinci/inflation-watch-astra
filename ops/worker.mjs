@@ -16,6 +16,26 @@ const clone = value => structuredClone(value);
 const iso = time => new Date(time).toISOString();
 const stamp = value => typeof value === 'string' ? Date.parse(value) : Number.NaN;
 const metadata = { httpMetadata: { contentType: 'application/json; charset=utf-8' } };
+export const MAX_PUBLIC_READ_FLIGHTS = 32;
+export const MAX_SHARED_REPORT_BYTES = 1_048_576;
+const publicReadFlights = new WeakMap();
+
+function inFlightRead(env, key, load) {
+  // Binding identity isolates deployments/environments without a global map of
+  // user-controlled hostnames or snapshot names. This is not a TTL cache.
+  const scope = env.SNAPSHOTS ?? env;
+  if (!scope || !['object', 'function'].includes(typeof scope)) return load();
+  let pending = publicReadFlights.get(scope);
+  if (!pending) { pending = new Map(); publicReadFlights.set(scope, pending); }
+  if (pending.has(key)) return pending.get(key);
+  // Never evict an active promise; excess distinct keys take the ordinary path.
+  if (pending.size >= MAX_PUBLIC_READ_FLIGHTS) return load();
+  const task = Promise.resolve().then(load).finally(() => {
+    if (pending.get(key) === task) pending.delete(key);
+  });
+  pending.set(key, task);
+  return task;
+}
 
 class LeaseLost extends Error {}
 
@@ -47,6 +67,19 @@ export async function calculationFingerprint(baseline = seed) {
     cashBasketHash: baseline.cashBasket?.basketHash ?? null,
     nxSchedule: baseline.cash.map(row => [row.slug, row.name, row.nx]).sort((a, b) => a[0].localeCompare(b[0])),
   }));
+}
+
+export async function referenceFingerprint(baseline = seed) {
+  // Only approved, dated public references participate. Capture/source clocks
+  // are evidence and remain exact; report build/check/planning state is absent.
+  const stable = value => Array.isArray(value) ? value.map(stable)
+    : value && typeof value === 'object'
+      ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])]))
+      : value;
+  return digest(JSON.stringify(stable(Object.fromEntries([
+    'comparisons', 'reportedNxHistory', 'rollingReference',
+    'rollingReferenceHistory', 'smega', 'smegaSource',
+  ].map(key => [key, baseline[key] ?? null])))));
 }
 
 async function archiveSource(bucket, feed, feedHash, state, archiveAt) {
@@ -97,7 +130,7 @@ function fallbackPointer(reason = 'awaiting_collector') {
   };
 }
 
-async function readPointer(env) {
+async function readPointerUnshared(env) {
   if (!env.SNAPSHOTS) return fallbackPointer('storage_unavailable');
   try {
     const { value } = await getJson(env.SNAPSHOTS, POINTER);
@@ -118,6 +151,10 @@ async function readPointer(env) {
   } catch {
     return fallbackPointer('storage_unavailable');
   }
+}
+
+async function readPointer(env) {
+  return clone(await inFlightRead(env, 'pointer', () => readPointerUnshared(env)));
 }
 
 async function acquire(bucket, now, owner) {
@@ -288,9 +325,10 @@ async function previousReport(bucket, pointer) {
   } catch { return null; }
 }
 
-/** Scheduled-only collector. Tests may inject fetcher and now; visitors cannot. */
+/** Scheduled-only collector. Tests may inject fetcher, now and compiled baseline; visitors cannot. */
 export async function collect(env, options = {}) {
   const now = clock(options);
+  const baseline = options.baseline ?? seed;
   const checkedAt = iso(now());
   const bucket = env.SNAPSHOTS;
   if (!bucket) return { status: 'storage_unavailable', checkedAt };
@@ -346,28 +384,31 @@ export async function collect(env, options = {}) {
     if (pointer && stamp(feed.updatedAt) < stamp(pointer.sourceUpdatedAt)) throw new Error('Source timestamp moved backwards');
     const feedText = JSON.stringify(feed);
     if (new TextEncoder().encode(feedText).byteLength > MAX_BYTES) throw new Error('Oversized cached source feed');
-    const definitionFingerprint = await calculationFingerprint();
+    const definitionFingerprint = await calculationFingerprint(baseline);
+    const references = await referenceFingerprint(baseline);
     const status = {
       status: response.status === 304 ? 'unchanged' : 'ok', checkedAt,
       lastSuccessfulFetchAt, detail: 'Public daily source checked by the scheduled collector; source observation time remains separately dated.',
     };
     const unchanged = pointer && state.publishedVersion === pointer.version
       && feedHash === state.feedHash && pointer.sourceUpdatedAt === feed.updatedAt
-      && state.calculationFingerprint === definitionFingerprint;
+      && state.calculationFingerprint === definitionFingerprint
+      && pointer.referenceFingerprint === references;
     const computeFeed = boundedComputeFeed(feed);
     let nextPointer;
     let report;
     if (unchanged) {
       // Validate again without creating a new snapshot or new market clock.
-      computeReport(computeFeed, seed, { checkedAt, builtAt: pointer.builtAt, sourceStatus: status, config });
+      computeReport(computeFeed, baseline, { checkedAt, builtAt: pointer.builtAt, sourceStatus: status, config });
       status.status = 'unchanged';
       nextPointer = { ...pointer, mode: 'collector', sourceStatus: status, lastSuccessfulFetchAt, nextAllowedAt: null };
     } else {
-      const computed = computeReport(computeFeed, seed, { checkedAt, builtAt: iso(now()), sourceStatus: status, config });
+      const computed = computeReport(computeFeed, baseline, { checkedAt, builtAt: iso(now()), sourceStatus: status, config });
       const previous = await previousReport(bucket, pointer);
       report = retainHistories(computed, previous);
       report.calculationModelVersion = CALCULATION_MODEL_VERSION;
       report.calculationFingerprint = definitionFingerprint;
+      report.referenceFingerprint = references;
     }
     // Full validated history is archived before any new public report or state.
     // This is storage time, never a renewed source/trade observation clock.
@@ -391,18 +432,31 @@ export async function collect(env, options = {}) {
         sourceUpdatedAt: report.sourceUpdatedAt, sourceStatus: status, mode: 'collector',
         lastSuccessfulFetchAt, nextAllowedAt: null,
         calculationFingerprint: definitionFingerprint,
+        referenceFingerprint: references,
       };
     }
     const nextState = {
       feed, feedHash, etag, lastModified, checkedAt, lastSuccessfulFetchAt,
       nextAllowedAt: null, publishedVersion: nextPointer.version,
       calculationFingerprint: definitionFingerprint, ...archived,
+      // Staged feed state may survive a lost pointer CAS. Do not acknowledge
+      // new reference evidence until its public pointer actually commits.
+      ...(state.referenceFingerprint ? { referenceFingerprint: state.referenceFingerprint } : {}),
     };
     await checkLease(bucket, lease, now());
-    await casJson(bucket, STATE, nextState, stateRecord.etag);
+    const stagedState = await casJson(bucket, STATE, nextState, stateRecord.etag);
     await checkLease(bucket, lease, now());
     // The public pointer is the final publication write; immutable payload exists.
     await casJson(bucket, POINTER, nextPointer, pointerRecord.etag);
+    if (nextState.referenceFingerprint !== references) {
+      try {
+        await checkLease(bucket, lease, now());
+        await casJson(bucket, STATE, { ...nextState, referenceFingerprint: references }, stagedState.etag);
+      } catch {
+        // Publication already succeeded. Its pointer is authoritative; a later
+        // unchanged check repairs this private acknowledgement without rebuild.
+      }
+    }
     return { status: unchanged ? 'unchanged' : 'published', version: nextPointer.version, checkedAt };
   } catch (error) {
     if (error instanceof LeaseLost) return { status: 'lease_lost', checkedAt };
@@ -444,18 +498,54 @@ function etagResponse(request, response) {
   return request.method === 'HEAD' ? new Response(null, response) : response;
 }
 
-async function serveSnapshot(request, env, data) {
-  if (!SNAPSHOT.test(data)) return new Response('Not found', { status: 404 });
+function byteStream(bytes) {
+  let offset = 0;
+  return new ReadableStream({
+    pull(controller) {
+      if (offset >= bytes.byteLength) { controller.close(); return; }
+      const end = Math.min(offset + 65_536, bytes.byteLength);
+      controller.enqueue(bytes.subarray(offset, end));
+      offset = end;
+    },
+  });
+}
+
+async function loadPublicSnapshot(env, data) {
   try {
     const object = await env.SNAPSHOTS?.get(data);
-    if (object?.body) return new Response(object.body, {
-      headers: { ...JSON_HEADERS, 'Cache-Control': 'public, max-age=31536000, immutable', ETag: `"${data.slice(5, 21)}"` },
-    });
+    if (object?.body) {
+      const headers = { ...JSON_HEADERS, 'Cache-Control': 'public, max-age=31536000, immutable', ETag: `"${data.slice(5, 21)}"` };
+      if (Number.isSafeInteger(object.size) && object.size >= 0 && object.size <= MAX_SHARED_REPORT_BYTES) {
+        const bytes = new Uint8Array(await new Response(object.body).arrayBuffer());
+        if (bytes.byteLength !== object.size) throw new Error('Snapshot size mismatch');
+        return { kind: 'bytes', bytes, headers };
+      }
+      // Large/unknown-size reports stay streaming. Only one caller claims this
+      // original body; followers open their own stream instead of sharing tees.
+      return { kind: 'stream', body: object.body, headers, claimed: false };
+    }
   } catch { /* A compiled seed remains available independently of R2. */ }
   if (data === seedVersion.data) {
-    return jsonResponse(seed, 'public, max-age=31536000, immutable', { ETag: `"${seedVersion.version}"`, 'X-Inflation-Mode': 'seed_fallback' });
+    return { kind: 'bytes', bytes: new TextEncoder().encode(JSON.stringify(seed)),
+      headers: { ...JSON_HEADERS, 'Cache-Control': 'public, max-age=31536000, immutable', ETag: `"${seedVersion.version}"`, 'X-Inflation-Mode': 'seed_fallback' } };
   }
-  return new Response('Snapshot not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
+  return { kind: 'missing' };
+}
+
+async function snapshotResponse(record, env, data) {
+  if (record.kind === 'bytes') return new Response(byteStream(record.bytes), { headers: record.headers });
+  if (record.kind === 'missing') return new Response('Snapshot not found', { status: 404, headers: { 'Cache-Control': 'no-store' } });
+  if (record.claimed) return snapshotResponse(await loadPublicSnapshot(env, data), env, data);
+  record.claimed = true;
+  return new Response(record.body, { headers: record.headers });
+}
+
+async function serveSnapshot(request, env, data) {
+  if (!SNAPSHOT.test(data)) return new Response('Not found', { status: 404 });
+  const record = await inFlightRead(env, `snapshot:${data}`, () => loadPublicSnapshot(env, data));
+  // Every caller gets an independent Response and readable body. Shared small
+  // payload bytes are immutable and streamed in chunks, never consumed jointly.
+  return snapshotResponse(record, env, data);
 }
 
 async function handleFetch(request, env, ctx) {
@@ -506,7 +596,7 @@ async function handleFetch(request, env, ctx) {
     }
   }
   if (cache && response.status === 200) {
-    const task = cache.put(cacheKey, response.clone()).catch(() => {});
+    const task = inFlightRead(env, `cache:${cacheKey.url}`, () => cache.put(cacheKey, response.clone())).catch(() => {});
     if (ctx?.waitUntil) ctx.waitUntil(task);
     else await task;
   }

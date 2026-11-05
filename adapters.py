@@ -75,15 +75,40 @@ def rolling_reference(rows,cash,root=None):
 CELL=re.compile(r'^1:([\d.]+)\s*\(([\d.]+)[–-]([\d.]+)\)\s*·\s*(\d+)$')
 
 
+def smega_row_offsets(payload):
+    rows=payload.get('rows')
+    if not isinstance(rows,list) or any(not isinstance(row,list) or len(row)!=3 or not all(isinstance(cell,str) for cell in row) for row in rows):
+        raise ValueError('Published table requires three-column string rows')
+    def valid(value):return isinstance(value,int) and not isinstance(value,bool) and -840<=value<=840
+    if 'utcOffsetMinutes' in payload and not valid(payload['utcOffsetMinutes']):raise ValueError('Invalid explicit UTC offset')
+    if 'rowUtcOffsetMinutes' in payload:
+        offsets=payload['rowUtcOffsetMinutes']
+        if not isinstance(offsets,list) or len(offsets)!=len(rows) or not all(valid(value) for value in offsets):
+            raise ValueError('Per-row UTC offsets must match row count and be integers within ±840 minutes')
+        return offsets
+    if 'utcOffsetMinutes' not in payload:raise ValueError('An explicit UTC offset is required')
+    return [payload['utcOffsetMinutes']]*len(rows)
+
+
 def normalize_smega_table(payload):
     check_stamp(payload.get('capturedAt'))
     if payload.get('sourceUrl')!='https://maplestory.market/ads?tab=services':raise ValueError('Unknown smega source')
     # Offset is explicit because the source table prints local dates without zone.
     # Callers must split a capture at DST transitions or provide per-row offsets.
-    offset=dt.timezone(dt.timedelta(minutes=payload['utcOffsetMinutes']))
+    offsets=smega_row_offsets(payload)
+    year=payload.get('year')
+    if not isinstance(year,int) or isinstance(year,bool) or not 1<=year<=9999:raise ValueError('An explicit source year is required')
     output=[];seen=set()
-    for row in payload['rows']:
-        stamp=dt.datetime.strptime(str(payload['year'])+' '+row[0],'%Y %b %d, %I:%M %p').replace(tzinfo=offset).astimezone(UTC).isoformat()
+    for row,minutes in zip(payload['rows'],offsets):
+        local=dt.datetime.strptime(str(year)+' '+row[0],'%Y %b %d, %I:%M %p')
+        if 'rowUtcOffsetMinutes' not in payload and payload.get('displayTimeZone'):
+            from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+            try:zone=ZoneInfo(payload['displayTimeZone'])
+            except (ZoneInfoNotFoundError,ValueError) as error:raise ValueError('IANA zone unavailable; declare per-row offsets explicitly') from error
+            if local.replace(tzinfo=zone,fold=0).utcoffset()!=local.replace(tzinfo=zone,fold=1).utcoffset():
+                raise ValueError('Ambiguous local hour requires explicit per-row UTC offsets')
+        offset=dt.timezone(dt.timedelta(minutes=minutes))
+        stamp=local.replace(tzinfo=offset).astimezone(UTC).isoformat()
         if stamp in seen:raise ValueError('Ambiguous/duplicate local hour; provide separate offsets at DST transition')
         seen.add(stamp)
         for side,text in zip(['sell','buy'],row[1:]):

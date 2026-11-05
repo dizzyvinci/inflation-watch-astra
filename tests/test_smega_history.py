@@ -56,6 +56,32 @@ class SmegaHistoryTests(unittest.TestCase):
         self.assertEqual(before, (self.root / 'cache' / history.LEDGER).read_bytes())
         self.assertEqual(sum(len(bucket['revisions']) for bucket in self.ledger()['buckets']), 2)
 
+    def test_raw_ledger_keeps_declared_row_offsets_without_identity_or_summary_bloat(self):
+        payload=self.table(rows=[['Nov 1, 01:00 AM','1:20 (19–21) · 2','—']]*2)
+        payload['rowUtcOffsetMinutes']=[-360,-300];payload['senderId']='never-retain'
+        self.assertEqual(len(self.ingest(payload)),2)
+        self.assertEqual(self.ledger()['captures'][0]['rawCaptures'][0]['rowUtcOffsetMinutes'],[-360,-300])
+        self.assertNotIn('rowUtcOffsetMinutes',history.latest_summary(self.ledger()))
+        self.assertNotIn('never-retain',json.dumps(self.ledger()))
+
+    def test_dst_review_plan_uses_both_folds_and_skips_ambiguous_singletons(self):
+        rows=[['Nov 1, 02:00 AM','1:20 (19–21) · 2','—'],
+              ['Nov 1, 01:00 AM','1:20 (19–21) · 2','—'],
+              ['Nov 1, 01:00 AM','1:20 (19–21) · 2','—'],
+              ['Nov 1, 12:00 AM','1:20 (19–21) · 2','—']]
+        payload=self.table(rows=rows);original=copy.deepcopy(payload)
+        planned,audit=history.prepare_dst_backfill(payload,2026)
+        self.assertEqual(planned['rowUtcOffsetMinutes'],[-360,-360,-300,-300])
+        self.assertEqual([r['at'] for r in audit['overlapRows']],['2026-11-01T07:00:00+00:00','2026-11-01T06:00:00+00:00'])
+        self.assertEqual(audit['acceptedRows'],4);self.assertEqual(payload,original)
+        self.assertFalse((self.root/'cache').exists())
+        payload['rows'].pop(2)
+        planned,audit=history.prepare_dst_backfill(payload,2026)
+        self.assertEqual(audit['acceptedRows'],2);self.assertEqual(len(audit['skippedRows']),1)
+        self.assertNotIn('Nov 1, 01:00 AM',[r[0] for r in planned['rows']])
+        payload['rows'].reverse()
+        with self.assertRaisesRegex(ValueError,'descending'):history.prepare_dst_backfill(payload,2026)
+
     def test_revision_replaces_latest_bucket_but_retains_prior_values_and_captures(self):
         self.ingest(self.table())
         later = self.table('2026-11-05T03:10:00Z', '1:21 (20–22) · 5')

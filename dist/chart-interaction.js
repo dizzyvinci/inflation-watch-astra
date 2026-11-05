@@ -7,6 +7,12 @@
   const managed = new WeakSet();
   let serial = 0;
   let queued = false;
+  const number = new Intl.NumberFormat(undefined, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const displayValue = value => number.format(Math.abs(value) < .05 ? 0 : value);
+  // Legacy labels lack numeric metadata. Round only decimal values with a known
+  // unit (or at the end), leaving dates, source hours and explanatory text intact.
+  const legacyLabel = text => text.replace(/([+-]?(?:\d{1,3}(?:,\d{3})+|\d+)\.\d+)(?=\s*(?:%|mesos\b|NX\b|index points\b|units\b|$))/g,
+    raw => displayValue(Number(raw.replaceAll(',', ''))));
 
   function box(svg) {
     const values = (svg.getAttribute('viewBox') || '').trim().split(/[ ,]+/).map(Number);
@@ -45,13 +51,18 @@
   }
   function label(circle) {
     const d = circle.dataset;
-    if (d.chartLabel) return d.chartLabel;
-    if (d.chartValue !== undefined && d.chartValue.trim() && Number.isFinite(Number(d.chartValue))) {
+    const title = circle.querySelector('title');
+    let text;
+    if (d.chartValue !== undefined) {
       const date = d.chartDateLabel || d.chartDate || '';
       const precision = d.chartDatePrecision === 'day' ? 'source time unspecified' : '';
-      return [d.chartSeries, date, precision, `${d.chartValue}${d.chartUnit ? ' ' + d.chartUnit : ''}`, d.chartNote].filter(Boolean).join(' · ');
-    }
-    return circle.querySelector('title')?.textContent.trim() || '';
+      const value = d.chartValue.trim() ? Number(d.chartValue) : NaN;
+      const measurement = Number.isFinite(value)
+        ? `${displayValue(value)}${d.chartUnit ? ' ' + d.chartUnit : ''}` : 'unavailable';
+      text = [d.chartSeries, date, precision, measurement, d.chartNote].filter(Boolean).join(' · ');
+    } else text = legacyLabel(d.chartLabel || title?.textContent.trim() || '');
+    if (title && title.textContent !== text) title.textContent = text;
+    return text;
   }
   function enhance(svg) {
     if (managed.has(svg)) return;

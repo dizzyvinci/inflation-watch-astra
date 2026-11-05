@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import worker, { collect, calculationFingerprint, retainHistories, CALCULATION_MODEL_VERSION } from '../ops/worker.mjs';
+import worker, { collect, calculationFingerprint, referenceFingerprint, retainHistories, CALCULATION_MODEL_VERSION, MAX_PUBLIC_READ_FLIGHTS, MAX_SHARED_REPORT_BYTES } from '../ops/worker.mjs';
 
 const seed = JSON.parse(readFileSync(new URL('../dist/data.json', import.meta.url), 'utf8'));
 const compiledVersion = JSON.parse(readFileSync(new URL('../dist/version.json', import.meta.url), 'utf8'));
@@ -27,13 +27,15 @@ class FakeR2 {
   sequence = 0;
   broken = false;
   beforePut = null;
+  beforeGet = null;
   async get(key) {
     if (this.broken) throw new Error('Binding unavailable');
     this.events.push({ op: 'get', key });
+    if (this.beforeGet) await this.beforeGet(key);
     const stored = this.values.get(key);
     if (!stored) return null;
     return {
-      key, etag: stored.etag, httpEtag: `"${stored.etag}"`,
+      key, size: new TextEncoder().encode(stored.text).byteLength, etag: stored.etag, httpEtag: `"${stored.etag}"`,
       body: new Response(stored.text).body,
       json: async () => JSON.parse(stored.text),
       text: async () => stored.text,
@@ -590,6 +592,124 @@ test('calculation fingerprint tracks definitions and ignores build, source and c
   assert.notEqual(await calculationFingerprint(goods), value);
 });
 
+test('reference fingerprint selects dated evidence, preserves observation clocks and ignores unrelated state', async () => {
+  const base = clone(seed), fingerprint = await referenceFingerprint(base);
+  base.builtAt = '2030-01-01T00:00:00Z';
+  base.sourceUpdatedAt = '2030-01-01T00:00:00Z';
+  base.sourceStatus = { checkedAt: '2030-01-01T00:00:00Z', status: 'ok' };
+  base.privatePlanningStatus = { phase: 'changed' };
+  base.history = [];
+  assert.equal(await referenceFingerprint(base), fingerprint);
+  const reorder = value => Array.isArray(value) ? value.map(reorder)
+    : value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).reverse().map(([key, item]) => [key, reorder(item)])) : value;
+  assert.equal(await referenceFingerprint(reorder(seed)), fingerprint, 'object key order is immaterial');
+  for (const key of ['comparisons', 'reportedNxHistory', 'rollingReference', 'rollingReferenceHistory', 'smega', 'smegaSource']) {
+    const changed = clone(seed);
+    changed[key] = { evidence: changed[key] ?? null, capturedAt: '2026-11-05T04:59:00Z' };
+    assert.notEqual(await referenceFingerprint(changed), fingerprint, key);
+    assert.equal(await calculationFingerprint(changed), await calculationFingerprint(seed), `${key} is not a calculation definition`);
+  }
+});
+
+function captureBaseline(capturedAt) {
+  const baseline = clone(seed);
+  baseline.comparisons = [{ kind: 'player_report', rate: 19.7, observedAt: capturedAt,
+    timestampKind: 'captured_at', sourceDate: '2026-11-04', sourceUrl: 'https://meowdb.com/msclassic/free-market' }];
+  baseline.smegaSource = { ...baseline.smegaSource, capturedAt };
+  return baseline;
+}
+
+test('a later approved reference capture publishes once on 304 without refreshing daily or trade clocks', async () => {
+  const bucket = new FakeR2(), env = envFor(bucket);
+  const older = captureBaseline('2026-11-05T03:00:00Z');
+  const newer = captureBaseline('2026-11-05T04:30:00Z');
+  assert.equal((await collect(env, { now: NOW, baseline: older, fetcher: async () => response() })).status, 'published');
+  const oldPointer = bucket.read(POINTER), oldReport = bucket.read(oldPointer.data);
+  const offset = bucket.events.length;
+  const changed = await collect(env, { now: NOW + 600_000, baseline: newer, fetcher: async () => new Response(null, { status: 304 }) });
+  assert.equal(changed.status, 'published', changed.detail);
+  const pointer = bucket.read(POINTER), report = bucket.read(pointer.data);
+  assert.notEqual(pointer.version, oldPointer.version);
+  assert.equal(pointer.sourceUpdatedAt, oldPointer.sourceUpdatedAt);
+  assert.equal(pointer.lastSuccessfulFetchAt, oldPointer.lastSuccessfulFetchAt);
+  assert.equal(pointer.builtAt, new Date(NOW + 600_000).toISOString());
+  assert.equal(report.comparisons.at(-1).observedAt, '2026-11-05T04:30:00Z');
+  assert.equal(report.smegaSource.capturedAt, '2026-11-05T04:30:00Z');
+  for (const key of ['history', 'intraday', 'smega', 'rollingReferenceHistory']) assert.deepEqual(report[key], oldReport[key], key);
+  assert.equal(report.latest.at, oldReport.latest.at);
+  assert.equal(report.referenceFingerprint, await referenceFingerprint(newer));
+  assert.equal(pointer.referenceFingerprint, report.referenceFingerprint);
+  assert.equal(bucket.read(STATE).referenceFingerprint, report.referenceFingerprint);
+  const writes = bucket.events.slice(offset).filter(event => event.op === 'put');
+  assert.equal(writes.filter(event => event.key.startsWith('data-')).length, 1);
+  assert.equal(writes.filter(event => event.key.startsWith('_private/sources/')).length, 0);
+  const after = bucket.events.length;
+  const repeated = await collect(env, { now: NOW + 1_200_000, baseline: newer, fetcher: async () => new Response(null, { status: 304 }) });
+  assert.equal(repeated.status, 'unchanged');
+  assert.equal(bucket.read(POINTER).version, pointer.version);
+  assert.equal(bucket.read(POINTER).builtAt, pointer.builtAt);
+  assert.ok(!bucket.events.slice(after).some(event => event.op === 'put' && event.key.startsWith('data-')));
+});
+
+test('reference fingerprint legacy migration on 304 publishes only once', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const state = bucket.read(STATE);
+  delete state.referenceFingerprint;
+  const legacy = clone(pointer); delete legacy.referenceFingerprint;
+  bucket.raw(STATE, state); bucket.raw(POINTER, legacy);
+  const options = { now: NOW + 600_000, fetcher: async () => new Response(null, { status: 304 }) };
+  assert.equal((await collect(env, options)).status, 'published');
+  const upgraded = bucket.read(POINTER);
+  assert.equal(upgraded.sourceUpdatedAt, pointer.sourceUpdatedAt);
+  assert.equal(upgraded.lastSuccessfulFetchAt, pointer.lastSuccessfulFetchAt);
+  assert.equal((await collect(env, { ...options, now: NOW + 1_200_000 })).status, 'unchanged');
+  assert.equal(bucket.read(POINTER).version, upgraded.version);
+});
+
+test('failed snapshot or pointer publication cannot acknowledge a new reference capture', async () => {
+  for (const phase of ['snapshot', 'pointer']) {
+    const { bucket, env, pointer } = await initialize();
+    const oldFingerprint = bucket.read(STATE).referenceFingerprint;
+    const baseline = captureBaseline('2026-11-05T04:45:00Z');
+    let failed = false;
+    bucket.beforePut = key => {
+      if (!failed && (phase === 'snapshot' ? key.startsWith('data-') : key === POINTER)) {
+        failed = true;
+        if (phase === 'snapshot') throw new Error('Snapshot storage unavailable');
+        bucket.raw(POINTER, { ...pointer, raceWinner: true });
+      }
+    };
+    const result = await collect(env, { now: NOW + 600_000, baseline, fetcher: async () => new Response(null, { status: 304 }) });
+    assert.equal(result.status, phase === 'pointer' ? 'lease_lost' : 'degraded');
+    assert.equal(bucket.read(POINTER).version, pointer.version, phase);
+    assert.equal(bucket.read(POINTER).referenceFingerprint, oldFingerprint, phase);
+    assert.equal(bucket.read(STATE).referenceFingerprint, oldFingerprint, phase);
+    bucket.beforePut = null;
+    assert.equal((await collect(env, { now: NOW + 1_200_000, baseline, fetcher: async () => new Response(null, { status: 304 }) })).status, 'published');
+    assert.equal(bucket.read(STATE).referenceFingerprint, await referenceFingerprint(baseline));
+  }
+});
+
+test('failed private reference acknowledgement repairs on 304 without duplicate publication', async () => {
+  const { bucket, env } = await initialize();
+  const baseline = captureBaseline('2026-11-05T04:45:00Z');
+  const expected = await referenceFingerprint(baseline);
+  bucket.beforePut = (key, value) => {
+    if (key === STATE && JSON.parse(value).referenceFingerprint === expected) throw new Error('Acknowledgement unavailable');
+  };
+  assert.equal((await collect(env, { now: NOW + 600_000, baseline, fetcher: async () => new Response(null, { status: 304 }) })).status, 'published');
+  const pointer = bucket.read(POINTER);
+  assert.equal(pointer.referenceFingerprint, expected);
+  assert.notEqual(bucket.read(STATE).referenceFingerprint, expected);
+  bucket.beforePut = null;
+  const offset = bucket.events.length;
+  assert.equal((await collect(env, { now: NOW + 1_200_000, baseline, fetcher: async () => new Response(null, { status: 304 }) })).status, 'unchanged');
+  assert.equal(bucket.read(POINTER).version, pointer.version);
+  assert.equal(bucket.read(STATE).referenceFingerprint, expected);
+  assert.ok(!bucket.events.slice(offset).some(event => event.op === 'put' && event.key.startsWith('data-')));
+});
+
 test('cash history retains at most 7300 dates only for the identical independent cash definition', () => {
   const hash = 'c'.repeat(64), day = feed.updatedAt.slice(0, 10);
   const point = { day, at: feed.updatedAt, cpi: 123, coverage: .9, pricedCoverage: 1, partial: true };
@@ -622,4 +742,139 @@ test('runtime/config contain no credentials or public collection endpoint', () =
   assert.equal(wrangler.limits.cpu_ms, 1000);
   assert.deepEqual(wrangler.assets.run_worker_first, ['/version.json', '/data.json', '/data-*', '/health.json']);
   assert.deepEqual(wrangler.triggers.crons, ['3,13,23,33,43,53 * * * *']);
+});
+
+test('1000 simultaneous cold pointer visitors coalesce one R2 read with no provider fetch', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const savedCaches = globalThis.caches, savedFetch = globalThis.fetch;
+  delete globalThis.caches;
+  let providerCalls = 0, release;
+  globalThis.fetch = async () => { providerCalls++; throw new Error('Forbidden provider call'); };
+  const gate = new Promise(resolve => { release = resolve; });
+  bucket.beforeGet = key => key === POINTER ? gate : undefined;
+  const offset = bucket.events.length;
+  try {
+    const tasks = Array.from({ length: 1000 }, () => request(env, '/version.json').then(response => response.json()));
+    await new Promise(resolve => setImmediate(resolve));
+    const pendingReads = bucket.events.slice(offset).filter(event => event.op === 'get' && event.key === POINTER).length;
+    release();
+    const results = await Promise.all(tasks);
+    assert.equal(pendingReads, 1);
+    assert(results.every(value => value.version === pointer.version && value.data === pointer.data));
+    results[0].sourceStatus.status = 'changed only in one client';
+    assert.notEqual(results[1].sourceStatus.status, results[0].sourceStatus.status);
+    assert.equal(providerCalls, 0);
+    assert.ok(!bucket.events.slice(offset).some(event => event.op === 'put'));
+  } finally { release(); globalThis.fetch = savedFetch; if (savedCaches === undefined) delete globalThis.caches; else globalThis.caches = savedCaches; }
+});
+
+test('250 simultaneous cold report-alias visitors share one pointer and one payload read with independent bodies', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const saved = globalThis.caches; delete globalThis.caches;
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  bucket.beforeGet = key => key === POINTER ? gate : undefined;
+  const offset = bucket.events.length;
+  try {
+    const tasks = Array.from({ length: 250 }, async () => {
+      const response = await request(env, '/data.json');
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get('Cache-Control'), /s-maxage=30/);
+      return response.json();
+    });
+    await new Promise(resolve => setImmediate(resolve)); release();
+    const results = await Promise.all(tasks);
+    assert.equal(bucket.events.slice(offset).filter(event => event.op === 'get' && event.key === POINTER).length, 1);
+    assert.equal(bucket.events.slice(offset).filter(event => event.op === 'get' && event.key === pointer.data).length, 1);
+    assert(results.every(value => value.rows.length === 50 && value.cash.length === 29 && value.cashBasket.rows.length === 28));
+    assert.equal(new Set(results.map(value => value.sourceUpdatedAt)).size, 1);
+  } finally { release(); if (saved === undefined) delete globalThis.caches; else globalThis.caches = saved; }
+});
+
+test('coalesced named snapshots preserve independent GET, HEAD and ETag responses', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const saved = globalThis.caches; delete globalThis.caches;
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  bucket.beforeGet = key => key === pointer.data ? gate : undefined;
+  const offset = bucket.events.length;
+  try {
+    const tasks = Array.from({ length: 150 }, async (_, i) => {
+      const mode = i % 3;
+      const response = await request(env, '/' + pointer.data, mode === 1 ? { method: 'HEAD' } : mode === 2 ? { headers: { 'If-None-Match': `"${pointer.version}"` } } : undefined);
+      assert.equal(response.status, mode === 2 ? 304 : 200);
+      assert.equal(response.headers.get('ETag'), `"${pointer.version}"`);
+      if (mode) assert.equal(await response.text(), '');
+      else assert.equal((await response.json()).rows.length, 50);
+    });
+    await new Promise(resolve => setImmediate(resolve)); release(); await Promise.all(tasks);
+    assert.equal(bucket.events.slice(offset).filter(event => event.op === 'get' && event.key === pointer.data).length, 1);
+  } finally { release(); if (saved === undefined) delete globalThis.caches; else globalThis.caches = saved; }
+});
+
+test('cold-read coalescing isolates different bucket bindings and clears storage/cache failures for retries', async () => {
+  const one = await initialize(), two = await initialize();
+  const other = two.bucket.read(POINTER); other.sourceStatus.detail = 'Different binding'; two.bucket.raw(POINTER, other);
+  const saved = globalThis.caches; delete globalThis.caches;
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  one.bucket.beforeGet = key => key === POINTER ? gate : undefined;
+  two.bucket.beforeGet = key => key === POINTER ? gate : undefined;
+  try {
+    const tasks = [request(one.env, '/version.json'), request(two.env, '/version.json')];
+    await new Promise(resolve => setImmediate(resolve)); release();
+    const [a, b] = await Promise.all(tasks.map(async task => (await task).json()));
+    assert.notEqual(a.sourceStatus.detail, b.sourceStatus.detail);
+    let fail = true;
+    one.bucket.beforeGet = () => { if (fail) { fail = false; throw new Error('One read failed'); } };
+    const fallback = await (await request(one.env, '/version.json')).json();
+    assert.equal(fallback.sourceStatus.status, 'degraded');
+    const retry = await (await request(one.env, '/version.json')).json();
+    assert.equal(retry.version, one.pointer.version);
+    let puts = 0;
+    globalThis.caches = { default: { match: async () => { throw new Error('Cache unavailable'); }, put: async () => { puts++; throw new Error('Cache unavailable'); } } };
+    for (let i = 0; i < 2; i++) assert.equal((await request(one.env, '/' + one.pointer.data)).status, 200);
+    assert.equal(puts, 2, 'Rejected cache writes must not remain in flight');
+    const missing = 'data-' + 'e'.repeat(16) + '.json';
+    assert.equal((await request(one.env, '/' + missing)).status, 404);
+    one.bucket.raw(missing, seed);
+    assert.equal((await (await request(one.env, '/' + missing)).json()).rows.length, 50);
+  } finally { release(); if (saved === undefined) delete globalThis.caches; else globalThis.caches = saved; }
+});
+
+test('distinct cold snapshot names cannot grow the pending map beyond its fixed bound and private paths never enter it', async () => {
+  const bucket = new FakeR2(), env = envFor(bucket);
+  const saved = globalThis.caches; delete globalThis.caches;
+  let release; const gate = new Promise(resolve => { release = resolve; });
+  bucket.beforeGet = () => gate;
+  const names = Array.from({ length: MAX_PUBLIC_READ_FLIGHTS + 1 }, (_, i) => `data-${i.toString(16).padStart(16, '0')}.json`);
+  try {
+    const tasks = names.map(name => request(env, '/' + name));
+    await new Promise(resolve => setImmediate(resolve));
+    tasks.push(request(env, '/' + names[0]), request(env, '/' + names.at(-1)));
+    assert.equal((await request(env, '/_private/sources/2026-11-04/private.json')).status, 404);
+    assert.equal((await request(env, '/data-invalid.json')).status, 404);
+    await new Promise(resolve => setImmediate(resolve));
+    const firstReads = bucket.events.filter(event => event.op === 'get' && event.key === names[0]).length;
+    const overflowReads = bucket.events.filter(event => event.op === 'get' && event.key === names.at(-1)).length;
+    release(); assert((await Promise.all(tasks)).every(response => response.status === 404));
+    assert.equal(firstReads, 1);
+    assert.equal(overflowReads, 2, 'Overflow bypasses coalescing instead of allocating another entry');
+    assert(bucket.events.filter(event => event.op === 'get').every(event => /^data-[a-f0-9]{16}\.json$/.test(event.key)));
+    await request(env, '/' + names[0]);
+    assert.equal(bucket.events.filter(event => event.op === 'get' && event.key === names[0]).length, 2, 'Settled entries must be removed');
+  } finally { release(); if (saved === undefined) delete globalThis.caches; else globalThis.caches = saved; }
+});
+
+test('reports above the sharing size bound keep independent streams without buffering a shared large body', async () => {
+  const bucket = new FakeR2(), env = envFor(bucket), name = 'data-' + 'd'.repeat(16) + '.json';
+  const value = { text: 'x'.repeat(MAX_SHARED_REPORT_BYTES + 1) }; bucket.raw(name, value);
+  const saved = globalThis.caches; delete globalThis.caches;
+  let release; const gate = new Promise(resolve => { release = resolve; }); bucket.beforeGet = () => gate;
+  try {
+    const tasks = Array.from({ length: 8 }, async () => {
+      const response = await request(env, '/' + name); assert.equal(response.status, 200);
+      return (await response.json()).text.length;
+    });
+    await new Promise(resolve => setImmediate(resolve)); release();
+    assert((await Promise.all(tasks)).every(length => length === value.text.length));
+    assert.equal(bucket.events.filter(event => event.op === 'get' && event.key === name).length, 8);
+  } finally { release(); if (saved === undefined) delete globalThis.caches; else globalThis.caches = saved; }
 });

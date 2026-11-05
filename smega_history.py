@@ -20,6 +20,63 @@ SERIES = 'published-smega-series.json'
 SUMMARY = 'published-smega-summary.json'
 
 
+def prepare_dst_backfill(payload, source_year):
+    """Pure, review-only plan for a verified descending Chicago aggregate table.
+
+    A repeated fall-back hour needs both occurrences. Ambiguous singletons and
+    nonexistent wall hours are skipped, never assigned an assumed fold.
+    """
+    from collections import Counter
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+    from adapters import normalize_smega_table, smega_row_offsets
+    if payload.get('sourceUrl') != SOURCE or payload.get('displayTimeZone') != 'America/Chicago':
+        raise ValueError('Backfill requires the verified Chicago published table')
+    if not isinstance(source_year, int) or isinstance(source_year, bool) or not 1 <= source_year <= 9999:
+        raise ValueError('An operator-verified source year is required')
+    captured = _stamp(payload.get('capturedAt'))
+    smega_row_offsets({'rows': payload.get('rows'), 'utcOffsetMinutes': 0})
+    try:
+        zone = ZoneInfo('America/Chicago')
+    except ZoneInfoNotFoundError as error:
+        raise ValueError('IANA America/Chicago data unavailable; no offset guessing allowed') from error
+    locals_ = [dt.datetime.strptime(str(source_year) + ' ' + row[0], '%Y %b %d, %I:%M %p') for row in payload['rows']]
+    counts, used = Counter(locals_), Counter()
+    result = {'sourceUrl': SOURCE, 'capturedAt': payload['capturedAt'], 'year': source_year,
+              'displayTimeZone': 'America/Chicago', 'rows': [], 'rowUtcOffsetMinutes': []}
+    accepted, skipped, overlap = [], [], []
+    previous = None
+    for ordinal, (local, row) in enumerate(zip(locals_, payload['rows'])):
+        candidates = {}
+        for fold in (0, 1):
+            aware = local.replace(tzinfo=zone, fold=fold)
+            utc = aware.astimezone(UTC)
+            if utc.astimezone(zone).replace(tzinfo=None) == local:
+                candidates[utc] = int(aware.utcoffset().total_seconds() // 60)
+        if not candidates or len(candidates) == 2 and counts[local] != 2:
+            skipped.append({'rowIndex': ordinal, 'localHour': row[0], 'reason': 'nonexistent_hour' if not candidates else 'ambiguous_without_exactly_two_occurrences'})
+            continue
+        if len(candidates) == 1 and counts[local] != 1:
+            raise ValueError('Repeated unambiguous source hour is not a valid descending table')
+        utc = sorted(candidates, reverse=True)[used[local] if len(candidates) == 2 else 0]
+        used[local] += 1
+        if utc > captured or previous is not None and utc >= previous:
+            raise ValueError('Source hours must be nonfuture and strictly descending in UTC')
+        previous = utc
+        result['rows'].append(copy.deepcopy(row))
+        result['rowUtcOffsetMinutes'].append(candidates[utc])
+        accepted.append(ordinal)
+        if len(candidates) == 2:
+            overlap.append({'rowIndex': ordinal, 'localHour': row[0], 'utcOffsetMinutes': candidates[utc], 'at': utc.isoformat()})
+    points = normalize_smega_table(result)
+    audit = {'dryRun': True, 'requiresOperatorReview': True, 'ianaTimeZone': zone.key,
+             'sourceYear': source_year, 'inputRows': len(locals_), 'acceptedRows': len(result['rows']),
+             'acceptedRowIndices': accepted, 'skippedRows': skipped, 'overlapRows': overlap,
+             'sidePoints': len(points), 'earliestSourceHour': points[0]['at'] if points else None,
+             'latestSourceHour': points[-1]['at'] if points else None,
+             'capturedAt': payload['capturedAt'], 'utcStrictDescending': True}
+    return result, audit
+
+
 def _stamp(value):
     if not isinstance(value, str):
         raise ValueError('A verified, timezone-aware capturedAt is required')
@@ -89,6 +146,9 @@ def _raw_capture(payload):
                 if cell != '—' and not re.fullmatch(r'1:[\d.]+\s*\([\d.]+[–-][\d.]+\)\s*·\s*\d+', cell):
                     raise ValueError('Raw table must contain aggregate rate cells, not messages or identities')
         result['rows'] = copy.deepcopy(rows)
+    if 'rowUtcOffsetMinutes' in payload:
+        from adapters import smega_row_offsets
+        result['rowUtcOffsetMinutes'] = list(smega_row_offsets(payload))
     if isinstance(payload.get('summary'), dict):
         summary = {}
         for key in ('sellerRate', 'buyerRate', 'windowHours'):
@@ -184,7 +244,7 @@ def latest_summary(ledger, source=SOURCE):
         return {'sourceUrl': source, 'capturedAt': latest['capturedAt']}
     payload = max(raw, key=lambda entry: ('summary' in entry,
                   _stamp(entry.get('summaryCapturedAt', entry['capturedAt'])), _hash(entry)))
-    return {key: value for key, value in payload.items() if key != 'rows'}
+    return {key: value for key, value in payload.items() if key not in ('rows', 'rowUtcOffsetMinutes')}
 
 
 def recover_legacy(root, ledger=None, normalize_raw=None, raw_paths=None):

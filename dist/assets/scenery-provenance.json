@@ -1,0 +1,50 @@
+{
+  "copyright": "Nexon",
+  "provider": "maplestory.io",
+  "region": "MCW",
+  "version": "1",
+  "assets": [
+    {
+      "file": "henesys-scenery.png",
+      "name": "Henesys",
+      "streetName": "Victoria Road",
+      "mapId": 10001000,
+      "isTown": true,
+      "region": "MCW",
+      "version": "1",
+      "layer": 0,
+      "frame": 0,
+      "metadataUrl": "https://maplestory.io/api/MCW/1/map/10001000",
+      "url": "https://maplestory.io/api/MCW/1/map/10001000/render/layer/0/0",
+      "downloadedAt": "2026-11-05T06:00:38+00:00",
+      "copyright": "Nexon",
+      "provider": "maplestory.io",
+      "bytes": 1382124,
+      "width": 6401,
+      "height": 989,
+      "sha256": "d1abdb71a75cd02fba305bc0c1d900ed4be4c157c36acc2ca63db3eaff831b78",
+      "transformation": "None; original layer0 render PNG downloaded without editing. Full-map render exceeded3MB; documented layer render used."
+    },
+    {
+      "file": "ellinia-scenery.png",
+      "name": "Ellinia",
+      "streetName": "Victoria Road",
+      "mapId": 10002000,
+      "isTown": true,
+      "region": "MCW",
+      "version": "1",
+      "layer": 0,
+      "frame": 0,
+      "metadataUrl": "https://maplestory.io/api/MCW/1/map/10002000",
+      "url": "https://maplestory.io/api/MCW/1/map/10002000/render/layer/0/0",
+      "downloadedAt": "2026-11-05T06:00:40+00:00",
+      "copyright": "Nexon",
+      "provider": "maplestory.io",
+      "bytes": 143596,
+      "width": 291,
+      "height": 548,
+      "sha256": "fc66fa52542870405178ff9126e6538c13edff85faae8f55435cda0fc74a304f",
+      "transformation": "None; original layer0 render PNG downloaded without editing. Full-map render exceeded3MB; documented layer render used."
+    }
+  ]
+}
