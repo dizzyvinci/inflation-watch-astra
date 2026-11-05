@@ -3,7 +3,7 @@
   "kind": "reviewed_catalogue_identity_provenance",
   "identityMapVersion": 2,
   "identityFile": "catalog-identities-v2.json",
-  "identityFileSha256": "2fae5a04406e365e4897b60bc704ad78a86af8a7f9cb9b568f93cc652954e708",
+  "identityFileSha256": "5b0fd206fda2e0ba7d4161008eab6f0b4c7d73116478f2bfb899d16b2a9b676e",
   "priorIdentityFile": "catalog-identities-v1.json",
   "priorIdentityFileSha256": "c7b56e5744ec4e94514a17caf68f1a136e7c2148186a6b5d1048b46da2a5b2bd",
   "region": "MCW",
@@ -380,5 +380,6 @@
     "No provider price/count/date/summary or MPI/NX basket math changed by this identity adoption",
     "Client isCash flag differs from economic acquisition origin and does not change source categories or frozen eligibility",
     "Metadata record completeness beyond the two captured responses is not guaranteed; names are not a global game-market census"
-  ]
+  ],
+  "identityFileFormatting": "UTF-8, LF line endings; identity content and portable hashes unchanged"
 }

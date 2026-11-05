@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T19:25:26+00:00",
+  "exportedAt": "2026-11-05T19:29:04+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7582,8 +7582,8 @@
     },
     {
       "path": "catalogue-identity-provenance-v2.json",
-      "bytes": 9423,
-      "sha256": "874e3d4c8cc4ab1e45eec112ff3b850a6e22569113522ffb7843a359a7bccd42"
+      "bytes": 9525,
+      "sha256": "4786a75075d68cc648882512e876dcc0c8fe553b7a07c22a8da72847d8f77d41"
     },
     {
       "path": "comparison-observations.json",
