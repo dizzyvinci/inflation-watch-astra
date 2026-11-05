@@ -217,6 +217,8 @@ const until=async predicate=>{const deadline=Date.now()+1500;while(!predicate()&
  const rolling=pricing(fixture,{evidence:'rolling',days:1}),rolling30=pricing(fixture,{evidence:'rolling',days:30});
  assert.equal(rolling.rows[0].price,500);assert.equal(rolling.rows[0].windowDays,3);assert.equal(rolling.rows[1].windowDays,30);assert.equal(rolling.rows[0].lowRate,null);assert.equal(rolling.rows[0].highRate,null);
  assert(Math.abs(rolling.reference-(.1/3+.2/15)/(.4))<1e-12);assert.equal(rolling.reference,rolling30.reference);
+ const guardedFixture=JSON.parse(JSON.stringify(fixture));guardedFixture.rollingReference.comparison={cashReferenceWeights:[{name:'Selective 5-slot Coupon',eligible:false,exclusionReason:'cash_roll_may_include_upgrade_premium'},{name:'AP Reset Scroll',eligible:true}]};guardedFixture.rollingReference.items[0].statRoll='5 ATT';
+ const guarded=pricing(guardedFixture,{evidence:'rolling'});assert.equal(guarded.rows[0].price,500);assert.equal(guarded.rows[0].referenceWeight,0);assert.equal(guarded.rows[0].verdict,'unknown');assert.equal(guarded.rows[0].statRoll,'5 ATT');assert.equal(guarded.reference,.2);assert.equal(guarded.eligibleCount,1);
  const schedule=chosen.rows.map(r=>r.slug+':'+r.nx).sort().join('|');assert.equal(schedule,published.cash.map(r=>r.slug+':'+r.nx).sort().join('|'));
  assert.equal(doc.getElementById('cash-lookback').value,'3');assert.equal(doc.getElementById('cash-lookback').disabled,false);
  assert(doc.getElementById('cash-window-note').textContent.includes('2026-11-02–2026-11-04'));assert(doc.getElementById('cash-window-note').textContent.includes('partial'));

@@ -42,7 +42,8 @@ class RollingCaptureTests(unittest.TestCase):
         self.assertEqual(item['sourceObservedAt'], '2026-11-05T02:59:00Z')
         self.assertEqual(item['sourceWindowStartAt'], '2026-11-02T00:00:00Z')
         self.assertEqual(item['statRoll'], '7 ATT / 0 slots'); self.assertEqual(item['windowDays'], 3)
-        self.assertEqual(item['cheapestListing'], {'price_each': 900, 'channel': 3, 'room': 4})
+        self.assertEqual(item['cheapestListing'], {'price_each': 900, 'channel': 3, 'room': 4, 'availabilityConfirmed': False})
+        self.assertFalse(item['availabilityConfirmed'])
         self.assertFalse(item['qualityConstant']); self.assertEqual(self.counts(), (1, 1))
         history = rolling.variant_history(self.root/rolling.LEDGER, item['variantKey'])
         self.assertEqual(history[0]['price'], 1000)
@@ -168,6 +169,169 @@ class RollingCaptureTests(unittest.TestCase):
         result, repeated = adapters.rolling_reference(rows, [], self.root)
         self.assertEqual(len(first), 1); self.assertEqual(repeated, first)
         self.assertEqual(result['capturedAt'], later['capturedAt'])
+
+    def test_casefold_receipt_names_match_comparison_and_ambiguous_names_reject(self):
+        payload = rolling.normalize_capture(self.payload(None))
+        item = payload['items'][0]
+        item.update(name='bLaCk HaT', id=1802003)
+        goods, cash, comparison = rolling.comparable_inputs(
+            [{'name': 'Black Hat', 'category': 'Consumables', 'weight': 1}],
+            [{'name': 'Black Hat', 'nx': 3200}], payload)
+        self.assertEqual(set(goods), {'Black Hat'})
+        self.assertEqual(set(cash), {'Black Hat'})
+        self.assertEqual(comparison['cashReferenceWeights'][0]['referenceWeight'], 1)
+        self.assertTrue(comparison['cashReferenceWeights'][0]['statRollKnown'])
+        no_sales = {'items': [], 'rejectedItems': [{'name': 'bLaCk HaT', 'completedAttempt': True}]}
+        _, _, excluded = rolling.comparable_inputs([], [{'name': 'Black Hat', 'nx': 3200}], no_sales)
+        self.assertEqual(excluded['excludedCashItems'][0]['reason'], 'captured_item_has_no_eligible_sales')
+        duplicate = self.payload(None)
+        second = copy.deepcopy(duplicate['items'][0])
+        second['result'].update(id=1082003, item='wOrK gLoVeS')
+        duplicate['items'].append(second)
+        with self.assertRaisesRegex(ValueError, 'Duplicate'):
+            rolling.normalize_capture(duplicate)
+        payload['items'].append({**item, 'name': 'BLACK HAT', 'id': 1802004})
+        with self.assertRaisesRegex(ValueError, 'Ambiguous'):
+            rolling.comparable_inputs([], [], payload)
+
+    def test_v3_legacy_cash_unverified_preserves_published_history_bytes(self):
+        legacy = {'sourceUrl': rolling.SOURCE, 'kind': 'rolling_scanner_reference',
+                  'capturedAt': '2026-11-05T02:00:00Z', 'items': [
+                      {'name': name, 'id': item_id, 'price': 50000, 'salesCounted': 5,
+                       'windowDays': 3, 'salesPerHourProxy': 5/72}
+                      for item_id, name in ((5000001, 'Pet A'), (5000002, 'Pet B'), (5000003, 'Pet C'))]}
+        engine.atomic(self.root/'config.json', {'basket_version': 2})
+        engine.atomic(self.root/'cache'/rolling.PROJECTION, legacy)
+        original = {'at': legacy['capturedAt'], 'cpi': None, 'nxRate': 13.65173115963695,
+                    'contentHash': 'published-legacy-hash', 'sourceUrl': rolling.SOURCE,
+                    'timestampKind': 'captured_at', 'observationTimestampKnown': False}
+        history_path = self.root/'cache/rolling-reference-history-v2.json'
+        engine.atomic(history_path, [original])
+        before, mtime = history_path.read_bytes(), history_path.stat().st_mtime_ns
+        cash = [{'name': row['name'], 'nx': 5000} for row in legacy['items']]
+        current, history = adapters.rolling_reference([], cash, self.root)
+        self.assertIsNone(current['nxRateReference'])
+        self.assertEqual(current['cashItems'], 0)
+        self.assertEqual(current['comparison']['methodVersion'], 3)
+        self.assertTrue(all(row['reason'] == 'cash_roll_metadata_unverified'
+                            for row in current['comparison']['excludedCashItems']))
+        self.assertTrue(all(not row['statRollKnown'] and row['statRollStatus'] == 'unknown_legacy'
+                            and row['captureTimeKind'] == 'batch_timestamp_only' for row in current['items']))
+        self.assertEqual(history, [original])
+        self.assertEqual(history_path.read_bytes(), before)
+        self.assertEqual(history_path.stat().st_mtime_ns, mtime)
+        self.assertIn('Older aggregate points may lack roll identity', current['aggregateHistoryNote'])
+
+    def known_plan(self, targets):
+        plan = {'kind': 'offline_scanner_capture_request_plan', 'isCapture': False,
+                'requestCount': len(targets), 'requests': [{'expectedItemId': item_id, 'expectedItemName': name} for item_id, name in targets]}
+        plan['planHash'] = rolling._hash(plan)
+        engine.atomic(self.root/'incoming/scanner-capture-plan.json', plan)
+        return plan['planHash']
+
+    def legacy_two(self):
+        payload = {'sourceUrl': rolling.SOURCE, 'kind': 'rolling_scanner_reference', 'capturedAt': '2026-11-05T02:00:00Z',
+                   'items': [{'name': name, 'id': item_id, 'price': 500, 'salesCounted': 5, 'windowDays': 3, 'salesPerHourProxy': 5/72}
+                             for item_id, name in [(4010001, 'Ore A'), (4010002, 'Ore B')]]}
+        engine.atomic(self.root/'cache'/rolling.PROJECTION, payload)
+        return (self.root/'cache'/rolling.PROJECTION).read_bytes()
+
+    def receipt(self, item_id, name, captured='2026-11-05T04:01:00Z', basis='median of sales', count=5):
+        return {'expectedItemId': item_id, 'expectedItemName': name, 'capturedAt': captured,
+                'result': {'id': item_id, 'item': name, 'typical_sale_price': 900, 'sales_counted': count,
+                           'window_days': 3, 'stat_roll': None, 'price_basis': basis, 'listings_now': 5,
+                           'cheapest_listing': {'price_each': 800, 'channel': 1, 'room': 2}}}
+
+    def planned_batch(self, entries, plan_hash):
+        return {'sourceUrl': rolling.SOURCE, 'captureStartedAt': '2026-11-05T04:00:00Z', 'capturedAt': '2026-11-05T04:03:00Z',
+                'planHash': plan_hash, 'scannerFreshnessText': 'Maintenance; displayed scanner10h old; listings not confirmed open.', 'items': entries}
+
+    def test_partial_known_plan_holds_projection_then_full_new_scope_publishes_without_losing_old_ids(self):
+        original = self.legacy_two(); plan_hash = self.known_plan([(4010002, 'Ore B'), (4010003, 'Ore C')])
+        first = self.receipt(4010002, 'Ore B'); second = self.receipt(4010003, 'Ore C', '2026-11-05T04:02:00Z')
+        held = rolling.import_capture(self.root, self.planned_batch([first], plan_hash))
+        self.assertEqual(held['intakeStatus']['status'], 'held'); self.assertEqual(held['intakeStatus']['missingTargetCount'], 1)
+        self.assertEqual(held['capturedAt'], '2026-11-05T02:00:00Z')
+        self.assertEqual((self.root/'cache'/rolling.PROJECTION).read_bytes(), original)
+        complete = rolling.import_capture(self.root, self.planned_batch([first, second], plan_hash))
+        self.assertEqual(complete['intakeStatus']['status'], 'published')
+        self.assertEqual({item['id'] for item in complete['items']}, {4010002, 4010003})
+        self.assertTrue(all(not item['availabilityConfirmed'] and item['sourceObservedAt'] is None for item in complete['items']))
+        self.assertIn('scanner10h', complete['scannerFreshnessText'])
+        with closing(sqlite3.connect(self.root/rolling.LEDGER)) as connection:
+            self.assertEqual(connection.execute('SELECT COUNT(DISTINCT item_id) FROM observations').fetchone()[0], 3)
+            self.assertEqual(connection.execute('SELECT COUNT(*) FROM observations').fetchone()[0], 4)
+        target = self.root/'cache'/rolling.PROJECTION; before = target.read_bytes(); modified = target.stat().st_mtime_ns
+        rolling.import_capture(self.root, self.planned_batch([first, second], plan_hash))
+        self.assertEqual(target.read_bytes(), before); self.assertEqual(target.stat().st_mtime_ns, modified)
+
+    def test_full_plan_no_sales_and_asking_fallback_count_as_completed_but_never_sale_prices(self):
+        self.legacy_two(); plan_hash = self.known_plan([(4010002, 'Ore B'), (4010003, 'Ore C')])
+        result = rolling.import_capture(self.root, self.planned_batch([
+            self.receipt(4010002, 'Ore B'), self.receipt(4010003, 'Ore C', basis='median asking price', count=0)], plan_hash))
+        self.assertEqual(result['intakeStatus']['status'], 'published')
+        self.assertEqual(result['intakeStatus']['verifiedAttemptCount'], 2)
+        self.assertEqual(result['intakeStatus']['ineligibleVerifiedCount'], 1)
+        self.assertEqual(len(result['items']), 1)
+        self.assertEqual(result['rejectedItems'][0]['reason'], 'reported_no_eligible_sales')
+        self.assertNotIn('price', result['rejectedItems'][0])
+        _, _, comparison = rolling.comparable_inputs([{'name': 'Ore C', 'category': 'Materials', 'weight': 1}], [], result)
+        self.assertEqual(comparison['excludedBasketItems'][0]['reason'], 'captured_item_has_no_eligible_sales')
+
+    def test_complete_all_no_sales_is_receipt_only_and_keeps_projection_byte_identical(self):
+        original = self.legacy_two(); plan_hash = self.known_plan([(4010002, 'Ore B'), (4010003, 'Ore C')])
+        result = rolling.import_capture(self.root, self.planned_batch([
+            self.receipt(4010002, 'Ore B', basis='no sales recorded in the window', count=0),
+            self.receipt(4010003, 'Ore C', basis='median of asking prices', count=0)], plan_hash))
+        status = result['intakeStatus']; self.assertEqual(status['status'], 'held')
+        self.assertEqual(status['reason'], 'complete_receipt_only_no_eligible_sales')
+        self.assertTrue(status['completeTargetScope']); self.assertEqual(status['missingTargetCount'], 0)
+        self.assertEqual(status['eligibleSaleCount'], 0)
+        self.assertEqual((self.root/'cache'/rolling.PROJECTION).read_bytes(), original)
+        self.assertEqual(result['capturedAt'], '2026-11-05T02:00:00Z')
+        with closing(sqlite3.connect(self.root/rolling.LEDGER)) as connection:
+            self.assertEqual(connection.execute('SELECT COUNT(*) FROM observations').fetchone()[0], 2)
+            captures = [json.loads(row[0]) for row in connection.execute('SELECT payload FROM captures')]
+            self.assertTrue(any(not capture['items'] and len(capture['rejectedItems']) == 2 for capture in captures))
+
+    def test_errors_and_unknown_identity_remain_missing_and_cannot_create_ledger_or_new_projection(self):
+        original = self.legacy_two(); plan_hash = self.known_plan([(4010002, 'Ore B'), (4010003, 'Ore C')])
+        error = {'expectedItemId': 4010002, 'expectedItemName': 'Ore B', 'result': {'content': [{'type': 'text', 'text': 'OpeningRoom; timeout/auth failure'}]}}
+        unknown = {'expectedItemId': 4010003, 'expectedItemName': 'Ore C', 'result': {'error': 'no item found'}}
+        result = rolling.import_capture(self.root, self.planned_batch([error, unknown], plan_hash))
+        self.assertEqual(result['intakeStatus']['status'], 'held'); self.assertEqual(result['intakeStatus']['missingTargetCount'], 2)
+        self.assertEqual(result['intakeStatus']['verifiedAttemptCount'], 0)
+        self.assertFalse((self.root/rolling.LEDGER).exists())
+        self.assertEqual((self.root/'cache'/rolling.PROJECTION).read_bytes(), original)
+        self.assertEqual(json.loads((self.root/rolling.STATUS).read_text())['status'], 'held')
+        wrong = self.planned_batch([self.receipt(4010002, 'Ore B')], 'f'*64)
+        with self.assertRaisesRegex(ValueError, 'planHash'): rolling.import_capture(self.root, wrong)
+        self.assertFalse((self.root/rolling.LEDGER).exists())
+        self.assertEqual((self.root/'cache'/rolling.PROJECTION).read_bytes(), original)
+
+    def test_unplanned_partial_cannot_drop_prior_projection_items(self):
+        original = self.legacy_two(); payload = self.planned_batch([self.receipt(4010002, 'Ore B')], '')
+        del payload['planHash']
+        result = rolling.import_capture(self.root, payload)
+        self.assertEqual(result['intakeStatus']['status'], 'held')
+        self.assertEqual(result['intakeStatus']['missingTargets'][0]['id'], 4010001)
+        self.assertEqual((self.root/'cache'/rolling.PROJECTION).read_bytes(), original)
+
+    def test_fixed_nx_cash_accepts_source_clean_or_explicit_null_not_upgraded_or_unknown(self):
+        cash = [{'name': 'Black Hat', 'nx': 5000}, {'name': 'Pet', 'nx': 2500}, {'name': 'Upgraded', 'nx': 1000}, {'name': 'Legacy', 'nx': 1000}]
+        items = [{'name': name, 'id': 1802003 if name == 'Black Hat' else 5000000+i, 'price': 50000, 'salesCounted': 5, 'windowDays': 2, 'salesPerHourProxy': proxy,
+                  'statRollKnown': known, 'statRoll': roll}
+                 for i, (name, known, roll, proxy) in enumerate([('Black Hat', True, 'Clean', 2), ('Pet', True, None, 1), ('Upgraded', True, '+3 ATT', 9), ('Legacy', False, None, 9)])]
+        _, eligible, report = rolling.comparable_inputs([], cash, {'items': items})
+        self.assertEqual(set(eligible), {'Black Hat', 'Pet'})
+        weights = {row['name']: row['referenceWeight'] for row in report['cashReferenceWeights']}
+        self.assertAlmostEqual(weights['Black Hat'], 2/3); self.assertAlmostEqual(weights['Pet'], 1/3)
+        self.assertEqual(weights['Upgraded'], 0); self.assertEqual(weights['Legacy'], 0)
+        self.assertEqual(report['methodVersion'], 3)
+        self.assertEqual(report['cashCleanDefinitionSource'], 'https://mesos.watch/app.js')
+        self.assertTrue(all(row['referenceWeight'] == 0 for row in report['excludedCashItems']))
+        self.assertIsNone(rolling.comparison_reason({}, {'statRollKnown': True, 'statRoll': 'cLeAn'}, cash=True))
+        self.assertEqual(rolling.comparison_reason({}, {'statRollKnown': True, 'statRoll': 'Clean · 2% crit rate'}, cash=True), 'cash_roll_may_include_upgrade_premium')
 
 
 if __name__ == '__main__': unittest.main()

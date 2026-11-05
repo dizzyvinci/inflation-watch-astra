@@ -18,6 +18,8 @@ SOURCE = 'https://mesos.watch/'
 UTC = dt.timezone.utc
 LEDGER = 'incoming/rolling-captures.sqlite3'
 PROJECTION = 'public-browser-prices.json'
+STATUS = 'incoming/rolling-intake-status.json'
+ASKING_BASES = {'asking', 'asking price', 'median asking price', 'median of asking prices', 'median of asks'}
 
 
 def _json(value):
@@ -61,7 +63,7 @@ def _unpack(value):
     return value
 
 
-def normalize_capture(payload):
+def normalize_capture(payload, allow_empty=False):
     completed = _stamp(payload.get('capturedAt'))
     if payload.get('sourceUrl') != SOURCE or not isinstance(payload.get('items'), list):
         raise ValueError('A supported source and item capture array are required')
@@ -86,24 +88,28 @@ def normalize_capture(payload):
             expected = entry['expectedItemName']
             if not isinstance(expected, str) or not expected.strip() or len(expected) > 256 or not isinstance(raw.get('item'), str) or raw['item'].casefold() != expected.casefold():
                 raise ValueError('Returned item name does not match expectedItemName (casefold)')
-        if item_id in seen_ids or name in seen_names:
+        if item_id in seen_ids or name.casefold() in seen_names:
             raise ValueError('Duplicate item capture')
-        seen_ids.add(item_id); seen_names.add(name)
+        seen_ids.add(item_id); seen_names.add(name.casefold())
         capture = entry.get('capturedAt', payload['capturedAt'])
         capture_time = _stamp(capture)
         if capture_time > completed or started and capture_time < started:
             raise ValueError('Per-item capture falls outside the declared batch interval')
-        if raw.get('price_basis') != 'median of sales':
-            rejected.append({'id': item_id, 'name': name, 'reason': 'not_sale_median'})
-            continue
-        if not _positive(raw.get('typical_sale_price')) or not _integer(raw.get('sales_counted'), 1):
-            rejected.append({'id': item_id, 'name': name, 'reason': 'no_usable_sale_price_or_count'})
+        site = raw.get('site', SOURCE)
+        if raw.get('currency', 'mesos') != 'mesos' or not isinstance(site, str) or site.rstrip('/') != SOURCE.rstrip('/'):
+            raise ValueError('Unexpected returned currency or source')
+        basis, count = raw.get('price_basis'), raw.get('sales_counted')
+        if basis != 'median of sales' or not _positive(raw.get('typical_sale_price')) or not _integer(count, 1):
+            known_no_sales = type(count) is int and count == 0 and (basis in ('median of sales', 'no sales recorded in the window') or isinstance(basis, str) and basis.casefold() in ASKING_BASES)
+            rejected.append({'id': item_id, 'name': name,
+                             'reason': 'reported_no_eligible_sales' if known_no_sales else 'not_eligible_sale_result',
+                             'completedAttempt': known_no_sales, 'reportedPriceBasis': basis if isinstance(basis, str) else None,
+                             'reportedSalesCount': count if _integer(count) else None,
+                             'capturedAt': capture, 'captureTimeKind': 'per_item_return' if 'capturedAt' in entry else 'batch_timestamp_only'})
             continue
         days = raw.get('window_days')
         if not _positive(days) or not 1 <= days <= 90:
             raise ValueError('Invalid sale window')
-        if raw.get('currency', 'mesos') != 'mesos' or raw.get('site', SOURCE).rstrip('/') != SOURCE.rstrip('/'):
-            raise ValueError('Unexpected returned currency or source')
         roll_known, roll = 'stat_roll' in raw, raw.get('stat_roll')
         if roll is not None and (not isinstance(roll, str) or not roll.strip() or len(roll) > 512):
             raise ValueError('Invalid reported stat roll')
@@ -140,13 +146,16 @@ def normalize_capture(payload):
                 if not isinstance(listing, dict) or not _positive(listing.get('price_each')) or not all(_integer(listing.get(key), 1) for key in ('channel', 'room')):
                     raise ValueError('Invalid source cheapest-listing provenance')
                 listing = {key: listing[key] for key in ('price_each', 'channel', 'room')}
+                listing['availabilityConfirmed'] = False
             item['cheapestListing'] = listing
+        if 'listings_now' in raw or 'cheapest_listing' in raw:
+            item['availabilityConfirmed'] = False
         items.append(item)
-    if not items:
+    if not items and not allow_empty:
         raise ValueError('No usable scanner sale medians')
     result = {'schemaVersion': 2, 'sourceUrl': SOURCE, 'capturedAt': payload['capturedAt'],
               'scannerFreshnessText': payload.get('scannerFreshnessText', 'Unknown'),
-              'observationTimestampKnown': all(item['observationTimestampKnown'] for item in items),
+              'observationTimestampKnown': bool(items) and all(item['observationTimestampKnown'] for item in items),
               'kind': 'rolling_scanner_reference', 'captureMethod': 'supported_browser_tool_receipt',
               'qualityConstant': False, 'items': items, 'rejectedItems': rejected}
     for key in ('captureStartedAt', 'captureCompletedAt'):
@@ -176,10 +185,15 @@ def legacy_capture(payload):
 def comparison_reason(row, item, cash=False):
     if item is None:
         return 'item_not_captured'
+    if cash:
+        if not item.get('statRollKnown'):
+            return 'cash_roll_metadata_unverified'
+        roll = item.get('statRoll')
+        if roll is None or isinstance(roll, str) and roll.casefold() == 'clean':
+            return None
+        return 'cash_roll_may_include_upgrade_premium'
     if item.get('statRoll') is not None:
         return 'reported_roll_has_no_matching_daily_baseline'
-    if cash:
-        return None
     if row.get('category') == 'Equipment':
         return 'daily_equipment_baseline_has_unidentified_roll_mix'
     if row.get('category') == 'Weapons':
@@ -192,30 +206,51 @@ def comparison_reason(row, item, cash=False):
 
 
 def comparable_inputs(rows, cash, payload):
-    by_name = {item['name']: item for item in payload['items']}
+    # Intake explicitly permits case-only source naming differences. Match on
+    # that same identity rule while retaining the original source spelling.
+    by_name = {item['name'].casefold(): item for item in payload['items']}
+    if len(by_name) != len(payload['items']):
+        raise ValueError('Ambiguous casefold item names in rolling comparison')
+    unavailable = {item['name'].casefold() for item in payload.get('rejectedItems', []) if item.get('completedAttempt')}
     goods, cash_items, excluded = {}, {}, []
     captured = 0
     for row in rows:
-        item = by_name.get(row['name'])
+        item = by_name.get(row['name'].casefold())
         if item:
             captured += row['weight']
         reason = comparison_reason(row, item)
+        if reason == 'item_not_captured' and row['name'].casefold() in unavailable:
+            reason = 'captured_item_has_no_eligible_sales'
         if reason:
             excluded.append({'name': row['name'], 'weight': row['weight'], 'reason': reason, 'statRoll': item.get('statRoll') if item else None})
         else:
             goods[row['name']] = item
     cash_excluded = []
     for row in cash:
-        item = by_name.get(row['name']); reason = comparison_reason(row, item, cash=True)
+        item = by_name.get(row['name'].casefold()); reason = comparison_reason(row, item, cash=True)
+        if reason == 'item_not_captured' and row['name'].casefold() in unavailable:
+            reason = 'captured_item_has_no_eligible_sales'
         if reason:
-            cash_excluded.append({'name': row['name'], 'reason': reason})
+            cash_excluded.append({'name': row['name'], 'reason': reason, 'statRoll': item.get('statRoll') if item else None, 'referenceWeight': 0})
         else:
             cash_items[row['name']] = item
-    return goods, cash_items, {'methodVersion': 2, 'qualityConstant': False, 'capturedBasketCoverage': captured,
+    total_proxy = sum(item['salesPerHourProxy'] for item in cash_items.values())
+    cash_reasons = {row['name']: row['reason'] for row in cash_excluded}
+    weights = [{'name': row['name'], 'fixedNxCost': row['nx'], 'statRoll': by_name.get(row['name'].casefold(), {}).get('statRoll'),
+                'statRollKnown': bool(by_name.get(row['name'].casefold(), {}).get('statRollKnown')),
+                'eligible': row['name'] in cash_items,
+                'exclusionReason': cash_reasons.get(row['name']),
+                'referenceWeight': cash_items[row['name']]['salesPerHourProxy'] / total_proxy if row['name'] in cash_items and total_proxy else 0}
+               for row in cash]
+    return goods, cash_items, {'methodVersion': 3, 'qualityConstant': False, 'capturedBasketCoverage': captured,
                               'comparableBasketCoverage': sum(row['weight'] for row in rows if row['name'] in goods),
                               'comparableBasketItems': len(goods), 'excludedBasketItems': excluded,
                               'comparableCashItems': len(cash_items), 'excludedCashItems': cash_excluded,
-                              'note': 'Equipment/roll comparisons without a matching daily baseline are excluded. Same reported labels/windows remain source aggregates, not independent quality adjustment.'}
+                              'cashReferenceWeights': weights,
+                              'cashEligibilityMethod': 'fixed_nx_purchase_cost_explicit_null_or_provider_clean_v1',
+                              'cashCleanDefinitionSource': 'https://mesos.watch/app.js',
+                              'cashCleanDefinitionEvidence': 'rollLabel/standardRoll: no added priced stat and full observed slots. Clean is a provider classification, not independent verification.',
+                              'note': 'Goods comparisons need a compatible daily baseline. Cash compares price with fixed NX purchase cost: explicit null/Clean is eligible; unknown or other rolls are excluded. Labels/windows remain source aggregates, not quality adjustment.'}
 
 
 def _connect(path):
@@ -256,6 +291,7 @@ def add_capture(connection, normalized):
 
 
 def _atomic(path, value):
+    path.parent.mkdir(parents=True, exist_ok=True)
     encoded = _json(value).encode('utf-8')
     if path.exists() and path.read_bytes() == encoded:
         return
@@ -267,8 +303,99 @@ def _atomic(path, value):
         temporary.unlink(missing_ok=True)
 
 
+def _known_plan(root, payload):
+    if 'planHash' not in payload:
+        return None
+    path = Path(root) / 'incoming/scanner-capture-plan.json'
+    plan = json.loads(path.read_text(encoding='utf-8'))
+    actual = _hash({key: value for key, value in plan.items() if key not in ('planHash', 'preparedAt')})
+    if plan.get('kind') != 'offline_scanner_capture_request_plan' or plan.get('isCapture') is not False or plan.get('planHash') != actual or payload['planHash'] != actual:
+        raise ValueError('Capture planHash does not match the known frozen plan')
+    requests = plan.get('requests')
+    if not isinstance(requests, list) or plan.get('requestCount') != len(requests):
+        raise ValueError('Invalid frozen plan target count')
+    by_id = {}
+    for row in requests:
+        item_id, name = row.get('expectedItemId'), row.get('expectedItemName')
+        if not _integer(item_id, 1) or not isinstance(name, str) or not name.strip() or item_id in by_id:
+            raise ValueError('Invalid or duplicate frozen plan identity')
+        by_id[item_id] = name
+    return by_id
+
+
+def _review_receipts(payload, plan):
+    """Keep parser/auth/timeout failures as missing attempts, never no-sale prices."""
+    if not isinstance(payload.get('items'), list):
+        raise ValueError('An item capture array is required')
+    usable, errors, requested = [], [], {}
+    for entry in payload['items']:
+        if not isinstance(entry, dict):
+            errors.append({'id': None, 'reason': 'missing_request_identity'}); continue
+        expected_id, expected_name = entry.get('expectedItemId'), entry.get('expectedItemName')
+        if plan is not None:
+            if not _integer(expected_id, 1) or not isinstance(expected_name, str):
+                errors.append({'id': None, 'reason': 'missing_request_identity'}); continue
+            if expected_id not in plan or expected_name.casefold() != plan[expected_id].casefold():
+                raise ValueError('Expected item identity does not match the frozen capture plan')
+            requested[expected_id] = expected_name
+        elif _integer(expected_id, 1):
+            requested[expected_id] = expected_name if isinstance(expected_name, str) else ''
+        try:
+            raw = _unpack(entry.get('result', entry))
+        except (ValueError, TypeError, KeyError, AttributeError):
+            errors.append({'id': expected_id if _integer(expected_id, 1) else None, 'reason': 'unusable_tool_response'}); continue
+        if not _integer(raw.get('id'), 1) or not isinstance(raw.get('item'), str) or not raw['item'].strip():
+            errors.append({'id': expected_id if _integer(expected_id, 1) else None, 'reason': 'missing_returned_identity'}); continue
+        # normalize_capture performs exact returned-ID/name validation. A wrong
+        # returned identity is a fatal mismatch, not an unavailable-price result.
+        usable.append(entry)
+        requested.setdefault(raw['id'], raw['item'])
+    normalized = normalize_capture({**payload, 'items': usable}, allow_empty=True)
+    if plan is None and not normalized['items'] and not any(row['completedAttempt'] for row in normalized['rejectedItems']):
+        raise ValueError('No usable scanner sale medians or verified no-sales receipts')
+    normalized['missingResponses'] = errors
+    return normalized, requested, errors
+
+
+def _publication_status(payload, normalized, previous, plan, requested, errors):
+    verified = {item['id'] for item in normalized['items']}
+    verified.update(row['id'] for row in normalized['rejectedItems'] if row['completedAttempt'])
+    expected = plan if plan is not None else {item['id']: item['name'] for item in (previous or {}).get('items', [])}
+    expected = {**expected, **requested} if plan is None else expected
+    missing = [{'id': item_id, 'name': name} for item_id, name in expected.items() if item_id not in verified]
+    unresolved = [error for error in errors if error['id'] is None or error['id'] not in verified]
+    complete = not missing and not unresolved
+    reason = 'complete_verified_target_scope'
+    if not complete:
+        reason = 'incomplete_target_scope'
+    elif not normalized['items']:
+        reason = 'complete_receipt_only_no_eligible_sales'
+    elif previous and _stamp(normalized['capturedAt']) < _stamp(previous['capturedAt']):
+        reason = 'older_capture_retained'
+    status = 'published' if complete and normalized['items'] and reason != 'older_capture_retained' else 'held'
+    return {'status': status, 'reason': reason, 'incomingCapturedAt': payload['capturedAt'],
+            'planHash': payload.get('planHash'), 'scopeKind': 'frozen_plan' if plan is not None else 'prior_projection_and_declared_targets',
+            'expectedTargetCount': len(expected), 'verifiedAttemptCount': len(verified.intersection(expected)),
+            'eligibleSaleCount': len(normalized['items']),
+            'ineligibleVerifiedCount': sum(row['completedAttempt'] for row in normalized['rejectedItems']),
+            'missingTargetCount': len(missing), 'missingTargets': missing, 'unresolvedResponses': unresolved,
+            'completeTargetScope': complete, 'projectionCapturedAt': previous.get('capturedAt') if previous else None,
+            'projectionItemCount': len(previous['items']) if previous else 0}
+
+
 def import_capture(root, payload):
-    normalized = normalize_capture(payload)  # validate before creating storage
+    try:
+        plan = _known_plan(root, payload)
+        normalized, requested, errors = _review_receipts(payload, plan)
+    except Exception as error:
+        try:
+            _atomic(Path(root) / STATUS, {'status': 'rejected', 'reason': 'invalid_capture_or_plan',
+                                         'projectionRetained': True, 'detail': str(error)[:180]})
+        except OSError:
+            pass
+        raise
+    if plan is not None:
+        normalized['planHash'] = payload['planHash']
     cache = Path(root) / 'cache'; path = cache / PROJECTION
     cache.mkdir(parents=True, exist_ok=True)
     lock = cache / '.rolling-captures.lock'
@@ -279,16 +406,28 @@ def import_capture(root, payload):
     try:
         os.close(handle)
         previous = json.loads(path.read_text(encoding='utf-8')) if path.exists() else None
-        with closing(_connect(Path(root) / LEDGER)) as connection:
-            with connection:
-                if previous:
-                    add_capture(connection, previous if previous.get('schemaVersion') == 2 else legacy_capture(previous))
-                add_capture(connection, normalized)
-        # Ledger commits first; replay repairs a failed local materialization.
-        if previous is None or _stamp(normalized['capturedAt']) >= _stamp(previous['capturedAt']):
-            _atomic(path, normalized)
-            return normalized
-        return previous
+        status = _publication_status(payload, normalized, previous, plan, requested, errors)
+        normalized['captureScope'] = {key: status[key] for key in ('scopeKind', 'expectedTargetCount', 'verifiedAttemptCount', 'completeTargetScope')}
+        if normalized['items'] or any(row['completedAttempt'] for row in normalized['rejectedItems']):
+            with closing(_connect(Path(root) / LEDGER)) as connection:
+                with connection:
+                    if previous:
+                        add_capture(connection, previous if previous.get('schemaVersion') == 2 else legacy_capture(previous))
+                    add_capture(connection, normalized)
+        # Never merge old items under a new clock. Only a fully accounted target
+        # scope can replace the projection; partial/receipt-only data stays private.
+        view = previous or normalized
+        if status['status'] == 'published':
+            try:
+                _atomic(path, normalized)
+            except OSError:
+                status.update(status='held', reason='projection_write_failed')
+                _atomic(Path(root) / STATUS, status)
+                raise
+            view = normalized
+            status.update(projectionCapturedAt=normalized['capturedAt'], projectionItemCount=len(normalized['items']))
+        _atomic(Path(root) / STATUS, status)
+        return {**view, 'intakeStatus': status}
     finally:
         lock.unlink(missing_ok=True)
 

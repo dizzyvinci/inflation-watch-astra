@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T08:56:34+00:00",
+  "exportedAt": "2026-11-05T09:54:47+00:00",
   "basketVersion": 2,
   "files": [
     {
@@ -26,8 +26,8 @@
     },
     {
       "path": "ROLLING_CAPTURE_CONTRACT.txt",
-      "bytes": 9017,
-      "sha256": "278c4e0af16f2c89a2a305276ccd404ee98e0972828050c7fe83dc6d05619372"
+      "bytes": 13306,
+      "sha256": "167a04d005b7075124873d5e3dfa2a081f98d34824f6af91fbfb10346a5f8297"
     },
     {
       "path": "Start-Preview.ps1",
@@ -41,8 +41,8 @@
     },
     {
       "path": "adapters.py",
-      "bytes": 7776,
-      "sha256": "d08d86fc7afa7328891ca33e9ced0a6f076d9f4e7b84836a77b7e98986304117"
+      "bytes": 8040,
+      "sha256": "4b407cec21399af2fc628098f68ea0d75b71869acc7f701162c7828621611181"
     },
     {
       "path": "assets/animal-fur-bundle.png",
@@ -727,7 +727,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 277,
-      "sha256": "cc1859fe6c89fbc8017424cd5eff8fa86ebb615d20b5d230a3afe7aa5232a14c"
+      "sha256": "66235ce6db384dfaa83749a6bf588100c98eeff3615fded7565a6d4d3215f594"
     },
     {
       "path": "cache/market.json",
@@ -782,7 +782,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "6ad607fefc1cd75284fc0886d7fbfa412f108ccd51c342432046e77ddac8e103"
+      "sha256": "1ca8bdf19f4d010ed12bfcae465aafeb2c9f6c291b6a0805a01eabd25213e68e"
     },
     {
       "path": "dist/_headers",
@@ -796,8 +796,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 96037,
-      "sha256": "0d91e1c049d8be3f1ed24d06353918eaa697a55bf26bd2e26fc32dc840390ad0"
+      "bytes": 98952,
+      "sha256": "5942ac78e23cb1f85396bcb9e9351c3b6ae097622c6b2270ca9753ccce8ba7e3"
     },
     {
       "path": "dist/assets/animal-fur-bundle.png",
@@ -2100,6 +2100,11 @@
       "sha256": "8da04b6a5d7d6150788b9866f2fa48165d8cc14320bd8f7bc760186c384b45a7"
     },
     {
+      "path": "dist/data-a1e4e89de7de8f97.json",
+      "bytes": 317323,
+      "sha256": "a1e4e89de7de8f9743bbbdb5646c268336cc8461be2901f5c72e5e0a5879e205"
+    },
+    {
       "path": "dist/data-afeef5831a222c8b.json",
       "bytes": 220243,
       "sha256": "afeef5831a222c8b3de280f69ed901207fb926bce808666159bd336705a9a229"
@@ -2131,13 +2136,13 @@
     },
     {
       "path": "dist/data.json",
-      "bytes": 308874,
-      "sha256": "fbf6054dd616ceea13a025b3ac7e2c78b552d92a19d69f02e2e659140aaf50b7"
+      "bytes": 317323,
+      "sha256": "a1e4e89de7de8f9743bbbdb5646c268336cc8461be2901f5c72e5e0a5879e205"
     },
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "6ad607fefc1cd75284fc0886d7fbfa412f108ccd51c342432046e77ddac8e103"
+      "sha256": "1ca8bdf19f4d010ed12bfcae465aafeb2c9f6c291b6a0805a01eabd25213e68e"
     },
     {
       "path": "dist/history/cpi-v1.json",
@@ -2192,7 +2197,7 @@
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "b0bd40a7a298906c6dfabdd13d7a41f8392c637dcddf852fe7096b5c40149132"
+      "sha256": "f8984c0b9cd7365d4cee29481209cb0622b00b8529b30ab9e097d994a4f2a8c3"
     },
     {
       "path": "engine.py",
@@ -2256,8 +2261,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 1326,
-      "sha256": "fbcdf3bd715da5cc383a48b35b57d9a0b941756193844fd95fa29be00812db6f"
+      "bytes": 1369,
+      "sha256": "c0900275aea5993845a4ca70944036ebe7c3628ba36c5adb6665814754243099"
     },
     {
       "path": "preview.py",
@@ -2276,8 +2281,8 @@
     },
     {
       "path": "rolling_history.py",
-      "bytes": 16576,
-      "sha256": "224eeec99a27a93d1a48d95f2db2c5d47b5d29b4f429de486151bc3966c3a8ac"
+      "bytes": 26607,
+      "sha256": "9ade736e354cec91b46e1508f94c9358dd6dc5efda7a4abf97bd4fdbcccfeaf2"
     },
     {
       "path": "scanner_capture_plan.py",
@@ -2316,8 +2321,8 @@
     },
     {
       "path": "tests/dom.cjs",
-      "bytes": 71279,
-      "sha256": "32b55b4a40c349ab24cd3fa7db802b4e3515bda25851ecbd659b76717be86257"
+      "bytes": 71926,
+      "sha256": "19cea286c42637f834967ff949e0744507289cb949372edd6ce32f08fdc41387"
     },
     {
       "path": "tests/headers.test.mjs",
@@ -2345,9 +2350,14 @@
       "sha256": "59d5997dc9b6426e424947f8a0a550b65015567775a31585440fa4209d9bfd93"
     },
     {
+      "path": "tests/rolling-reference-labels.cjs",
+      "bytes": 6791,
+      "sha256": "3c9d1aebd6c9cd88ca8b7d026b5de33cbe8da42b9a5ef52d10537313efc70cfe"
+    },
+    {
       "path": "tests/test_adapters.py",
-      "bytes": 5583,
-      "sha256": "7c87a3b0baf5e608a499655bd9deae73af395222297a93e820dc3ef97739f7e8"
+      "bytes": 5634,
+      "sha256": "2c6fbcee3800058406e4bb94d0001a844b92415075293199e489fbc8cf53dc2a"
     },
     {
       "path": "tests/test_basket_v2.py",
@@ -2381,8 +2391,8 @@
     },
     {
       "path": "tests/test_rolling_history.py",
-      "bytes": 12854,
-      "sha256": "49525298d93b4a910313b74971f3d24e50660c6d5218f5d778e2b2cfe86d8a66"
+      "bytes": 26188,
+      "sha256": "a68f0167aa33a9e25f2aa265b77cb750a6e612cfea0824f6d964d2dcc3df796b"
     },
     {
       "path": "tests/test_scanner_capture_plan.py",
@@ -2431,8 +2441,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 96037,
-      "sha256": "0d91e1c049d8be3f1ed24d06353918eaa697a55bf26bd2e26fc32dc840390ad0"
+      "bytes": 98952,
+      "sha256": "5942ac78e23cb1f85396bcb9e9351c3b6ae097622c6b2270ca9753ccce8ba7e3"
     },
     {
       "path": "web/author-portrait.css",

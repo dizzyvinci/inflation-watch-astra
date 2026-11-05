@@ -52,12 +52,12 @@ def rolling_reference(rows,cash,root=None):
     nx=sum(p*q for p,q in rate_rows)/sum(q for p,q in rate_rows) if len(rate_rows)>=3 else None
     result={**payload,'basketVersion':basket_version,'cpiReference':cpi,'nxRateReference':nx,'coverage':coverage,'cashItems':len(rate_rows),'comparison':comparison,'aggregateHistoryNote':'Older aggregate points may lack roll identity; variant histories remain separate in the private capture ledger. No quality-constant history is claimed.','windowMinDays':min(r['windowDays'] for r in payload['items']),'windowMaxDays':max(r['windowDays'] for r in payload['items'])}
     measurement=[{key:item.get(key) for key in ('name','id','price','salesCounted','windowDays','statRollStatus','statRoll','sourceObservedAt','sourceWindowStartAt','sourceWindowEndAt')} for item in payload['items']]
-    content=json.dumps({'comparisonMethodVersion':2,'items':measurement},sort_keys=True,separators=(',',':'))
+    content=json.dumps({'comparisonMethodVersion':3,'items':measurement},sort_keys=True,separators=(',',':'))
     digest=hashlib.sha256(content.encode()).hexdigest()[:16]
     path=root/'cache'/('rolling-reference-history.json' if basket_version==1 else f'rolling-reference-history-v{basket_version}.json')
     history=read(path,[])
     if not history or (history[-1]['contentHash']!=digest and check_stamp(history[-1]['at'])!=check_stamp(payload['capturedAt'])):
-        history.append({'at':payload['capturedAt'],'cpi':cpi,'nxRate':nx,'contentHash':digest,'sourceUrl':payload['sourceUrl'],'timestampKind':'captured_at','observationTimestampKnown':False,'comparisonMethodVersion':2,'comparableCoverage':coverage,'capturedCoverage':comparison['capturedBasketCoverage'],'qualityConstant':False})
+        history.append({'at':payload['capturedAt'],'cpi':cpi,'nxRate':nx,'contentHash':digest,'sourceUrl':payload['sourceUrl'],'timestampKind':'captured_at','observationTimestampKnown':False,'comparisonMethodVersion':3,'comparableCoverage':coverage,'capturedCoverage':comparison['capturedBasketCoverage'],'qualityConstant':False})
         atomic(path,history[-10000:])
     return result,history
 
@@ -121,4 +121,6 @@ def import_smega_table(path):
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('kind',choices=['prices','smega-table']);parser.add_argument('path',type=Path);args=parser.parse_args()
     result=import_prices(args.path) if args.kind=='prices' else import_smega_table(args.path)
-    print(json.dumps({'imported':len(result['items']) if args.kind=='prices' else len(result)}))
+    if args.kind=='prices':
+        status=result['intakeStatus'];print(json.dumps({'storedSaleReceipts':status['eligibleSaleCount'],'projectionStatus':status['status'],'projectionReason':status['reason'],'projectionItemCount':status['projectionItemCount'],'missingTargets':status['missingTargetCount']}))
+    else:print(json.dumps({'imported':len(result)}))

@@ -15,6 +15,7 @@ INPUT SHAPE FOR AN ACTUAL SUPPORTED-BROWSER CAPTURE
 {
   "sourceUrl": "https://mesos.watch/",
   "capturedAt": "<actual batch completion, timezone-aware>",
+  "planHash": "<hash of the frozen incoming request plan>",
   "captureStartedAt": "<optional actual batch start>",
   "captureCompletedAt": "<optional actual completion; same instant as capturedAt>",
   "scannerFreshnessText": "<actual displayed context, if available>",
@@ -44,13 +45,17 @@ RETAINED RETURNED FIELDS
 Provider item ID/name; positive sale median; positive integer source sale count;
 reported rolling window; currency; stat_roll presence/null/exact label; actual
 item capture time and its precision; supplied source clocks/window bounds;
-listings_now; cheapest_listing price_each/channel/room. Listing offers stay
+listings_now; cheapest_listing price_each/channel/room. Every retained listing
+explicitly has availabilityConfirmed:false: a returned receipt does not verify
+that a shop remains open, especially during maintenance. Listing offers stay
 separate from the sale median. Arbitrary owner/sender/token fields are discarded.
 No listing is claimed current after its capture, and no owner identity is needed.
 
 Only price_basis == median of sales enters eligible observations. Asking/no-sale
-results are excluded with reasons; a wholly unusable batch or failed browser text
-does not create a ledger. Zero/error prices do not replace last-good observations.
+results are excluded with reasons. An identity-verified explicit no-sales response,
+including a documented asking fallback with sales_counted0, counts as a completed
+attempt without becoming a sale price. Errors, unknown items, missing returned IDs,
+auth failures and timeouts remain missing, never zero-priced observations.
 Duplicate IDs/names, invalid windows/counts/rolls/listings and inconsistent clocks
 are rejected. Capture times must be nonfuture and within any declared batch span.
 
@@ -86,10 +91,12 @@ The daily basket contains aggregate gear prices without a matched provider roll
 baseline. The rolling MPI comparison now excludes captured Equipment, equipment
 Weapon IDs, and any explicitly reported roll without a matching daily baseline.
 Fungible Materials/Consumables/Scrolls and non-equipment Weapon IDs can remain
-eligible. Current fixed-cost cash inputs remain separate; explicit rolled cash
-would be excluded. Unknown category/variant scope is not guessed.
+eligible. Cash instead compares price with its known fixed NX purchase cost, not
+with a daily baseline: explicit null or exact provider Clean is eligible; other
+labels can include an upgrade premium, and missing legacy roll metadata remains
+unverified. Unknown category/variant scope is not guessed.
 
-rollingReference.comparison reports methodVersion2, capturedBasketCoverage,
+rollingReference.comparison reports methodVersion3, capturedBasketCoverage,
 comparableBasketCoverage, comparable item counts, every excluded item/weight and
 its reason. It does not silently equate captured coverage with comparable coverage.
 The existing80% rolling-MPI threshold still applies to comparable weight.
@@ -105,9 +112,13 @@ Pan Lid2.81534192%; Emerald Earrings2.01601858%; Blue Sauna Robe1.31661855%;
 Squishy Shoes0.70452694%. Their daily baselines have unidentified roll mixes.
 35 current basket names were not captured; no aliases are guessed to fill them.
 Both old and new rolling MPI reference remain unavailable below80% coverage.
-All29 cash inputs remain eligible; the separate rolling NX reference remains
-13.6517311596 mesos/NX. Primary source MPI156.0789523579 and NX17.0860671368 remain
-the same recorded values. This preview did not call compute/build or write caches.
+The earlier method2 preview carried29 legacy cash inputs and13.6517311596 mesos/NX.
+The corrected method3 does NOT quietly treat missing legacy roll metadata as null:
+those29 old inputs are unverified for a NEW v3 reference calculation. The older
+published13.6517311596 history point remains unchanged with its roll limitations.
+Do not publish an intermediate policy-only snapshot before the reviewed full new
+capture. Primary source MPI156.0789523579 and NX17.0860671368 remain the same recorded
+values. This preview did not call compute/build or write caches.
 
 AGGREGATE HISTORY / WORKER COMPATIBILITY
 Aggregate history remains one point per measured capture/method, never one row
@@ -138,3 +149,48 @@ have art provenance (including overlaps). Art identity is not proof that a provi
 will return that item: the real response must still pass both expectation guards.
 This replaces the targeting scope of the old v1-mix79, which matched only15 of the
 current50 names. It does not supply prices, a successful batch or new coverage.
+
+PUBLICATION COMPLETENESS GUARD — CURRENT BEHAVIOR
++ import_capture verifies payload.planHash against the integrity-checked frozen
+  incoming/scanner-capture-plan.json. Every planned target needs one identity-
+  verified sale or explicit ineligible/no-sales response before replacement.
++ Valid zero-sales/asking-fallback responses count toward target completeness but
+  never supply an asking price as a sale. Unknown/auth/error/timeout/no-ID returns
+  stay missing. Wrong positive returned IDs/names remain fatal identity mismatches.
++ Partial successes can be archived by an explicit import, but the current selected
+  price projection stays BYTE-IDENTICAL. It never fills missing items from older
+  captures under a new timestamp. A full new plan intentionally changes target
+  scope; old v1-mix observations remain in the append-only ledger.
++ A completely attempted all-no-sales batch is archived receipt-only, retains the
+  last-good projection and does not invent zero prices. With no verified usable
+  receipt at all, a failed pilot creates no price ledger.
++ Legacy unplanned imports must account for prior-projection IDs plus declared
+  requested IDs. A subset cannot drop other last-good items. A first unplanned
+  valid capture establishes only its actual local scope, never whole-market scope.
++ The ignored incoming/rolling-intake-status.json reports published/held/rejected,
+  reason, verified/eligible/ineligible/missing counts, planned hash, incoming capture
+  time and unchanged/published projection capture time. import_capture returns this
+  as intakeStatus; it is not a new market observation. CLI output distinguishes
+  stored sale receipts from published projection rows. Snapshot clocks remain dated.
+
+CASH ELIGIBILITY PROOF AND ROW/AGGREGATE CONSISTENCY
+Primary source: https://mesos.watch/app.js
+Saved evidence: work/mesos-contract-current/app.js, lines147–151 and174–181.
+The provider's rollLabel/standardRoll code classifies Clean using no added priced
+stat and full observed slots, preferring a clean/full-slot pool. maxS itself is
+inferred from observed rows/listings, so this is provider classification, not an
+independent quality audit. Exact Clean is appropriate for the plain fixed-NX item
+ratio; a daily-price baseline is irrelevant to that ratio. Clean plus a stat/crit
+qualifier is not exact Clean and can contain an upgrade premium.
+
+Method3 accepts explicit reported-null and exact case-insensitive Clean for cash.
+Other/unknown labels and absent legacy roll metadata are excluded with distinct
+reasons. Goods still need daily-baseline comparability; the cash exception does
+not admit Clean gear to a mismatched daily-goods index.
+rollingReference.comparison.cashReferenceWeights lists all configured cash rows,
+observed roll, fixed NX cost, eligibility and referenceWeight (zero for exclusions).
+The aggregate uses only those eligible rolling sales-per-hour proxy weights.
+excludedCashItems also carries roll/reason/zero weight. UI rows must use this same
+eligibility and keep excluded observed prices visible as context, rather than
+silently dropping them or recomputing a different aggregate. Black Hat1802003
+with exact Clean qualifies; its price is still a delayed rolling source estimate.

@@ -5,7 +5,7 @@
   "description": "MapleStory Classic CPI and NX dashboard with scheduled collection and CDN snapshot delivery",
   "scripts": {
     "check": "node --check web/app.js && node --check web/community.js && node --check web/layout-preview.js && node --check web/chart-interaction.js && node --check web/sw.js && node --check ops/worker-core.mjs && node --check ops/worker.mjs && node --check web/privacy-controls.js && node --check web/preview-runtime.js && node --check web/author-portrait.js && node --check ops/preview-gate.mjs",
-    "test:dom": "node tests/dom.cjs && node tests/community.cjs && node tests/layout-preview.cjs && node tests/chart-interaction.cjs && node tests/privacy-controls.cjs && node tests/author-portrait.cjs && node tests/preview-runtime.cjs",
+    "test:dom": "node tests/dom.cjs && node tests/community.cjs && node tests/layout-preview.cjs && node tests/chart-interaction.cjs && node tests/privacy-controls.cjs && node tests/author-portrait.cjs && node tests/preview-runtime.cjs && node tests/rolling-reference-labels.cjs",
     "test:worker": "node --test tests/worker-core.test.mjs tests/worker-runtime.test.mjs tests/worker-cash-basket.test.mjs tests/preview-gate.test.mjs tests/headers.test.mjs",
     "build:offline": "python engine.py --offline",
     "preview": "python preview.py",

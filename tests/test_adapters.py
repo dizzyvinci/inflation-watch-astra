@@ -12,7 +12,7 @@ import engine
 
 class PublicAdapterTests(unittest.TestCase):
     def prices(self):
-        return {'sourceUrl':'https://mesos.watch/','capturedAt':engine.now(),'items':[{'item':'A','id':1,'typical_sale_price':100000,'sales_counted':5000,'window_days':2,'price_basis':'median of sales'},{'item':'B','id':2,'typical_sale_price':50000,'sales_counted':5000,'window_days':30,'price_basis':'median of sales'},{'item':'C','id':3,'typical_sale_price':50000,'sales_counted':5000,'window_days':30,'price_basis':'median of sales'}]}
+        return {'sourceUrl':'https://mesos.watch/','capturedAt':engine.now(),'items':[{'item':'A','id':1,'typical_sale_price':100000,'sales_counted':5000,'window_days':2,'price_basis':'median of sales','stat_roll':None},{'item':'B','id':2,'typical_sale_price':50000,'sales_counted':5000,'window_days':30,'price_basis':'median of sales','stat_roll':None},{'item':'C','id':3,'typical_sale_price':50000,'sales_counted':5000,'window_days':30,'price_basis':'median of sales','stat_roll':None}]}
     def table(self):
         return {'sourceUrl':'https://maplestory.market/ads?tab=services','capturedAt':engine.now(),'year':2026,'utcOffsetMinutes':-360,'rows':[['Nov 4, 07:00 PM','1:20 (20–20) · 2','1:15 (13–15) · 3']]}
     def test_nested_webmcp_envelope(self):
