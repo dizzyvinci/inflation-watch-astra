@@ -11,6 +11,7 @@ function launchPeriodFilter(p,period=selectedLaunchPeriod){
 let snapshot, version, selectedRange='all', metric='nx', sortKey='weight', sortAsc=false, layout='table', retry=60000, timer;
 let cashLookback=3, cashEvidence='daily', cashSide='sell', cashFilter='all', cashSortKey='rate', cashSortAsc=false;
 let smegaComparison=false;
+const mainOverlays={intraday:false,rolling:false};let reportedHistoryVisible=false;
 try{smegaComparison=localStorage.getItem('astra-smega-comparison')==='on';}catch{}
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -28,10 +29,9 @@ const zones=[...new Set(['UTC',...(Intl.supportedValuesOf?Intl.supportedValuesOf
 $('display-timezone').innerHTML=zones.map(zone=>`<option value="${esc(zone)}">${esc(zone.replaceAll('_',' '))}</option>`).join('');
 $('display-timezone').value=displayTimeZone;
 const sceneryToggle=$('scenery-toggle');
-const sceneryModes=new Set(['classic','banner','backdrop','zakum-dark','zakum-bright']);
+const sceneryModes=new Set(['classic','banner','backdrop','zakum-dark','zakum-bright','zakum-raid','lantern-market']);
 let sceneryMode='classic';
 function setSceneryMode(mode){
- if(mode==='zakum')mode='zakum-dark';
  if(mode==='zakum')mode='zakum-dark';
  sceneryMode=sceneryModes.has(mode)?mode:'classic';document.body.dataset.sceneryMode=sceneryMode;
  document.querySelectorAll('[data-scenery-mode]').forEach(button=>{if(button.tagName==='BUTTON')button.setAttribute('aria-pressed',String(button.dataset.sceneryMode===sceneryMode));});
@@ -57,8 +57,19 @@ function setCategoryHeading(value){
 }
 try{setCategoryHeading(localStorage.getItem('astra-category-heading'));}catch{setCategoryHeading('stories');}
 document.querySelectorAll('button[data-category-heading]').forEach(button=>button.addEventListener('click',()=>{setCategoryHeading(button.dataset.categoryHeading);try{localStorage.setItem('astra-category-heading',document.body.dataset.categoryHeading);}catch{}}));
-let rateCaption='exact';
-function renderRateCaption(){if(snapshot)$('exact-rate').textContent=rateCaption==='method'?'Cash-item sale medians, weighted by recorded volume.':rateCaption==='weight'?'More weight to cash items with more recorded sales.':`${number(activeRate()*1000)} mesos per 1,000 NX`;}
+let rateCaption='exact',rateCaptionFootnote='none';
+function renderRateCaption(){
+ if(!snapshot)return;
+ const caption=$('exact-rate');caption.textContent=rateCaption==='method'?'Cash-item sale medians, weighted by recorded volume.':rateCaption==='weight'?'More weight to cash items with more recorded sales.':`${number(activeRate()*1000)} mesos per 1,000 NX`;
+ if(rateCaption==='method'&&rateCaptionFootnote!=='none'){
+  const note=document.createElement('sup'),link=document.createElement('a');note.className='weight-help rate-caption-footnote';link.textContent='?';
+  link.href=rateCaptionFootnote==='weight'?'#method-weights':document.querySelector('.hero-bottom a[href="#nx"]').getAttribute('href');
+  link.setAttribute('aria-label',rateCaptionFootnote==='weight'?'Read the weight explanation':'How this NX value was calculated');note.append(link);caption.append(note);
+ }
+}
+function setRateCaptionFootnote(value){rateCaptionFootnote=['none','weight','calculation'].includes(value)?value:'none';document.querySelectorAll('button[data-rate-caption-footnote]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.rateCaptionFootnote===rateCaptionFootnote)));renderRateCaption();}
+try{setRateCaptionFootnote(localStorage.getItem('astra-rate-caption-footnote'));}catch{setRateCaptionFootnote('none');}
+document.querySelectorAll('button[data-rate-caption-footnote]').forEach(button=>button.addEventListener('click',()=>{setRateCaptionFootnote(button.dataset.rateCaptionFootnote);try{localStorage.setItem('astra-rate-caption-footnote',rateCaptionFootnote);}catch{}}));
 function setRateCaption(value){rateCaption=['exact','method','weight'].includes(value)?value:'exact';document.querySelectorAll('button[data-rate-caption]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.rateCaption===rateCaption)));renderRateCaption();}
 try{setRateCaption(localStorage.getItem('astra-rate-caption'));}catch{setRateCaption('exact');}
 document.querySelectorAll('button[data-rate-caption]').forEach(button=>button.addEventListener('click',()=>{setRateCaption(button.dataset.rateCaption);try{localStorage.setItem('astra-rate-caption',rateCaption);}catch{}}));
@@ -91,7 +102,7 @@ const recentLive=()=>snapshot.live&&Date.now()-Date.parse(snapshot.live.observed
 const activeRate=()=>recentLive()?(snapshot.live.nxRate??snapshot.latest.nxRate):snapshot.latest.nxRate;
 const activeCpi=()=>recentLive()?(snapshot.live.cpi??snapshot.latest.cpi):snapshot.latest.cpi;
 const freshLive=()=>snapshot.live?.nxRate!=null&&Date.now()-Date.parse(snapshot.live.observedAt)<2400000;
-const route=()=>{let page=location.hash.slice(1)||'index';page=sectionRoutes[page]||page;const itemSlug=page.startsWith('item/')?decodeURIComponent(page.slice(5)):null;if(itemSlug)page='item';if(!['index','basket','cash-basket','nx','method','sources','item','privacy'].includes(page))page='index';document.querySelectorAll('.view').forEach(s=>s.hidden=s.id!==`view-${page}`);document.querySelectorAll('.nav-link').forEach(a=>{a.classList.toggle('active',a.hash===`#${page}`);a.setAttribute('aria-current',a.hash===`#${page}`?'page':'false');});if(page==='item'&&snapshot)renderItemPage(itemSlug);if(page==='cash-basket'&&snapshot)renderCashBasket();if(page==='basket'&&snapshot)renderCpiDetail();if(page==='index'&&snapshot){renderMainChart();renderVolume();renderSmega();renderReportedHistory();}};
+const route=()=>{let page=location.hash.slice(1)||'index';page=sectionRoutes[page]||page;const itemSlug=page.startsWith('item/')?decodeURIComponent(page.slice(5)):null;if(itemSlug)page='item';if(!['index','basket','cash-basket','nx','method','sources','item','privacy','market-comparison'].includes(page))page='index';document.querySelectorAll('.view').forEach(s=>s.hidden=s.id!==`view-${page}`);document.querySelectorAll('.nav-link').forEach(a=>{a.classList.toggle('active',a.hash===`#${page}`);a.setAttribute('aria-current',a.hash===`#${page}`?'page':'false');});if(page==='item'&&snapshot)renderItemPage(itemSlug);if(page==='cash-basket'&&snapshot)renderCashBasket();if(page==='market-comparison'&&snapshot)renderMarketComparison();if(page==='basket'&&snapshot)renderCpiDetail();if(page==='index'&&snapshot){renderMainChart();renderVolume();renderSmega();renderReportedHistory();}};
 
 function spark(values,color='#87bdcf',width=100,height=30){
  const vals=values.filter(Number.isFinite); if(vals.length<2)return '';
@@ -102,7 +113,7 @@ function spark(values,color='#87bdcf',width=100,height=30){
 
 function chartHTML(series,{height=264,yTitle='mesos / NX',event=false,compactAxis=false,zeroBaseline=false,width=1120,allowNegative=false,dateOnlyAxis=false,allTime=false,timeAxis=false}={}){
  const chartId='plot-'+(++chartSerial);
- const W=width,H=height,R=30,T=31,B=timeAxis?52:39;let L=55;
+  const W=width,H=height,R=30,T=36,B=timeAxis?76:60;let L=55;
  series=series.map(s=>({...s,points:s.points.filter(p=>Number.isFinite(p.value)&&Number.isFinite(Date.parse(p.at))&&launchPeriodFilter(p))}));
  const all=series.flatMap(s=>s.points);
  if(!all.length)return '<div class="empty">No observations in this range. Missing history is not interpolated.</div>';
@@ -117,7 +128,9 @@ function chartHTML(series,{height=264,yTitle='mesos / NX',event=false,compactAxi
  const x=t=>L+(Date.parse(t)-xmin)/(xmax-xmin)*(W-L-R), y=v=>T+(high-v)/(high-low)*(H-T-B);
  let out=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"><title>${esc(yTitle)} over time</title><defs><linearGradient id="${chartId}-fill" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#87bdcf" stop-opacity=".15"/><stop offset="1" stop-color="#87bdcf" stop-opacity="0"/></linearGradient><clipPath id="${chartId}-clip"><rect x="${L}" y="${T}" width="${W-L-R}" height="${H-T-B}"/></clipPath></defs>`;
  for(let i=0;i<=4;i++){const v=low+(high-low)*i/4,yp=y(v);out+=`<line x1="${L}" x2="${W-R}" y1="${yp}" y2="${yp}" stroke="#2c3c46" stroke-dasharray="3 6"/><text x="${L-12}" y="${yp+5}" text-anchor="end" class="chart-y-tick" style="font-size:${axisSize}px;font-weight:650;fill:#eae7dc">${axisLabels[i]}</text>`;}
- const ticks=W<500?2:W<800?3:5;for(let i=0;i<=ticks;i++){const t=xmin+(xmax-xmin)*i/ticks,date=new Date(t),label=date.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:dateOnlyAxis?'UTC':displayTimeZone}),tickX=L+(W-L-R)*i/ticks,clock=timeAxis?date.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:displayTimeZone}):'';out+=`<text x="${tickX}" y="${H-(timeAxis?27:9)}" text-anchor="middle" class="chart-x-tick" style="font-size:${W<500?13:14}px;font-weight:500;fill:#d4ddd5">${label}${timeAxis?`<tspan x="${tickX}" dy="17">${clock}</tspan>`:''}</text>`;}
+  const ticks=W<500?2:W<800?3:5;for(let i=0;i<=ticks;i++){const t=xmin+(xmax-xmin)*i/ticks,date=new Date(t),label=date.toLocaleDateString('en-US',{month:'short',day:'numeric',timeZone:dateOnlyAxis?'UTC':displayTimeZone}),tickX=L+(W-L-R)*i/ticks,clock=timeAxis?date.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:displayTimeZone}):'';out+=`<text x="${tickX}" y="${H-(timeAxis?49:30)}" text-anchor="middle" class="chart-x-tick" style="font-size:${W<500?13:14}px;font-weight:500;fill:#d4ddd5">${label}${timeAxis?`<tspan x="${tickX}" dy="17">${clock}</tspan>`:''}</text>`;}
+  const rateAxis=/NX/.test(yTitle)?`Rate (${yTitle})`:yTitle;
+  out+=`<text x="${L}" y="18" class="chart-y-axis-label" style="font-size:${W<500?12:14}px;font-weight:650;fill:#eae7dc">${esc(rateAxis)}</text><text x="${L+(W-L-R)/2}" y="${H-7}" text-anchor="middle" class="chart-x-axis-label" style="font-size:${W<500?12:14}px;font-weight:650;fill:#eae7dc">${esc(timeAxis?'Time ('+displayTimeZone+')':'Date')}</text>`;
 
  let launchMarkers='';
  for(const launch of LAUNCH_EVENTS){
@@ -150,11 +163,14 @@ function chartHTML(series,{height=264,yTitle='mesos / NX',event=false,compactAxi
 function rangeFilter(p){if(selectedRange==='all')return true;const end=Math.max(Date.parse(snapshot.sourceUpdatedAt),...(snapshot.intraday||[]).map(p=>Date.parse(p.observedAt)),...(snapshot.comparisons||[]).map(p=>Date.parse(p.observedAt)),...(snapshot.rollingReferenceHistory||[]).map(p=>Date.parse(p.at)),...(snapshot.smega||[]).map(p=>Date.parse(p.at)));return Date.parse(p.at)>=end-Number(selectedRange)*86400000;}
 function renderMainChart(){
  const key=metric==='nx'?'nxRate':'cpi';
- const series=[{name:metric==='nx'?'Cash-item sale estimate':'Fixed-basket MPI',color:'#87bdcf',points:snapshot.history.map(p=>({...p,value:p[key]})).filter(rangeFilter)},{name:'Intraday scanner',color:'#edc471',points:snapshot.intraday.map(p=>({at:p.observedAt,value:p[key]})).filter(rangeFilter)}];
- series.push({name:'Rolling scanner reference (2–30 day windows; capture time)',color:'#edc471',line:false,points:rollingHistoryPoints(snapshot.rollingReferenceHistory||[],key).filter(rangeFilter)});
+ const series=[{name:metric==='nx'?'Cash-item sale estimate':'Fixed-basket MPI',color:'#87bdcf',points:snapshot.history.map(p=>({...p,value:p[key]})).filter(rangeFilter)}];
+ if(mainOverlays.intraday)series.push({name:'Intraday scanner',color:'#edc471',points:snapshot.intraday.map(p=>({...p,at:p.observedAt,value:p[key]})).filter(rangeFilter)});
+ if(mainOverlays.rolling)series.push({name:'Rolling scanner reference (2–30 day windows; capture time)',color:'#edc471',line:false,points:rollingHistoryPoints(snapshot.rollingReferenceHistory||[],key).filter(rangeFilter)});
+ document.querySelectorAll('[data-main-overlay]').forEach(button=>{const enabled=mainOverlays[button.dataset.mainOverlay];button.setAttribute('aria-pressed',String(enabled));button.textContent=(enabled?'Hide ':'Show ')+(button.dataset.mainOverlay==='intraday'?'intraday scanner':'rolling reference');});
+ document.querySelectorAll('[data-main-overlay-legend]').forEach(node=>node.hidden=!mainOverlays[node.dataset.mainOverlayLegend]);
  $('main-chart').innerHTML=chartHTML(series,{yTitle:metric==='nx'?'mesos per NX':'MPI points',allTime:selectedRange==='all',width:Math.max(320,($('main-chart').clientWidth||1148)-28)});
- $('main-chart').setAttribute('aria-label',metric==='nx'?'Cash-item implied NX exchange rate by observation date, with a separate rolling scanner reference. Offers are shown in their own chart.':'Fixed-basket meso price index over time.');
- $('chart-note').textContent=`Source through ${utc(snapshot.sourceUpdatedAt)} · latest day partial · ${snapshot.intraday.length} intraday observations · offers and player reports shown separately${(snapshot.rollingReferenceHistory||[]).some(rollingHistoryLegacy)?' · Earlier rolling history: legacy method / roll identity unverified; original values and capture clocks retained.':''}`;
+ $('main-chart').setAttribute('aria-label',metric==='nx'?'Daily cash-item implied NX exchange rate by source date; optional comparisons shown only when selected. Offers are shown separately.':'Fixed-basket meso price index over time.');
+ $('chart-note').textContent=`Source through ${utc(snapshot.sourceUpdatedAt)} · latest day partial · Daily series shown; additional comparisons are optional. ${mainOverlays.intraday?snapshot.intraday.length+' recorded intraday observations. ':''}${mainOverlays.rolling&&(snapshot.rollingReferenceHistory||[]).some(rollingHistoryLegacy)?'Earlier rolling history: legacy method / roll identity unverified; original values and capture clocks retained.':''}`;
 }
 
 function renderCpiDetail(){
@@ -180,6 +196,10 @@ function categoryGauge(index,scaleMax){
 }
 
 function renderReportedHistory(){
+  $('reported-content').hidden=!reportedHistoryVisible;
+  $('reported-heading').hidden=!reportedHistoryVisible;
+  document.querySelectorAll('[data-reported-history-toggle]').forEach(button=>{button.setAttribute('aria-pressed',String(reportedHistoryVisible));button.textContent=reportedHistoryVisible?'Hide NiaDB reported history':'Show NiaDB reported history (optional)';});
+  if(!reportedHistoryVisible){$('reported-chart').innerHTML='';return;}
  const history=snapshot.reportedNxHistory||{},points=(history.points||[]).map(p=>({...p,at:p.date+'T12:00:00Z',value:p.rate}));
  const captures=(snapshot.comparisons||[]).filter(p=>p.kind==='player_report').map(p=>({...p,at:p.observedAt,value:p.rate}));
  $('reported-chart').innerHTML=chartHTML([{name:'NiaDB published report (date only)',color:'#89c6b0',line:false,points},{name:'NiaDB indicator capture (source observation time unknown)',color:'#d9a1a0',line:false,points:captures}],{event:false,yTitle:'reported mesos per NX',dateOnlyAxis:true,allTime:true,width:Math.max(320,($('reported-chart').clientWidth||1148)-28)});
@@ -218,21 +238,40 @@ function smegaWindow(points,hours){
  const valid=points.filter(p=>Number.isFinite(Date.parse(p.at))),end=Math.max(0,...valid.map(p=>Date.parse(p.at)));
  return hours==='all'?valid:valid.filter(p=>Date.parse(p.at)>end-Number(hours)*3600000&&Date.parse(p.at)<=end);
 }
+// Window proxy from published hourly medians, not a pooled raw-price median.
+function summarizeSmegaWindow(points){
+ const buckets=new Map();
+ for(const point of points){
+  const count=point.sampleCount??point.distinctSenders;
+  if(!['buy','sell'].includes(point.side)||!Number.isFinite(point.rate)||point.rate<=0||!Number.isFinite(count)||count<=0||!Number.isFinite(Date.parse(point.at)))continue;
+  const key=(point.sourceUrl||'')+'|'+new Date(point.at).toISOString()+'|'+point.side,prior=buckets.get(key);
+  if(prior){if(prior.rate!==point.rate||prior.count!==count)prior.conflict=true;}
+  else buckets.set(key,{rate:point.rate,count,side:point.side});
+ }
+ const side=type=>{
+  const rows=[...buckets.values()].filter(row=>row.side===type&&!row.conflict).sort((a,b)=>a.rate-b.rate),total=rows.reduce((sum,row)=>sum+row.count,0);let cumulative=0,value=null;
+  for(let i=0;i<rows.length;i++){cumulative+=rows[i].count;if(cumulative>=total/2){value=cumulative===total/2&&rows[i+1]?(rows[i].rate+rows[i+1].rate)/2:rows[i].rate;break;}}
+  return {value,hours:rows.length,posterHours:total};
+ };
+ const ask=side('sell'),bid=side('buy'),difference=ask.value!==null&&bid.value!==null?ask.value-bid.value:null,midpoint=difference===null?null:(ask.value+bid.value)/2;
+ return {ask,bid,difference,differencePercent:midpoint>0?difference/midpoint*100:null};
+}
 function renderSmega(){
  updateSmegaComparisonControls();
- const inputs=smegaInputs(),pairs=deriveSmegaSpreads(inputs),latest=pairs.at(-1),visible=smegaWindow(inputs,selectedSmegaRange).filter(p=>launchPeriodFilter(p)),visibleHours=new Set(visible.map(p=>Date.parse(p.at))),spreadPoints=pairs.filter(p=>visibleHours.has(Date.parse(p.at)));
- if(!latest){$('smega-stats').innerHTML='';$('smega-offer-chart').innerHTML='<div class="empty">Awaiting published paired offers.</div>';$('smega-spread-chart').innerHTML='<div class="empty">No matching source/hour pairs.</div>';$('smega-point-note').textContent='No paired hourly observations available.';$('smega-history-note').textContent='No hourly window can be reconstructed from an unpaired source.';return;}
- $('smega-point-note').textContent=`Top figures: latest paired source hour ${utc(latest.at)}${latest.partial?' · partial when pulled':''}. The range controls change the chart view, not these hourly medians.`;
- const stats=[['SELLERS ASK','1:'+number(latest.ask,1),`${latest.askCount??'—'} source posters in this hour`,'sell'],['BUYERS BID','1:'+number(latest.bid,1),`${latest.bidCount??'—'} source posters in this hour`,'buy'],['MEDIAN GAP',number(latest.spread,1),'mesos per NX · ask minus bid','gap'],['GAP / MIDPOINT',number(latest.spreadPercent,1)+'%','Same source and hourly bucket','gap']];
+ const inputs=smegaInputs(),pairs=deriveSmegaSpreads(inputs),visible=smegaWindow(inputs,selectedSmegaRange).filter(p=>launchPeriodFilter(p)),visibleHours=new Set(visible.map(p=>Date.parse(p.at))),spreadPoints=pairs.filter(p=>visibleHours.has(Date.parse(p.at))),summary=summarizeSmegaWindow(visible);
+ const sourceTimes=inputs.map(p=>Date.parse(p.at)).filter(Number.isFinite),sourceEnd=sourceTimes.length?Math.max(...sourceTimes):null,orderedHours=[...visibleHours].sort((a,b)=>a-b),windowLabel=selectedSmegaRange==='all'?'All retained source hours':`Last ${selectedSmegaRange} source hours`;
+ document.querySelectorAll('[data-smega-range]').forEach(button=>{const active=button.dataset.smegaRange===selectedSmegaRange;button.classList.toggle('selected',active);button.setAttribute('aria-pressed',String(active));});
+ $('smega-point-note').textContent=`${windowLabel}${sourceEnd!==null?' · as of source hour '+utc(new Date(sourceEnd).toISOString()):''} · ${visibleHours.size}${selectedSmegaRange==='all'?'':' / '+selectedSmegaRange} hour buckets available${selectedLaunchPeriod!=='all'?' after launch-period filter':''}.`;
+ const detail=side=>`${side.hours} qualifying hourly medians · ${number(side.posterHours)} poster-hour appearances`;
+ const stats=[['SELLERS ASK · WINDOW PROXY',summary.ask.value===null?'—':'1:'+number(summary.ask.value,1),detail(summary.ask),'sell'],['BUYERS BID · WINDOW PROXY',summary.bid.value===null?'—':'1:'+number(summary.bid.value,1),detail(summary.bid),'buy'],['WINDOW PROXY DIFFERENCE',number(summary.difference,1),'mesos per NX · ask proxy minus bid proxy','gap'],['DIFFERENCE / PROXY MIDPOINT',summary.differencePercent===null?'—':number(summary.differencePercent,1)+'%','Window proxies; not a matched-hour spread','gap']];
  $('smega-stats').innerHTML=stats.map(([label,value,detail,side])=>`<div class="stat-cell" data-offer-side="${side}"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(detail)}</small></div>`).join('');
  const width=Math.max(320,($('smega-offer-chart').clientWidth||1148)-28);
  const offerSeries=[{name:'MapleStory Market sellers ask',color:'#edc471',fill:false,maxGapMs:5400000,points:visible.filter(p=>p.side==='sell').map(p=>({...p,value:p.rate}))},{name:'MapleStory Market buyers bid',color:'#89c6b0',fill:false,maxGapMs:5400000,points:visible.filter(p=>p.side==='buy').map(p=>({...p,value:p.rate}))}];
  if(smegaComparison){offerSeries.push({name:'Matched-hour bid/ask midpoint',color:'#d7c2e8',fill:false,dashArray:'1 6',maxGapMs:5400000,points:spreadPoints.map(p=>({...p,value:p.midpoint}))});offerSeries.push(...cashBenchmarkSeries(snapshot,visible));}
  $('smega-offer-chart').innerHTML=chartHTML(offerSeries,{yTitle:'mesos per NX',event:false,allTime:selectedSmegaRange==='all',timeAxis:true,width});
  $('smega-comparison-note').textContent=`Cash calculation published ${utc(snapshot.sourceUpdatedAt)}: ${number(snapshot.latest.nxRate,1)} mesos per NX. Its dashed reference starts no earlier than publication and is explicitly carried forward; it is not an hourly cash-sale series. Genuine qualified intraday observations are shown only when recorded. The dotted midpoint uses matching source/hour ask and bid medians only; a missing side leaves no midpoint.`;
- const asPercent=$('smega-spread-unit').value==='percent';
- $('smega-spread-chart').innerHTML=chartHTML([{name:'Ask median minus bid median',color:'#edc471',fill:false,maxGapMs:5400000,points:spreadPoints.map(p=>({...p,value:asPercent?p.spreadPercent:p.spread}))}],{height:200,yTitle:asPercent?'% of midpoint':'mesos per NX gap',event:false,allTime:selectedSmegaRange==='all',timeAxis:true,width,allowNegative:true});
- $('smega-history-note').textContent=`${spreadPoints.length} matched hours plotted · ${visibleHours.size} source-hour buckets in this ${selectedSmegaRange==='all'?'all-pulled':selectedSmegaRange+'h'} view · ${inputs.length} published side/hour observations pulled · last pulled ${utc(snapshot.smegaSource.capturedAt)}. Hourly poster counts are not summed into unique people; cash-item sales appear in their own chart.`;
+ const capturedAt=snapshot.smegaSource?.capturedAt,captureAge=Date.parse(capturedAt),age=Number.isFinite(captureAge)?Math.max(0,(Date.now()-captureAge)/3600000):null;
+ $('smega-history-note').textContent=`Headline proxies: poster-count-weighted medians of hourly medians, not true pooled offer-price medians. ${orderedHours.length?utc(new Date(orderedHours[0]).toISOString())+' – '+utc(new Date(orderedHours.at(-1)).toISOString()):'No source hours in this view'} · ${spreadPoints.length} matched hour pairs available${visible.some(p=>p.partial)?' · includes partial source hour':''} · ${inputs.length} retained side/hour observations · last pulled ${utc(capturedAt)}${age===null?'':' ('+number(age,1)+'h ago)'}. Missing sides and buckets are not filled. Hourly poster counts are not summed into unique people; the same poster may appear across hours. Cash-item sales appear in their own chart.`;
 }
 
 function selectedVolumeRows(){
@@ -300,20 +339,23 @@ function render(){
  const qualifiedDays=snapshot.rows.map(r=>r.priceDay).filter(Boolean).sort();
  $('movers-period').textContent=`${referencePeriodLabel()} reference prices → latest qualified item prices (${qualifiedDays[0]}–${qualifiedDays.at(-1)}). Contributions are index points since the fixed base, not a daily change.`;
  const movers=[...snapshot.rows].sort((a,b)=>Math.abs(b.changeContribution??b.changeBase)-Math.abs(a.changeContribution??a.changeBase)).slice(0,4);
- $('movers').innerHTML=movers.map(r=>`<div class="mover">${sprite(r)}<div class="item-name">${nameOf(r)}<small>${esc(r.category)} · ${number(r.weight*100,1)}% weight</small></div><div class="mover-value">${Number.isFinite(r.changeContribution)?(r.changeContribution>=0?'+':'')+number(r.changeContribution,1)+' pts':compact(r.price)}<small class="${r.changeBase>=0?'up':'down'}">${percent(r.changeBase)} vs. base · ${esc(r.priceDay)}</small></div></div>`).join('');
+ $('movers').innerHTML=movers.map(r=>`<div class="mover"><div class="mover-item">${sprite(r)}<div class="item-name">${nameOf(r)}<small>${esc(r.category)} · ${number(r.weight*100,1)}% weight</small></div></div><div class="mover-value">${Number.isFinite(r.changeContribution)?(r.changeContribution>=0?'+':'')+number(r.changeContribution,1)+' pts':compact(r.price)}<small class="${r.changeBase>=0?'up':'down'}">${percent(r.changeBase)} vs. base · ${esc(r.priceDay)}</small></div></div>`).join('');
  renderOverviewFreshness();
  $('wolbi-note').textContent='Citizenship-shop supply shifted this item’s price around October 25–26. This is not economy-wide deflation. '+snapshot.wolbi.text+' Similar item-specific supply shifts can occur if players raise crafting levels and unlock equipment they could not previously craft. Such a shift would not automatically indicate broad deflation.';
  $('wolbi-short').textContent='Wolbi’s item-specific supply shift needs context. See its basket note and full history.';
  $('basket-context').innerHTML=(snapshot.contextItems||[]).map(r=>`<p class="eyebrow">A SUPPLY ASTERISK</p><button class="item-link" data-item="${esc(r.slug)}">${sprite(r)}<span>${nameOf(r)}</span></button><p>${number(r.price)} mesos · ${esc(r.priceDay)}<br>zero MPI weight</p><p>Citizenship-shop supply shifted this item’s price around October 25–26. This is not economy-wide deflation.</p><a href="#item/${encodeURIComponent(r.slug)}">Full item history →</a><a href="#method">Method caveat →</a>`).join('');$('basket-context').hidden=!(snapshot.contextItems||[]).length;
  $('method-base-coverage').textContent=`The 50 selected items account for ${number(snapshot.baseTurnoverCoverageProxy*100,1)}% of qualified non-cash reference-week estimated turnover (${referencePeriodLabel()}). All items passing the liquidity rule account for ${number(snapshot.eligibleBaseTurnoverCoverageProxy*100,1)}%; the basket takes the largest 50 by reference turnover. These shares use the frozen selection source, not today’s rankings.`;
  $('method-coverage').textContent=`This basket covers ${number(snapshot.quantityCoverage*100,1)}% of the feed’s recorded seven-day sale volume and ${number(snapshot.turnoverCoverageProxy*100,1)}% of estimated meso turnover. Activity uses ${snapshot.recentStart} through the day before ${snapshot.recentEndExclusive}; reference-period membership and weights stay fixed. These shares are computed from this snapshot, not inherited from an old artifact.`;
- $('method-tiles').innerHTML=snapshot.categories.map(c=>`<div class="method-category"><h3>${esc(c.name)} <small>${c.count} items · ${number(c.weight*100,1)}% weight</small></h3><div class="tiles">${snapshot.rows.filter(r=>r.category===c.name).map(tileHTML).join('')}</div></div>`).join('');
+ $('method-tiles').innerHTML=categoryItemsHTML(snapshot.rows);
  renderVolume();renderBasket();renderCpiDetail();renderCash();renderCashBasket();renderComparisons();renderSources();renderSourceComparisons();renderQuickConverter();renderMainChart();renderFreshness();route();
 }
 
 const referenceHelp=()=>`<sup class="weight-help"><a href="#method-reference-week" aria-label="Fixed reference period: ${esc(referencePeriodLabel())}. Read the explanation" title="Fixed reference: ${esc(referencePeriodLabel())}">?</a></sup>`;
 const weightHelp=()=>'<sup class="weight-help"><a href="#method-weights" aria-label="Why this weight? Read the basket methodology" title="Why this weight?">?</a></sup>';
 function tileHTML(r){return `<button class="item-tile" data-item="${esc(r.slug)}"><span class="tile-title">${sprite(r)}${nameOf(r)}</span><strong>${compact(r.price)} <small>mesos / ${esc(r.unit)}</small></strong><small>${number(r.recentQuantity)} sold volume / 7d</small><span class="tile-bottom"><span>${number(r.weight*100,2)}% weight</span><span class="${r.changeBase>=0?'up':'down'}">${percent(r.changeBase)}</span></span></button>`;}
+function categoryItemsHTML(rows){
+ return snapshot.categories.map(c=>{const members=rows.filter(r=>r.category===c.name);if(!members.length)return '';const weight=members.reduce((sum,r)=>sum+r.weight,0);return `<section class="method-category" aria-label="${esc(c.name)}"><h3>${esc(c.name)}<small>${members.length} ${members.length===1?'item':'items'} · ${number(weight*100,2)}% basket weight shown</small></h3><div class="tiles">${members.map(tileHTML).join('')}</div></section>`;}).join('')||'<p class="empty">No items match this search.</p>';
+}
 function renderBasket(){
  const query=$('basket-search').value.toLowerCase().trim(),cat=$('category-filter').value;
  let rows=snapshot.rows.filter(r=>(cat==='All categories'||r.category===cat)&&r.name.toLowerCase().includes(query));
@@ -322,7 +364,9 @@ function renderBasket(){
  const headers=[['name','Item'],['price','Daily price'],['scanner','Rolling scanner reference'],['recentQuantity','Sold volume · 7d'],['recentTurnoverProxy','Est. turnover · 7d'],['weight','Weight'],['changeBase','Vs. base'],['history','History']];
  $('basket-table').innerHTML=`<table><thead><tr>${headers.map(([key,label])=>`<th ${key===sortKey?`aria-sort="${sortAsc?'ascending':'descending'}"`:''}>${['history','scanner'].includes(key)?label:`<button data-sort="${key}">${label} ${sortKey===key?(sortAsc?'↑':'↓'):''}</button>`}${key==='weight'?weightHelp():key==='changeBase'?referenceHelp():''}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr><td><button class="item-link" data-item="${esc(r.slug)}">${sprite(r)}<span>${nameOf(r)}<small>${esc(r.category)} · per ${esc(r.unit)} · ${esc(r.priceDay)}</small></span></button></td><td>${number(r.price)}</td><td>${referenceCell(r)}</td><td>${number(r.recentQuantity)}</td><td>${compact(r.recentTurnoverProxy)}</td><td>${number(r.weight*100,2)}%</td><td class="${r.changeBase>=0?'up':'down'}">${percent(r.changeBase)}</td><td><div class="mini-spark">${spark(r.history.map(p=>p[1]),r.changeBase>=0?'#87bdcf':'#89c6b0')}</div></td></tr>`).join('')||'<tr><td colspan="8" class="empty">No items match this search.</td></tr>'}</tbody></table>`;
  $('basket-tiles').innerHTML=rows.map(tileHTML).join('')||'<div class="empty">No items match.</div>';
- $('basket-table').hidden=layout!=='table';$('basket-tiles').hidden=layout!=='tiles';
+ $('basket-categories').innerHTML=categoryItemsHTML(rows);
+ $('basket-table').hidden=layout!=='table';$('basket-tiles').hidden=layout!=='tiles';$('basket-categories').hidden=layout!=='categories';
+ document.querySelectorAll('#basket-layout [data-layout]').forEach(button=>{const selected=button.dataset.layout===layout;button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));});
 }
 // Fixed single-item schedule: source gaps must not silently remove a cash item.
 const CASH_SCHEDULE=Object.freeze([{"slug":"selective-5-slot-coupon","name":"Selective 5-slot Coupon","nx":5000},{"slug":"ap-reset-scroll","name":"AP Reset Scroll","nx":7000},{"slug":"sp-reset-scroll","name":"SP Reset Scroll","nx":7000},{"slug":"brown-kitty","name":"Brown Kitty","nx":3500},{"slug":"brown-puppy","name":"Brown Puppy","nx":3500},{"slug":"pink-bunny","name":"Pink Bunny","nx":3500},{"slug":"black-kitty","name":"Black Kitty","nx":3500},{"slug":"white-bunny","name":"White Bunny","nx":3500},{"slug":"black-pig","name":"Black Pig","nx":3500},{"slug":"water-of-life","name":"Water of Life","nx":2000},{"slug":"pet-name-tag","name":"Pet Name Tag","nx":1800},{"slug":"auto-hp-potion-skill","name":"Auto HP Potion Skill","nx":2500},{"slug":"auto-mp-potion-skill","name":"Auto MP Potion Skill","nx":2500},{"slug":"auto-move-skill","name":"Auto Move Skill","nx":3000},{"slug":"expanded-auto-move-skill","name":"Expanded Auto Move Skill","nx":3000},{"slug":"signature-hair-coupon","name":"Signature Hair Coupon","nx":7500},{"slug":"signature-face-coupon","name":"Signature Face Coupon","nx":5500},{"slug":"signature-hair-color-coupon","name":"Signature Hair Color Coupon","nx":4500},{"slug":"signature-eye-color-coupon","name":"Signature Eye Color Coupon","nx":2500},{"slug":"signature-skin-color-coupon","name":"Signature Skin Color Coupon","nx":2000},{"slug":"mystery-hair-coupon","name":"Mystery Hair Coupon","nx":5500},{"slug":"mystery-face-coupon","name":"Mystery Face Coupon","nx":3500},{"slug":"mystery-hair-color-coupon","name":"Mystery Hair Color Coupon","nx":1700},{"slug":"red-ribbon","name":"Red Ribbon","nx":3200},{"slug":"yellow-hat","name":"Yellow Hat","nx":3200},{"slug":"red-hat","name":"Red Hat","nx":3200},{"slug":"black-hat","name":"Black Hat","nx":3200},{"slug":"red-top-hat","name":"Red Top Hat","nx":3200},{"slug":"storage-room-5-slot-coupon","name":"Storage Room 5-slot Coupon","nx":5000}]);
@@ -352,18 +396,61 @@ function renderCash(){
  const model=buildCashPricing(snapshot,{days:cashLookback,evidence:cashEvidence,side:cashSide}),rolling=model.rolling;
  let rows=model.rows.filter(r=>cashFilter==='all'||r.verdict===cashFilter);
  rows.sort((a,b)=>{const av=a[cashSortKey],bv=b[cashSortKey];if(cashSortKey==='name')return (cashSortAsc?1:-1)*a.name.localeCompare(b.name);if(!Number.isFinite(av))return Number.isFinite(bv)?1:a.name.localeCompare(b.name);if(!Number.isFinite(bv))return -1;return (cashSortAsc?1:-1)*(av-bv)||a.name.localeCompare(b.name);});
+ const bestOrder=cashSortKey==='rate'&&cashSortAsc===(cashSide==='buy'),sortNames={name:'item name',nx:'fixed NX cost',price:'meso price',rate:'mesos per NX',quantity:'recorded volume',windowDays:'source days',lowRate:'lowest daily median / NX',highRate:'highest daily median / NX',deltaPct:'difference from reference'};
+ let bestButton=$('cash-best-value');if(!bestButton){bestButton=document.createElement('button');bestButton.id='cash-best-value';bestButton.type='button';bestButton.className='secondary';bestButton.dataset.cashBestValue='';bestButton.textContent='Best value first';document.querySelector('#view-nx .cash-controls').append(bestButton);}
+ bestButton.setAttribute('aria-pressed',String(bestOrder));bestButton.setAttribute('aria-label',cashSide==='sell'?'Best value first for selling NX: highest mesos per NX':'Best value first for buying NX items: lowest mesos per NX');
+ const sortNote=bestOrder?`Best value first for ${cashSide==='sell'?'selling NX: highest mesos per NX.':'buying NX items: lowest mesos per NX.'}`:`Sorted by ${sortNames[cashSortKey]||cashSortKey} (${cashSortAsc?'ascending':'descending'}).`;
  $('cash-count').textContent=`${rows.length} / ${model.rows.length} FIXED-PRICE CASH ITEMS`;
  $('cash-lookback').disabled=rolling;
  document.querySelectorAll('[data-cash-side]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.cashSide===cashSide)));
  $('cash-window-note').textContent=rolling?`Captured ${utc(snapshot.rollingReference?.capturedAt)}. Each row retains its own source window; capture time is not trade time. Lookback is disabled because this capture cannot be resliced into another window.`:`${model.start||'Unknown'}–${model.end||'Unknown'} · ${model.days} source-calendar day${model.days===1?'':'s'}, inclusive. ${model.partial?'Latest source day is partial. ':''}Only days with at least 5 recorded sales qualify; missing days are not filled.`;
- $('cash-reference').textContent=`Selected evidence reference: ${number(model.reference,2)} mesos / NX · ${model.eligibleCount} items · ${rolling?'weighted by recorded sales per hour of each item window':'weighted by recorded volume across qualifying days'}.`;
- $('cash-pricing-note').textContent=`${cashSide==='sell'?'Higher mesos / NX is more favorable when selling NX.':'Lower mesos / NX is more favorable when buying NX items.'} Color and verdict compare each item with the selected evidence reference, before filters. These estimates are not executable quotes or profit calculations.`;
+ const eligibleWindows=model.rows.filter(row=>row.referenceWeight>0&&Number.isFinite(row.windowDays)).map(row=>row.windowDays);
+ const evidenceWindow=rolling?`Rolling capture · ${eligibleWindows.length?Math.min(...eligibleWindows)+'–'+Math.max(...eligibleWindows)+'-day item windows':'eligible item windows unavailable'} · pulled ${utc(snapshot.rollingReference?.capturedAt)}`:`Daily history · ${model.days}-day lookback · ${model.start||'Unknown'}–${model.end||'Unknown'} inclusive`;
+ $('cash-reference').textContent=`Selected evidence reference (${evidenceWindow}): ${number(model.reference,2)} mesos / NX · ${model.eligibleCount} items · ${rolling?'weighted by recorded sales per hour of each item window':'weighted by recorded volume across qualifying days'}.`;
+ $('cash-pricing-note').textContent=`${sortNote} ${cashSide==='sell'?'Higher mesos / NX is more favorable when selling NX.':'Lower mesos / NX is more favorable when buying NX items.'} Color and verdict compare each item with the selected evidence reference, before filters. These estimates are not executable quotes or profit calculations. This explorer differs from the Cash Basket’s frozen reference-week expenditure weights; these daily-lookback/rolling controls do not change that index.`;
  const rateChange=snapshot.baseNxRate>0&&Number.isFinite(snapshot.latest?.nxRate)?(snapshot.latest.nxRate/snapshot.baseNxRate-1)*100:null;
  $('cash-goods-comparison').innerHTML=`<h3>Cash conversion and ordinary goods measure different things.</h3><p>Latest daily cash-implied NX rate: <strong>${rateChange==null?'Unavailable':percent(rateChange)}</strong> versus its frozen reference-week rate (<a href="#method-reference-week">${esc(referencePeriodLabel())}</a>). Non-cash fixed-basket MPI: <strong>${Number.isFinite(snapshot.latest?.cpi)?percent(snapshot.latest.cpi-100):'Unavailable'}</strong> versus its base of 100 (${esc(snapshot.latest?.day||model.end)}${snapshot.latest?.partial?' · partial':''}). These are not directly comparable: NX uses cash-item ratios and changing daily volume weights; MPI uses fixed base-expenditure weights.</p><p>Cash Shop items are excluded from MPI to keep ordinary meso-goods prices separate from NX conversion and monetized-item supply. This is the non-cash index’s scope choice. A <a href="#cash-basket">separate fixed Cash Basket</a> tracks cash-item price changes. <a href="#method-weights">Read the method →</a></p>`;
  const headers=[['name','Cash item'],['nx','Fixed NX'],['price',rolling?'Captured median · mesos':'Daily-median estimate · mesos'],['rate','Mesos / NX'],['quantity','Recorded volume'],['windowDays',rolling?'Source window · days':'Qualifying days'],['lowRate','Lowest daily median / NX'],['highRate','Highest daily median / NX'],['deltaPct','Vs. reference']];
  $('cash-table').innerHTML=`<table><caption class="sr-only">Cash pricing exploration; ${rolling?'rolling scanner capture':'volume-weighted daily-median estimates'}; ${cashSide==='sell'?'selling NX':'buying NX items'}</caption><thead><tr>${headers.map(([key,label])=>`<th aria-sort="${cashSortKey===key?(cashSortAsc?'ascending':'descending'):'none'}"><button type="button" data-cash-sort="${key}">${label} ${cashSortKey===key?(cashSortAsc?'↑':'↓'):''}</button></th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr data-cash-item="${esc(r.slug)}" data-rate="${r.rate??''}" data-verdict="${r.verdict}"><td><button class="item-link" data-item="${esc(r.slug)}">${sprite(r)}<span>${esc(r.name)}<small>${rolling?(r.windowDays?`${number(r.windowDays)}-day source window`:'Source window unknown'):`${model.start||'?'}–${model.end||'?'}`}${r.missing?' · Evidence unavailable':''}${r.statRoll?' · Reported '+esc(r.statRoll):''}${r.price!=null&&r.referenceExclusion?' · Excluded from reference: '+(r.referenceExclusion==='cash_roll_may_include_upgrade_premium'?'upgrade premium not isolated':'stat roll unverified'):''}</small></span></button></td><td>${number(r.nx)}</td><td>${number(r.price,1)}</td><td class="cash-${r.verdict}">${number(r.rate,2)}</td><td>${number(r.quantity)}</td><td>${number(r.windowDays)}</td><td>${rolling?'Unavailable':number(r.lowRate,2)}</td><td>${rolling?'Unavailable':number(r.highRate,2)}</td><td class="cash-${r.verdict}">${r.deltaPct==null?'Unknown':`${percent(r.deltaPct)}<small>${r.verdict==='favorable'?'More favorable':r.verdict==='less-favorable'?'Less favorable':'At reference'}</small>`}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">No items match this comparison filter.</td></tr>'}</tbody></table>`;
 }
 
+function marketComparisonModel(report){
+ const day=report.latest.day,start=report.recentStart,end=report.recentEndExclusive;
+ const activity=(rows,from,to)=>{let quantity=0,turnover=0,observations=0,qualifiedItems=0;const seen=new Set();
+  for(const row of rows){if(seen.has(row.slug))throw new Error('Duplicate comparison cohort member');seen.add(row.slug);let qualified=false;
+   for(const p of row.history||[]){if(!Array.isArray(p)||p[0]<from||p[0]>=to||!Number.isFinite(p[1])||p[1]<=0||!Number.isFinite(p[2])||p[2]<0)continue;quantity+=p[2];turnover+=p[1]*p[2];observations++;if(p[2]>=5)qualified=true;}
+   if(qualified)qualifiedItems++;
+  }return {quantity:observations?quantity:null,turnover:observations?turnover:null,observations,qualifiedItems};};
+ const nextDay=new Date(Date.parse(day+'T00:00:00Z')+86400000).toISOString().slice(0,10);
+ const cash=report.cashBasket,goodsRows=report.rows||[],cashRows=cash?.status==='ok'?cash.rows:[],nxRows=CASH_SCHEDULE.map(item=>(report.cash||[]).find(row=>row.slug===item.slug)||{...item,history:[]});
+ const cohorts=[{key:'goods',name:'Goods MPI',rows:goodsRows,value:report.latest.cpi,unit:'price index · reference = 100',coverage:report.latest.coverage},
+  {key:'cash',name:'Cash Basket',rows:cashRows,value:cash?.latest?.cpi,unit:'price index · reference = 100',coverage:cash?.latest?.day===day?cash.latest.coverage:null},
+  {key:'nx',name:'NX sale estimate',rows:nxRows,value:report.latest.nxRate,unit:'mesos per NX',coverage:null}].map(cohort=>({...cohort,count:cohort.rows.length,current:activity(cohort.rows,day,nextDay),recent:activity(cohort.rows,start,end),carriedItems:cohort.key==='nx'?0:cohort.rows.filter(row=>row.priceDay&&row.priceDay<day).length}));
+ const totals=(report.volumeHistory||[]).filter(p=>p.day>=start&&p.day<end);
+ const feedQuantity=totals.length?totals.reduce((sum,p)=>sum+p.allSoldVolume,0):null,feedTurnover=totals.length?totals.reduce((sum,p)=>sum+p.allMesos,0):null;
+ const nxSlugs=new Set(nxRows.map(row=>row.slug));
+ return {day,start,end,partial:!!report.latest.partial,sourceUpdatedAt:report.sourceUpdatedAt,cohorts,feedQuantity,feedTurnover,cashNxOverlap:cashRows.filter(row=>nxSlugs.has(row.slug)).length};
+}
+function renderMarketComparison(){
+ if(!$('view-market-comparison'))return;const model=marketComparisonModel(snapshot),cash=snapshot.cashBasket;
+ $('market-comparison-clock').textContent=`Daily source published ${utc(model.sourceUpdatedAt)} · ${model.day}${model.partial?' is partial':''}. Reference period ${snapshot.baseStart}–${snapshot.baseEnd}; these are source-dated comparisons, not new intraday measurements.`;
+ $('market-comparison-cards').innerHTML=model.cohorts.map(cohort=>`<article class="market-comparison-card"><h2>${esc(cohort.name)}</h2><strong class="market-comparison-value">${cohort.key==='nx'?'≈1:':''}${number(cohort.value,cohort.key==='nx'?2:1)}</strong><small>${cohort.key==='nx'?'NX : mesos':esc(cohort.unit)}</small><p>${cohort.count} ${cohort.key==='nx'?'fixed-NX-cost items':'frozen members'} · ${cohort.current.qualifiedItems} with ≥5 recorded sales on ${esc(model.day)}</p><p>${cohort.key==='nx'?'Daily quantity-weighted item price / NX cost; no carried price enters this day’s rate.':`${Number.isFinite(cohort.coverage)?number(cohort.coverage*100,1)+'% of fixed weight observed on this day':'Observed-weight coverage unavailable'} · ${cohort.carriedItems} earlier qualifying prices carried.`}</p><small>${cohort.key==='cash'?`Cash definition v${cash?.version||'—'} · ${cash?.missingBaselineCount??'—'} configured items lack a qualifying baseline.`:cohort.key==='goods'?`Goods definition v${snapshot.basketVersion} · fixed base-expenditure weights.`:'The explorer’s default 3-day window is a separate table estimate; it is not this daily headline.'}</small></article>`).join('');
+ $('market-comparison-window').textContent=`Common activity window: ${model.start} ≤ source day < ${model.end} (seven complete source-calendar days). Denominator: ${number(model.feedQuantity)} recorded source counts and ${number(model.feedTurnover)} estimated mesos across the published feed (${number(snapshot.itemsAvailable)} catalog items).`;
+ const share=(value,total)=>Number.isFinite(value)&&total>0?value/total*100:null;
+ $('market-comparison-table').innerHTML=`<table data-search-key="market-cohort-comparison"><thead><tr><th>Measure</th><th>Qualified items on latest source day</th><th>Latest day recorded count</th><th>Latest day estimated mesos</th><th>7-day recorded count</th><th>7-day estimated mesos</th><th>Share of feed count · 7d</th><th>Share of feed estimated mesos · 7d</th></tr></thead><tbody>${model.cohorts.map(c=>{const qShare=share(c.recent.quantity,model.feedQuantity),eShare=share(c.recent.turnover,model.feedTurnover);return `<tr><td>${esc(c.name)}</td><td data-sort-value="${c.current.qualifiedItems}">${c.current.qualifiedItems} / ${c.count}</td><td data-sort-value="${c.current.quantity??''}">${number(c.current.quantity)}</td><td data-sort-value="${c.current.turnover??''}">${number(c.current.turnover)}</td><td data-sort-value="${c.recent.quantity??''}">${number(c.recent.quantity)}</td><td data-sort-value="${c.recent.turnover??''}">${number(c.recent.turnover)}</td><td data-sort-value="${qShare??''}">${qShare==null?'—':number(qShare,1)+'%'}</td><td data-sort-value="${eShare??''}">${eShare==null?'—':number(eShare,1)+'%'}</td></tr>`;}).join('')}</tbody></table>`;
+ const countLeader=model.cohorts.filter(c=>Number.isFinite(c.recent.quantity)).sort((a,b)=>b.recent.quantity-a.recent.quantity)[0],turnoverLeader=model.cohorts.filter(c=>Number.isFinite(c.recent.turnover)).sort((a,b)=>b.recent.turnover-a.recent.turnover)[0];
+ $('market-comparison-activity').textContent=`${model.cashNxOverlap} cash-index members also belong to the NX cohort; these rows overlap and must not be summed. ${countLeader?countLeader.name+' has the largest recorded count in this window. ':''}${turnoverLeader?turnoverLeader.name+' has the largest estimated turnover proxy. ':''}More recorded activity is not evidence that a measure is more accurate or covers the entire game.`;
+ enhanceTables();
+}
+function fixedCashNxEquivalent(model){
+ if(model?.status!=='ok'||model.baseIndex!==100||!Array.isArray(model.rows)||!model.rows.length||model.rows.length!==model.itemCount||!Number.isFinite(model.latest?.cpi)||!Number.isFinite(model.latest?.pricedCoverage)||model.latest.pricedCoverage<1-1e-9)return null;
+ const rows=model.rows,valid=value=>Number.isFinite(value)&&value>0,day=model.latest.day;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(day||'')||rows.some(row=>!valid(row.weight)||!valid(row.nx)||!valid(row.basePrice)||!valid(row.price)||row.missingSource||!/^\d{4}-\d{2}-\d{2}$/.test(row.priceDay||'')||row.priceDay>day))return null;
+ const weightSum=rows.reduce((sum,row)=>sum+row.weight,0),mesos=rows.reduce((sum,row)=>sum+row.weight*row.price/row.basePrice,0),nx=rows.reduce((sum,row)=>sum+row.weight*row.nx/row.basePrice,0);
+ if(Math.abs(weightSum-1)>1e-8||Math.abs(mesos*100-model.latest.cpi)>1e-7||!valid(nx)||!valid(mesos))return null;
+ const days=rows.map(row=>row.priceDay).sort();
+ return {rate:mesos/nx,baseRate:weightSum/nx,itemCount:rows.length,day,partial:!!model.latest.partial,oldestPriceDay:days[0],newestPriceDay:days.at(-1),carriedCount:rows.filter(row=>row.priceDay<day).length};
+}
 function renderCashBasketChart(){
  const model=snapshot.cashBasket;if(model?.status!=='ok'||!Array.isArray(model.history))return;const point=model.latest;
  const sameBase=model.baseStart===snapshot.baseStart&&model.baseEnd===snapshot.baseEnd;
@@ -385,6 +472,8 @@ function renderCashBasket(){
  $('cash-basket-stats').innerHTML=stats.map(([label,value,note])=>`<div class="stat-cell"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`).join('');
  const nxDay=snapshot.latest?.day,nxChange=snapshot.baseNxRate>0?(snapshot.latest.nxRate/snapshot.baseNxRate-1)*100:null;
  $('cash-basket-implications').innerHTML=`<h2>Cash prices and the NX rate can move differently.</h2><p>The fixed Cash Basket is <strong>${Number.isFinite(point?.cpi)?percent(point.cpi-100):'unavailable'}</strong> versus its base on ${esc(point?.day||'an unavailable day')}; the daily NX estimate is <strong>${Number.isFinite(nxChange)?percent(nxChange):'unavailable'}</strong> versus its frozen reference rate on ${esc(nxDay||'an unavailable day')}. ${point?.partial||snapshot.latest?.partial?'The latest source day is partial. ':''}The Cash Basket holds reference expenditure weights fixed. NX divides cash-item meso prices by their NX costs and weights the ratios by each day’s recorded sale quantities.</p><p>More sales shifting toward high-ratio or low-ratio items can move the NX estimate even when the fixed price mix changes less. Cohort coverage and qualifying or carried prices can also differ. This gap is consistent with those methodological differences; it does not measure the exact composition effect or an individual player’s purchasing power.</p>`;
+ const equivalent=fixedCashNxEquivalent(model);
+ $('cash-basket-implications').insertAdjacentHTML('beforeend',`<h3>Does this index imply an NX rate?</h3><p>A normalized price index alone has no absolute NX conversion unit. ${equivalent?`The underlying frozen rows support a separate, experimental fixed-mix equivalent of <strong>≈1:${number(equivalent.rate,2)} (NX : mesos)</strong> as of ${esc(equivalent.day)}${equivalent.partial?' (partial source day)':''}. It uses the same ${equivalent.itemCount} members and capped base weights, with qualifying or carried prices; it is not the changing-volume headline or the <a href="#nx">selected daily/rolling explorer estimate</a>.`:'The underlying fixed-mix conversion is unavailable while complete consistent price/cost coverage is missing; no absolute rate is inferred from the index alone.'}</p><details><summary>Fixed-mix conversion formula and source dates</summary><p>Use synthetic fixed quantities qᵢ = fixed weightᵢ / base meso priceᵢ; a common scale cancels. This preserves the capped weights rather than reusing uncapped recorded base quantities.</p><div class="formula">Fixed-mix mesos / NX = Σ(qᵢ × current meso priceᵢ) / Σ(qᵢ × fixed NX costᵢ)</div>${equivalent?`<p>The same synthetic mix implies ≈1:${number(equivalent.baseRate,2)} (NX : mesos) at reference prices. Current qualifying price dates span ${esc(equivalent.oldestPriceDay)}–${esc(equivalent.newestPriceDay)}; ${equivalent.carriedCount} item${equivalent.carriedCount===1?' uses':'s use'} an earlier qualifying price. Those dates and the frozen weights are shown in the table. This is an analytical basket equivalent, not an executable exchange quote.</p>`:''}</details>`);
  renderCashBasketChart();
  const missing=(model.missingBaselineNames||[]).map(esc).join(', ');
  $('cash-basket-exclusions').innerHTML=`${model.missingBaselineCount} of ${model.configuredItemCount} configured items ${model.missingBaselineCount===1?'has':'have'} no qualifying reference-week baseline${missing?`: ${missing}`:''}. Those items remain in the <a href="#nx">all-${model.configuredItemCount}-item NX pricing explorer</a> with zero cash-index weight. Other cash-category cosmetics with unverified fixed NX costs are outside this known-price cohort.`;
@@ -520,7 +609,6 @@ $('cash-evidence').addEventListener('change',e=>{cashEvidence=e.target.value;if(
 $('cash-lookback').addEventListener('change',e=>{cashLookback=Number(e.target.value);if(snapshot)renderCash();});
 $('cash-filter').addEventListener('change',e=>{cashFilter=e.target.value;if(snapshot)renderCash();});
 $('basket-search').addEventListener('input',()=>snapshot&&renderBasket());$('category-filter').addEventListener('change',()=>snapshot&&renderBasket());
-$('smega-spread-unit').addEventListener('change',()=>snapshot&&renderSmega());
 $('export-smega').addEventListener('click',()=>snapshot&&csvDownload('inflation-watch-smega-spreads.csv',['source_hour','source','seller_median','buyer_median','gap_mesos_per_nx','gap_percent_midpoint','seller_sample','buyer_sample','partial_when_pulled'],deriveSmegaSpreads(smegaInputs()).map(p=>[p.at,p.sourceUrl,p.ask,p.bid,p.spread,p.spreadPercent,p.askCount,p.bidCount,p.partial])));
 $('volume-period').addEventListener('change',()=>snapshot&&renderVolume());
 $('volume-metric').addEventListener('change',()=>snapshot&&renderVolume());
@@ -528,12 +616,15 @@ $('export-volume').addEventListener('click',()=>snapshot&&csvDownload('inflation
 $('chart-metric').addEventListener('change',e=>{metric=e.target.value;if(snapshot)renderMainChart();});
 document.addEventListener('click',e=>{
  const comparisonToggle=e.target.closest('button[data-smega-comparison-toggle]');if(comparisonToggle&&snapshot){smegaComparison=!smegaComparison;try{localStorage.setItem('astra-smega-comparison',smegaComparison?'on':'off');}catch{}renderSmega();updateSmegaComparisonControls();}
+ const overlay=e.target.closest('button[data-main-overlay]');if(overlay&&snapshot&&Object.hasOwn(mainOverlays,overlay.dataset.mainOverlay)){mainOverlays[overlay.dataset.mainOverlay]=!mainOverlays[overlay.dataset.mainOverlay];renderMainChart();}
+ const reportedToggle=e.target.closest('button[data-reported-history-toggle]');if(reportedToggle&&snapshot){reportedHistoryVisible=!reportedHistoryVisible;renderReportedHistory();}
  const tableSort=e.target.closest('[data-table-sort]');if(tableSort)sortTable(tableSort);
  const fullItemLink=e.target.closest('.item-full-link');if(fullItemLink)$('item-dialog').close();
  const weightLink=e.target.closest('.weight-help a');if(weightLink&&$('item-dialog').open)$('item-dialog').close();
  const item=e.target.closest('[data-item]');if(item&&snapshot)showItem(item.dataset.item);
  const category=e.target.closest('[data-category]');if(category){$('category-filter').value=category.dataset.category;location.hash='basket';renderBasket();}
  const cashSideButton=e.target.closest('[data-cash-side]');if(cashSideButton&&snapshot){cashSide=cashSideButton.dataset.cashSide;cashSortKey='rate';cashSortAsc=cashSide==='buy';renderCash();}
+ const bestCash=e.target.closest('[data-cash-best-value]');if(bestCash&&snapshot){cashSortKey='rate';cashSortAsc=cashSide==='buy';renderCash();}
  const cashSort=e.target.closest('[data-cash-sort]');if(cashSort&&snapshot){cashSortAsc=cashSortKey===cashSort.dataset.cashSort?!cashSortAsc:cashSort.dataset.cashSort==='name';cashSortKey=cashSort.dataset.cashSort;renderCash();}
  const sort=e.target.closest('[data-sort]');if(sort){sortAsc=sortKey===sort.dataset.sort?!sortAsc:sort.dataset.sort==='name';sortKey=sort.dataset.sort;renderBasket();}
  const smegaRange=e.target.closest('[data-smega-range]');if(smegaRange){selectedSmegaRange=smegaRange.dataset.smegaRange;document.querySelectorAll('[data-smega-range]').forEach(b=>b.classList.toggle('selected',b===smegaRange));renderSmega();}

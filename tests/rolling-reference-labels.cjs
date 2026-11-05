@@ -32,6 +32,8 @@ const wait=async predicate=>{const end=Date.now()+1500;while(!predicate()&&Date.
  assert.match(doc.querySelector('.rolling-policy-note').textContent,/7 captured cash inputs lack retained roll metadata/);
  assert.match(doc.getElementById('comparison-card').textContent,/0\/7 fixed-NX items eligible/);
  assert.doesNotMatch(doc.querySelector('.rolling-policy-note').textContent,/64|79|private/);
+ assert(![...doc.querySelectorAll('#main-chart circle')].some(point=>point.dataset.chartDate===clock),'Rolling reference is OFF by default');
+ doc.querySelector('[data-main-overlay="rolling"]').click();
  const circle=[...doc.querySelectorAll('#main-chart circle')].find(p=>p.dataset.chartDate===clock);
  assert(circle,'Legacy point still plotted');
  assert.equal(Number(circle.dataset.chartValue),oldRate);

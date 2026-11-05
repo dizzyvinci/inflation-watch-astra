@@ -42,7 +42,26 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
   assert.equal(story.firstElementChild.textContent, personalStory);
   assert.equal(story.outerHTML, storyBefore);
   assert.equal(footer.dataset.footerStyle, 'clear');
-  assert.equal(w.getComputedStyle(story).fontSize, '18px');
+  assert.equal(w.getComputedStyle(story).fontSize, '17px');
+  assert.equal(w.getComputedStyle(story).textAlign, 'left');
+  assert.equal(w.getComputedStyle(footer).justifyItems,'start');
+  assert.equal(w.getComputedStyle(doc.querySelector('.footer-links a')).textDecorationLine,'underline');
+  const normalFooterBackground=w.getComputedStyle(footer).backgroundColor;
+  const normalFooterPadding=w.getComputedStyle(footer).padding;
+  for(const mode of ['zakum-dark','zakum-bright','zakum-raid','lantern-market']){
+    doc.body.dataset.sceneryMode=mode;doc.body.classList.add('scenery-on');
+    assert.equal(w.getComputedStyle(footer).backgroundColor,'rgba(14, 26, 19, 0.94)','full-cover scenery backs the whole footer');
+    assert.equal(w.getComputedStyle(footer).paddingTop,'24px');
+    assert.equal(w.getComputedStyle(story).textAlign,'left');
+  }
+  for(const mode of ['classic','banner','backdrop']){
+    doc.body.dataset.sceneryMode=mode;
+    assert.equal(w.getComputedStyle(footer).backgroundColor,normalFooterBackground);
+    assert.equal(w.getComputedStyle(footer).padding,normalFooterPadding);
+  }
+  doc.body.dataset.sceneryMode='zakum-dark';doc.body.classList.remove('scenery-on');
+  assert.equal(w.getComputedStyle(footer).backgroundColor,normalFooterBackground,'Scenery Off preserves the normal footer');
+  assert.equal(w.getComputedStyle(footer).padding,normalFooterPadding);
   const choices = [...doc.querySelectorAll('[data-footer-style-choice]')];
   assert.deepEqual(choices.map(button => button.textContent), ['Clear', 'Personal', 'Emphasis']);
   assert.equal(doc.querySelector('.community-footer-styles').getAttribute('role'), 'group');

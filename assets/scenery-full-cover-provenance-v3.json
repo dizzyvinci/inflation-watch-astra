@@ -1,0 +1,33 @@
+{
+  "updatedAt": "2026-11-05T10:57:50.252968+00:00",
+  "notes": "Single full-viewport cover layer, no repeated copies or central mask. Originals retained. WebP encoding only; no visual crop edits. Lantern market made with built-in image_gen.",
+  "assets": [
+    {
+      "file": "zakum-dark-v2.webp",
+      "bytes": 482474,
+      "sha256": "ec697bc885977cde6637763eb5d7f399632865e2aad1abdb3d841c863ccddea3",
+      "original": "zakum-dark-v2.png"
+    },
+    {
+      "file": "zakum-bright-v2.webp",
+      "bytes": 485772,
+      "sha256": "f3b9455206bf4bfdb8615ec8ea35168efba732fa0d873d0d85ae38f0e2552b99",
+      "original": "zakum-bright-v2.png"
+    },
+    {
+      "file": "lantern-market-v1.webp",
+      "bytes": 686004,
+      "sha256": "2dbd99b77f3954fdebf918453172d3b44772fc5eeef6d081de57781d5bd446bf",
+      "original": "lantern-market-v1.png"
+    }
+  ],
+  "raidReference": {
+    "file": "zakum-raid-reference.jpg",
+    "imageUrl": "https://upload.inven.co.kr/upload/2010/08/28/bbs/i28720949.jpg?MW=800",
+    "page": "https://www.inven.co.kr/board/maple/2316/549",
+    "notes": "2010 classic-game raid screenshot found via public image search. MapleStory game imagery \u00a9 Nexon. Optional low-resolution reference, not source market data.",
+    "bytes": 98254
+  },
+  "lanternPrompt": "Use case: illustration-story. Asset type: full-viewport background for inflation.gg, a MapleStory fan market dashboard. Create one single seamless-looking landscape composition (wide 16:9), not panels, no borders or letterboxing. Scene: a cozy lantern-lit forest market at blue-green dusk inside enormous old trees, winding wooden market platforms and rope bridges, moss, ferns, glowing fireflies, little potion stalls and coin pouches, a few tiny cheerful MapleStory-style adventurers trading and exploring. Beautiful finely detailed classic 2D pixel-art game scenery, readable silhouettes, rich forest greens and muted warm amber lantern light; calm, wholesome atmosphere to match a dark olive dashboard. Full-bleed detailed scenery all the way to every edge, no large empty black area. Composition: interesting forest/stalls visible in both left and right outer thirds, central woodland depth. No text, letters, numbers, UI, watermark or logos. Decorative fan illustration, not a screenshot.",
+  "lanternTool": "built-in image_gen"
+}

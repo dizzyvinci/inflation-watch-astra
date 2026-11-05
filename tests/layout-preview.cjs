@@ -7,6 +7,7 @@ const script = fs.readFileSync(path.join(web, 'layout-preview.js'), 'utf8');
 const inspector = fs.readFileSync(path.join(web, 'chart-interaction.js'), 'utf8');
 const page = fs.readFileSync(path.join(web, 'index.html'), 'utf8');
 const key = 'astra-banner-layout';
+const orderKey = 'astra-banner-order';
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
 function verifyResponsiveStyleContract() {
@@ -51,7 +52,22 @@ function verifyResponsiveStyleContract() {
       const chartWidth = shellWidth / 3, artworkWidth = shellWidth * 2 / 3;
       assert(chartWidth >= 360 && artworkWidth >= chartWidth * 1.99);
     } else {
-      assert.equal(art.gridColumn, '1'); assert.equal(art.gridRow, '1'); assert.equal(chart.gridRow, '2');
+      assert.equal(art.gridColumn, '1'); assert.equal(art.gridRow, '2'); assert.equal(chart.gridRow, '1');
+    }
+    const sceneBefore = art.backgroundImage;
+    doc.body.dataset.bannerOrder = 'rate-first';
+    const swappedCopy = w.getComputedStyle(doc.querySelector('.hero-copy'));
+    const swappedArt = w.getComputedStyle(doc.querySelector('.hero-art'));
+    const swappedChart = w.getComputedStyle(doc.querySelector('.banner-preview-chart-slot'));
+    assert.equal(swappedArt.backgroundImage, sceneBefore, 'swap preserves artwork');
+    if (viewport >= 1200) {
+      assert.equal(swappedChart.gridColumn, '3');
+      assert.equal(swappedCopy.gridColumn, '1 / 3');
+      assert.equal(swappedArt.gridColumn, '2 / 4', 'desktop artwork stays in place');
+    } else {
+      assert.equal(swappedChart.gridRow, '2');
+      assert.equal(swappedCopy.gridRow, '1');
+      assert.equal(swappedArt.gridRow, '1', 'scenery remains behind rate when stacked');
     }
     assert.equal(w.getComputedStyle(doc.querySelector('.hero-merchant')).transform, 'none');
     widths.push([viewport, Math.round(shellWidth * 100) / 100]);
@@ -106,7 +122,9 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   assert.equal(controls.closest('#scenery-options'), null, 'control is available when scenery is off');
   assert.equal(controls.getAttribute('role'), 'group');
   assert.equal(controls.getAttribute('aria-label'), 'Banner layout');
-  assert.deepEqual([...controls.querySelectorAll('button')].map(button => button.textContent), ['Art banner', 'Chart beside rate']);
+  assert.deepEqual([...controls.querySelectorAll('button')].map(button => button.textContent), ['Art banner', 'Chart beside rate', 'Rate first']);
+  const swap = doc.getElementById('banner-order-toggle');
+  assert.equal(swap.disabled, true);
   assert([...controls.querySelectorAll('button')].every(button => button.type === 'button' && button.getAttribute('aria-controls') === 'rate-section'));
   const chartChoice = controls.querySelector('[data-banner-layout-choice="chart"]');
   assert.equal(chartChoice.tabIndex, 0, 'native buttons participate in keyboard navigation');
@@ -167,10 +185,24 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   assert.equal(preferences.get('astra-scenery'), 'off');
   assert.equal(preferences.get('astra-hero-layout'), 'dials-first');
   assert.equal(preferences.get('inflation-footer-style'), 'personal');
-  assert.deepEqual(calls.reads, [key]);
-  assert(calls.writes.every(([name, value]) => name === key && ['chart', 'original'].includes(value)));
+  assert.deepEqual(calls.reads, [key, orderKey]);
+  assert(calls.writes.every(([name, value]) => (name === key && ['chart', 'original'].includes(value)) || (name === orderKey && ['chart-first', 'rate-first'].includes(value))));
+  choose('chart');
+  assert.equal(swap.disabled, false);
+  swap.click();
+  assert.equal(doc.body.dataset.bannerOrder, 'rate-first');
+  assert.equal(swap.getAttribute('aria-pressed'), 'true');
+  assert.equal(before.hero.firstElementChild, before.copy, 'reading and keyboard order follows rate-first layout');
+  assert.equal(before.copy.nextElementSibling.firstElementChild, history);
+  assert.equal(doc.getElementById('main-chart'), before.main, 'swap retains original chart');
+  assert.equal(before.main.querySelector('.chart-inspector-toggle'), follow);
+  choose('original');
+  assert.equal(history.parentNode, originalParent);
+  assert.equal(swap.disabled, true);
   choose('chart');
   const restored = fixture({ preferences });
+  assert.equal(restored.doc.body.dataset.bannerOrder, 'rate-first');
+  assert.equal(restored.before.hero.firstElementChild, restored.before.copy);
   assert.equal(restored.doc.body.dataset.bannerLayout, 'chart');
   assert(restored.before.hero.contains(restored.before.main));
   restored.dom.window.close();
@@ -192,6 +224,8 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   const blocked = fixture({ blocked: true, legacy: true });
   blocked.doc.querySelector('[data-banner-layout-choice="chart"]').click();
   assert(blocked.before.hero.contains(blocked.before.main));
+  blocked.doc.getElementById('banner-order-toggle').click();
+  assert.equal(blocked.doc.body.dataset.bannerOrder, 'rate-first');
   blocked.doc.querySelector('[data-banner-layout-choice="original"]').click();
   assert.equal(blocked.before.hero.contains(blocked.before.main), false);
   assert.equal(blocked.calls.network, 0);

@@ -1,4 +1,5 @@
 .community-prose{max-width:850px;margin-bottom:30px}
+.market-comparison .page-heading{justify-content:center;text-align:center}.market-comparison h2,.market-comparison h3,.market-comparison .notice,.market-comparison #market-comparison-window,.market-comparison #market-comparison-activity{text-align:center}.market-comparison-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin:20px 0}.market-comparison-card{padding:24px 18px;border:1px solid var(--line);border-radius:10px;background:var(--surface);text-align:center;min-width:0}.market-comparison-card h2{font-size:21px}.market-comparison-value{display:block;font-size:35px;line-height:1.25;color:var(--gold);margin:12px 0}.market-comparison-card p{font-size:15px;line-height:1.7;margin-bottom:10px}.market-comparison-card small{display:block;font-size:12px;line-height:1.6;color:var(--muted)}.market-comparison .panel>p{font-size:15px;line-height:1.8}.market-comparison-method p{max-width:100ch;margin:0 auto 18px}.market-comparison-method h2{margin-top:25px}.market-comparison a,.market-comparison-link{color:var(--gold);text-decoration:underline;text-underline-offset:3px}.market-comparison-link{font-size:14px;text-align:center}.market-comparison .table-wrap td,.market-comparison .table-wrap th{text-align:center;white-space:normal;min-width:120px}@media(max-width:800px){.market-comparison-cards{grid-template-columns:1fr}.market-comparison-card{padding:18px}.market-comparison-value{font-size:32px}.market-comparison .panel>p{font-size:14px}}
 .community-prose h2{margin-top:29px;font-size:19px}
 .community-prose p{max-width:75ch;line-height:1.85}
 .community-prose a,.community-contact p a,.community-back{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
@@ -7,18 +8,27 @@
 .community-footer-button{color:inherit;text-align:left}
 .community-footer-button:hover{color:var(--gold)}
 .community-back{display:inline-block;margin-top:13px;font-size:12px}
-footer.community-footer{text-align:center;justify-items:center}
-footer.community-footer .footer-story{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:18px;font-weight:400;line-height:1.85;text-align:center}
-footer.community-footer[data-footer-style="personal"] .footer-story{font-family:Georgia,"Times New Roman",serif;line-height:1.9}
+footer.community-footer{grid-template-columns:minmax(0,1fr);text-align:left;justify-items:start;gap:14px}
+body.scenery-on:is([data-scenery-mode="zakum-dark"],[data-scenery-mode="zakum-bright"],[data-scenery-mode="zakum-raid"],[data-scenery-mode="lantern-market"]) footer.community-footer{background:rgba(14,26,19,.94);border:1px solid rgba(144,164,130,.35);border-radius:12px;padding:24px;color:var(--text,#eae7dc);box-shadow:0 8px 26px rgba(3,12,7,.2)}
+footer.community-footer .footer-story{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:17px;font-weight:400;line-height:1.7;text-align:left;max-width:760px}
+footer.community-footer .footer-story>p{margin-bottom:10px}
+footer.community-footer .footer-story>p:nth-child(2){font-size:15px;line-height:1.7}
+footer.community-footer .footer-story>p:last-child{font-size:13px;line-height:1.6;margin:12px 0 0}
+footer.community-footer .footer-brand,footer.community-footer .footer-signature,footer.community-footer .footer-links,footer.community-footer .footer-links button{text-align:left}
+footer.community-footer .footer-links{align-items:flex-start;justify-content:flex-start;flex-direction:row;flex-wrap:wrap;gap:10px 20px}
+footer.community-footer a{text-decoration:underline;text-decoration-line:underline;text-underline-offset:3px}
+a[href^="https://maplestory-classic.com/"],a[href^="https://mesos.watch/"],a[href^="https://maplestory.market/"],a[href^="https://meowdb.com/"],a[href^="https://maplestory.io/"]{text-decoration:underline;text-decoration-line:underline;text-underline-offset:3px}
+footer.community-footer[data-footer-style="personal"] .footer-story{font-family:Georgia,"Times New Roman",serif;line-height:1.8}
 footer.community-footer[data-footer-style="personal"] .footer-story>p:first-child{font-style:italic}
-footer.community-footer[data-footer-style="emphasis"] .footer-story{font-weight:600;line-height:1.9}
-footer.community-footer .community-footer-styles{grid-column:1/-1;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:4px auto 0;max-width:100%;text-align:center}
+footer.community-footer[data-footer-style="emphasis"] .footer-story{font-weight:600;line-height:1.75}
+footer.community-footer .community-footer-styles{grid-column:1/-1;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:6px;margin:4px 0 0;max-width:100%;text-align:left}
 .community-footer-styles>span{font:12px/1.5 system-ui,sans-serif;margin-right:4px;color:var(--muted)}
 .community-footer-styles button{font:12px/1.5 system-ui,sans-serif;padding:6px 11px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--text);cursor:pointer}
 .community-footer-styles button[aria-pressed="true"]{border-color:var(--gold);background:var(--surface2);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
 .community-footer-styles button:hover{border-color:var(--gold)}
 .community-footer-styles button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
-@media(max-width:700px){footer.community-footer .footer-story{font-size:16px}footer.community-footer .community-footer-styles{order:4;gap:5px}.community-footer-styles button{padding:7px 10px}}
+@media(max-width:700px){footer.community-footer .footer-story{font-size:15px}footer.community-footer .footer-story>p:nth-child(2){font-size:14px}footer.community-footer .footer-story>p:last-child{font-size:12px;line-height:1.65}footer.community-footer .community-footer-styles{order:4;gap:5px}.community-footer-styles button{padding:7px 10px}}
+@media(max-width:700px){body.scenery-on:is([data-scenery-mode="zakum-dark"],[data-scenery-mode="zakum-bright"],[data-scenery-mode="zakum-raid"],[data-scenery-mode="lantern-market"]) footer.community-footer{padding:20px 16px}}
 dialog.community-contact{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;padding:30px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:12px}
 .community-contact::backdrop{background:#08110dcc;backdrop-filter:blur(3px)}
 .community-contact h2{max-width:430px;font-size:25px;line-height:1.35;padding-right:18px}

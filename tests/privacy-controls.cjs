@@ -14,7 +14,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 
 function fixture({ preferences = new Map(), blocked = false, readonly = false,
   config = validConfig, responseOk = true, responseStatus = 200, contentType = 'application/json', pending = false, url = 'https://inflation.gg/?existing=kept#nx-calculator',
-  injected = false, latePrivacy = false } = {}) {
+  injected = false, latePrivacy = false, previewDefault = false, previewHeader = 'password' } = {}) {
   const navigation = [], errors = [], console = new VirtualConsole();
   console.on('jsdomError', error => {
     if (error.message.includes('navigation')) navigation.push(error.message);
@@ -24,6 +24,9 @@ function fixture({ preferences = new Map(), blocked = false, readonly = false,
     url, runScripts: 'outside-only', pretendToBeVisual: true, virtualConsole: console,
   });
   const w = dom.window, doc = w.document;
+  // Most cases exercise explicit-choice behavior with the preview default
+  // disabled. Dedicated cases below exercise the actual marked preview default.
+  if (!previewDefault) delete doc.querySelector('footer').dataset.previewAnalyticsDefault;
   const calls = { fetch: [], beacon: 0, xhr: 0, writes: [] };
   const storage = { blocked, readonly };
   Object.defineProperty(w, 'localStorage', { value: {
@@ -35,7 +38,7 @@ function fixture({ preferences = new Map(), blocked = false, readonly = false,
     },
   } });
   let complete;
-  const response = () => ({ ok: responseOk, status: responseStatus, headers: { get: () => contentType }, json: async () => config });
+  const response = () => ({ ok: responseOk, status: responseStatus, headers: { get: name => name.toLowerCase()==='content-type'?contentType:name.toLowerCase()==='x-astra-preview'?previewHeader:null }, json: async () => config });
   w.fetch = (request, options) => {
     calls.fetch.push({ request, options });
     if (pending) return new Promise(resolve => { complete = () => resolve(response()); });
@@ -67,6 +70,19 @@ const assertOff = f => {
 };
 
 (async () => {
+  assert.match(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),/data-preview-analytics-default="on"/);
+  const defaultOn=fixture({previewDefault:true});await flush();
+  assert.equal(defaultOn.calls.fetch.length,1);assert.equal(scripts(defaultOn).length,1);
+  assert(defaultOn.doc.querySelector('[data-analytics-choice="on"]').getAttribute('aria-pressed')==='true');
+  assert(defaultOn.doc.querySelector('.privacy-choice-description').textContent.includes('preview defaults to On'));
+  assert(defaultOn.doc.querySelector('.footer-story p a[href="#privacy"]'));
+  assert.equal(defaultOn.preferences.has(preferenceKey),false,'preview default must not fabricate a saved explicit choice');
+  click(defaultOn,'off');assertOff(defaultOn);assert.equal(scripts(defaultOn).length,0);assert.equal(defaultOn.preferences.get(preferenceKey),'off');
+  const previewOff=fixture({previewDefault:true,preferences:defaultOn.preferences});await flush();assertOff(previewOff);
+  assert.equal(previewOff.calls.fetch.length,0);assert.equal(scripts(previewOff).length,0);previewOff.close();defaultOn.close();
+  const publicDefault=fixture({previewDefault:true,previewHeader:null});await flush();assertOff(publicDefault);
+  assert.equal(scripts(publicDefault).length,0,'external default-on script requires server-confirmed password preview');publicDefault.close();
+  const blockedDefault=fixture({previewDefault:true,blocked:true});await flush();assertOff(blockedDefault);assert.equal(blockedDefault.calls.fetch.length,0);blockedDefault.close();
   const preferences = new Map([['astra-scenery', 'on'], ['astra-hero-layout', 'dials-first']]);
   const f = fixture({ preferences });
   assertOff(f); assert.equal(f.calls.fetch.length, 0); assert.equal(scripts(f).length, 0);
@@ -169,5 +185,5 @@ const assertOff = f => {
   late.w.eval(community); await flush(); assert.equal(late.doc.querySelectorAll('.privacy-controls-panel').length, 2);
   assert.equal(late.doc.querySelector('.footer-story').outerHTML, late.storyBefore); assert.equal(late.calls.fetch.length, 0); late.close();
 
-  console.log('PASS: default-OFF/no network, explicit and saved consent, strict manual config, one approved script, withdrawal reload/race safety, blocked storage, synced disclosures and unchanged personal story');
+  console.log('PASS: disclosed preview default-ON/one script, saved-OFF/no load, explicit and saved choices, server-confirmed default scope, strict manual config, withdrawal reload/race safety, blocked storage and unchanged personal story');
 })().catch(error => { console.error(error); process.exitCode = 1; });

@@ -9,8 +9,12 @@
   const scriptId = 'optional-cloudflare-analytics';
   const approvedSource = 'https://static.cloudflareinsights.com/beacon.min.js';
   const forcedOffParameter = 'optional-analytics';
+  // Preview-only default. A server-confirmed preview response is required
+  // before loading the external script; saved Off always wins.
+  const previewDefaultOn = footer.dataset.previewAnalyticsDefault === 'on';
   const panels = [];
   let choice = 'off';
+  let previewDefaultActive = false;
   let generation = 0;
   let controller;
   let loading;
@@ -55,6 +59,7 @@
   function useOff() {
     const reloadNeeded = choice === 'on' || scriptAdded;
     choice = 'off';
+    previewDefaultActive = false;
     generation++;
     controller?.abort();
     controller = undefined;
@@ -92,14 +97,21 @@
     return config;
   }
 
-  async function enable(savedConsent = false) {
-    if (choice === 'on' && (loading || document.getElementById(scriptId))) return;
+  async function enable(savedConsent = false, fromPreviewDefault = false) {
+    if (choice === 'on' && (loading || document.getElementById(scriptId))) {
+      if (!savedConsent && !fromPreviewDefault) {
+        previewDefaultActive = false;
+        message = save('on') ? 'Your On choice is saved. Optional Cloudflare metrics remain enabled.' : 'Metrics are on in this page, but the choice could not be saved. Off can still reload without the script.';
+        update();
+      }
+      return;
+    }
     if (unexpectedBeacon()) {
       choice = 'off'; save('off');
       message = 'An analytics script added outside this control is present. Hosting configuration must be corrected; this switch cannot undo previously loaded code.';
       update(); return;
     }
-    if (!save('on')) {
+    if (!fromPreviewDefault && !save('on')) {
       choice = 'off';
       message = 'Browser storage is unavailable. Optional analytics stays off.';
       update(); return;
@@ -112,18 +124,24 @@
       } catch { /* This explicit click still authorizes this document only. */ }
     }
     choice = 'on';
+    previewDefaultActive = fromPreviewDefault;
     const current = ++generation;
     controller = new AbortController();
-    message = savedConsent ? 'Restoring your saved On choice. Loading optional Cloudflare metrics.' : 'Your choice is on. Loading optional Cloudflare metrics.';
+    message = fromPreviewDefault ? 'This password-protected preview defaults to On. Loading the disclosed Cloudflare metrics; choose Off to disable them.'
+      : savedConsent ? 'Restoring your saved On choice. Loading optional Cloudflare metrics.' : 'Your choice is on. Loading optional Cloudflare metrics.';
     update();
     loading = (async () => {
       try {
-        // No request is made at all before consent (or for an OFF/invalid choice).
+        // Saved/forced Off never reaches this request. A default is not stored
+        // as if the visitor explicitly selected On.
         const response = await window.fetch('/analytics-config.json', {
           cache: 'no-store', credentials: 'same-origin', redirect: 'error', signal: controller.signal,
         });
         if (response.status === 401 || response.status === 403) throw new Error('Unlock this site again before enabling optional metrics.');
         if (!response.ok) throw new Error('Optional analytics configuration is unavailable.');
+        if (fromPreviewDefault && response.headers?.get?.('x-astra-preview') !== 'password') {
+          throw new Error('The On default applies only to the password-protected preview.');
+        }
         const contentType = response.headers?.get?.('content-type');
         if (contentType && !/\bapplication\/(?:[a-z0-9.+-]*\+)?json\b/i.test(contentType)) {
           throw new Error('Configuration is not JSON; unlock this site again if your session expired.');
@@ -153,7 +171,8 @@
         document.head.append(script);
       } catch (error) {
         if (choice !== 'on' || current !== generation) return;
-        choice = 'off'; save('off');
+        choice = 'off'; previewDefaultActive = false;
+        if (!fromPreviewDefault) save('off');
         message = 'Optional analytics stays off: ' + (error instanceof Error ? error.message : 'configuration could not be loaded.');
         update();
       } finally {
@@ -168,12 +187,12 @@
     panel.setAttribute('aria-labelledby', id + '-title');
     const heading = make('h2', '', headingText); heading.id = id + '-title';
     const state = make('p', 'privacy-choice-state');
-    const explanation = make('p', 'privacy-choice-description', 'With On, Cloudflare may process page views, visited/referring URLs, device and browser information, and performance measurements. This is voluntary and does not affect prices, market feeds or features.');
+    const explanation = make('p', 'privacy-choice-description', 'With On, Cloudflare may process page views, visited/referring URLs, device and browser information, and performance measurements. This password-protected preview defaults to On unless you saved Off. Prices, market feeds and features work in either mode.');
     explanation.id = id + '-description';
     const options = make('div', 'privacy-choice-options');
     options.setAttribute('role', 'group'); options.setAttribute('aria-label', 'Optional Cloudflare browser metrics');
     const buttons = ['off', 'on'].map(value => {
-      const button = make('button', 'privacy-choice-button', value === 'off' ? 'Off (default)' : 'On (optional)');
+      const button = make('button', 'privacy-choice-button', value === 'off' ? 'Off' : 'On (preview default)');
       button.type = 'button'; button.dataset.analyticsChoice = value;
       button.setAttribute('aria-describedby', explanation.id);
       button.addEventListener('click', () => { if (value === 'on') enable(); else useOff(); });
@@ -193,7 +212,7 @@
     const prose = privacy?.querySelector('.community-prose');
     if (!prose || document.getElementById('privacy-analytics-controls')) return !!prose;
     const intro = prose.querySelector('p');
-    if (intro) intro.textContent = 'This note describes inflation.gg, maintained by DishWasher. There are no visitor accounts or ads. Optional Cloudflare browser metrics are off by default and are controlled by the choice below, including a saved On choice.';
+    if (intro) intro.textContent = 'This note describes inflation.gg, maintained by DishWasher. There are no visitor accounts or ads. Optional Cloudflare browser metrics are On by default in this password-protected preview unless you saved Off. The controls below explain the data and let you turn them Off or On.';
     const panel = addPanel(prose, 'privacy-analytics-controls', 'Optional performance metrics');
     if (intro) intro.after(panel);
     const sources = make('p', 'privacy-choice-sources');
@@ -214,16 +233,20 @@
   if (unexpectedBeacon()) message = 'An analytics script added outside this control is present. Hosting configuration must be corrected; the Off setting cannot undo code already loaded.';
   else message = 'No optional analytics script is loaded by this control.';
   update();
-  let saved;
-  try { saved = localStorage.getItem(preferenceKey); } catch { /* OFF is the safe default. */ }
+  let saved, storageReadable = true;
+  try { saved = localStorage.getItem(preferenceKey); } catch { storageReadable = false; }
   if (hasForcedOff()) save('off');
   else if (saved === 'on') enable(true);
+  else if (saved === null && storageReadable && previewDefaultOn) enable(false, true);
 
   // A withdrawal in another tab or restored page must not revive a loaded beacon.
   window.addEventListener('storage', event => { if (event.key === preferenceKey && event.newValue !== 'on' && choice === 'on') useOff(); });
   window.addEventListener('pageshow', event => {
     if (!event.persisted || choice !== 'on') return;
-    try { if (localStorage.getItem(preferenceKey) !== 'on') useOff(); }
+    try {
+      const saved = localStorage.getItem(preferenceKey);
+      if (saved !== 'on' && !(previewDefaultActive && saved === null && !hasForcedOff())) useOff();
+    }
     catch { useOff(); }
   });
 })();

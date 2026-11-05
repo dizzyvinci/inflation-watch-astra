@@ -12,6 +12,8 @@
       alt: 'Original game screenshot of DishWasher’s MapleStory character, including the nameplate.' }),
     transparent: Object.freeze({ label: 'Transparent', src: '/assets/dishwasher-transparent-v2.png',
       alt: 'Transparent cutout of DishWasher’s MapleStory character.' }),
+    'transparent-large': Object.freeze({ label: 'Large transparent', src: '/assets/dishwasher-transparent-v2.png',
+      alt: 'Large transparent cutout of DishWasher’s MapleStory character.' }),
     pixelart: Object.freeze({ label: 'Pixelart', src: '/assets/dishwasher-pixel-v2.png',
       alt: 'Pixel-art rendering of DishWasher’s MapleStory character.' }),
   });
@@ -81,8 +83,9 @@
     button.addEventListener('click', () => select(value, true));
     buttons.push(button); options.append(button);
   }
-  panel.append(figure, options, feedback);
-  signature.before(panel);
+  panel.append(figure, feedback, options);
+  const signatureRow = document.createElement('div'); signatureRow.className = 'author-signature-row';
+  signature.before(signatureRow); signatureRow.append(signature, panel);
   let saved;
   try { saved = localStorage.getItem(preferenceKey); } catch { /* Original is the cosmetic default. */ }
   select(saved);

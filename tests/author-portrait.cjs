@@ -49,7 +49,10 @@ assert(f.doc.querySelector('.footer-signature').textContent.includes(chef), 'fai
 assert.equal(f.w.getComputedStyle(image(f)).objectFit, 'contain');
 assert.equal(f.w.getComputedStyle(f.doc.querySelector('.author-portrait-frame')).width, '220px');
 assert.equal(f.doc.querySelector('.author-portrait-options').getAttribute('role'), 'group');
-assert.deepEqual([...f.doc.querySelectorAll('[data-author-portrait]')].map(node => node.textContent), ['Original', 'Transparent', 'Pixelart']);
+assert.deepEqual([...f.doc.querySelectorAll('[data-author-portrait]')].map(node => node.textContent), ['Original', 'Transparent', 'Large transparent', 'Pixelart']);
+assert.equal(f.doc.querySelector('.footer-signature').parentElement.className,'author-signature-row');
+assert.equal(f.doc.querySelector('.footer-signature').nextElementSibling.id,'author-portrait','portrait and every option sit in the signature row to its right');
+assert.equal(f.doc.querySelector('#author-portrait').lastElementChild.className,'author-portrait-options','portrait toggles come last after image and signature content');
 load(f); assert.equal(f.doc.querySelector('.author-portrait-frame').hidden, false); assertUnchangedWords(f);
 const originalImage = image(f);
 choose(f, 'transparent'); assert.equal(image(f).getAttribute('src'), '/assets/dishwasher-transparent-v2.png');
@@ -57,6 +60,13 @@ assert.equal(f.preferences.get(key), 'transparent'); assert.equal(f.doc.querySel
 assert(f.doc.querySelector('.footer-signature').textContent.includes(chef));
 originalImage.dispatchEvent(new f.w.Event('load')); assert.equal(f.doc.querySelector('.author-portrait-frame').hidden, true, 'stale image event must not show the wrong source');
 load(f); assert(image(f).alt.includes('Transparent')); assertUnchangedWords(f);
+assert.equal(f.w.getComputedStyle(f.doc.querySelector('.author-portrait-frame')).backgroundColor,'rgba(0, 0, 0, 0)');
+assert.equal(f.w.getComputedStyle(f.doc.querySelector('.author-portrait-frame')).borderTopWidth,'0px');
+choose(f,'transparent-large');load(f);
+assert.equal(image(f).getAttribute('src'),'/assets/dishwasher-transparent-v2.png');
+assert.equal(f.preferences.get(key),'transparent-large');
+assert.equal(f.w.getComputedStyle(f.doc.querySelector('.author-portrait-frame')).width,'380px');
+assert.equal(f.w.getComputedStyle(f.doc.querySelector('.author-portrait-frame')).backgroundColor,'rgba(0, 0, 0, 0)');assertUnchangedWords(f);
 choose(f, 'pixelart'); assert.equal(image(f).getAttribute('src'), '/assets/dishwasher-pixel-v2.png');
 assert.equal(f.w.getComputedStyle(image(f)).imageRendering, 'pixelated'); load(f); assertUnchangedWords(f);
 assert.equal(f.doc.querySelectorAll('[data-author-portrait][aria-pressed="true"]').length, 1);
@@ -70,7 +80,7 @@ assertUnchangedWords(f);
 f.w.eval(script); assert.equal(f.doc.querySelectorAll('#author-portrait').length, 1); assert.equal(f.doc.querySelectorAll('#author-portrait img').length, 1);
 assert.equal(f.calls.fetch, 0); assert.equal(f.calls.beacon, 0); assert.equal(f.calls.xhr, 0); f.close();
 
-for (const mode of ['original', 'transparent', 'pixelart']) {
+for (const mode of ['original', 'transparent', 'transparent-large', 'pixelart']) {
   const restored = fixture({ saved: mode }); assert.equal(restored.doc.getElementById('author-portrait').dataset.portraitMode, mode);
   assert.equal(restored.doc.querySelectorAll('#author-portrait img').length, 1); load(restored); assertUnchangedWords(restored); restored.close();
 }
