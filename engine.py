@@ -120,7 +120,7 @@ def fetch_feed(offline=False):
     if offline:
         return validate_feed(read(cache)), {'status': 'cached', 'checkedAt': previous.get('checkedAt'), 'detail': 'Offline verification; retained source timestamp.'}
     cfg = read(ROOT / 'config.json')
-    headers = {'User-Agent': 'inflation.watch/preview (local market-index research)', 'Accept': 'application/json'}
+    headers = {'User-Agent': 'inflation.gg/preview (local market-index research; https://inflation.gg/)', 'Accept': 'application/json'}
     if previous.get('etag'):
         headers['If-None-Match'] = previous['etag']
     if previous.get('lastModified'):

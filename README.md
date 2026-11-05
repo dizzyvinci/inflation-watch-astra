@@ -1,4 +1,4 @@
-# inflation.watch · Astra
+# inflation.gg · Astra
 
 A MapleStory Classic market dashboard: a fixed-basket price index, a daily meso-per-NX estimate, recorded market-volume charts and separately dated scanner/offer references. Independent fan project; no Nexon affiliation.
 

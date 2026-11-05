@@ -343,6 +343,15 @@ function renderCash(){
  $('cash-table').innerHTML=`<table><caption class="sr-only">Cash pricing exploration; ${rolling?'rolling scanner capture':'volume-weighted daily-median estimates'}; ${cashSide==='sell'?'selling NX':'buying NX items'}</caption><thead><tr>${headers.map(([key,label])=>`<th aria-sort="${cashSortKey===key?(cashSortAsc?'ascending':'descending'):'none'}"><button type="button" data-cash-sort="${key}">${label} ${cashSortKey===key?(cashSortAsc?'↑':'↓'):''}</button></th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr data-cash-item="${esc(r.slug)}" data-rate="${r.rate??''}" data-verdict="${r.verdict}"><td><button class="item-link" data-item="${esc(r.slug)}">${sprite(r)}<span>${esc(r.name)}<small>${rolling?(r.windowDays?`${number(r.windowDays)}-day source window`:'Source window unknown'):`${model.start||'?'}–${model.end||'?'}`}${r.missing?' · Evidence unavailable':''}</small></span></button></td><td>${number(r.nx)}</td><td>${number(r.price,1)}</td><td class="cash-${r.verdict}">${number(r.rate,2)}</td><td>${number(r.quantity)}</td><td>${number(r.windowDays)}</td><td>${rolling?'Unavailable':number(r.lowRate,2)}</td><td>${rolling?'Unavailable':number(r.highRate,2)}</td><td class="cash-${r.verdict}">${r.deltaPct==null?'Unknown':`${percent(r.deltaPct)}<small>${r.verdict==='favorable'?'More favorable':r.verdict==='less-favorable'?'Less favorable':'At reference'}</small>`}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">No items match this comparison filter.</td></tr>'}</tbody></table>`;
 }
 
+function renderCashBasketChart(){
+ const model=snapshot.cashBasket;if(model?.status!=='ok'||!Array.isArray(model.history))return;const point=model.latest;
+ const sameBase=model.baseStart===snapshot.baseStart&&model.baseEnd===snapshot.baseEnd;
+ const dated=rows=>rows.map(p=>({...p,date:p.day,datePrecision:'day',value:p.cpi}));
+ const series=[{name:'Fixed cash-item price index',color:'#89c6b0',fill:false,maxGapMs:129600000,points:dated(model.history)}];
+ if(sameBase)series.push({name:'Non-cash public 50 price index',color:'#edc471',fill:false,maxGapMs:129600000,points:dated(snapshot.history)});
+ $('cash-basket-chart').innerHTML=chartHTML(series,{yTitle:'Price index · reference week = 100',event:false,dateOnlyAxis:true,allTime:true,width:Math.max(320,($('cash-basket-chart').clientWidth||1148)-28)});
+ $('cash-basket-chart-note').textContent=`${sameBase?'Cash and non-cash indexes share the same reference week.':'Non-cash comparison omitted because reference periods differ.'} ${point?`${number(point.coverage*100,1)}% of fixed cash weight observed on ${point.day}; ${number(point.pricedCoverage*100,1)}% has a qualifying current or carried price.`:''} No partial-cohort renormalization; initial incomplete history stays blank.`;
+}
 function renderCashBasket(){
  const model=snapshot.cashBasket;
  const available=model?.status==='ok'&&Array.isArray(model.rows)&&Array.isArray(model.history)&&model.rows.length>0;
@@ -355,12 +364,7 @@ function renderCashBasket(){
  $('cash-basket-stats').innerHTML=stats.map(([label,value,note])=>`<div class="stat-cell"><span>${esc(label)}</span><strong>${esc(value)}</strong><small>${esc(note)}</small></div>`).join('');
  const nxDay=snapshot.latest?.day,nxChange=snapshot.baseNxRate>0?(snapshot.latest.nxRate/snapshot.baseNxRate-1)*100:null;
  $('cash-basket-implications').innerHTML=`<h2>Cash prices and the NX rate can move differently.</h2><p>The fixed Cash Basket is <strong>${Number.isFinite(point?.cpi)?percent(point.cpi-100):'unavailable'}</strong> versus its base on ${esc(point?.day||'an unavailable day')}; the daily NX estimate is <strong>${Number.isFinite(nxChange)?percent(nxChange):'unavailable'}</strong> versus its frozen reference rate on ${esc(nxDay||'an unavailable day')}. ${point?.partial||snapshot.latest?.partial?'The latest source day is partial. ':''}The Cash Basket holds reference expenditure weights fixed. NX divides cash-item meso prices by their NX costs and weights the ratios by each day’s recorded sale quantities.</p><p>More sales shifting toward high-ratio or low-ratio items can move the NX estimate even when the fixed price mix changes less. Cohort coverage and qualifying or carried prices can also differ. This gap is consistent with those methodological differences; it does not measure the exact composition effect or an individual player’s purchasing power.</p>`;
- const sameBase=model.baseStart===snapshot.baseStart&&model.baseEnd===snapshot.baseEnd;
- const dated=rows=>rows.map(p=>({...p,date:p.day,datePrecision:'day',value:p.cpi}));
- const series=[{name:'Fixed cash-item price index',color:'#89c6b0',fill:false,maxGapMs:129600000,points:dated(model.history)}];
- if(sameBase)series.push({name:'Non-cash public 50 price index',color:'#edc471',fill:false,maxGapMs:129600000,points:dated(snapshot.history)});
- $('cash-basket-chart').innerHTML=chartHTML(series,{yTitle:'Price index · reference week = 100',event:false,dateOnlyAxis:true,allTime:true,width:Math.max(320,($('cash-basket-chart').clientWidth||1148)-28)});
- $('cash-basket-chart-note').textContent=`${sameBase?'Cash and non-cash indexes share the same reference week.':'Non-cash comparison omitted because reference periods differ.'} ${point?`${number(point.coverage*100,1)}% of fixed cash weight observed on ${point.day}; ${number(point.pricedCoverage*100,1)}% has a qualifying current or carried price.`:''} No partial-cohort renormalization; initial incomplete history stays blank.`;
+ renderCashBasketChart();
  const missing=(model.missingBaselineNames||[]).map(esc).join(', ');
  $('cash-basket-exclusions').innerHTML=`${model.missingBaselineCount} of ${model.configuredItemCount} configured items ${model.missingBaselineCount===1?'has':'have'} no qualifying reference-week baseline${missing?`: ${missing}`:''}. Those items remain in the <a href="#nx">all-${model.configuredItemCount}-item NX pricing explorer</a> with zero cash-index weight. Other cash-category cosmetics with unverified fixed NX costs are outside this known-price cohort.`;
  $('cash-basket-definition').textContent=JSON.stringify({version:model.version,baseStart:model.baseStart,baseEnd:model.baseEnd,historyKind:model.historyKind,indexSpecification:model.indexSpecification,specificationHash:model.specificationHash,basketHash:model.basketHash,sourceSnapshotHash:model.sourceSnapshotHash,selectionSourceUpdatedAt:model.selectionSourceUpdatedAt},null,2);
@@ -475,7 +479,7 @@ async function checkSnapshot(manual=false){
 }
 
 window.addEventListener('astrabannerlayoutchange',()=>{if(snapshot&&!$('view-index').hidden)renderMainChart();});
-let volumeResizeTimer;window.addEventListener('resize',()=>{clearTimeout(volumeResizeTimer);volumeResizeTimer=setTimeout(()=>{if(snapshot){if(!$('view-index').hidden){renderVolume();renderSmega();renderReportedHistory();}if(!$('view-basket').hidden)renderCpiDetail();}},150);});
+let volumeResizeTimer;window.addEventListener('resize',()=>{clearTimeout(volumeResizeTimer);volumeResizeTimer=setTimeout(()=>{if(snapshot){if(!$('view-index').hidden){renderMainChart();renderVolume();renderSmega();renderReportedHistory();}if(!$('view-basket').hidden)renderCpiDetail();if(!$('view-cash-basket').hidden)renderCashBasketChart();}},150);});
 window.addEventListener('hashchange',()=>{route();if(!focusRouteAnchor())window.scrollTo({top:0,behavior:'instant'});});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkSnapshot();});
 $('launch-period').addEventListener('change',e=>{selectedLaunchPeriod=e.target.value;if(snapshot)render();});
