@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T09:54:47+00:00",
+  "exportedAt": "2026-11-05T10:15:57+00:00",
   "basketVersion": 2,
   "files": [
     {
@@ -726,8 +726,8 @@
     },
     {
       "path": "cache/fetch.json",
-      "bytes": 277,
-      "sha256": "66235ce6db384dfaa83749a6bf588100c98eeff3615fded7565a6d4d3215f594"
+      "bytes": 284,
+      "sha256": "b2d2b4d8e59f4da6c68960fe32bfe624871d3140a3ef75335a863b421539bc88"
     },
     {
       "path": "cache/market.json",
@@ -741,8 +741,8 @@
     },
     {
       "path": "cache/public-browser-prices.json",
-      "bytes": 10345,
-      "sha256": "f554ac99f27f48afc3834e3c73fe3f1c0fbb07f53218c4c19b48119058cd62e9"
+      "bytes": 62329,
+      "sha256": "960e32c4065ecdeb73f79ddbfe97d05f4d9827a37c185524bbcb2c9a61faed87"
     },
     {
       "path": "cache/published-smega-series.json",
@@ -756,8 +756,8 @@
     },
     {
       "path": "cache/rolling-reference-history-v2.json",
-      "bytes": 205,
-      "sha256": "e03fd87b269e126e9ca69de0b24d8ddc26bea58195dc703f9245cdc40bec2f0e"
+      "bytes": 540,
+      "sha256": "8e26e31ddc92b31c83b70d343d5f900b2df093308902d22e76db370b0ed63d87"
     },
     {
       "path": "cache/rolling-reference-history.json",
@@ -782,7 +782,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "1ca8bdf19f4d010ed12bfcae465aafeb2c9f6c291b6a0805a01eabd25213e68e"
+      "sha256": "75b5cbcc408b0d90ebff58b7a4bf21a2d39d0c3b2866f4440c06a1c513c9a842"
     },
     {
       "path": "dist/_headers",
@@ -2125,6 +2125,11 @@
       "sha256": "ce6510bb9ae85dfe518b2c82a73ed6827d8e8860e70f6830f5c0920fd9d91b46"
     },
     {
+      "path": "dist/data-eeebf04b6dfc455c.json",
+      "bytes": 328649,
+      "sha256": "eeebf04b6dfc455c438dbe6a2c105444ab2e24f058bcf14031254a3f1e70d125"
+    },
+    {
       "path": "dist/data-f6c5ed14923531e4.json",
       "bytes": 268484,
       "sha256": "f6c5ed14923531e41ca7483545d5bb63b049135652ceafa7361c549bd5349e89"
@@ -2136,13 +2141,13 @@
     },
     {
       "path": "dist/data.json",
-      "bytes": 317323,
-      "sha256": "a1e4e89de7de8f9743bbbdb5646c268336cc8461be2901f5c72e5e0a5879e205"
+      "bytes": 328649,
+      "sha256": "eeebf04b6dfc455c438dbe6a2c105444ab2e24f058bcf14031254a3f1e70d125"
     },
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "1ca8bdf19f4d010ed12bfcae465aafeb2c9f6c291b6a0805a01eabd25213e68e"
+      "sha256": "75b5cbcc408b0d90ebff58b7a4bf21a2d39d0c3b2866f4440c06a1c513c9a842"
     },
     {
       "path": "dist/history/cpi-v1.json",
@@ -2197,7 +2202,7 @@
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "f8984c0b9cd7365d4cee29481209cb0622b00b8529b30ab9e097d994a4f2a8c3"
+      "sha256": "35a4b2cd6aa114ab29318a5a1c167a3a077f8e48ff5d48ffe4fda6d5a43703ed"
     },
     {
       "path": "engine.py",
