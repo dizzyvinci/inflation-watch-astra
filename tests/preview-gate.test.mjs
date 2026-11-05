@@ -62,6 +62,16 @@ test('valid login signs eight-hour secure host cookie and sanitized redirect', a
   assert.equal(await unlocked.text(), 'unlocked'); privateResponse(unlocked);
 });
 
+test('login page preserves same-origin form context without weakening strict Origin verification', async () => {
+  const handler = withPreviewGate(() => new Response('unlocked'), { now: () => NOW });
+  const page = await handler(request('/'), env);
+  assert.equal(page.headers.get('Referrer-Policy'), 'same-origin');
+  assert.match(await page.text(), /<form method="post" action="\/__preview_login">/);
+  assert.equal((await handler(login(), env)).status, 303);
+  assert.equal((await handler(login(undefined, '/', { Origin: 'null' }), env)).status, 403);
+  assert.equal((await handler(login(undefined, '/', { Origin: 'https://example.com' }), env)).status, 403);
+});
+
 test('centered green login style is authorized by its exact CSP hash without script or external requests', async () => {
   const handler = withPreviewGate(() => { throw new Error('Not unlocked'); });
   const response = await handler(request(), env);

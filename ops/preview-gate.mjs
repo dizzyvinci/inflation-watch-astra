@@ -45,7 +45,7 @@ function privateHeaders() {
     'Cache-Control': 'private, no-store, no-transform',
     'CDN-Cache-Control': 'no-store', 'Cloudflare-CDN-Cache-Control': 'no-store',
     'Content-Type': 'text/html; charset=utf-8', 'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex, nofollow, noarchive',
+    'Referrer-Policy': 'same-origin', 'X-Robots-Tag': 'noindex, nofollow, noarchive',
     'X-Astra-Preview': 'password',
     'Content-Security-Policy': `default-src 'none'; script-src 'none'; style-src '${PREVIEW_STYLE_HASH}'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`,
   };
