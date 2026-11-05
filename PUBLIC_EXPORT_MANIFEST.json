@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T08:11:02+00:00",
+  "exportedAt": "2026-11-05T08:14:10+00:00",
   "basketVersion": 2,
   "files": [
     {
@@ -777,7 +777,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "d04f087f4e02f1c1650273eff9800400f96787b88d30fd9d04e08c19b3da0b34"
+      "sha256": "aa0de7959dac827c74adcd2a8c250cacc9a9a8e9be6cec983f57a1d02ecf668b"
     },
     {
       "path": "dist/_headers",
@@ -2105,14 +2105,19 @@
       "sha256": "ce6510bb9ae85dfe518b2c82a73ed6827d8e8860e70f6830f5c0920fd9d91b46"
     },
     {
+      "path": "dist/data-f6c5ed14923531e4.json",
+      "bytes": 268484,
+      "sha256": "f6c5ed14923531e41ca7483545d5bb63b049135652ceafa7361c549bd5349e89"
+    },
+    {
       "path": "dist/data.json",
       "bytes": 268484,
-      "sha256": "b49a9a8bde52cabe218806a937f040c6a6811f4b6d711204c2547a94e094ddf7"
+      "sha256": "f6c5ed14923531e41ca7483545d5bb63b049135652ceafa7361c549bd5349e89"
     },
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "d04f087f4e02f1c1650273eff9800400f96787b88d30fd9d04e08c19b3da0b34"
+      "sha256": "aa0de7959dac827c74adcd2a8c250cacc9a9a8e9be6cec983f57a1d02ecf668b"
     },
     {
       "path": "dist/history/cpi-v1.json",
@@ -2156,8 +2161,8 @@
     },
     {
       "path": "dist/style.css",
-      "bytes": 56733,
-      "sha256": "4d660e491be51ceb96c86cc7cfcd943cde4e2c80a386c11319b44ee85f13a650"
+      "bytes": 56991,
+      "sha256": "11f055437e91eb149a2b1128721ccbf2576aa9a742f0761035635e91c873a19c"
     },
     {
       "path": "dist/sw.js",
@@ -2167,7 +2172,7 @@
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "f3e9c879189324527694788ab785b2562c995b9f90ae0247d6d04b6faaf24efb"
+      "sha256": "4f87626b54a5969cb36ba8c3d0d9e1014482d030efbde628ec3293b562be9a41"
     },
     {
       "path": "engine.py",
@@ -2451,8 +2456,8 @@
     },
     {
       "path": "web/style.css",
-      "bytes": 56733,
-      "sha256": "4d660e491be51ceb96c86cc7cfcd943cde4e2c80a386c11319b44ee85f13a650"
+      "bytes": 56991,
+      "sha256": "11f055437e91eb149a2b1128721ccbf2576aa9a742f0761035635e91c873a19c"
     },
     {
       "path": "web/sw.js",
