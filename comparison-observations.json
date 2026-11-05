@@ -1,0 +1,21 @@
+[
+  {
+    "kind": "player_report",
+    "rate": 19.7,
+    "observedAt": "2026-11-05T01:53:48Z",
+    "timestampKind": "captured_at",
+    "sourceUrl": "https://meowdb.com/msclassic/free-market",
+    "sourceDate": "2026-11-04",
+    "sampleCount": 495,
+    "note": "One-time web-reader observation confirmed during rebuild: published indicator, not a smega rate or a continuous feed. Timestamp is our capture/confirmation time, not the upstream market observation time, which is not provided."
+  },
+  {
+    "observedAt": "2026-11-05T03:44:21.708Z",
+    "sourceUrl": "https://meowdb.com/msclassic/free-market",
+    "kind": "player_report",
+    "rate": 20.0,
+    "sampleItemPrices": 362,
+    "timestampKind": "captured_at",
+    "observationTimestampKnown": false
+  }
+]

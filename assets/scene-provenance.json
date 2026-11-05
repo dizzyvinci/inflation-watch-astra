@@ -1,0 +1,26 @@
+{
+  "copyright": "Nexon",
+  "provider": "maplestory.io",
+  "region": "MCW",
+  "version": "1",
+  "assets": [
+    {
+      "file": "free-market-entrance.png",
+      "mapId": 80002000,
+      "name": "Free Market Entrance",
+      "url": "https://maplestory.io/api/MCW/1/map/80002000/render/0"
+    },
+    {
+      "file": "fredrick.png",
+      "npcId": 800008,
+      "name": "Fredrick",
+      "url": "https://maplestory.io/api/MCW/1/npc/800008/icon"
+    },
+    {
+      "file": "meso-pouch.png",
+      "itemId": 2028000,
+      "name": "Mysterious Meso Pouch",
+      "url": "https://maplestory.io/api/MCW/1/item/2028000/icon"
+    }
+  ]
+}

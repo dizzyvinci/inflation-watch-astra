@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"Authorized intraday scanner input",
+  "type":"object",
+  "required":["sourceUrl","observedAt","kind","items"],
+  "properties":{
+    "sourceUrl":{"type":"string","format":"uri","pattern":"^https://"},
+    "observedAt":{"type":"string","format":"date-time"},
+    "kind":{"const":"scanner_sales"},
+    "items":{"type":"array","items":{"type":"object","required":["slug","price","quantity","evidence"],"properties":{"slug":{"type":"string"},"price":{"type":"number","exclusiveMinimum":0},"quantity":{"type":"integer","minimum":1},"evidence":{"const":"sold"}}}}
+  }
+}

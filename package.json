@@ -1,0 +1,18 @@
+{
+  "name": "inflation-watch-astra",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MapleStory Classic CPI and NX dashboard with scheduled collection and CDN snapshot delivery",
+  "scripts": {
+    "check": "node --check web/app.js && node --check web/sw.js && node --check ops/worker-core.mjs && node --check ops/worker.mjs",
+    "test:dom": "node tests/dom.cjs",
+    "test:worker": "node --test tests/worker-core.test.mjs tests/worker-runtime.test.mjs",
+    "build:offline": "python engine.py --offline",
+    "preview": "python preview.py",
+    "deploy:check": "npx wrangler deploy --config ops/wrangler.jsonc --dry-run",
+    "deploy": "npx wrangler deploy --config ops/wrangler.jsonc"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.3"
+  }
+}

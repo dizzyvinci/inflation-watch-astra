@@ -1,0 +1,22 @@
+# Local dependencies, runtimes and private operator state
+node_modules/
+.wrangler/
+work/
+__pycache__/
+*.pyc
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+.collector.lock
+.preview-state/
+.mfm-state/
+incoming/
+*.sqlite
+*.sqlite-*
+*.db
+cache/provider-*.json
+cache/public-api-status.json
+cache/source-access-status.json
+PUBLIC_API_REQUEST*.txt
+history/PUBLIC_API_REQUEST*.txt

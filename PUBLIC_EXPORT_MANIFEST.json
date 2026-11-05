@@ -1,0 +1,2093 @@
+{
+  "schemaVersion": 1,
+  "repository": "dizzyvinci/inflation-watch-astra",
+  "exportedAt": "2026-11-05T04:20:42+00:00",
+  "basketVersion": 2,
+  "files": [
+    {
+      "path": ".github/workflows/validate.yml",
+      "bytes": 468,
+      "sha256": "5910cc7f4fa4782a85de72770a9712cdc6c23010ce4549ea4fd68a04a7858577"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 360,
+      "sha256": "135df71f11e70024d8c8f4485b6682aeafc7778ae142fc18f7925763ad09380c"
+    },
+    {
+      "path": "DEPLOYMENT.md",
+      "bytes": 7790,
+      "sha256": "139924c9dcae89424d7b51175e9f19cd40b90b665089f247ca00a62b93ab8cb4"
+    },
+    {
+      "path": "README.md",
+      "bytes": 4947,
+      "sha256": "9c298441e5af9efd9b7a31b63bba0b29c2cc18bfbcc66dfd2df0a870102310f1"
+    },
+    {
+      "path": "Start-Preview.ps1",
+      "bytes": 102,
+      "sha256": "810394cf84db466a7cbffcd15b7ca7953ae3eb2585621394d9ffee1a748dc85c"
+    },
+    {
+      "path": "Stop-Preview.ps1",
+      "bytes": 377,
+      "sha256": "f2511ea5b9085c81b28469644405b410b3208f291f6ccd072190f2ef3b302674"
+    },
+    {
+      "path": "adapters.py",
+      "bytes": 6059,
+      "sha256": "03bfce27a70f856f8886e21185e6e3ab47665b88f49e929d41308cc676f5fe03"
+    },
+    {
+      "path": "assets/animal-fur-bundle.png",
+      "bytes": 1313,
+      "sha256": "6cee646b1d8d2b9a369a7c51376482a86b3806e8f73ca65c60bcf5c5d91e113e"
+    },
+    {
+      "path": "assets/ap-reset-scroll.png",
+      "bytes": 1475,
+      "sha256": "eaa77affed3ce55b9377a57dd7017bcf69328ace38ce8e0c624159af6bffb300"
+    },
+    {
+      "path": "assets/arrows-for-bows.png",
+      "bytes": 1096,
+      "sha256": "4996116d66abfd8ddc89c3b9eac96fabd47ef42772104702f3f7b90216633502"
+    },
+    {
+      "path": "assets/arwens-glass-shoe.png",
+      "bytes": 915,
+      "sha256": "c53935418a296ddc03d4dbffdf80fa25efd68c6ee00290eab5965344c21939fc"
+    },
+    {
+      "path": "assets/auto-hp-potion-skill.png",
+      "bytes": 955,
+      "sha256": "65653a6f406ff05b3fd55c7c84671c1ce0593544cabf2447c072779985e66ea2"
+    },
+    {
+      "path": "assets/auto-move-skill.png",
+      "bytes": 1101,
+      "sha256": "a1ddced9d1887a94d4c7cb60b480c1c08e902aaca0c286c0f6238769ec68b9ae"
+    },
+    {
+      "path": "assets/auto-mp-potion-skill.png",
+      "bytes": 952,
+      "sha256": "7afaef93886c1aaf60f1e1014823e056f89c8b4fc3a90de4a3f9ab7700bfbff1"
+    },
+    {
+      "path": "assets/black-crystal-ore.png",
+      "bytes": 796,
+      "sha256": "c5bac7c6b94255db2d57db416a2a0eb25c16a881064017fc1aa3870157c68adc"
+    },
+    {
+      "path": "assets/black-hat.png",
+      "bytes": 859,
+      "sha256": "4758f73e3137106daf05500185e73359eb7225e27ced9f215d863beb30d013d1"
+    },
+    {
+      "path": "assets/black-kitty.png",
+      "bytes": 964,
+      "sha256": "4587bab41ecdfe1d46d83c6bf12c917dc45b041f37fbfe7a9fd5af957686d0d4"
+    },
+    {
+      "path": "assets/black-napoleon.png",
+      "bytes": 1040,
+      "sha256": "2b079e873879ecae5ad033b97413d9d018c5c744bc0694ae09b80fb4c2157585"
+    },
+    {
+      "path": "assets/black-pig.png",
+      "bytes": 932,
+      "sha256": "1a560d75701db3136b05590b9b55b563be939737774d3585d2402f993150d8f1"
+    },
+    {
+      "path": "assets/blue-potion.png",
+      "bytes": 610,
+      "sha256": "42af127be6ecfe68400ea5018ee9ad4a6e130db791daa113d20199a9ee79c22f"
+    },
+    {
+      "path": "assets/blue-sauna-robe.png",
+      "bytes": 1168,
+      "sha256": "408843cebafcb428df40b7bec3a82e82429eacefe7877f9fca5cac96b7c7c60f"
+    },
+    {
+      "path": "assets/blue-starlight.png",
+      "bytes": 1247,
+      "sha256": "2a79abfd786fe1fceead60dd7a4639182e0897c1cf7efe9beb5483959119e924"
+    },
+    {
+      "path": "assets/bow-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "bee1a387e6bb38f413da34ea5b72295cfcae7d8186bfaf7546529d106c107feb"
+    },
+    {
+      "path": "assets/bronze-ore.png",
+      "bytes": 717,
+      "sha256": "90b9e76aff36b0c478b31ab16a66a5cd90f372d55c3bb83d536b1de8e0f23bbc"
+    },
+    {
+      "path": "assets/brown-kitty.png",
+      "bytes": 950,
+      "sha256": "5e0c1e339039b55135f1581c317a6f3a9cc69513a4b9a40cf52ba8e6b998d5a9"
+    },
+    {
+      "path": "assets/brown-puppy.png",
+      "bytes": 898,
+      "sha256": "de3ad66fa3fddc0e5d29c41660489e594023ae15a411b28fafb1281a38931233"
+    },
+    {
+      "path": "assets/cape-str-scroll-lesser.png",
+      "bytes": 1078,
+      "sha256": "3bf472eee63ac9541cdd681ce2a46b4d05e76c6da6209bda79ad98aec269ea14"
+    },
+    {
+      "path": "assets/claw-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "1a34b4204d750350c4d4c781736e57748b807345b4303a045ff723372a3fd22e"
+    },
+    {
+      "path": "assets/crossbow-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "8f89c22618da21dab46792243fdc39689938896ece14c9ef50522fa63e30c102"
+    },
+    {
+      "path": "assets/dagger-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "3424f26c96b831e818dda4a81db78c98688ec69a6f65a63281d0ab8a40661634"
+    },
+    {
+      "path": "assets/dark-cleave.png",
+      "bytes": 889,
+      "sha256": "fcff3d2c0612732f1586717d85fa3586d55861512916728456b599b3efb7d890"
+    },
+    {
+      "path": "assets/dark-crusader-chainmail.png",
+      "bytes": 1049,
+      "sha256": "7ebfce12542c00a3ebf7cff16b50835efd7a1244bf3eb911522dc60d35b5321d"
+    },
+    {
+      "path": "assets/dark-pilfer.png",
+      "bytes": 870,
+      "sha256": "559e4aa60f01bad21902d2fe9ea4553ae4443fe7c74eed0d7922e4248727f159"
+    },
+    {
+      "path": "assets/dark-shadow-pants.png",
+      "bytes": 760,
+      "sha256": "1d4ea3de480d519fd17a840c089b9afa2b461f52b186ce1f792b5b827941a243"
+    },
+    {
+      "path": "assets/diamond-ore.png",
+      "bytes": 913,
+      "sha256": "94d0cd5b320b572e9bd313355fe1dfb8ae01b6d796c38fe7cffb4ec19a13dde1"
+    },
+    {
+      "path": "assets/earring-dex-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "f7bf3d2f1a3d748a5f761fb7e3c1f724f58bc53a389cab0de926aad83f817c9e"
+    },
+    {
+      "path": "assets/earring-int-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "ab4758bf94e9adc6734a94fca65c0143ea51d14d36b06e1fc49d90f80d1344df"
+    },
+    {
+      "path": "assets/earring-luk-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "66bbc430a280179848c0d27db476fc7d5a2247b5f0b989d80078f24edd738499"
+    },
+    {
+      "path": "assets/earring-str-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "35f2c3e805b39ebca8694eab29d5eb234b8d321e8dd788f61824ec7a4194e2eb"
+    },
+    {
+      "path": "assets/elixir.png",
+      "bytes": 1189,
+      "sha256": "1683894878dba792eef5ed1f2112e994368e588864c2996e5db989ddca2d1750"
+    },
+    {
+      "path": "assets/emerald-earrings.png",
+      "bytes": 1243,
+      "sha256": "0962afd8a3ab68250593cee54ff5beea22daaa74a57ae8765176ce812f92de16"
+    },
+    {
+      "path": "assets/emerald-ore.png",
+      "bytes": 658,
+      "sha256": "1e81e4a78948bfcc93e330009e103cef6a50a2235e63e40efeb7c027388ef9bd"
+    },
+    {
+      "path": "assets/expanded-auto-move-skill.png",
+      "bytes": 895,
+      "sha256": "2402d8e3e051215072755c358d0fb0b7b41ebf843135a848a27d844afa006896"
+    },
+    {
+      "path": "assets/fairy-wand.png",
+      "bytes": 860,
+      "sha256": "9d0ae457066d352d21dc774aad75bb384ada270b8d6acc6967c924bdf2a52756"
+    },
+    {
+      "path": "assets/fairy-wing.png",
+      "bytes": 831,
+      "sha256": "c56d4cf5abcc0dff5a0f9b56cdb1cb09437a23cc5f1bd34ef85dfabbdd5fde84"
+    },
+    {
+      "path": "assets/fragment-of-magic.png",
+      "bytes": 2940,
+      "sha256": "431b6ebc39b33ed888efff8b13c4b76d99f81b1b594a1474970feb7b2715f7f2"
+    },
+    {
+      "path": "assets/fredrick.png",
+      "bytes": 7642,
+      "sha256": "62722488de9769b409f763bae055919bf413b9c372ed0125800c134721dcb84f"
+    },
+    {
+      "path": "assets/free-market-entrance.png",
+      "bytes": 810948,
+      "sha256": "4c6658a0ecfe2193b912fa7ddf0c3cb8fe9ef8007307737a15977d8c1b058616"
+    },
+    {
+      "path": "assets/garnet-ore.png",
+      "bytes": 901,
+      "sha256": "0cc6b1bc655ffbdd43314697df324799d5cae9864c13614aa163b7dc727cf22f"
+    },
+    {
+      "path": "assets/gloves-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "2822735ae1893fa1fb691a60409c87f492d94776ef9d99720b8b5ed5dd9b3e7b"
+    },
+    {
+      "path": "assets/gloves-crit-rate-scroll-chaos.png",
+      "bytes": 1033,
+      "sha256": "ce9fa40da351cc5b00d6a1eee0ced7cd198a6c55cb01a1f6503f6802ade70080"
+    },
+    {
+      "path": "assets/gloves-magic-attack-scroll-intermediate.png",
+      "bytes": 1046,
+      "sha256": "594af39a8edb1e329296c67cafe3d219ff267d68b4d7f880de4bfb1c2b4a2d9c"
+    },
+    {
+      "path": "assets/gold-ore.png",
+      "bytes": 972,
+      "sha256": "5326c213e29e9fa6c07941c55cb204fac56f1027568bac851c00960a21755757"
+    },
+    {
+      "path": "assets/hat-accuracy-scroll-greater.png",
+      "bytes": 777,
+      "sha256": "3e96d859aed9dac64b30b4a5f7eff82bffe3bdb04eabbb6e03f8b166a5765f28"
+    },
+    {
+      "path": "assets/hat-accuracy-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "eadb704d70dabc25e2a1ade44f5b641886e86696c17b5d804b033c53741a50e1"
+    },
+    {
+      "path": "assets/hat-accuracy-scroll-lesser.png",
+      "bytes": 1078,
+      "sha256": "d9435c7dccdcc663aedde5f027340919777b4ea67b76a7c62974109f55a04f10"
+    },
+    {
+      "path": "assets/iron-ore.png",
+      "bytes": 685,
+      "sha256": "283c7c948cf807afc1a9caeacc34aed03a2e0604cae6371dd0247d47d377ae6c"
+    },
+    {
+      "path": "assets/jr-necki-skin.png",
+      "bytes": 788,
+      "sha256": "b969d6dec2ad865eb624bff3bd0abb05d5454ec8af9fee01dfbc1d1a14e1f051"
+    },
+    {
+      "path": "assets/korean-fan.png",
+      "bytes": 947,
+      "sha256": "aa5d225f100b1b1814e8f857622d2d71029c0dc9e747599fc5566434954f69ad"
+    },
+    {
+      "path": "assets/kumbi-throwing-stars.png",
+      "bytes": 667,
+      "sha256": "bc39a2d54c553756a0de8a05970425926d6664ef7bd9edfc6c484b6461d52f99"
+    },
+    {
+      "path": "assets/leaf.png",
+      "bytes": 931,
+      "sha256": "64e74fa62d08ea0f08a76d19addc06b845ca986c1cb7edf4e688373ee31610b4"
+    },
+    {
+      "path": "assets/leather.png",
+      "bytes": 692,
+      "sha256": "b709ab4b7fdc122c716db56673bec65d94a55a07ba991cc1cf80ba455b4628e7"
+    },
+    {
+      "path": "assets/magic-potion.png",
+      "bytes": 783,
+      "sha256": "4b96ab8a87a707c284beec9e7436bcd1114791f538f9ec75b2e53bada5deeaf3"
+    },
+    {
+      "path": "assets/meba.png",
+      "bytes": 1047,
+      "sha256": "8476ee6c2e460e4a98ce2d3f1045b659f3d46064fc6bbd26d16e88dbf43efcef"
+    },
+    {
+      "path": "assets/meso-pouch.png",
+      "bytes": 1206,
+      "sha256": "67b97def81ee89a2dad95bac39cd7ded6fb4d922ecc481d055abab11383435c8"
+    },
+    {
+      "path": "assets/mithril-ore.png",
+      "bytes": 978,
+      "sha256": "12cb05c073920b93a81d2be41e0e7aaa29ce878cc7c3db190fd2494c96de29f0"
+    },
+    {
+      "path": "assets/mokbi-throwing-stars.png",
+      "bytes": 631,
+      "sha256": "0e5c4a72e2db08ca72e2aed1d716d7815ef88855b4a84278bbb951454cd2102a"
+    },
+    {
+      "path": "assets/mystery-face-coupon.png",
+      "bytes": 1254,
+      "sha256": "191c39563aa191495edaf05f414f83b7543a53e253c63bf7e7da477c365bfe74"
+    },
+    {
+      "path": "assets/mystery-hair-color-coupon.png",
+      "bytes": 1113,
+      "sha256": "c7b1e82ba27c1c63d8946f8a84db3cfd877e30d50a511001a9e96873d2ead285"
+    },
+    {
+      "path": "assets/mystery-hair-coupon.png",
+      "bytes": 1430,
+      "sha256": "cb708920b540e8ca44d0dcc5f277a2210538facb2d7168b6c0a2ecdbf09dbf9b"
+    },
+    {
+      "path": "assets/mystery-palette-exchange-coupon.png",
+      "bytes": 1618,
+      "sha256": "132e33636e60af0d369a7e430ae358a906285648161ead73f39ac2286a230385"
+    },
+    {
+      "path": "assets/orange-potion.png",
+      "bytes": 630,
+      "sha256": "261b14aec24a8f648d5dd3507b2a691a9c03154741b08b440a8cd68cc4f2e55a"
+    },
+    {
+      "path": "assets/orihalcon-ore.png",
+      "bytes": 706,
+      "sha256": "ea4a70948ebf48abb2cab18f91ea3b0381ca66414e3958702a8d84c13e846c96"
+    },
+    {
+      "path": "assets/overall-armor-dex-scroll-greater.png",
+      "bytes": 1034,
+      "sha256": "0b6324bdd70d8073bf22daad468b4d97dab9766406c264b19688ebb3e7888db1"
+    },
+    {
+      "path": "assets/overall-armor-int-scroll-greater.png",
+      "bytes": 1034,
+      "sha256": "9449dbe0dc2b790241721f06d3798e86f356017837af1343a65d1e1424a897f3"
+    },
+    {
+      "path": "assets/overall-armor-luk-scroll-greater.png",
+      "bytes": 1035,
+      "sha256": "2a833d59ad2797df1f107b99782d211160ef4fc715db398f0af006726103ee73"
+    },
+    {
+      "path": "assets/overall-armor-str-scroll-greater.png",
+      "bytes": 1035,
+      "sha256": "2a833d59ad2797df1f107b99782d211160ef4fc715db398f0af006726103ee73"
+    },
+    {
+      "path": "assets/pan-lid.png",
+      "bytes": 937,
+      "sha256": "0abd97a0f16631e8f878e77c873f576f19e2a19fd9a09b7abff8e9806c68c796"
+    },
+    {
+      "path": "assets/pet-equip-jump-scroll-intermediate.png",
+      "bytes": 1046,
+      "sha256": "19a2130b7acd3ed446a879010e058d9be608e06476b3ca38225e7eb447d02e70"
+    },
+    {
+      "path": "assets/pet-equip-speed-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "c6a907b8050ce65dd266117bbee05439a0c79f854ad657457c1abbea44e7fdbf"
+    },
+    {
+      "path": "assets/pet-equip-speed-scroll-lesser.png",
+      "bytes": 1078,
+      "sha256": "d347f295995c44b870f094f31f6a179156d9fabd34211dfebe8094fb18889cbd"
+    },
+    {
+      "path": "assets/pet-name-tag.png",
+      "bytes": 1092,
+      "sha256": "a76c7a4c30038cb39b3ffaeda0c67fd9fdadb0e2eece393108e0de4cd9fea6a2"
+    },
+    {
+      "path": "assets/pigs-head.png",
+      "bytes": 954,
+      "sha256": "fc65426d0f1d66539231ae229cb4ca4cd530c2043b88adab149d3692ece0e5f6"
+    },
+    {
+      "path": "assets/pink-bunny.png",
+      "bytes": 991,
+      "sha256": "d453516b1a830d93f716d12f18e81ff5971b9d4ed51ce698c04366725e02585c"
+    },
+    {
+      "path": "assets/polearm-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "a1d0c2b54afbd3eca220f658d5b6159b3d3180fd58c317b839494ff5a3085c84"
+    },
+    {
+      "path": "assets/pure-water.png",
+      "bytes": 979,
+      "sha256": "f8243bb06b0e944dad79f07707b6e0436e6213213792ab6a2f8c4c5e496cf0e1"
+    },
+    {
+      "path": "assets/red-hat.png",
+      "bytes": 955,
+      "sha256": "c7ab4d817cf67fd35eec55b7b2f4bc49be3b609cf88b170672146fcdb3994777"
+    },
+    {
+      "path": "assets/red-potion.png",
+      "bytes": 883,
+      "sha256": "cf104b81e13b2eb8f41e6aaed3c2038d564cac5a1a90ebcb488be669aa56ac10"
+    },
+    {
+      "path": "assets/red-ribbon.png",
+      "bytes": 966,
+      "sha256": "b14e95911f946c5887e51b4367e3cda3713a2ee6fa833de8b38a7f39eb099efa"
+    },
+    {
+      "path": "assets/red-top-hat.png",
+      "bytes": 813,
+      "sha256": "418ecfc6c2d41254ec8de7a1ebb4029b841d3e7229c8e0c879d97347ec72cce6"
+    },
+    {
+      "path": "assets/sapphire-ore.png",
+      "bytes": 904,
+      "sha256": "eb091dc614c1f6046ffca029fed04df115dd4fcc8beab482cf27eccb20ea661d"
+    },
+    {
+      "path": "assets/scene-provenance.json",
+      "bytes": 655,
+      "sha256": "78af797e06613d3f9e803d5ba77c29681f238387205b95c3c59423c4ed7fb56a"
+    },
+    {
+      "path": "assets/screw.png",
+      "bytes": 724,
+      "sha256": "85550e803d67eda5cf0264668f7e966bee58bee4ca7aeb8abeee5ecdcfacddfc"
+    },
+    {
+      "path": "assets/selective-5-slot-coupon.png",
+      "bytes": 965,
+      "sha256": "cc0b64d88263cb82cde6f456e99302d6395c1494871c0b2bda578ce8741078dd"
+    },
+    {
+      "path": "assets/shoes-speed-scroll-greater.png",
+      "bytes": 1034,
+      "sha256": "2634c85f9b125b5de18f9d3d7ef5e5d6f5002792c5cdad857bb8a8616ebd975b"
+    },
+    {
+      "path": "assets/shoes-speed-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "041a9b4af91185dbda6ed075a4dab6c12b0ee209be1e21d3ded5e067cbf0b1a7"
+    },
+    {
+      "path": "assets/signature-eye-color-coupon.png",
+      "bytes": 853,
+      "sha256": "53775d6d32d76d76ad39a5dfddb075b38bf5802c7e36c8e2b776298775eccc7f"
+    },
+    {
+      "path": "assets/signature-face-coupon.png",
+      "bytes": 977,
+      "sha256": "d572ecac677cb8a229824258a491ffa6d9fe1c2415e3253d672b3e60bba2b039"
+    },
+    {
+      "path": "assets/signature-hair-color-coupon.png",
+      "bytes": 904,
+      "sha256": "beca973222119ba948801c5ec58ebdb224e8c4c64ad8792074e4e47387bf4985"
+    },
+    {
+      "path": "assets/signature-hair-coupon.png",
+      "bytes": 1219,
+      "sha256": "beb2921306e87f9f03b97a1a8842f9edd5b3e001f5bcaf6a3cba4e83c8a7bdf1"
+    },
+    {
+      "path": "assets/signature-skin-color-coupon.png",
+      "bytes": 1080,
+      "sha256": "1e704363d26bcd083ca75fa8abe0df28c7f89ebb95117fe876e3b4966b2d9f32"
+    },
+    {
+      "path": "assets/silver-guardian.png",
+      "bytes": 1142,
+      "sha256": "41f37d68757593863bcfe3cb306f80636034813dce00e1879bc1cf0e0b502496"
+    },
+    {
+      "path": "assets/silver-ore.png",
+      "bytes": 538,
+      "sha256": "dca3370bc0efa00d81f3abcb508c2eb9a526703bd02acb92a8007c9b890dbbc2"
+    },
+    {
+      "path": "assets/sp-reset-scroll.png",
+      "bytes": 1514,
+      "sha256": "e7dcc4f0c0b6090ff41a1d5e3bdd8d64646b7154ea2aba457bfd4a469db0b109"
+    },
+    {
+      "path": "assets/spear-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "c2323957e36a3349d850e49f4c0574d21fe4c11fe4745f0aa1d0270c3832d53b"
+    },
+    {
+      "path": "assets/sprite-provenance.json",
+      "bytes": 30992,
+      "sha256": "00c44c7747cf5c2084a649c66c072221daa4a6f309aafef10a0c4751533c8583"
+    },
+    {
+      "path": "assets/sprites.json",
+      "bytes": 6875,
+      "sha256": "4f5efa15f1fe23b611c8a9fe4d702dcfc1f84a0bc3eb318a5dc6342c745f8ef6"
+    },
+    {
+      "path": "assets/squishy-shoes.png",
+      "bytes": 1017,
+      "sha256": "02cdd74fb5ce8d8bef2ddee5fd87724a2a8d661b63e666de56b6869e7a453ec7"
+    },
+    {
+      "path": "assets/staff-magic-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "90b6507dfe8e17b97ca16760759d109552ea0b5578aad329610ef105e7f1e2b8"
+    },
+    {
+      "path": "assets/steel-avarice.png",
+      "bytes": 1064,
+      "sha256": "758a03d0870792daf434dc3b3367c3d56d18944d5fb543b52d0900167f5d3316"
+    },
+    {
+      "path": "assets/stiff-feather.png",
+      "bytes": 798,
+      "sha256": "5d64c55b27394b813cda80d082dcee692a2a51e403655f291934d7d67523e7c4"
+    },
+    {
+      "path": "assets/storage-room-5-slot-coupon.png",
+      "bytes": 1171,
+      "sha256": "e62f8a8844120e2c3d59b55fb608313502ef6c760d0432199ed2bda5c88144d8"
+    },
+    {
+      "path": "assets/topaz-ore.png",
+      "bytes": 945,
+      "sha256": "e7bd6158f77a6139b84c6be4269b33babef3d00eaf22206cb9eb8033f13bc516"
+    },
+    {
+      "path": "assets/topwear-def-scroll-greater.png",
+      "bytes": 1034,
+      "sha256": "107926699a07c70fdd4e0cd9cae18a231e62fc0621ad3376042af0eddd74369f"
+    },
+    {
+      "path": "assets/two-handed-axe-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "89a35f75996c61f023d47231a6f9337063dff757ecb729c1ca622a2618df0bec"
+    },
+    {
+      "path": "assets/two-handed-blunt-weapon-attack-scroll-intermediate.png",
+      "bytes": 1045,
+      "sha256": "2b17cee0cc1b2b2679440095752c110bd63a22829f66e7955f32d4e8d311ab17"
+    },
+    {
+      "path": "assets/two-handed-sword-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "ccfd899bff08b9c981484563bbd60c092b271fdf9dd73a208b84fdb009cf2fe1"
+    },
+    {
+      "path": "assets/unagi.png",
+      "bytes": 641,
+      "sha256": "e2029bad39331da72a09689c3c5f048ce6fa035c5e8514d629f5bde6428ab5a5"
+    },
+    {
+      "path": "assets/wand-magic-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "f02e811e6636bc7b954eb438acdce7a96e50860dca9a7f4df3b592537e143c9c"
+    },
+    {
+      "path": "assets/water-of-life.png",
+      "bytes": 1410,
+      "sha256": "d148d5882ec8eaf122e9a6ba11061af3cb0d8fb830e672d774976babd3890b16"
+    },
+    {
+      "path": "assets/weighted-earrings.png",
+      "bytes": 988,
+      "sha256": "5dca957f00a6d74cf1c3b4390fda4f8466cc528a84d1e11727d266d55ae39017"
+    },
+    {
+      "path": "assets/white-bunny.png",
+      "bytes": 908,
+      "sha256": "56d0d40492490e9428a6e10f0d43c7515a2f2207974fa3ba8c7d4cdde6c95dbb"
+    },
+    {
+      "path": "assets/white-potion.png",
+      "bytes": 886,
+      "sha256": "eaa6b74595b87a0afe1d5674b90fa3463acb1efa3ade60ede2ab9258d3f42381"
+    },
+    {
+      "path": "assets/wizard-wand.png",
+      "bytes": 729,
+      "sha256": "9447196d8cf9b88ad9e04adead2dbb75d0a509bf699d5e840aae5d507a0fc5a8"
+    },
+    {
+      "path": "assets/wolbi-throwing-stars.png",
+      "bytes": 431,
+      "sha256": "82facdc68536c7108872a50748266a7add3816ab5660c4cff04425482e868103"
+    },
+    {
+      "path": "assets/wooden-top.png",
+      "bytes": 880,
+      "sha256": "c239f3d8d566af7d029683a393436cee8e1d7f05ec9aa88d670d0bf75547abff"
+    },
+    {
+      "path": "assets/yellow-hat.png",
+      "bytes": 935,
+      "sha256": "e7ffad426e19def23a2e86f86dc1388b106a539dc63c9e2deac23dafb906a8b3"
+    },
+    {
+      "path": "cache/basket-v1.json",
+      "bytes": 8166,
+      "sha256": "246bc5b42bbd6b3bf56f9eb5032526e5202623e28f5be943a3e35b6621095319"
+    },
+    {
+      "path": "cache/basket-v2-source.json",
+      "bytes": 898617,
+      "sha256": "0aa5f6abdd337f7c7448d4ef0ca93859f8e12e5705fb6642fc9ef4efcb125ce6"
+    },
+    {
+      "path": "cache/basket-v2.json",
+      "bytes": 12118,
+      "sha256": "efc9dba67121521d430d9fc0576c88f87bbb907a2c0f0ff37ea17fb2a3f3d26a"
+    },
+    {
+      "path": "cache/fetch.json",
+      "bytes": 211,
+      "sha256": "a8f2c07534b2a1096ec06981e564bd0dd9e9ca295296c9432dca7a3db12bcf14"
+    },
+    {
+      "path": "cache/market.json",
+      "bytes": 898617,
+      "sha256": "0aa5f6abdd337f7c7448d4ef0ca93859f8e12e5705fb6642fc9ef4efcb125ce6"
+    },
+    {
+      "path": "cache/nx-base-v1.json",
+      "bytes": 121,
+      "sha256": "470aab98dae9c8ddbaa1a44b6c4cae08f6d9183bc36795b726015297532652d0"
+    },
+    {
+      "path": "cache/public-browser-prices.json",
+      "bytes": 10345,
+      "sha256": "f554ac99f27f48afc3834e3c73fe3f1c0fbb07f53218c4c19b48119058cd62e9"
+    },
+    {
+      "path": "cache/published-smega-series.json",
+      "bytes": 37975,
+      "sha256": "3bcc68b26fd9b82ebf61cba64efeca019d07324378d404461cee32b64e53eb01"
+    },
+    {
+      "path": "cache/published-smega-summary.json",
+      "bytes": 313,
+      "sha256": "5824f4a4fdadcdf030ee792350b1f20e07b1695d9dadc82b0b9fe118dbac64b6"
+    },
+    {
+      "path": "cache/rolling-reference-history-v2.json",
+      "bytes": 205,
+      "sha256": "e03fd87b269e126e9ca69de0b24d8ddc26bea58195dc703f9245cdc40bec2f0e"
+    },
+    {
+      "path": "cache/rolling-reference-history.json",
+      "bytes": 219,
+      "sha256": "0d610ec1fece4646d21703cd834b343a16783557a2fcf47881c607531af3b711"
+    },
+    {
+      "path": "comparison-observations.json",
+      "bytes": 783,
+      "sha256": "5a5497ab8be0cdf6150e6933f390a553f42621dcb0c5220ec44521f9fa7cd84f"
+    },
+    {
+      "path": "config.json",
+      "bytes": 1352,
+      "sha256": "40d20deb29beacedc8124a482b780bf2fed5b6b7c4753cbc81751506822d2891"
+    },
+    {
+      "path": "dist/404.html",
+      "bytes": 1032,
+      "sha256": "28440882e518969b1e298a4a9d67598809fcfee1d419b915f9ea757bfaeb60b1"
+    },
+    {
+      "path": "dist/_headers",
+      "bytes": 562,
+      "sha256": "8dfa9dc73f14047bf2fbbf8f9d75423e8d9202c4668ec8056c685153141ec944"
+    },
+    {
+      "path": "dist/app.js",
+      "bytes": 47950,
+      "sha256": "7e68eee94fb6905397a5ece06e6e3f13624f9cfbd6cb35638b308a8ed4e2bf36"
+    },
+    {
+      "path": "dist/assets/animal-fur-bundle.png",
+      "bytes": 1313,
+      "sha256": "6cee646b1d8d2b9a369a7c51376482a86b3806e8f73ca65c60bcf5c5d91e113e"
+    },
+    {
+      "path": "dist/assets/animal-fur-bundle.svg",
+      "bytes": 357,
+      "sha256": "409aadd5b1fbc68d1370794c7e849d054e4facad3685d7632eb977c4a8c0eb3b"
+    },
+    {
+      "path": "dist/assets/ap-reset-scroll.png",
+      "bytes": 1475,
+      "sha256": "eaa77affed3ce55b9377a57dd7017bcf69328ace38ce8e0c624159af6bffb300"
+    },
+    {
+      "path": "dist/assets/ap-reset-scroll.svg",
+      "bytes": 409,
+      "sha256": "7c8aeb04885f1cbb30fca19337a072ec04892e15514507b451a93529ff10d649"
+    },
+    {
+      "path": "dist/assets/arrows-for-bows.png",
+      "bytes": 1096,
+      "sha256": "4996116d66abfd8ddc89c3b9eac96fabd47ef42772104702f3f7b90216633502"
+    },
+    {
+      "path": "dist/assets/arrows-for-bows.svg",
+      "bytes": 387,
+      "sha256": "0616910e7e86d8346d7eb0ba6f02a6eb29d84fb37bfea14282f7f6b12cdbef96"
+    },
+    {
+      "path": "dist/assets/arwens-glass-shoe.png",
+      "bytes": 915,
+      "sha256": "c53935418a296ddc03d4dbffdf80fa25efd68c6ee00290eab5965344c21939fc"
+    },
+    {
+      "path": "dist/assets/arwens-glass-shoe.svg",
+      "bytes": 357,
+      "sha256": "3c9aea80061fe3c1f699ce60eb7974ddd84d90a796c543ae728a05e00d80a98e"
+    },
+    {
+      "path": "dist/assets/auto-hp-potion-skill.png",
+      "bytes": 955,
+      "sha256": "65653a6f406ff05b3fd55c7c84671c1ce0593544cabf2447c072779985e66ea2"
+    },
+    {
+      "path": "dist/assets/auto-hp-potion-skill.svg",
+      "bytes": 350,
+      "sha256": "1895fde8aad1739d94dd7f2c881637d7161347b31411abefc159558fd1e0a410"
+    },
+    {
+      "path": "dist/assets/auto-move-skill.png",
+      "bytes": 1101,
+      "sha256": "a1ddced9d1887a94d4c7cb60b480c1c08e902aaca0c286c0f6238769ec68b9ae"
+    },
+    {
+      "path": "dist/assets/auto-move-skill.svg",
+      "bytes": 345,
+      "sha256": "062d7ee18c4894dc8dd7add5ec345199662330d7959f64770fadc7c6da16f6d4"
+    },
+    {
+      "path": "dist/assets/auto-mp-potion-skill.png",
+      "bytes": 952,
+      "sha256": "7afaef93886c1aaf60f1e1014823e056f89c8b4fc3a90de4a3f9ab7700bfbff1"
+    },
+    {
+      "path": "dist/assets/auto-mp-potion-skill.svg",
+      "bytes": 350,
+      "sha256": "27ab9dc329044c6c666fe0d43bbf66a8d40060e86900b765d5aa409beb01353a"
+    },
+    {
+      "path": "dist/assets/black-crystal-ore.png",
+      "bytes": 796,
+      "sha256": "c5bac7c6b94255db2d57db416a2a0eb25c16a881064017fc1aa3870157c68adc"
+    },
+    {
+      "path": "dist/assets/black-crystal-ore.svg",
+      "bytes": 357,
+      "sha256": "f0236dd9a7c24c0ced37dda3164a33c7e3c2bec5b0492c2d696e4b8d9f42fed2"
+    },
+    {
+      "path": "dist/assets/black-hat.png",
+      "bytes": 859,
+      "sha256": "4758f73e3137106daf05500185e73359eb7225e27ced9f215d863beb30d013d1"
+    },
+    {
+      "path": "dist/assets/black-hat.svg",
+      "bytes": 300,
+      "sha256": "75de7666dde34e2b2efbdf2c0f37a226133f88d3f856a3114f94b397600da57f"
+    },
+    {
+      "path": "dist/assets/black-kitty.png",
+      "bytes": 964,
+      "sha256": "4587bab41ecdfe1d46d83c6bf12c917dc45b041f37fbfe7a9fd5af957686d0d4"
+    },
+    {
+      "path": "dist/assets/black-kitty.svg",
+      "bytes": 502,
+      "sha256": "9da5df3b7677aac2a2182fe8e567790410dc1493d64f57983dbe9913ca2129ca"
+    },
+    {
+      "path": "dist/assets/black-napoleon.png",
+      "bytes": 1040,
+      "sha256": "2b079e873879ecae5ad033b97413d9d018c5c744bc0694ae09b80fb4c2157585"
+    },
+    {
+      "path": "dist/assets/black-napoleon.svg",
+      "bytes": 262,
+      "sha256": "5d4a26a55128d94158e3880b792a6fbff724d3b05109ea71cd91839d104ea507"
+    },
+    {
+      "path": "dist/assets/black-pig.png",
+      "bytes": 932,
+      "sha256": "1a560d75701db3136b05590b9b55b563be939737774d3585d2402f993150d8f1"
+    },
+    {
+      "path": "dist/assets/black-pig.svg",
+      "bytes": 500,
+      "sha256": "fc8f4ebbe8887e71d0ab04a96f87ebb904f5db045e6152c9a7d436553366b04d"
+    },
+    {
+      "path": "dist/assets/blue-potion.png",
+      "bytes": 610,
+      "sha256": "42af127be6ecfe68400ea5018ee9ad4a6e130db791daa113d20199a9ee79c22f"
+    },
+    {
+      "path": "dist/assets/blue-potion.svg",
+      "bytes": 383,
+      "sha256": "63dffd2427be7ce7933e7dcf77e16daec746029eaf2a6ab9f2c88c9cbe7336d4"
+    },
+    {
+      "path": "dist/assets/blue-sauna-robe.png",
+      "bytes": 1168,
+      "sha256": "408843cebafcb428df40b7bec3a82e82429eacefe7877f9fca5cac96b7c7c60f"
+    },
+    {
+      "path": "dist/assets/blue-sauna-robe.svg",
+      "bytes": 263,
+      "sha256": "1f8500b90b8172fd8c61aa84a08d1cb994feb5414d41ccc641669cfef13da462"
+    },
+    {
+      "path": "dist/assets/blue-starlight.png",
+      "bytes": 1247,
+      "sha256": "2a79abfd786fe1fceead60dd7a4639182e0897c1cf7efe9beb5483959119e924"
+    },
+    {
+      "path": "dist/assets/blue-starlight.svg",
+      "bytes": 313,
+      "sha256": "6e5c99a7e6f1fd2387600a334c7127aad4a2f5b282008bf26db6dbccff0284d4"
+    },
+    {
+      "path": "dist/assets/bow-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "bee1a387e6bb38f413da34ea5b72295cfcae7d8186bfaf7546529d106c107feb"
+    },
+    {
+      "path": "dist/assets/bow-attack-scroll-intermediate.svg",
+      "bytes": 424,
+      "sha256": "2c8b5df4a36c48d9c7a6fc424730b95815ac1be3f11451d1c198bf2f794bef51"
+    },
+    {
+      "path": "dist/assets/bronze-ore.png",
+      "bytes": 717,
+      "sha256": "90b9e76aff36b0c478b31ab16a66a5cd90f372d55c3bb83d536b1de8e0f23bbc"
+    },
+    {
+      "path": "dist/assets/bronze-ore.svg",
+      "bytes": 350,
+      "sha256": "50cc0cd73546df43191791a691dee9433242829be31bb2833460f20354105a79"
+    },
+    {
+      "path": "dist/assets/brown-kitty.png",
+      "bytes": 950,
+      "sha256": "5e0c1e339039b55135f1581c317a6f3a9cc69513a4b9a40cf52ba8e6b998d5a9"
+    },
+    {
+      "path": "dist/assets/brown-kitty.svg",
+      "bytes": 502,
+      "sha256": "6b2ce99516a0a0380a6995af936af7fac348ab940c47bd5253b7591f0d9fdfd0"
+    },
+    {
+      "path": "dist/assets/brown-puppy.png",
+      "bytes": 898,
+      "sha256": "de3ad66fa3fddc0e5d29c41660489e594023ae15a411b28fafb1281a38931233"
+    },
+    {
+      "path": "dist/assets/brown-puppy.svg",
+      "bytes": 502,
+      "sha256": "9dbcf89c4cf5eadd9c9b95ea06b6861f668bb29cf79cfe5f3680fa9cf0ee5090"
+    },
+    {
+      "path": "dist/assets/cape-str-scroll-lesser.png",
+      "bytes": 1078,
+      "sha256": "3bf472eee63ac9541cdd681ce2a46b4d05e76c6da6209bda79ad98aec269ea14"
+    },
+    {
+      "path": "dist/assets/cape-str-scroll-lesser.svg",
+      "bytes": 416,
+      "sha256": "aa9fd86d3a12994f0a2c2e354e73fa8bf0878ee4b77fd3db1f8a45d1d79efd08"
+    },
+    {
+      "path": "dist/assets/claw-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "1a34b4204d750350c4d4c781736e57748b807345b4303a045ff723372a3fd22e"
+    },
+    {
+      "path": "dist/assets/claw-attack-scroll-intermediate.svg",
+      "bytes": 425,
+      "sha256": "3dbd6da76544e0ea9f9d219de24843bcfc0a066a5047cdd572cdb68530ed8470"
+    },
+    {
+      "path": "dist/assets/crossbow-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "8f89c22618da21dab46792243fdc39689938896ece14c9ef50522fa63e30c102"
+    },
+    {
+      "path": "dist/assets/crossbow-attack-scroll-intermediate.svg",
+      "bytes": 429,
+      "sha256": "156040b0d43ec022c7e21c3694d4acc4f2c236f4ec76cc780fb22a5839f8b36d"
+    },
+    {
+      "path": "dist/assets/dagger-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "3424f26c96b831e818dda4a81db78c98688ec69a6f65a63281d0ab8a40661634"
+    },
+    {
+      "path": "dist/assets/dagger-attack-scroll-intermediate.svg",
+      "bytes": 427,
+      "sha256": "a1cba84933f9692c62ecea5e2b3e824fb5bcbf41373aaefb01d588c14e7b427c"
+    },
+    {
+      "path": "dist/assets/dark-cleave.png",
+      "bytes": 889,
+      "sha256": "fcff3d2c0612732f1586717d85fa3586d55861512916728456b599b3efb7d890"
+    },
+    {
+      "path": "dist/assets/dark-cleave.svg",
+      "bytes": 259,
+      "sha256": "91803be47f576a8354ca66c351420f6eb97658bbd3d22a80d66e9380796d04af"
+    },
+    {
+      "path": "dist/assets/dark-crusader-chainmail.png",
+      "bytes": 1049,
+      "sha256": "7ebfce12542c00a3ebf7cff16b50835efd7a1244bf3eb911522dc60d35b5321d"
+    },
+    {
+      "path": "dist/assets/dark-crusader-chainmail.svg",
+      "bytes": 271,
+      "sha256": "e16e1eb59e22c1e572d7118bf3cecb7a3c894af1fb14c1cb0754e0f47ae2ebed"
+    },
+    {
+      "path": "dist/assets/dark-pilfer.png",
+      "bytes": 870,
+      "sha256": "559e4aa60f01bad21902d2fe9ea4553ae4443fe7c74eed0d7922e4248727f159"
+    },
+    {
+      "path": "dist/assets/dark-pilfer.svg",
+      "bytes": 259,
+      "sha256": "6d81f810552b79e1add4dbea4d5679b5d9f8fa52f83abc3b901dbcdfda426291"
+    },
+    {
+      "path": "dist/assets/dark-shadow-pants.png",
+      "bytes": 760,
+      "sha256": "1d4ea3de480d519fd17a840c089b9afa2b461f52b186ce1f792b5b827941a243"
+    },
+    {
+      "path": "dist/assets/dark-shadow-pants.svg",
+      "bytes": 265,
+      "sha256": "ec3d28dae6bf835d9f36e2dd69f4c80ba99a233e45430f8afba07ed5887fe11d"
+    },
+    {
+      "path": "dist/assets/diamond-ore.png",
+      "bytes": 913,
+      "sha256": "94d0cd5b320b572e9bd313355fe1dfb8ae01b6d796c38fe7cffb4ec19a13dde1"
+    },
+    {
+      "path": "dist/assets/diamond-ore.svg",
+      "bytes": 351,
+      "sha256": "5ded4a10a5dd33596dcb10b1ddc0d96a2162ee8c5c96b238f44481008c15a1a6"
+    },
+    {
+      "path": "dist/assets/earring-dex-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "f7bf3d2f1a3d748a5f761fb7e3c1f724f58bc53a389cab0de926aad83f817c9e"
+    },
+    {
+      "path": "dist/assets/earring-dex-scroll-intermediate.svg",
+      "bytes": 425,
+      "sha256": "9de353f78299ef63d647f5f758ce5106fbb7388531eb7a11b6519a80c12126d8"
+    },
+    {
+      "path": "dist/assets/earring-int-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "ab4758bf94e9adc6734a94fca65c0143ea51d14d36b06e1fc49d90f80d1344df"
+    },
+    {
+      "path": "dist/assets/earring-int-scroll-intermediate.svg",
+      "bytes": 425,
+      "sha256": "d257b9f3b0b45d7bf11fd8b85a52056ed80dffd4a01e40dc80f0e42a629af9e5"
+    },
+    {
+      "path": "dist/assets/earring-luk-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "66bbc430a280179848c0d27db476fc7d5a2247b5f0b989d80078f24edd738499"
+    },
+    {
+      "path": "dist/assets/earring-luk-scroll-intermediate.svg",
+      "bytes": 425,
+      "sha256": "3bd6b880a7a652515513317ecedcf161619eb9b153323a30c20d56f56b02d410"
+    },
+    {
+      "path": "dist/assets/earring-str-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "35f2c3e805b39ebca8694eab29d5eb234b8d321e8dd788f61824ec7a4194e2eb"
+    },
+    {
+      "path": "dist/assets/earring-str-scroll-intermediate.svg",
+      "bytes": 425,
+      "sha256": "5d72392586f444abdc1a6b688c1a21d4810a004797a0961f67ae3acc527fe9d0"
+    },
+    {
+      "path": "dist/assets/elixir.png",
+      "bytes": 1189,
+      "sha256": "1683894878dba792eef5ed1f2112e994368e588864c2996e5db989ddca2d1750"
+    },
+    {
+      "path": "dist/assets/elixir.svg",
+      "bytes": 378,
+      "sha256": "2ab092c8d8cd3032498e5878ecc06c6ce7f933f23449dc6f0adce14e0a2b3713"
+    },
+    {
+      "path": "dist/assets/emerald-earrings.png",
+      "bytes": 1243,
+      "sha256": "0962afd8a3ab68250593cee54ff5beea22daaa74a57ae8765176ce812f92de16"
+    },
+    {
+      "path": "dist/assets/emerald-earrings.svg",
+      "bytes": 393,
+      "sha256": "ce0e2644ea26ec09bb2014c59ff28eb556dedad282488456814a3a57215e1ed4"
+    },
+    {
+      "path": "dist/assets/emerald-ore.png",
+      "bytes": 658,
+      "sha256": "1e81e4a78948bfcc93e330009e103cef6a50a2235e63e40efeb7c027388ef9bd"
+    },
+    {
+      "path": "dist/assets/emerald-ore.svg",
+      "bytes": 351,
+      "sha256": "a78f2b81fd157e9ec3bfcb15b38472732ef774977a23428b64efe4871c6e37b9"
+    },
+    {
+      "path": "dist/assets/expanded-auto-move-skill.png",
+      "bytes": 895,
+      "sha256": "2402d8e3e051215072755c358d0fb0b7b41ebf843135a848a27d844afa006896"
+    },
+    {
+      "path": "dist/assets/expanded-auto-move-skill.svg",
+      "bytes": 354,
+      "sha256": "7930e3ca59d517c44389d0a3992287069fd00c8bcc3d6cda488ea293133dac87"
+    },
+    {
+      "path": "dist/assets/fairy-wand.png",
+      "bytes": 860,
+      "sha256": "9d0ae457066d352d21dc774aad75bb384ada270b8d6acc6967c924bdf2a52756"
+    },
+    {
+      "path": "dist/assets/fairy-wand.svg",
+      "bytes": 274,
+      "sha256": "584cf9ae6c47da7d2fb654a21a53b9fcf5909049d2323624f6c7622580a7c0e3"
+    },
+    {
+      "path": "dist/assets/fairy-wing.png",
+      "bytes": 831,
+      "sha256": "c56d4cf5abcc0dff5a0f9b56cdb1cb09437a23cc5f1bd34ef85dfabbdd5fde84"
+    },
+    {
+      "path": "dist/assets/fairy-wing.svg",
+      "bytes": 350,
+      "sha256": "66e747b662bdb3535dc382ae4fb1c8bc7c851b5f7c620296362169e311933dcf"
+    },
+    {
+      "path": "dist/assets/fragment-of-magic.png",
+      "bytes": 2940,
+      "sha256": "431b6ebc39b33ed888efff8b13c4b76d99f81b1b594a1474970feb7b2715f7f2"
+    },
+    {
+      "path": "dist/assets/fragment-of-magic.svg",
+      "bytes": 357,
+      "sha256": "aca4acebdc322df493462c732a2ad371a8af0f953d8e94fc563d6ade7209dace"
+    },
+    {
+      "path": "dist/assets/fredrick.png",
+      "bytes": 7642,
+      "sha256": "62722488de9769b409f763bae055919bf413b9c372ed0125800c134721dcb84f"
+    },
+    {
+      "path": "dist/assets/free-market-entrance.png",
+      "bytes": 810948,
+      "sha256": "4c6658a0ecfe2193b912fa7ddf0c3cb8fe9ef8007307737a15977d8c1b058616"
+    },
+    {
+      "path": "dist/assets/garnet-ore.png",
+      "bytes": 901,
+      "sha256": "0cc6b1bc655ffbdd43314697df324799d5cae9864c13614aa163b7dc727cf22f"
+    },
+    {
+      "path": "dist/assets/garnet-ore.svg",
+      "bytes": 350,
+      "sha256": "fc30978a8b7894b8fac72ff72c216242a6422e04e2ce42a6d56b1fc39beeaa4d"
+    },
+    {
+      "path": "dist/assets/gloves-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "2822735ae1893fa1fb691a60409c87f492d94776ef9d99720b8b5ed5dd9b3e7b"
+    },
+    {
+      "path": "dist/assets/gloves-attack-scroll-intermediate.svg",
+      "bytes": 427,
+      "sha256": "60c04334201d19309c09e94b70a1fb828dfedccae9563684a6c422c7969daff2"
+    },
+    {
+      "path": "dist/assets/gloves-crit-rate-scroll-chaos.png",
+      "bytes": 1033,
+      "sha256": "ce9fa40da351cc5b00d6a1eee0ced7cd198a6c55cb01a1f6503f6802ade70080"
+    },
+    {
+      "path": "dist/assets/gloves-crit-rate-scroll-chaos.svg",
+      "bytes": 423,
+      "sha256": "cedd052b371d2680fc93709b36c91453f2f30c1f0a51a4ff5acd25ad0a70d35a"
+    },
+    {
+      "path": "dist/assets/gloves-magic-attack-scroll-intermediate.png",
+      "bytes": 1046,
+      "sha256": "594af39a8edb1e329296c67cafe3d219ff267d68b4d7f880de4bfb1c2b4a2d9c"
+    },
+    {
+      "path": "dist/assets/gloves-magic-attack-scroll-intermediate.svg",
+      "bytes": 433,
+      "sha256": "929c5d9a22709609fa10739437a09f37d772cd47ed22d576e50b777177cb4d24"
+    },
+    {
+      "path": "dist/assets/gold-ore.png",
+      "bytes": 972,
+      "sha256": "5326c213e29e9fa6c07941c55cb204fac56f1027568bac851c00960a21755757"
+    },
+    {
+      "path": "dist/assets/gold-ore.svg",
+      "bytes": 348,
+      "sha256": "0fe831b135b5987505a2d80c63d44b84b74c5ede0ca3fd3b3d3ccf2607ea6ac7"
+    },
+    {
+      "path": "dist/assets/hat-accuracy-scroll-greater.png",
+      "bytes": 777,
+      "sha256": "3e96d859aed9dac64b30b4a5f7eff82bffe3bdb04eabbb6e03f8b166a5765f28"
+    },
+    {
+      "path": "dist/assets/hat-accuracy-scroll-greater.svg",
+      "bytes": 421,
+      "sha256": "39da6b124ede9c3940bcf4783e3e9291eb1afa9fe43eba55d0b2d0a34bdd41b7"
+    },
+    {
+      "path": "dist/assets/hat-accuracy-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "eadb704d70dabc25e2a1ade44f5b641886e86696c17b5d804b033c53741a50e1"
+    },
+    {
+      "path": "dist/assets/hat-accuracy-scroll-intermediate.svg",
+      "bytes": 426,
+      "sha256": "323a8c483461b6dc7e5d995953b16d2fe8bd63d15af7d33be295584d1acc33c0"
+    },
+    {
+      "path": "dist/assets/hat-accuracy-scroll-lesser.png",
+      "bytes": 1078,
+      "sha256": "d9435c7dccdcc663aedde5f027340919777b4ea67b76a7c62974109f55a04f10"
+    },
+    {
+      "path": "dist/assets/hat-accuracy-scroll-lesser.svg",
+      "bytes": 420,
+      "sha256": "18b0d13420753397142276c109adad6463f2d3854738b1861825e4aa504e03ca"
+    },
+    {
+      "path": "dist/assets/iron-ore.png",
+      "bytes": 685,
+      "sha256": "283c7c948cf807afc1a9caeacc34aed03a2e0604cae6371dd0247d47d377ae6c"
+    },
+    {
+      "path": "dist/assets/iron-ore.svg",
+      "bytes": 348,
+      "sha256": "ee64f0cb2cd5e8b82f873c5a5a899b54114ff3aff54e95a1b3f0e1c80fcc3127"
+    },
+    {
+      "path": "dist/assets/jr-necki-skin.png",
+      "bytes": 788,
+      "sha256": "b969d6dec2ad865eb624bff3bd0abb05d5454ec8af9fee01dfbc1d1a14e1f051"
+    },
+    {
+      "path": "dist/assets/jr-necki-skin.svg",
+      "bytes": 353,
+      "sha256": "2d4d3d9d137bfdab278ea9820d5b4f3e934d52da24508a220e6d50cfbea4d538"
+    },
+    {
+      "path": "dist/assets/korean-fan.png",
+      "bytes": 947,
+      "sha256": "aa5d225f100b1b1814e8f857622d2d71029c0dc9e747599fc5566434954f69ad"
+    },
+    {
+      "path": "dist/assets/korean-fan.svg",
+      "bytes": 274,
+      "sha256": "fc27487abcc3b209fad8e5d642b7292f1247c831b3bde9af70ec99152a23f932"
+    },
+    {
+      "path": "dist/assets/kumbi-throwing-stars.png",
+      "bytes": 667,
+      "sha256": "bc39a2d54c553756a0de8a05970425926d6664ef7bd9edfc6c484b6461d52f99"
+    },
+    {
+      "path": "dist/assets/kumbi-throwing-stars.svg",
+      "bytes": 319,
+      "sha256": "63fc639d63aee4c5b72859753c5eaaa20981fa59b8991d5305c326c101241171"
+    },
+    {
+      "path": "dist/assets/leaf.png",
+      "bytes": 931,
+      "sha256": "64e74fa62d08ea0f08a76d19addc06b845ca986c1cb7edf4e688373ee31610b4"
+    },
+    {
+      "path": "dist/assets/leaf.svg",
+      "bytes": 197,
+      "sha256": "28c3bf481f1d76a21d840f5a76685d3f11cade5e95e317b41c1f416552475018"
+    },
+    {
+      "path": "dist/assets/leather.png",
+      "bytes": 692,
+      "sha256": "b709ab4b7fdc122c716db56673bec65d94a55a07ba991cc1cf80ba455b4628e7"
+    },
+    {
+      "path": "dist/assets/leather.svg",
+      "bytes": 347,
+      "sha256": "ad054890bc87bdd069a90a5db1179b61e4356f53c10f51b9e132bf1e2bb504f4"
+    },
+    {
+      "path": "dist/assets/magic-potion.png",
+      "bytes": 783,
+      "sha256": "4b96ab8a87a707c284beec9e7436bcd1114791f538f9ec75b2e53bada5deeaf3"
+    },
+    {
+      "path": "dist/assets/magic-potion.svg",
+      "bytes": 384,
+      "sha256": "8eba0b520c900d057de287e270c6f715987596a09038145ccfd5eb94b2b51bf0"
+    },
+    {
+      "path": "dist/assets/meba.png",
+      "bytes": 1047,
+      "sha256": "8476ee6c2e460e4a98ce2d3f1045b659f3d46064fc6bbd26d16e88dbf43efcef"
+    },
+    {
+      "path": "dist/assets/meba.svg",
+      "bytes": 268,
+      "sha256": "4dcfb0138db3cfd551b8c050ba8a6b72ddefd0b1b5ad262bc8b48ee66cfed395"
+    },
+    {
+      "path": "dist/assets/meso-pouch.png",
+      "bytes": 1206,
+      "sha256": "67b97def81ee89a2dad95bac39cd7ded6fb4d922ecc481d055abab11383435c8"
+    },
+    {
+      "path": "dist/assets/mithril-ore.png",
+      "bytes": 978,
+      "sha256": "12cb05c073920b93a81d2be41e0e7aaa29ce878cc7c3db190fd2494c96de29f0"
+    },
+    {
+      "path": "dist/assets/mithril-ore.svg",
+      "bytes": 351,
+      "sha256": "b5038877a56ad5b4e0f33a66f9e89df94d82bae5edf7b277db8ad5812d41fc08"
+    },
+    {
+      "path": "dist/assets/mokbi-throwing-stars.png",
+      "bytes": 631,
+      "sha256": "0e5c4a72e2db08ca72e2aed1d716d7815ef88855b4a84278bbb951454cd2102a"
+    },
+    {
+      "path": "dist/assets/mokbi-throwing-stars.svg",
+      "bytes": 319,
+      "sha256": "8c4aee9f509595b14fbbddfdb626253c616cb24ab3e3cce30a492496527a98f8"
+    },
+    {
+      "path": "dist/assets/mystery-face-coupon.png",
+      "bytes": 1254,
+      "sha256": "191c39563aa191495edaf05f414f83b7543a53e253c63bf7e7da477c365bfe74"
+    },
+    {
+      "path": "dist/assets/mystery-face-coupon.svg",
+      "bytes": 349,
+      "sha256": "2a411f24f99800ca6270fddd29eee822816d27189c2ed0b18104f911595fbe4c"
+    },
+    {
+      "path": "dist/assets/mystery-hair-color-coupon.png",
+      "bytes": 1113,
+      "sha256": "c7b1e82ba27c1c63d8946f8a84db3cfd877e30d50a511001a9e96873d2ead285"
+    },
+    {
+      "path": "dist/assets/mystery-hair-color-coupon.svg",
+      "bytes": 355,
+      "sha256": "0b9c30320d98975cf214b3976d9841aef2b7e982299feb97be2d8c841d729b78"
+    },
+    {
+      "path": "dist/assets/mystery-hair-coupon.png",
+      "bytes": 1430,
+      "sha256": "cb708920b540e8ca44d0dcc5f277a2210538facb2d7168b6c0a2ecdbf09dbf9b"
+    },
+    {
+      "path": "dist/assets/mystery-hair-coupon.svg",
+      "bytes": 349,
+      "sha256": "3db88f08a6b424c8f0ba628e95f03c0cb529caa915e67d7e804142c545fbfcfa"
+    },
+    {
+      "path": "dist/assets/mystery-palette-exchange-coupon.png",
+      "bytes": 1618,
+      "sha256": "132e33636e60af0d369a7e430ae358a906285648161ead73f39ac2286a230385"
+    },
+    {
+      "path": "dist/assets/mystery-palette-exchange-coupon.svg",
+      "bytes": 361,
+      "sha256": "6b27e7319afc4bd5846c800d8d931322f5a4b70b7674fea9dceb70aa815a7b84"
+    },
+    {
+      "path": "dist/assets/orange-potion.png",
+      "bytes": 630,
+      "sha256": "261b14aec24a8f648d5dd3507b2a691a9c03154741b08b440a8cd68cc4f2e55a"
+    },
+    {
+      "path": "dist/assets/orange-potion.svg",
+      "bytes": 385,
+      "sha256": "7538c978d6af02f698a43f6052a4cbc9a6c1115223f5a8e956108bdb10b44116"
+    },
+    {
+      "path": "dist/assets/orihalcon-ore.png",
+      "bytes": 706,
+      "sha256": "ea4a70948ebf48abb2cab18f91ea3b0381ca66414e3958702a8d84c13e846c96"
+    },
+    {
+      "path": "dist/assets/orihalcon-ore.svg",
+      "bytes": 353,
+      "sha256": "b25d58e2add2f0d629f1fe0883bdd43030585581aa6305ab54b63cbd246aef6f"
+    },
+    {
+      "path": "dist/assets/overall-armor-dex-scroll-greater.png",
+      "bytes": 1034,
+      "sha256": "0b6324bdd70d8073bf22daad468b4d97dab9766406c264b19688ebb3e7888db1"
+    },
+    {
+      "path": "dist/assets/overall-armor-dex-scroll-greater.svg",
+      "bytes": 426,
+      "sha256": "3af850c7a1fb331a1da9564d489b77e7ca85e6594675266d48a3cf4d6eb35690"
+    },
+    {
+      "path": "dist/assets/overall-armor-int-scroll-greater.png",
+      "bytes": 1034,
+      "sha256": "9449dbe0dc2b790241721f06d3798e86f356017837af1343a65d1e1424a897f3"
+    },
+    {
+      "path": "dist/assets/overall-armor-int-scroll-greater.svg",
+      "bytes": 426,
+      "sha256": "667dbdf44f5532a731570201f2ab1fa4a371fa785866875d5900b71f4e33f99e"
+    },
+    {
+      "path": "dist/assets/overall-armor-luk-scroll-greater.png",
+      "bytes": 1035,
+      "sha256": "2a833d59ad2797df1f107b99782d211160ef4fc715db398f0af006726103ee73"
+    },
+    {
+      "path": "dist/assets/overall-armor-luk-scroll-greater.svg",
+      "bytes": 426,
+      "sha256": "2e38b5aff4f48563e40f0e97258eeaab9d4a3d0da629a4ac639fc7171de2d4b8"
+    },
+    {
+      "path": "dist/assets/overall-armor-str-scroll-greater.png",
+      "bytes": 1035,
+      "sha256": "2a833d59ad2797df1f107b99782d211160ef4fc715db398f0af006726103ee73"
+    },
+    {
+      "path": "dist/assets/overall-armor-str-scroll-greater.svg",
+      "bytes": 426,
+      "sha256": "cc7884bab60682d3981d19dac94f15e69d9b630332d3f5294c52c06aba43154a"
+    },
+    {
+      "path": "dist/assets/pan-lid.png",
+      "bytes": 937,
+      "sha256": "0abd97a0f16631e8f878e77c873f576f19e2a19fd9a09b7abff8e9806c68c796"
+    },
+    {
+      "path": "dist/assets/pan-lid.svg",
+      "bytes": 255,
+      "sha256": "ebe3fc6532cd3a1dca8f2045b1aa969d14fe5312cf1d2a2a482bf5033cef67b0"
+    },
+    {
+      "path": "dist/assets/pet-equip-jump-scroll-intermediate.png",
+      "bytes": 1046,
+      "sha256": "19a2130b7acd3ed446a879010e058d9be608e06476b3ca38225e7eb447d02e70"
+    },
+    {
+      "path": "dist/assets/pet-equip-jump-scroll-intermediate.svg",
+      "bytes": 428,
+      "sha256": "22d810ae0b78d83e5eed35d33664d7317a886cb2ac662a04887a52f1d48f040b"
+    },
+    {
+      "path": "dist/assets/pet-equip-speed-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "c6a907b8050ce65dd266117bbee05439a0c79f854ad657457c1abbea44e7fdbf"
+    },
+    {
+      "path": "dist/assets/pet-equip-speed-scroll-intermediate.svg",
+      "bytes": 429,
+      "sha256": "950e7a685b9c35d90bfd83651a5aff853596d2ffbec57bcda778a3e62467ec27"
+    },
+    {
+      "path": "dist/assets/pet-equip-speed-scroll-lesser.png",
+      "bytes": 1078,
+      "sha256": "d347f295995c44b870f094f31f6a179156d9fabd34211dfebe8094fb18889cbd"
+    },
+    {
+      "path": "dist/assets/pet-equip-speed-scroll-lesser.svg",
+      "bytes": 423,
+      "sha256": "933d5c98b90c05bc2a918612d785f7d4f0054b96d7cd9133bff260ad1db4c0f2"
+    },
+    {
+      "path": "dist/assets/pet-name-tag.png",
+      "bytes": 1092,
+      "sha256": "a76c7a4c30038cb39b3ffaeda0c67fd9fdadb0e2eece393108e0de4cd9fea6a2"
+    },
+    {
+      "path": "dist/assets/pet-name-tag.svg",
+      "bytes": 260,
+      "sha256": "9cf15937ffb6ede5ab007951de93cd06041864999ff6ece037823db5f3431f13"
+    },
+    {
+      "path": "dist/assets/pigs-head.png",
+      "bytes": 954,
+      "sha256": "fc65426d0f1d66539231ae229cb4ca4cd530c2043b88adab149d3692ece0e5f6"
+    },
+    {
+      "path": "dist/assets/pigs-head.svg",
+      "bytes": 500,
+      "sha256": "d29b9e24abc7860cc328943ed18ccb203498963630e2a833326204ad1790f03f"
+    },
+    {
+      "path": "dist/assets/pink-bunny.png",
+      "bytes": 991,
+      "sha256": "d453516b1a830d93f716d12f18e81ff5971b9d4ed51ce698c04366725e02585c"
+    },
+    {
+      "path": "dist/assets/pink-bunny.svg",
+      "bytes": 513,
+      "sha256": "373d29ead24ae5549ca0b50ffcf67abf89642b8fb823bd4d6e1979456a1b450f"
+    },
+    {
+      "path": "dist/assets/polearm-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "a1d0c2b54afbd3eca220f658d5b6159b3d3180fd58c317b839494ff5a3085c84"
+    },
+    {
+      "path": "dist/assets/polearm-attack-scroll-intermediate.svg",
+      "bytes": 428,
+      "sha256": "04a115ff6af5afd058a9e42da39ef2a2bdd5110af720deed0587c7c761445ac9"
+    },
+    {
+      "path": "dist/assets/pure-water.png",
+      "bytes": 979,
+      "sha256": "f8243bb06b0e944dad79f07707b6e0436e6213213792ab6a2f8c4c5e496cf0e1"
+    },
+    {
+      "path": "dist/assets/pure-water.svg",
+      "bytes": 382,
+      "sha256": "86da466927eb425b610642905c054f4321dc238248c45e788e494bba9237e296"
+    },
+    {
+      "path": "dist/assets/red-hat.png",
+      "bytes": 955,
+      "sha256": "c7ab4d817cf67fd35eec55b7b2f4bc49be3b609cf88b170672146fcdb3994777"
+    },
+    {
+      "path": "dist/assets/red-hat.svg",
+      "bytes": 298,
+      "sha256": "ca4286229f3d663b8bfe8e36eba76add26bc30c53ba121dfc3f7bcb0d6b92269"
+    },
+    {
+      "path": "dist/assets/red-potion.png",
+      "bytes": 883,
+      "sha256": "cf104b81e13b2eb8f41e6aaed3c2038d564cac5a1a90ebcb488be669aa56ac10"
+    },
+    {
+      "path": "dist/assets/red-potion.svg",
+      "bytes": 382,
+      "sha256": "d0a6efcb91e3b1ed0a737247b6d2e3aba55e3ebb95789c499ddca982756c0fda"
+    },
+    {
+      "path": "dist/assets/red-ribbon.png",
+      "bytes": 966,
+      "sha256": "b14e95911f946c5887e51b4367e3cda3713a2ee6fa833de8b38a7f39eb099efa"
+    },
+    {
+      "path": "dist/assets/red-ribbon.svg",
+      "bytes": 301,
+      "sha256": "ba14d1d2c412651603d6f07dea39e04660755a97d4e35f7ceede8dc4978cc523"
+    },
+    {
+      "path": "dist/assets/red-top-hat.png",
+      "bytes": 813,
+      "sha256": "418ecfc6c2d41254ec8de7a1ebb4029b841d3e7229c8e0c879d97347ec72cce6"
+    },
+    {
+      "path": "dist/assets/red-top-hat.svg",
+      "bytes": 302,
+      "sha256": "74efb72d9777925b04a0299c26c8e488497a388beb8f377aea332831a71c5c6f"
+    },
+    {
+      "path": "dist/assets/sapphire-ore.png",
+      "bytes": 904,
+      "sha256": "eb091dc614c1f6046ffca029fed04df115dd4fcc8beab482cf27eccb20ea661d"
+    },
+    {
+      "path": "dist/assets/sapphire-ore.svg",
+      "bytes": 352,
+      "sha256": "ad35a083ccf00c9b6b08b449ef2f5f89bccf2ae1b98500cdf9ef576a8c121be1"
+    },
+    {
+      "path": "dist/assets/scene-provenance.json",
+      "bytes": 655,
+      "sha256": "78af797e06613d3f9e803d5ba77c29681f238387205b95c3c59423c4ed7fb56a"
+    },
+    {
+      "path": "dist/assets/screw.png",
+      "bytes": 724,
+      "sha256": "85550e803d67eda5cf0264668f7e966bee58bee4ca7aeb8abeee5ecdcfacddfc"
+    },
+    {
+      "path": "dist/assets/screw.svg",
+      "bytes": 345,
+      "sha256": "92e363067289c5216ff58f9c34ab65c46603df44e2163271d6554ebcbad00076"
+    },
+    {
+      "path": "dist/assets/selective-5-slot-coupon.png",
+      "bytes": 965,
+      "sha256": "cc0b64d88263cb82cde6f456e99302d6395c1494871c0b2bda578ce8741078dd"
+    },
+    {
+      "path": "dist/assets/selective-5-slot-coupon.svg",
+      "bytes": 353,
+      "sha256": "b5ac96333f1a94cadb312ccf3d7345c964306bc03dbe6d2ab9bea5b6658b1085"
+    },
+    {
+      "path": "dist/assets/shoes-speed-scroll-greater.png",
+      "bytes": 1034,
+      "sha256": "2634c85f9b125b5de18f9d3d7ef5e5d6f5002792c5cdad857bb8a8616ebd975b"
+    },
+    {
+      "path": "dist/assets/shoes-speed-scroll-greater.svg",
+      "bytes": 420,
+      "sha256": "bddf6d5ba66e1ba1fbc871ae638c668d955d3d1a19dd25ff6d23209879ff5048"
+    },
+    {
+      "path": "dist/assets/shoes-speed-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "041a9b4af91185dbda6ed075a4dab6c12b0ee209be1e21d3ded5e067cbf0b1a7"
+    },
+    {
+      "path": "dist/assets/shoes-speed-scroll-intermediate.svg",
+      "bytes": 425,
+      "sha256": "d491f5938faf3856cc7e5675af5c606b27a7c2f758e3b771e8ddd99a3afbb388"
+    },
+    {
+      "path": "dist/assets/signature-eye-color-coupon.png",
+      "bytes": 853,
+      "sha256": "53775d6d32d76d76ad39a5dfddb075b38bf5802c7e36c8e2b776298775eccc7f"
+    },
+    {
+      "path": "dist/assets/signature-eye-color-coupon.svg",
+      "bytes": 356,
+      "sha256": "9e12d938341a0a11ae7fb700dc64b61f78736c70451a03e9e590e3d9c4eb094c"
+    },
+    {
+      "path": "dist/assets/signature-face-coupon.png",
+      "bytes": 977,
+      "sha256": "d572ecac677cb8a229824258a491ffa6d9fe1c2415e3253d672b3e60bba2b039"
+    },
+    {
+      "path": "dist/assets/signature-face-coupon.svg",
+      "bytes": 351,
+      "sha256": "4feac1fd98236ed988604c2bbde2e4c967453b5ce4943f33a1156a5d93481381"
+    },
+    {
+      "path": "dist/assets/signature-hair-color-coupon.png",
+      "bytes": 904,
+      "sha256": "beca973222119ba948801c5ec58ebdb224e8c4c64ad8792074e4e47387bf4985"
+    },
+    {
+      "path": "dist/assets/signature-hair-color-coupon.svg",
+      "bytes": 357,
+      "sha256": "8a20f021e44449aa77b1a2d230fc06b32191349092ee50c99bd577213a303e4a"
+    },
+    {
+      "path": "dist/assets/signature-hair-coupon.png",
+      "bytes": 1219,
+      "sha256": "beb2921306e87f9f03b97a1a8842f9edd5b3e001f5bcaf6a3cba4e83c8a7bdf1"
+    },
+    {
+      "path": "dist/assets/signature-hair-coupon.svg",
+      "bytes": 351,
+      "sha256": "249dc9418070bd9cae26a3b5aadb9699a4e05b836ade671507d6375046a8f92d"
+    },
+    {
+      "path": "dist/assets/signature-skin-color-coupon.png",
+      "bytes": 1080,
+      "sha256": "1e704363d26bcd083ca75fa8abe0df28c7f89ebb95117fe876e3b4966b2d9f32"
+    },
+    {
+      "path": "dist/assets/signature-skin-color-coupon.svg",
+      "bytes": 357,
+      "sha256": "1c200e25486fa3fdcdb7f5c3e427ae5fad6bca73653bab66bdb4489adde5d413"
+    },
+    {
+      "path": "dist/assets/silver-guardian.png",
+      "bytes": 1142,
+      "sha256": "41f37d68757593863bcfe3cb306f80636034813dce00e1879bc1cf0e0b502496"
+    },
+    {
+      "path": "dist/assets/silver-guardian.svg",
+      "bytes": 279,
+      "sha256": "d73c2ca8a516e8833ba41a1d3ca4c660f130b349c50a8712e7d3650c546cc40a"
+    },
+    {
+      "path": "dist/assets/silver-ore.png",
+      "bytes": 538,
+      "sha256": "dca3370bc0efa00d81f3abcb508c2eb9a526703bd02acb92a8007c9b890dbbc2"
+    },
+    {
+      "path": "dist/assets/silver-ore.svg",
+      "bytes": 350,
+      "sha256": "f166372f056fbc0428710e998c0e05e12cd1ab8de1e07accc169baf6ef64762c"
+    },
+    {
+      "path": "dist/assets/sp-reset-scroll.png",
+      "bytes": 1514,
+      "sha256": "e7dcc4f0c0b6090ff41a1d5e3bdd8d64646b7154ea2aba457bfd4a469db0b109"
+    },
+    {
+      "path": "dist/assets/sp-reset-scroll.svg",
+      "bytes": 409,
+      "sha256": "b881fcf4329ca99ab19b8fbb979c590cd0097a21e1cd5f0ab130d0de2f4ca195"
+    },
+    {
+      "path": "dist/assets/spear-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "c2323957e36a3349d850e49f4c0574d21fe4c11fe4745f0aa1d0270c3832d53b"
+    },
+    {
+      "path": "dist/assets/spear-attack-scroll-intermediate.svg",
+      "bytes": 426,
+      "sha256": "3c78b8b0e0c48d901c0407e5ca27d2fe099f44d06b61df6a906099b6aafe7ddb"
+    },
+    {
+      "path": "dist/assets/sprite-provenance.json",
+      "bytes": 30992,
+      "sha256": "00c44c7747cf5c2084a649c66c072221daa4a6f309aafef10a0c4751533c8583"
+    },
+    {
+      "path": "dist/assets/sprites.json",
+      "bytes": 6875,
+      "sha256": "4f5efa15f1fe23b611c8a9fe4d702dcfc1f84a0bc3eb318a5dc6342c745f8ef6"
+    },
+    {
+      "path": "dist/assets/squishy-shoes.png",
+      "bytes": 1017,
+      "sha256": "02cdd74fb5ce8d8bef2ddee5fd87724a2a8d661b63e666de56b6869e7a453ec7"
+    },
+    {
+      "path": "dist/assets/squishy-shoes.svg",
+      "bytes": 261,
+      "sha256": "ca9b7cbc8e5a214c601c8825878d2ada9342806769a842d39e541cefb50fcd19"
+    },
+    {
+      "path": "dist/assets/staff-magic-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "90b6507dfe8e17b97ca16760759d109552ea0b5578aad329610ef105e7f1e2b8"
+    },
+    {
+      "path": "dist/assets/staff-magic-attack-scroll-intermediate.svg",
+      "bytes": 432,
+      "sha256": "12819338e0b7fb4fb517022e863971bc475a5d687cf4c84c3547d2ac02393d7b"
+    },
+    {
+      "path": "dist/assets/steel-avarice.png",
+      "bytes": 1064,
+      "sha256": "758a03d0870792daf434dc3b3367c3d56d18944d5fb543b52d0900167f5d3316"
+    },
+    {
+      "path": "dist/assets/steel-avarice.svg",
+      "bytes": 277,
+      "sha256": "493903c9357033f125a5bdb833a1ebd31888ef57e9b5b5d328c9915e2a6e1271"
+    },
+    {
+      "path": "dist/assets/stiff-feather.png",
+      "bytes": 798,
+      "sha256": "5d64c55b27394b813cda80d082dcee692a2a51e403655f291934d7d67523e7c4"
+    },
+    {
+      "path": "dist/assets/stiff-feather.svg",
+      "bytes": 353,
+      "sha256": "d508236e3cd84aa20786896fc7ff3f9628a900f5099c09fa3db8f2732271fbda"
+    },
+    {
+      "path": "dist/assets/storage-room-5-slot-coupon.png",
+      "bytes": 1171,
+      "sha256": "e62f8a8844120e2c3d59b55fb608313502ef6c760d0432199ed2bda5c88144d8"
+    },
+    {
+      "path": "dist/assets/storage-room-5-slot-coupon.svg",
+      "bytes": 356,
+      "sha256": "f3ff37793a9bc791a3189c2d078c711625c2a8b40aa91fa7ec9d897a50cb3d98"
+    },
+    {
+      "path": "dist/assets/topaz-ore.png",
+      "bytes": 945,
+      "sha256": "e7bd6158f77a6139b84c6be4269b33babef3d00eaf22206cb9eb8033f13bc516"
+    },
+    {
+      "path": "dist/assets/topaz-ore.svg",
+      "bytes": 349,
+      "sha256": "966c7cd0029f1f64ec728ebdf8f7b6a0a590c6d01dd2e68046651a69c8171d5f"
+    },
+    {
+      "path": "dist/assets/topwear-def-scroll-greater.png",
+      "bytes": 1034,
+      "sha256": "107926699a07c70fdd4e0cd9cae18a231e62fc0621ad3376042af0eddd74369f"
+    },
+    {
+      "path": "dist/assets/topwear-def-scroll-greater.svg",
+      "bytes": 420,
+      "sha256": "d5803e24127eaa6f549ff82404b37a7f3603a210ddb106baca7c7ebd4846f64d"
+    },
+    {
+      "path": "dist/assets/two-handed-axe-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "89a35f75996c61f023d47231a6f9337063dff757ecb729c1ca622a2618df0bec"
+    },
+    {
+      "path": "dist/assets/two-handed-axe-attack-scroll-intermediate.svg",
+      "bytes": 435,
+      "sha256": "385fa18bd3ae67551c0596054507abe877cc04762874a1b6b8910593edfad6a0"
+    },
+    {
+      "path": "dist/assets/two-handed-blunt-weapon-attack-scroll-intermediate.png",
+      "bytes": 1045,
+      "sha256": "2b17cee0cc1b2b2679440095752c110bd63a22829f66e7955f32d4e8d311ab17"
+    },
+    {
+      "path": "dist/assets/two-handed-blunt-weapon-attack-scroll-intermediate.svg",
+      "bytes": 444,
+      "sha256": "31baafab876cfd03e3b690de6433e8fcfc7d0bd27f0e96c64d4963f4d77ad66c"
+    },
+    {
+      "path": "dist/assets/two-handed-sword-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "ccfd899bff08b9c981484563bbd60c092b271fdf9dd73a208b84fdb009cf2fe1"
+    },
+    {
+      "path": "dist/assets/two-handed-sword-attack-scroll-intermediate.svg",
+      "bytes": 437,
+      "sha256": "6e0f0bd42a2badda0b6e998d30cd01052293128dcb9a6120661c9de068234c97"
+    },
+    {
+      "path": "dist/assets/unagi.png",
+      "bytes": 641,
+      "sha256": "e2029bad39331da72a09689c3c5f048ce6fa035c5e8514d629f5bde6428ab5a5"
+    },
+    {
+      "path": "dist/assets/unagi.svg",
+      "bytes": 377,
+      "sha256": "e1150f6f15ccbecc3cad0844f14d69e8d4caeb3dc1105734a35791d16441ffcc"
+    },
+    {
+      "path": "dist/assets/wand-magic-attack-scroll-intermediate.png",
+      "bytes": 1047,
+      "sha256": "f02e811e6636bc7b954eb438acdce7a96e50860dca9a7f4df3b592537e143c9c"
+    },
+    {
+      "path": "dist/assets/wand-magic-attack-scroll-intermediate.svg",
+      "bytes": 431,
+      "sha256": "2b2f9f83395ed6fea98268df206f784520bed472fde6a1f4e4a61d60dba6796e"
+    },
+    {
+      "path": "dist/assets/water-of-life.png",
+      "bytes": 1410,
+      "sha256": "d148d5882ec8eaf122e9a6ba11061af3cb0d8fb830e672d774976babd3890b16"
+    },
+    {
+      "path": "dist/assets/water-of-life.svg",
+      "bytes": 385,
+      "sha256": "7051d4c12d4c0edb3576bfd21d6c205d57e78d5ad061e154f258306f95a55250"
+    },
+    {
+      "path": "dist/assets/weighted-earrings.png",
+      "bytes": 988,
+      "sha256": "5dca957f00a6d74cf1c3b4390fda4f8466cc528a84d1e11727d266d55ae39017"
+    },
+    {
+      "path": "dist/assets/weighted-earrings.svg",
+      "bytes": 394,
+      "sha256": "c19419718a2a571bb0597b20d5a2158b46ced6a93fb51d4909b6acd19ef1b935"
+    },
+    {
+      "path": "dist/assets/white-bunny.png",
+      "bytes": 908,
+      "sha256": "56d0d40492490e9428a6e10f0d43c7515a2f2207974fa3ba8c7d4cdde6c95dbb"
+    },
+    {
+      "path": "dist/assets/white-bunny.svg",
+      "bytes": 514,
+      "sha256": "62eb3e57d8094447b069a8e3d199e7aaa21b38c1a3dc085b01b4e175674cd5ed"
+    },
+    {
+      "path": "dist/assets/white-potion.png",
+      "bytes": 886,
+      "sha256": "eaa6b74595b87a0afe1d5674b90fa3463acb1efa3ade60ede2ab9258d3f42381"
+    },
+    {
+      "path": "dist/assets/white-potion.svg",
+      "bytes": 384,
+      "sha256": "b526bc22bb285265bf50260ee3deb6cd16af026dbcafd3586263598ec22d1a18"
+    },
+    {
+      "path": "dist/assets/wizard-wand.png",
+      "bytes": 729,
+      "sha256": "9447196d8cf9b88ad9e04adead2dbb75d0a509bf699d5e840aae5d507a0fc5a8"
+    },
+    {
+      "path": "dist/assets/wizard-wand.svg",
+      "bytes": 275,
+      "sha256": "ad8cf77f70746425d96db75b4702083c74ea444570fcee2457bb6371e228be63"
+    },
+    {
+      "path": "dist/assets/wolbi-throwing-stars.png",
+      "bytes": 431,
+      "sha256": "82facdc68536c7108872a50748266a7add3816ab5660c4cff04425482e868103"
+    },
+    {
+      "path": "dist/assets/wolbi-throwing-stars.svg",
+      "bytes": 319,
+      "sha256": "b3b06b951ff6f6be6efaed3fa9133a9ab211618bf6546167d2fc31108d6db605"
+    },
+    {
+      "path": "dist/assets/wooden-top.png",
+      "bytes": 880,
+      "sha256": "c239f3d8d566af7d029683a393436cee8e1d7f05ec9aa88d670d0bf75547abff"
+    },
+    {
+      "path": "dist/assets/wooden-top.svg",
+      "bytes": 274,
+      "sha256": "75e153d936c5dcade4d6bf0825a34d1066d928588c70cb36c2ceba7f14f26069"
+    },
+    {
+      "path": "dist/assets/yellow-hat.png",
+      "bytes": 935,
+      "sha256": "e7ffad426e19def23a2e86f86dc1388b106a539dc63c9e2deac23dafb906a8b3"
+    },
+    {
+      "path": "dist/assets/yellow-hat.svg",
+      "bytes": 301,
+      "sha256": "35bda723356c3f1fbeef3b19d108e06b266882ced25c22e84432f9db4153b2e1"
+    },
+    {
+      "path": "dist/data-59cde1eaa6747299.json",
+      "bytes": 191501,
+      "sha256": "59cde1eaa67472993b5da312c07d587252b57629b0ea845f07fcabe0e7c2ba2d"
+    },
+    {
+      "path": "dist/data.json",
+      "bytes": 191501,
+      "sha256": "59cde1eaa67472993b5da312c07d587252b57629b0ea845f07fcabe0e7c2ba2d"
+    },
+    {
+      "path": "dist/fallback.html",
+      "bytes": 1032,
+      "sha256": "28440882e518969b1e298a4a9d67598809fcfee1d419b915f9ea757bfaeb60b1"
+    },
+    {
+      "path": "dist/history/cpi-v1.json",
+      "bytes": 13243,
+      "sha256": "8915561fdd66b964a154a9d1fbff73689388d0ee66791ded4f2c1e8e7804579b"
+    },
+    {
+      "path": "dist/index.html",
+      "bytes": 26265,
+      "sha256": "daacbf5537a40a25b8a6ec6a41613cbd800eacfaf31c4a5b7c5de78e8c3162a0"
+    },
+    {
+      "path": "dist/style.css",
+      "bytes": 31996,
+      "sha256": "fee84fbf880f49a5821691bef80cc8f9af638d55bd163332952dcc0182b1f869"
+    },
+    {
+      "path": "dist/sw.js",
+      "bytes": 851,
+      "sha256": "00b464af5e19764786eb04cf76874441594624994fad193aebad734ac035e52d"
+    },
+    {
+      "path": "dist/version.json",
+      "bytes": 150,
+      "sha256": "d9fe3afa46e7c1097910f571ad0f21b4073faa3f2e9f7b284c9e2b23f7507287"
+    },
+    {
+      "path": "engine.py",
+      "bytes": 33450,
+      "sha256": "d65549859b996afe73aea67a08868c6406d1f36d7d22df57c0b7dbefd4a1d644"
+    },
+    {
+      "path": "historical_backfill.py",
+      "bytes": 8410,
+      "sha256": "2120959c587ec8a27aa1f657675fe740639689ec114be03b29b8868cf9625930"
+    },
+    {
+      "path": "history/cpi-v1.json",
+      "bytes": 13243,
+      "sha256": "8915561fdd66b964a154a9d1fbff73689388d0ee66791ded4f2c1e8e7804579b"
+    },
+    {
+      "path": "history/niadb-reported-nx-history.json",
+      "bytes": 10147,
+      "sha256": "6f9e762160b44b716f4158ac2d83607ff162caa0e29293f7d99d7b5ab2ba7489"
+    },
+    {
+      "path": "icons.py",
+      "bytes": 4463,
+      "sha256": "a310eda454ea0ebfe7a64f01a36a0bc669ce4c55dfcec89955deb6a5a8e38b74"
+    },
+    {
+      "path": "intraday-example.schema.json",
+      "bytes": 636,
+      "sha256": "2b73fd646e5a01da533715371475eda8aff63d1b1474529af4219de96d99b6c7"
+    },
+    {
+      "path": "mfm_adapter.py",
+      "bytes": 14782,
+      "sha256": "b27336e2fc16400022aa22c13df95f94f33237426a2bbe0d2741a6561499d4d5"
+    },
+    {
+      "path": "ops/fallback-worker.js",
+      "bytes": 2435,
+      "sha256": "a5675857799556e5c9e09d2c58a79c91b1bb86db4ab1d26af2964a90b537d4e7"
+    },
+    {
+      "path": "ops/worker-core.mjs",
+      "bytes": 19232,
+      "sha256": "670b1fc5aed99ab40b3b8dcd6e30a80299ea5d40278488efec428635136672f6"
+    },
+    {
+      "path": "ops/worker.mjs",
+      "bytes": 21173,
+      "sha256": "8e5ea636de2a65c919e5ea53408fc858366b409ba179f0231c3e232e32d7f6e8"
+    },
+    {
+      "path": "ops/wrangler.jsonc",
+      "bytes": 648,
+      "sha256": "67a0864799f713dbe75d4c977519bde9d8e405f36d71263747add89a339806de"
+    },
+    {
+      "path": "package.json",
+      "bytes": 774,
+      "sha256": "cf73db168098db3d77c557756b0c8772c7e4228acf5fcd18ae99cbebfe5fc275"
+    },
+    {
+      "path": "preview.py",
+      "bytes": 2660,
+      "sha256": "5f7f29fb897deff084aa4f28081f5df72b31e79470588e640ee19c179bb6815b"
+    },
+    {
+      "path": "public_api.py",
+      "bytes": 4622,
+      "sha256": "03694a2077dc43abc7cd83cdcf220cb5267261a6b9c1445cde6fb4c5f4763737"
+    },
+    {
+      "path": "requirements.txt",
+      "bytes": 24,
+      "sha256": "40ff0af8660569c61fb5c7a91ccd33983cf6e7d92b5b06c11c38dbdb2ca4dcd4"
+    },
+    {
+      "path": "smega.py",
+      "bytes": 3419,
+      "sha256": "1833ebbca3eb0dd508917c98c63dbb26c8f0958714e2d5de547b1082dc6d2d88"
+    },
+    {
+      "path": "sprite_fetch.py",
+      "bytes": 4016,
+      "sha256": "a1da712aac3b470de5d265e909b62db0e4732139871ff157a2ab56f9538a5162"
+    },
+    {
+      "path": "tests/dom.cjs",
+      "bytes": 9475,
+      "sha256": "990211723eff5407282b9828e943ae1cc4385a19acaa2e0480ee79b06c519479"
+    },
+    {
+      "path": "tests/test_adapters.py",
+      "bytes": 4058,
+      "sha256": "79ae6f1013ee8a793e880ed53b9033a07334ad88c7bba0ed262bc9ab6b1e75df"
+    },
+    {
+      "path": "tests/test_basket_v2.py",
+      "bytes": 8832,
+      "sha256": "9c0bb4620d910c561286628a0c67a727b79858441d90940d8a7baf36d34913b6"
+    },
+    {
+      "path": "tests/test_engine.py",
+      "bytes": 11571,
+      "sha256": "734a10d3269a43e10ef7bc869ba2b700ca7ed064c866462873a916048a1f6f58"
+    },
+    {
+      "path": "tests/test_historical_backfill.py",
+      "bytes": 4371,
+      "sha256": "1a28bfe5812319e3873e486628c12af06f2d8945daf6c2de9165627aaa667cc7"
+    },
+    {
+      "path": "tests/test_mfm_adapter.py",
+      "bytes": 9159,
+      "sha256": "841da1330b96c0b26d9f9d7b32fe2ed2cc62fbab62abc198ec1fb51ac6e46209"
+    },
+    {
+      "path": "tests/test_public_api.py",
+      "bytes": 2211,
+      "sha256": "16117df031e7c515d6caad744c5b4bbee62f3baa3843d1d7391b3f194de5ca79"
+    },
+    {
+      "path": "tests/test_source_summary.py",
+      "bytes": 4854,
+      "sha256": "2365410a140325408b2c2b482e8947dfc05ecb36d7c10714dbb148fbff981fa7"
+    },
+    {
+      "path": "tests/worker-core.test.mjs",
+      "bytes": 21010,
+      "sha256": "b19477e0cda9d6314236758cfe237b03aeb72b8fba2b729019a0f6cc2e74d5eb"
+    },
+    {
+      "path": "tests/worker-runtime.test.mjs",
+      "bytes": 22059,
+      "sha256": "4f899692645d3ddfc9163228af524a8149e45895efd654cc5a6c986ce71c0292"
+    },
+    {
+      "path": "web/_headers",
+      "bytes": 562,
+      "sha256": "8dfa9dc73f14047bf2fbbf8f9d75423e8d9202c4668ec8056c685153141ec944"
+    },
+    {
+      "path": "web/app.js",
+      "bytes": 47950,
+      "sha256": "7e68eee94fb6905397a5ece06e6e3f13624f9cfbd6cb35638b308a8ed4e2bf36"
+    },
+    {
+      "path": "web/index.html",
+      "bytes": 26265,
+      "sha256": "daacbf5537a40a25b8a6ec6a41613cbd800eacfaf31c4a5b7c5de78e8c3162a0"
+    },
+    {
+      "path": "web/style.css",
+      "bytes": 31996,
+      "sha256": "fee84fbf880f49a5821691bef80cc8f9af638d55bd163332952dcc0182b1f869"
+    },
+    {
+      "path": "web/sw.js",
+      "bytes": 851,
+      "sha256": "00b464af5e19764786eb04cf76874441594624994fad193aebad734ac035e52d"
+    }
+  ]
+}
