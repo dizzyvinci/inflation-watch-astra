@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T17:10:18+00:00",
+  "exportedAt": "2026-11-05T17:13:27+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -5622,8 +5622,8 @@
     },
     {
       "path": "tests/test_basket_v2.py",
-      "bytes": 11008,
-      "sha256": "33bef35ffdfdda27fa753a737f44da9a04edbb15800383b1f26978839f024e0b"
+      "bytes": 11051,
+      "sha256": "7baa8e5c62aceeeba8f7e3273f17cc859b75876e3980d7050ed39114d6ef240c"
     },
     {
       "path": "tests/test_cash_basket.py",
