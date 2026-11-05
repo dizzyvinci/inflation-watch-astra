@@ -6,7 +6,8 @@
   "compatibility_date": "2026-11-04",
   "workers_dev": true,
   "vars": {
-    "PREVIEW_ACCESS": "review"
+    "PREVIEW_ACCESS": "review",
+    "API_GRANT_JSON": "{\"enabled\":false,\"publicationEnabled\":false}"
   },
   "limits": {
     "cpu_ms": 1000
@@ -20,6 +21,10 @@
     {
       "binding": "SNAPSHOTS",
       "bucket_name": "inflation-watch-astra-data"
+    },
+    {
+      "binding": "API_RAW_RECEIPTS",
+      "bucket_name": "inflation-watch-astra-data"
     }
   ],
   "triggers": {
@@ -30,5 +35,21 @@
   "observability": {
     "enabled": true,
     "head_sampling_rate": 0.01
-  }
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "API_BUDGET_OWNER",
+        "class_name": "ApiGrantCollector"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "api-schema-probes-v1",
+      "new_sqlite_classes": [
+        "ApiGrantCollector"
+      ]
+    }
+  ]
 }

@@ -1086,12 +1086,23 @@ test('catalogue projection failure retains the last-good main report and cannot 
 });
 
 
-test('deployed runtime entry exports only the tested default handler', async () => {
+test('deployed entry exposes tested handlers and the internal API Durable Object class', async () => {
   const config = JSON.parse(readFileSync(new URL('../ops/wrangler.jsonc', import.meta.url), 'utf8'));
   assert.equal(config.main, './worker-entry.mjs');
-  const entry = await import('../ops/worker-entry.mjs');
-  assert.deepEqual(Object.keys(entry), ['default']);
-  assert.equal(entry.default, worker);
-  assert.equal(typeof entry.default.fetch, 'function');
-  assert.equal(typeof entry.default.scheduled, 'function');
+  const {registerHooks} = await import('node:module');
+  const stub = 'data:text/javascript,export class DurableObject { constructor() { throw new Error("Node test must not instantiate the runtime stub"); } }';
+  const hook = registerHooks({resolve(specifier, context, nextResolve) {
+    return specifier === 'cloudflare:workers' ? {url:stub,shortCircuit:true} : nextResolve(specifier,context);
+  }});
+  try {
+    const entry = await import('../ops/worker-entry.mjs');
+    assert.deepEqual(Object.keys(entry), ['ApiGrantCollector','default']);
+    assert.equal(entry.default, worker);
+    assert.equal(typeof entry.default.fetch, 'function');
+    assert.equal(typeof entry.default.scheduled, 'function');
+    assert.equal(entry.ApiGrantCollector.name, 'ApiGrantCollector');
+    assert.equal(typeof entry.ApiGrantCollector.prototype.runOne, 'function');
+  } finally { hook.deregister(); }
+  assert.deepEqual(JSON.parse(config.vars.API_GRANT_JSON), {enabled:false,publicationEnabled:false});
+  assert.deepEqual(config.durable_objects.bindings, [{name:'API_BUDGET_OWNER',class_name:'ApiGrantCollector'}]);
 });

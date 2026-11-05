@@ -87,6 +87,32 @@ After deployment, inspect the returned URL, UI, `/version.json`, `/health.json` 
 
 For rollback, use the previous Worker deployment; retained immutable report objects remain available. Inspect health/source dates before publishing claims about update frequency. If the source fails, repair collection while the last-good report remains served. If a token lacks deployment/binding permission, report the exact missing operation rather than expanding credentials by default.
 
+## Prepared API schema probes
+
+The optional hosted API collector is disabled by default: `API_GRANT_JSON` is
+`{"enabled":false,"publicationEnabled":false}`. Scheduled checks return before
+reading its key, creating a Durable Object instance or making an API request.
+The normal daily collector operates independently. Registering the internal
+`ApiGrantCollector` class and its SQLite namespace does not activate collection.
+
+After an actual approval, record the granted scope and limits separately from
+the requested allowance. Configure the server-side secret
+`MAPLESTORY_MARKET_APPROVED_API_KEY` and an explicit reviewed grant only then.
+One fixed Durable Object owns the account-wide request budget; do not run a
+separate Python collector against the same allowance. The prepared four GET
+operations capture private raw schema receipts, with persisted spacing, rolling
+minute/day budgets, Retry-After and an authentication stop. Their existence is
+not evidence of historical coverage, sales quantities, item variants or a live
+intraday feed.
+
+`API_RAW_RECEIPTS` aliases the existing private R2 bucket under
+`_private/provider-api/v1/`. Keep public bucket URLs and custom domains disabled.
+No HTTP route exposes the receipts or collector administration. Raw response
+bytes and their hashes are retained for inspection; parsed JSON is explicitly
+only a potentially lossy view. Publication remains prohibited even after raw
+collection is enabled. Schema validation and normalization require a separate
+implementation once actual responses and provider permissions are available.
+
 ## Traffic and build planning
 
 Data checks do not rebuild the site: ten-minute scheduling is approximately 4,320 invocations per 30-day month, independently of visitor traffic. Deployments happen on code changes. The [Workers Static Assets billing documentation](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) describes static requests as free and unlimited; JSON Worker invocations, CPU and R2 operations are separately metered under the account's actual plan. See [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) and [R2 pricing](https://developers.cloudflare.com/r2/pricing/) for current terms.

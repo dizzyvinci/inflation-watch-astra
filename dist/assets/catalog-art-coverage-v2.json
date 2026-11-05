@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 2,
+  "kind": "combined_reviewed_original_icon_coverage",
+  "previousSourceCoverage": "assets/catalog-art-coverage-v1.json",
+  "previousSource404Meaning": "Retained historical MapleStory.io MCW/1 results; not overwritten by the separate wiki supplement",
+  "originalPlanCount": 1090,
+  "originalPlanMapleIoImages": 1087,
+  "originalPlanWikiSupplementImages": 3,
+  "allOriginalPlanEntriesHaveReviewedImages": true,
+  "spriteKeyCount": 2525,
+  "collectedFeedItems": 1424,
+  "collectedFeedItemsWithReviewedArt": 1385,
+  "collectedFeedItemsWithoutReviewedArt": 39,
+  "supplementProvenance": "assets/halloween-icon-provenance-v1.json",
+  "note": "Art coverage only. Metadata, prices, quantities, source times and economic classification are independent."
+}

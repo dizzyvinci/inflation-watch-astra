@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T20:07:08+00:00",
+  "exportedAt": "2026-11-05T20:55:51+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -22,8 +22,8 @@
     },
     {
       "path": "DEPLOYMENT.md",
-      "bytes": 9414,
-      "sha256": "3e44b945d4afea339e2a1c7c7da3d214d57c5ec3f9c1c8e54e94905f8bdf709c"
+      "bytes": 10993,
+      "sha256": "270cd1ef9d169f028a9a08cab7a004efe5aa0f2d73955633089e183748a02112"
     },
     {
       "path": "MYSTERY_BOXES_EVIDENCE.json",
@@ -414,6 +414,11 @@
       "path": "assets/catalog-art-coverage-v1.json",
       "bytes": 590,
       "sha256": "1333025108542505fd0cab00799648c5dfaa47a942199e43984e9a9449d59f0b"
+    },
+    {
+      "path": "assets/catalog-art-coverage-v2.json",
+      "bytes": 772,
+      "sha256": "7b1c8741bda3b0181dafc4ccd8135cd0daf806a5640bd9334ba9c2430708a272"
     },
     {
       "path": "assets/catalog-mcw1-1002000-07482670237e3e77.png",
@@ -4251,6 +4256,21 @@
       "sha256": "8319a758c11a4d00ab3f9a4620e5e79383379d24671301c5eaebd04aea152ddb"
     },
     {
+      "path": "assets/catalog-mcw1-1702096-55864ac69e5bdd04.png",
+      "bytes": 1061,
+      "sha256": "55864ac69e5bdd042a908f1ff61c4974ad2e70d3ba38bb00cf6561a017b1bc5b"
+    },
+    {
+      "path": "assets/catalog-mcw1-1702325-ca0999b0c0c3d536.png",
+      "bytes": 1331,
+      "sha256": "ca0999b0c0c3d536111c9e5e3c76bb5d953709ef6fc7d6c076c19fd9d4611b41"
+    },
+    {
+      "path": "assets/catalog-mcw1-1702326-402eb3fb302d0587.png",
+      "bytes": 956,
+      "sha256": "402eb3fb302d0587a719d183b2b4e2f224a0867582cabadd803afb10a4b80c84"
+    },
+    {
       "path": "assets/catalog-mcw1-2000005-18dad75926ceacbb.png",
       "bytes": 1176,
       "sha256": "18dad75926ceacbb30bd7e21592d29710da0efacbae40b5ed284ee97fc982cf1"
@@ -6221,6 +6241,11 @@
       "sha256": "0ba7bdf1c797920fcc6cf55e9ee2c5bfb912b9d4dfc5f37ca8f30f7560f6822c"
     },
     {
+      "path": "assets/halloween-icon-provenance-v1.json",
+      "bytes": 4412,
+      "sha256": "9a8ea6ce4b0342e8ded7b617aad97b900cbc375e58828b77ac07ac580c0bd550"
+    },
+    {
       "path": "assets/hat-accuracy-scroll-greater.png",
       "bytes": 777,
       "sha256": "3e96d859aed9dac64b30b4a5f7eff82bffe3bdb04eabbb6e03f8b166a5765f28"
@@ -7172,8 +7197,8 @@
     },
     {
       "path": "assets/sprites.json",
-      "bytes": 170229,
-      "sha256": "5df90c6d2b78c23b1dd74e5d2f8915ae30a020c283bd9b0913d521cd51a99368"
+      "bytes": 170638,
+      "sha256": "356280fac3d0b4719ce31aa9e263b5de5a2797e191600f178c3fa4e53d1711de"
     },
     {
       "path": "assets/squishy-shoes.png",
@@ -7518,7 +7543,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "19d0c91b8987b22159c9067658f23537c4df9a099ca4fab2a54a7ac51e60a590"
+      "sha256": "cbc5a99ff64dce4070471f4877a5d53ed5d3c9feba8c452f71be1f7ad9470f5c"
     },
     {
       "path": "cache/market.json",
@@ -7603,7 +7628,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "29ffd9dbda9b38bab0069b5da87fd95dfb46e2f0a9be3d8c1ecafd2097b29e76"
+      "sha256": "91ff1e93dffe20968b9a245cb3445fcfa6d109afe87739dc906c3138163874a0"
     },
     {
       "path": "dist/_headers",
@@ -8064,6 +8089,11 @@
       "path": "dist/assets/catalog-art-coverage-v1.json",
       "bytes": 590,
       "sha256": "1333025108542505fd0cab00799648c5dfaa47a942199e43984e9a9449d59f0b"
+    },
+    {
+      "path": "dist/assets/catalog-art-coverage-v2.json",
+      "bytes": 772,
+      "sha256": "7b1c8741bda3b0181dafc4ccd8135cd0daf806a5640bd9334ba9c2430708a272"
     },
     {
       "path": "dist/assets/catalog-mcw1-1002000-07482670237e3e77.png",
@@ -11901,6 +11931,21 @@
       "sha256": "8319a758c11a4d00ab3f9a4620e5e79383379d24671301c5eaebd04aea152ddb"
     },
     {
+      "path": "dist/assets/catalog-mcw1-1702096-55864ac69e5bdd04.png",
+      "bytes": 1061,
+      "sha256": "55864ac69e5bdd042a908f1ff61c4974ad2e70d3ba38bb00cf6561a017b1bc5b"
+    },
+    {
+      "path": "dist/assets/catalog-mcw1-1702325-ca0999b0c0c3d536.png",
+      "bytes": 1331,
+      "sha256": "ca0999b0c0c3d536111c9e5e3c76bb5d953709ef6fc7d6c076c19fd9d4611b41"
+    },
+    {
+      "path": "dist/assets/catalog-mcw1-1702326-402eb3fb302d0587.png",
+      "bytes": 956,
+      "sha256": "402eb3fb302d0587a719d183b2b4e2f224a0867582cabadd803afb10a4b80c84"
+    },
+    {
       "path": "dist/assets/catalog-mcw1-2000005-18dad75926ceacbb.png",
       "bytes": 1176,
       "sha256": "18dad75926ceacbb30bd7e21592d29710da0efacbae40b5ed284ee97fc982cf1"
@@ -13991,6 +14036,11 @@
       "sha256": "0ba7bdf1c797920fcc6cf55e9ee2c5bfb912b9d4dfc5f37ca8f30f7560f6822c"
     },
     {
+      "path": "dist/assets/halloween-icon-provenance-v1.json",
+      "bytes": 4412,
+      "sha256": "9a8ea6ce4b0342e8ded7b617aad97b900cbc375e58828b77ac07ac580c0bd550"
+    },
+    {
       "path": "dist/assets/hat-accuracy-scroll-greater.png",
       "bytes": 777,
       "sha256": "3e96d859aed9dac64b30b4a5f7eff82bffe3bdb04eabbb6e03f8b166a5765f28"
@@ -15192,8 +15242,8 @@
     },
     {
       "path": "dist/assets/sprites.json",
-      "bytes": 170229,
-      "sha256": "5df90c6d2b78c23b1dd74e5d2f8915ae30a020c283bd9b0913d521cd51a99368"
+      "bytes": 170638,
+      "sha256": "356280fac3d0b4719ce31aa9e263b5de5a2797e191600f178c3fa4e53d1711de"
     },
     {
       "path": "dist/assets/squishy-shoes.png",
@@ -15721,6 +15771,11 @@
       "sha256": "ec4c031544d318305aa6cae4931cd167a95b915f13b6b5a3e87f73894b06307c"
     },
     {
+      "path": "dist/astra-ui-edd27d52c42a0bf6.js",
+      "bytes": 363513,
+      "sha256": "edd27d52c42a0bf6ea40633dea02e14b63eabd8523c96c68d191edf45bc99521"
+    },
+    {
       "path": "dist/author-portrait.css",
       "bytes": 2558,
       "sha256": "0e81174243f97f7732287943c6bbf1c18ab7c11f6b9864fc01b56d96955ea25e"
@@ -15911,6 +15966,11 @@
       "sha256": "6c4628228e2366f93dc0ebc09d568abbb5f91ddb4ad95fe50139e1c219a4302d"
     },
     {
+      "path": "dist/data-6cb8ae555685d164.json",
+      "bytes": 992898,
+      "sha256": "6cb8ae555685d1641cacb1295536889bed154b115eeb7935c4cea0be0551d7fd"
+    },
+    {
       "path": "dist/data-6eda6c9c64ca1f05.json",
       "bytes": 267719,
       "sha256": "6eda6c9c64ca1f05e345d5611f9edee717a1b75a2a6a7b762ab115fcc8c8d7d9"
@@ -15986,6 +16046,11 @@
       "sha256": "f6c5ed14923531e41ca7483545d5bb63b049135652ceafa7361c549bd5349e89"
     },
     {
+      "path": "dist/data-faba8188c3c07fcd.json",
+      "bytes": 992898,
+      "sha256": "faba8188c3c07fcdbe8547cc15c3637e9b2e728c292310272b08b383616ba79e"
+    },
+    {
       "path": "dist/data-fbf6054dd616ceea.json",
       "bytes": 308874,
       "sha256": "fbf6054dd616ceea13a025b3ac7e2c78b552d92a19d69f02e2e659140aaf50b7"
@@ -16002,8 +16067,8 @@
     },
     {
       "path": "dist/data.json",
-      "bytes": 992513,
-      "sha256": "dad836796be9b3be73ed80cbf43f45e67ec5b25e907b63909fe4d798669a51b5"
+      "bytes": 992898,
+      "sha256": "faba8188c3c07fcdbe8547cc15c3637e9b2e728c292310272b08b383616ba79e"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16023,7 +16088,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "29ffd9dbda9b38bab0069b5da87fd95dfb46e2f0a9be3d8c1ecafd2097b29e76"
+      "sha256": "91ff1e93dffe20968b9a245cb3445fcfa6d109afe87739dc906c3138163874a0"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16032,8 +16097,8 @@
     },
     {
       "path": "dist/fee-preview.js",
-      "bytes": 15289,
-      "sha256": "32e0bacf46bb964cb04522177ceb90aa746c41d674e092b206c4305c6dbf3b68"
+      "bytes": 15570,
+      "sha256": "a6e85a8b174fa7b067592abac130e9511ccc2c3c938b117741b9d005de198dbc"
     },
     {
       "path": "dist/fm-backdrop-preview.css",
@@ -16057,8 +16122,8 @@
     },
     {
       "path": "dist/index.html",
-      "bytes": 48791,
-      "sha256": "6a6ca22012a77f7a05b29c6331b0b42101c81963670c2c093d018d9527d89ba4"
+      "bytes": 49249,
+      "sha256": "f9cd0f866d6b127195df2cedba0f8cd385ac7253aff8f372621fe8a1753662cd"
     },
     {
       "path": "dist/layout-preview.css",
@@ -16167,8 +16232,8 @@
     },
     {
       "path": "dist/price-check.js",
-      "bytes": 26180,
-      "sha256": "41947b5b2694c8fb54fd0cbae437091c6f61f1b31b6026bef95c39c994e788e5"
+      "bytes": 29910,
+      "sha256": "d062af1d9159ba69eea8afb52e9bac521467bd82ed0e1374f97f0b950c0756f0"
     },
     {
       "path": "dist/privacy-controls.css",
@@ -16278,12 +16343,12 @@
     {
       "path": "dist/ui-bundles.json",
       "bytes": 9766,
-      "sha256": "3d6236ad4a854686daaec4b5594ef62a5170b6ee4bbf071f1682dc3cd1f7784d"
+      "sha256": "2d4c287b80eb96a02b5dc7977338b3790659f1312fea8fb1eda48028ab24134e"
     },
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "686001837edb7cca26150a17d60a548ef4182ecb93a23a0965b3927dbfdb2b77"
+      "sha256": "7eb63225928e059262abab6b1f6bfd6cb65f620ec196698d8f292b5e80b2f9e9"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16361,6 +16426,21 @@
       "sha256": "c5cab36f28dcd623ed45afadffa5101ed63dc34b60b4e607c5c6fe636c2ca457"
     },
     {
+      "path": "ops/api-collector-core.mjs",
+      "bytes": 19475,
+      "sha256": "e445d0066048d093435293544cfb947ea3e0d615aa8e539ff03f86da5a5dff28"
+    },
+    {
+      "path": "ops/api-cron-hook.mjs",
+      "bytes": 598,
+      "sha256": "3e3c96676aebb81119944e400642549ff4d19e9c71550922adc7dbd8c4b3778f"
+    },
+    {
+      "path": "ops/api-grant-collector.mjs",
+      "bytes": 1013,
+      "sha256": "28b1bc04768cd8a6db0aed7ecf2a279bd1fb4954480c9b4d274041f39957932a"
+    },
+    {
       "path": "ops/archive-client-cash-metadata.py",
       "bytes": 5295,
       "sha256": "5cf1f6170ee26b9efc7b6d31580236b26836e40ab1dba62946c8c951a41cca3c"
@@ -16402,18 +16482,18 @@
     },
     {
       "path": "ops/worker-entry.mjs",
-      "bytes": 130,
-      "sha256": "9cfa59f279d3fc1726f8c6b99e5f12d538ca853a44ced5312305f27044db49d3"
+      "bytes": 215,
+      "sha256": "87e2cf40922638f3a7448911c3098cb6fee0d19016fac95bb49875a8dbbf460f"
     },
     {
       "path": "ops/worker.mjs",
-      "bytes": 39003,
-      "sha256": "0f0d476200dae72c0667c93486d159061a35abc4a9630c06e4d9a15ce0b19ac2"
+      "bytes": 39634,
+      "sha256": "45b9962cc9838c3e768d8afe2bd266b0d7f1de40d59ff3921f1c6330e3aafc30"
     },
     {
       "path": "ops/wrangler.jsonc",
-      "bytes": 698,
-      "sha256": "b625781a197e05119171518e2d954354307decba7a2a2dd3c508147f07299b81"
+      "bytes": 1156,
+      "sha256": "9ac925e2a9a1141f59472d97d8b627c8c9e243abe999cd0d010c7a2a36823532"
     },
     {
       "path": "package-lock.json",
@@ -16422,8 +16502,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 4551,
-      "sha256": "cd79e3316c20f5d2ea6d2b9f6d0db67829343527c0e72b0d92667a3db88968b9"
+      "bytes": 4749,
+      "sha256": "51451c8fdc4222028543ca5a7d37b4dd741cf7b4861d446d85c80f69e3d4b020"
     },
     {
       "path": "portable_hash.py",
@@ -16471,6 +16551,11 @@
       "sha256": "a1da712aac3b470de5d265e909b62db0e4732139871ff157a2ab56f9538a5162"
     },
     {
+      "path": "tests/api-collector-core.test.mjs",
+      "bytes": 9257,
+      "sha256": "30c0b46db869df47657f8089292caf3f1ed16d1e8dca990e1fdc4a4c418b70aa"
+    },
+    {
       "path": "tests/asset-bundles.cjs",
       "bytes": 13275,
       "sha256": "78a4dd1d281b61e6f5f0915e41ae0d6cb080fb5da640975f858ae33742c51d25"
@@ -16512,8 +16597,8 @@
     },
     {
       "path": "tests/cash-price-references.cjs",
-      "bytes": 7006,
-      "sha256": "2e4a837d2346cb4d2d91859e6f10aa2d3bb122acb97cd87e765317da9a804824"
+      "bytes": 7225,
+      "sha256": "c24a61edd3dc5f77d57976f63272c38215f9bca4dbd125124361bc9f9cae7072"
     },
     {
       "path": "tests/catalog-identity-v2.test.mjs",
@@ -16676,9 +16761,14 @@
       "sha256": "9dea8047019a81078943f30f0a1e30bd264105e90ef311df92c9bb65a1eb2b55"
     },
     {
+      "path": "tests/price-check-timezone.cjs",
+      "bytes": 10968,
+      "sha256": "20849674f700558bbac182c211472cffabf1870f28777a8358bfdbd0a543c5e1"
+    },
+    {
       "path": "tests/price-check.cjs",
-      "bytes": 16807,
-      "sha256": "c1ff284db0ebaae688d32e3f4d4036676c078f390c5801765b75be0c9fe84fb3"
+      "bytes": 16822,
+      "sha256": "30ffd6c6cb87bbaf6f4801b56a6bf08a2335b6b4b1ea7ab8c8ce6238709b3784"
     },
     {
       "path": "tests/privacy-controls.cjs",
@@ -16887,8 +16977,8 @@
     },
     {
       "path": "tests/worker-runtime.test.mjs",
-      "bytes": 66598,
-      "sha256": "f6e353728078635a624d69938fe489f95a39cde874d4035ab489512ac0628ff1"
+      "bytes": 67454,
+      "sha256": "1d7cb0344b447b494430224ed532a25b68b878986785160fc16a2c687241403f"
     },
     {
       "path": "tests/worker-ui-assets.test.mjs",
@@ -17042,8 +17132,8 @@
     },
     {
       "path": "web/fee-preview.js",
-      "bytes": 15289,
-      "sha256": "32e0bacf46bb964cb04522177ceb90aa746c41d674e092b206c4305c6dbf3b68"
+      "bytes": 15570,
+      "sha256": "a6e85a8b174fa7b067592abac130e9511ccc2c3c938b117741b9d005de198dbc"
     },
     {
       "path": "web/fm-backdrop-preview.css",
@@ -17062,8 +17152,8 @@
     },
     {
       "path": "web/index.html",
-      "bytes": 53780,
-      "sha256": "c481ecfeaba0805012ff48a4a9e44de64d7e09e7602c1c4db005dff886f6b7fb"
+      "bytes": 54238,
+      "sha256": "7e065d2de383a1a14bb1432d3eb48a223df585d7eb5b4581a833bcd9dea554fc"
     },
     {
       "path": "web/layout-preview.css",
@@ -17172,8 +17262,8 @@
     },
     {
       "path": "web/price-check.js",
-      "bytes": 26180,
-      "sha256": "41947b5b2694c8fb54fd0cbae437091c6f61f1b31b6026bef95c39c994e788e5"
+      "bytes": 29910,
+      "sha256": "d062af1d9159ba69eea8afb52e9bac521467bd82ed0e1374f97f0b950c0756f0"
     },
     {
       "path": "web/privacy-controls.css",

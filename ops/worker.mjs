@@ -1,3 +1,4 @@
+import {maybeRunApprovedApiSchemaProbe} from './api-cron-hook.mjs';
 import seed from '../dist/data.json' with { type: 'json' };
 import seedVersion from '../dist/version.json' with { type: 'json' };
 import config from '../config.json' with { type: 'json' };
@@ -710,7 +711,15 @@ async function handleFetch(request, env, ctx) {
 export default {
   fetch: withPreviewGate(handleFetch),
   async scheduled(_controller, env, ctx) {
-    const task = collect(env).then(result => { console.log(JSON.stringify({ collector: result.status, checkedAt: result.checkedAt })); });
+    const dailyTask = collect(env).then(result => { console.log(JSON.stringify({ collector: result.status, checkedAt: result.checkedAt })); });
+    // Independent optional schema probes; default off returns before DO/key access.
+    // No provider exception, credentials or payload is logged; daily failure semantics stay unchanged.
+    const apiTask = Promise.resolve().then(() => maybeRunApprovedApiSchemaProbe(env))
+      .then(result => {
+        if (result.status !== 'disabled') console.log(JSON.stringify({ apiSchemaProbe: result.status }));
+      })
+      .catch(() => { console.log(JSON.stringify({ apiSchemaProbe: 'internal_error' })); });
+    const task = Promise.all([dailyTask, apiTask]);
     if (ctx?.waitUntil) ctx.waitUntil(task);
     else await task;
   },

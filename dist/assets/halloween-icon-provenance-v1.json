@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed_wiki_original_game_icon_supplement",
+  "identityMethod": "Existing reviewed exact MCW item name/ID plus exact displayed wiki item name; no fuzzy matching",
+  "marketDataChanged": false,
+  "items": [
+    {
+      "slug": "glowing-pumpkin-basket",
+      "itemId": 1702096,
+      "name": "Glowing Pumpkin Basket",
+      "path": "assets/catalog-mcw1-1702096-55864ac69e5bdd04.png",
+      "sha256": "55864ac69e5bdd042a908f1ff61c4974ad2e70d3ba38bb00cf6561a017b1bc5b",
+      "bytes": 1061,
+      "width": 30,
+      "height": 32,
+      "sourceUrl": "https://mapleclassic.wiki/images/4/43/Glowing_Pumpkin_Basket.png",
+      "sourcePageUrl": "https://mapleclassic.wiki/wiki/Update:29_October_2026_Scheduled_Maintenance",
+      "sourceItemPageUrl": "https://mapleclassic.wiki/wiki/Glowing_Pumpkin_Basket",
+      "sourcePageSha256": "a4d16be11c1dac602453f4d8d3491cee6ee5c02de2535bc705d6ad0be0fef788",
+      "retrievedAt": "2026-11-05T20:14:21.633632+00:00",
+      "sourceKind": "community_wiki_displayed_original_game_icon",
+      "identityPlanHash": "0f340c97e2bddfec81326123b60c47d793870c544a77818292cb17fc372d0ccb",
+      "copyright": "Nexon",
+      "transformed": false,
+      "limitations": [
+        "Wiki-hosted displayed original; not retrieved from the MCW/1 MapleIO endpoint.",
+        "Wiki page claims data verified1.1.0; client icon bytes have not been independently compared with an installed game client.",
+        "Article/site license does not by itself establish a separate copyright license for game art.",
+        "No release date, market quote, fixed NX cost, stat roll or availability is inferred."
+      ]
+    },
+    {
+      "slug": "evil-skull",
+      "itemId": 1702325,
+      "name": "Evil Skull",
+      "path": "assets/catalog-mcw1-1702325-ca0999b0c0c3d536.png",
+      "sha256": "ca0999b0c0c3d536111c9e5e3c76bb5d953709ef6fc7d6c076c19fd9d4611b41",
+      "bytes": 1331,
+      "width": 33,
+      "height": 32,
+      "sourceUrl": "https://mapleclassic.wiki/images/f/f4/Evil_Skull.png",
+      "sourcePageUrl": "https://mapleclassic.wiki/wiki/Update:29_October_2026_Scheduled_Maintenance",
+      "sourceItemPageUrl": "https://mapleclassic.wiki/wiki/Evil_Skull",
+      "sourcePageSha256": "a4d16be11c1dac602453f4d8d3491cee6ee5c02de2535bc705d6ad0be0fef788",
+      "retrievedAt": "2026-11-05T20:14:21.850430+00:00",
+      "sourceKind": "community_wiki_displayed_original_game_icon",
+      "identityPlanHash": "0f340c97e2bddfec81326123b60c47d793870c544a77818292cb17fc372d0ccb",
+      "copyright": "Nexon",
+      "transformed": false,
+      "limitations": [
+        "Wiki-hosted displayed original; not retrieved from the MCW/1 MapleIO endpoint.",
+        "Wiki page claims data verified1.1.0; client icon bytes have not been independently compared with an installed game client.",
+        "Article/site license does not by itself establish a separate copyright license for game art.",
+        "No release date, market quote, fixed NX cost, stat roll or availability is inferred."
+      ]
+    },
+    {
+      "slug": "cat-soul",
+      "itemId": 1702326,
+      "name": "Cat Soul",
+      "path": "assets/catalog-mcw1-1702326-402eb3fb302d0587.png",
+      "sha256": "402eb3fb302d0587a719d183b2b4e2f224a0867582cabadd803afb10a4b80c84",
+      "bytes": 956,
+      "width": 33,
+      "height": 32,
+      "sourceUrl": "https://mapleclassic.wiki/images/8/8b/Cat_Soul.png",
+      "sourcePageUrl": "https://mapleclassic.wiki/wiki/Update:29_October_2026_Scheduled_Maintenance",
+      "sourceItemPageUrl": "https://mapleclassic.wiki/wiki/Cat_Soul",
+      "sourcePageSha256": "a4d16be11c1dac602453f4d8d3491cee6ee5c02de2535bc705d6ad0be0fef788",
+      "retrievedAt": "2026-11-05T20:14:22.125510+00:00",
+      "sourceKind": "community_wiki_displayed_original_game_icon",
+      "identityPlanHash": "0f340c97e2bddfec81326123b60c47d793870c544a77818292cb17fc372d0ccb",
+      "copyright": "Nexon",
+      "transformed": false,
+      "limitations": [
+        "Wiki-hosted displayed original; not retrieved from the MCW/1 MapleIO endpoint.",
+        "Wiki page claims data verified1.1.0; client icon bytes have not been independently compared with an installed game client.",
+        "Article/site license does not by itself establish a separate copyright license for game art.",
+        "No release date, market quote, fixed NX cost, stat roll or availability is inferred."
+      ]
+    }
+  ]
+}
