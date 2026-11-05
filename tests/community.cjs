@@ -81,6 +81,8 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
   assert.equal(privacy.getAttribute('aria-labelledby'), 'privacy-title');
   assert.match(privacy.textContent, /Draft privacy note/);
   assert.match(privacy.textContent, /request count is not a count of distinct visitors/i);
+  assert.match(privacy.textContent, /I may review aggregate hosting counts/);
+  assert.doesNotMatch(privacy.textContent, /We may review aggregate hosting counts/);
   assert.match(privacy.textContent, /localStorage/);
   assert.match(privacy.textContent, /security cookies/);
   assert.equal(privacy.querySelector('.community-back').getAttribute('href'), '#index');

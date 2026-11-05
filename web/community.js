@@ -50,7 +50,7 @@
       <p>This note describes the current inflation.gg build, maintained by DishWasher. There are no visitor accounts, ads or client analytics beacons in this build, and the site sets no visitor-tracking cookies of its own.</p>
       <h2>Hosting and security</h2>
       <p>Cloudflare delivers and protects the site. Normal request metadata can include your IP address, browser information, requested URL and request time. Cloudflare may process that information and use security cookies to operate its services and prevent abuse. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Cloudflare’s privacy policy</a> and <a href="https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/" target="_blank" rel="noopener noreferrer">cookie documentation</a>.</p>
-      <p>We may review aggregate hosting counts to understand capacity and reliability. A request count is not a count of distinct visitors or people: one visit can request several files, and automated traffic can make requests too.</p>
+      <p>I may review aggregate hosting counts to understand capacity and reliability. A request count is not a count of distinct visitors or people: one visit can request several files, and automated traffic can make requests too.</p>
       <h2>What stays in your browser</h2>
       <p>Your display-timezone, scenery and footer text-style choices are saved in localStorage on this browser. The browser and service worker can cache public snapshots, the fallback page, JavaScript, CSS and other public assets so the site can load efficiently. You can remove these preferences and cached files through your browser’s site-data settings.</p>
       <h2>Contact and external links</h2>
