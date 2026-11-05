@@ -128,7 +128,7 @@ export class ApiCollectorCore {
   constructor(ctx, env, options = {}) {
     this.ctx = ctx; this.env = env; this.sql = ctx.storage.sql;
     this.now = options.now ?? Date.now; this.fetcher = options.fetcher ?? ((...args) => fetch(...args));
-    this.jitter = options.jitter ?? jitter; this.flight = null;
+    this.jitter = options.jitter ?? jitter; this.flight = null; this.observed = options.observedScope ?? null;
     ctx.storage.transactionSync(() => {
       this.sql.exec(`CREATE TABLE IF NOT EXISTS api_control (
         id INTEGER PRIMARY KEY CHECK(id=1), auth_stopped INTEGER NOT NULL DEFAULT 0,
@@ -208,15 +208,20 @@ export class ApiCollectorCore {
       return this.nxSchemaProbeState(config);
     });
   }
+  eligible(config) {
+    const operations=this.effectiveOperations?.(config)??config.allowedOperations;
+    const base={sql:operations.length?`operation IN (${operations.map(()=>'?').join(',')})`:'0',args:[...operations]};
+    const dynamic=this.observed?.eligibility(config);
+    return dynamic?{sql:`(${base.sql} OR ${dynamic.sql})`,args:[...base.args,...dynamic.args]}:base;
+  }
   nextAttemptAt(config) {
     const now=this.clock(),control=this.row('SELECT * FROM api_control WHERE id=1');
     if(control.auth_stopped)return null;
-    const operations=this.effectiveOperations(config);if(!operations.length)return null;
-    const slots=operations.map(()=>'?').join(',');
+    const eligible=this.eligible(config);
     const running=this.row("SELECT MIN(lease_until) AS at FROM api_jobs WHERE state='running'").at;
     if(running!==null)return Math.max(now+1,running);
-    const pending=this.row(`SELECT MIN(available_at) AS at FROM api_jobs WHERE state='pending' AND round_ref=? AND operation IN (${slots})`,
-      config.probeRound,...operations).at;
+    const pending=this.row(`SELECT MIN(available_at) AS at FROM api_jobs WHERE state='pending' AND round_ref=? AND ${eligible.sql}`,
+      config.probeRound,...eligible.args).at;
     if(pending===null)return null;
     let next=Math.max(now+1,pending,control.blocked_until,control.next_allowed);
     for(const [window,cap] of [[60_000,config.grantedPerMinute],[86_400_000,this.dailyCap(config)]]){
@@ -267,11 +272,19 @@ export class ApiCollectorCore {
         }
       }
       if (waits.length) return {status: 'budget_wait', retryAt: stamp(Math.max(...waits))};
-      const operations=this.effectiveOperations(config);if(!operations.length)return {status:'idle'};
-      const slots = operations.map(() => '?').join(',');
-      const job = this.row(`SELECT * FROM api_jobs WHERE state='pending' AND available_at<=?
-        AND round_ref=? AND operation IN (${slots}) ORDER BY job_key LIMIT 1`,
-        now, config.probeRound, ...operations);
+      const eligible = this.eligible(config);
+      if(this.observed){
+        const exhausted=this.sql.exec(`SELECT * FROM api_jobs WHERE state='pending' AND round_ref=? AND ${eligible.sql}`,config.probeRound,...eligible.args).toArray();
+        for(const pending of exhausted){const maximum=this.observed.maxAttempts(pending.operation,config);if(maximum&&pending.attempts>=maximum)this.sql.exec("UPDATE api_jobs SET state='unavailable',last_result='interrupted_retry_exhausted' WHERE job_key=?",pending.job_key);}
+      }
+      let job=null;
+      for(let checked=0;checked<129;checked++){
+        job=this.row(`SELECT * FROM api_jobs WHERE state='pending' AND available_at<=?
+          AND round_ref=? AND ${eligible.sql} ORDER BY job_key LIMIT 1`,now,config.probeRound,...eligible.args);
+        if(!job||own(OPERATIONS,job.operation)||this.observed?.registeredJobValid(job,config))break;
+        this.sql.exec("UPDATE api_jobs SET state='unavailable',last_result='invalid_registered_identity' WHERE job_key=?",job.job_key);
+        job=null;
+      }
       if (!job) return {status: 'idle'};
       const attempt = this.row('INSERT INTO api_attempts(job_key,at,grant_ref) VALUES(?,?,?) RETURNING id', job.job_key, now, config.grantReference).id;
       this.sql.exec("UPDATE api_jobs SET state='running',attempts=attempts+1,lease_until=?,attempt_id=? WHERE job_key=?", now+LEASE_MS, attempt, job.job_key);
@@ -285,8 +298,10 @@ export class ApiCollectorCore {
     return this.ctx.storage.transactionSync(() => {
       const current = this.row('SELECT state,attempt_id FROM api_jobs WHERE job_key=?', job.job_key);
       if (current?.state !== 'running' || current.attempt_id !== job.attempt_id) return {status: 'stale_attempt'};
-      const kind = outcome.kind; let wait = 0;
-      if (kind === 'retry') {
+      let kind = outcome.kind; let wait = 0;
+      const maxAttempts=this.observed?.maxAttempts(job.operation,config);
+      if(kind==='retry'&&maxAttempts&&job.attempts>=maxAttempts)kind='retry_exhausted';
+      if (kind === 'retry' || kind === 'retry_exhausted') {
         const base = Math.min(3_600_000, 1000*2**Math.min(job.attempts, 11));
         const maxJitter = Math.min(60_000, Math.floor(base/4));
         let extra = 0;
@@ -295,7 +310,7 @@ export class ApiCollectorCore {
         wait = now + Math.max(base, config.minimumRequestIntervalSeconds*1000, retryDelay(outcome.retryAfter, now)) + extra;
         if (!finiteTime(wait)) throw new TypeError('Invalid retry clock');
       }
-      const state = {success: 'complete', retry: 'pending', auth_denied: 'auth_stopped', permanent_error: 'failed'}[kind];
+      const state = {success: 'complete', retry: 'pending', auth_denied: 'auth_stopped', permanent_error: 'failed', unavailable:'unavailable', retry_exhausted:'unavailable'}[kind];
       if (!state) throw new TypeError('Invalid outcome');
       this.sql.exec('UPDATE api_attempts SET result=? WHERE id=?', kind, job.attempt_id);
       this.sql.exec('UPDATE api_jobs SET state=?,last_result=?,available_at=?,lease_until=NULL,attempt_id=NULL,receipt_key=? WHERE job_key=?',
@@ -352,13 +367,15 @@ export class ApiCollectorCore {
     const {job, startedAt} = claimed;
     let outcome;
     try {
-      const path = OPERATIONS[job.operation];
+      const path = own(OPERATIONS,job.operation)?OPERATIONS[job.operation]:this.observed?.path(job.operation,config);
+      if(!path)throw new TypeError('Unapproved operation');
       const response = await this.fetcher(ORIGIN+path, {method: 'GET', redirect: 'manual',
         signal: AbortSignal.timeout(20_000), headers: {Authorization: 'Bearer '+key,
           Accept: 'application/json', 'User-Agent': 'inflation.watch/1.0 (+https://inflation.gg; approved raw schema probe)'}});
       if ([401, 403].includes(response.status)) outcome = {kind: 'auth_denied'};
       else if (response.status === 429) outcome = {kind: 'retry', retryAfter: response.headers.get('retry-after')};
       else if (response.status >= 500) outcome = {kind: 'retry'};
+      else if (response.status === 404 && this.observed?.definition(job.operation)) outcome = {kind:'unavailable'};
       else if (response.status !== 200) outcome = {kind: 'permanent_error'};
       else {
         const data = await jsonResponse(response, key); const capturedAt = stamp(this.clock());
@@ -369,7 +386,8 @@ export class ApiCollectorCore {
           schemaVerified: false, publicationEligible: false, httpStatus: 200, attemptId: job.attempt_id,
           roundReference: job.round_ref,
           ...(job.operation.startsWith('apple-') ? {expectedItemId:2010001,expectedItemName:'Apple',
-            identityStatus:'known_canonical_id_not_yet_verified_in_this_provider_response'} : {}), ...data};
+            identityStatus:'known_canonical_id_not_yet_verified_in_this_provider_response'} : {}),
+          ...(this.observed?.metadata(job.operation)??{}), ...data};
         const receiptKey = PRIVATE_PREFIX+`receipts/${String(job.attempt_id).padStart(12, '0')}-${job.operation}-${data.responseSha256}.json`;
         const serialized = JSON.stringify(receipt);
         if (serialized.includes(key)) throw new TypeError('Credential in receipt metadata');

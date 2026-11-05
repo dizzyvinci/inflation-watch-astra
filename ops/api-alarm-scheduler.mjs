@@ -24,8 +24,8 @@ export function scheduleConfig(env){
 }
 
 export class ApiAlarmScheduler{
-  constructor(ctx,env,core,{alarmControl=ctx.storage}={}){
-    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.alarmControl=alarmControl;
+  constructor(ctx,env,core,{alarmControl=ctx.storage,firstPass=null}={}){
+    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.alarmControl=alarmControl;this.firstPass=firstPass;
     ctx.storage.transactionSync(()=>{
       core.sql.exec(`CREATE TABLE IF NOT EXISTS api_alarm_plans(schedule_ref TEXT PRIMARY KEY,config_json TEXT NOT NULL,
         round_ref TEXT NOT NULL,started_at INTEGER NOT NULL,target_at INTEGER NOT NULL,initial_complete_at INTEGER,phase TEXT NOT NULL)`);
@@ -56,6 +56,8 @@ export class ApiAlarmScheduler{
     const existing=this.core.row('SELECT config_json,round_ref FROM api_alarm_plans WHERE schedule_ref=?',schedule.scheduleReference);
     if(existing&&(existing.config_json!==snapshot||existing.round_ref!==grant.probeRound))return{status:'schedule_reference_changed_requires_new_version'};
     this.core.enqueueProbeRound(grant.probeRound);
+    const firstPass=this.firstPass?.enqueueChunk(this.core);
+    if(firstPass&&! ['firstpass_disabled','firstpass_chunk_ready','firstpass_complete'].includes(firstPass.status))return firstPass;
     return this.ctx.storage.transactionSync(()=>{
       let plan=this.core.row('SELECT * FROM api_alarm_plans WHERE schedule_ref=?',schedule.scheduleReference);
       if(plan&&(plan.config_json!==snapshot||plan.round_ref!==grant.probeRound))return{status:'schedule_reference_changed_requires_new_version'};

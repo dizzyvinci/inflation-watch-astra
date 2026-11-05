@@ -3,16 +3,20 @@ import {ApiCollectorCore} from './api-collector-core.mjs';
 import {ApiPrivateHealth} from './api-private-health.mjs';
 import {ApiAlarmScheduler} from './api-alarm-scheduler.mjs';
 import {ApiPrivateCashAlarm} from './api-private-cash-alarm.mjs';
+import {ObservedFirstPass,loadObservedPlan} from './api-observed-firstpass.mjs';
+import {OBSERVED_PLAN_SHA256,observedPlanBytes} from './observed-firstpass-plan.mjs';
 
 export class ApiGrantCollector extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
     this.ready = ctx.blockConcurrencyWhile(async () => {
-      this.core = new ApiCollectorCore(ctx, env);
+      this.firstPass = env.API_OBSERVED_FIRSTPASS_JSON && JSON.parse(env.API_OBSERVED_FIRSTPASS_JSON).enabled === true
+        ? new ObservedFirstPass(ctx,env,await loadObservedPlan(observedPlanBytes(),OBSERVED_PLAN_SHA256)) : null;
+      this.core = new ApiCollectorCore(ctx, env,{observedScope:this.firstPass});
       this.privateHealth = new ApiPrivateHealth(ctx, env, this.core);
       this.privateCash = new ApiPrivateCashAlarm(ctx, env, this.core);
       await this.privateCash.initialize();
-      this.scheduler = new ApiAlarmScheduler(ctx, env, this.core,this.privateCash.hasMux?{alarmControl:this.privateCash.providerControl}:{});
+      this.scheduler = new ApiAlarmScheduler(ctx, env, this.core,{firstPass:this.firstPass,...(this.privateCash.hasMux?{alarmControl:this.privateCash.providerControl}:{})});
     });
   }
   async enqueueProbeRound(round) {await this.ready; return this.core.enqueueProbeRound(round);}

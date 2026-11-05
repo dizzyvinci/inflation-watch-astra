@@ -1,9 +1,10 @@
 // Optional private diagnostics only. Never a provider request or public health replacement.
 const KEY='_private/provider-api/v1/health.json';
 const SCHEMA_OPERATIONS=['status','prices','catalogue','overview','apple-detail','apple-history'];
-const STATES=new Set(['pending','running','complete','failed','auth_stopped']);
+const STATES=new Set(['pending','running','complete','unavailable','failed','auth_stopped']);
 const RESULTS=new Set(['success','retry','auth_denied','permanent_error','requires_approved_key',
   'private_storage_unavailable','private_pointer_pending','invalid_grant_configuration',
+  'unavailable','retry_exhausted',
   'authentication_stopped','spacing_wait','budget_wait','backoff','busy','leased','idle','stale_attempt','internal_error']);
 const integer=value=>Number.isSafeInteger(value)&&value>=0;
 const iso=value=>typeof value==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?Z$/.test(value)&&Number.isFinite(Date.parse(value))?value:null;
@@ -52,6 +53,30 @@ export class ApiPrivateHealth{
         return match&&match[1]===row.operation&&row.round_ref===round&&keys[operations.indexOf(row.operation)]===row.job_key;
       }).map(row=>({operation:row.operation,receiptKey:row.receipt_key,roundReference:row.round_ref}));
   }
+  observedFirstPassProgress(config){
+    const scope=this.core.observed;if(!scope)return{status:'disabled'};
+    let checked;try{checked=scope.config(config);}catch{return{status:'invalid_configuration'};}
+    if(!checked.enabled)return{status:'disabled'};
+    scope.ensureTables();
+    const plan=this.core.row('SELECT * FROM api_observed_plans WHERE plan_hash=?',scope.plan.hash);
+    if(!plan)return{status:'not_started'};
+    if(plan.config_json!==JSON.stringify(checked)||plan.round_ref!==config.probeRound)return{status:'configuration_changed_requires_review'};
+    const counts={pending:0,running:0,complete:0,unavailable:0,failed:0,auth_stopped:0};
+    const rows=this.core.sql.exec(`SELECT api_jobs.state,COUNT(*) AS count FROM api_jobs JOIN api_observed_jobs USING(job_key)
+      WHERE plan_hash=? AND round_ref=? AND api_jobs.operation=api_observed_jobs.operation GROUP BY api_jobs.state`,scope.plan.hash,config.probeRound).toArray();
+    if(rows.some(row=>!Object.hasOwn(counts,row.state)||!integer(row.count)))return{status:'invalid_progress_state'};
+    for(const row of rows)counts[row.state]=row.count;
+    const total=Object.values(counts).reduce((sum,value)=>sum+value,0),terminal=counts.complete+counts.unavailable+counts.failed;
+    if(!integer(plan.cursor)||plan.cursor>scope.plan.totalJobs||total!==plan.cursor||plan.total_jobs!==scope.plan.totalJobs)return{status:'invalid_progress_state'};
+    const done=plan.cursor===scope.plan.totalJobs&&terminal===scope.plan.totalJobs;
+    return{status:done?(counts.failed?'complete_with_failures':counts.unavailable?'complete_with_unavailable':'complete'):
+      this.core.row('SELECT auth_stopped FROM api_control WHERE id=1').auth_stopped?'authentication_stopped':'running',
+      totalItemCount:scope.plan.targets.length,plannedJobCount:scope.plan.totalJobs,enqueuedJobCount:plan.cursor,
+      remainingToEnqueue:scope.plan.totalJobs-plan.cursor,completeCount:counts.complete,
+      unavailableCount:counts.unavailable,failedCount:counts.failed,pendingCount:counts.pending,
+      runningCount:counts.running,authStoppedCount:counts.auth_stopped,
+      clockKind:'operator_queue_progress_not_market_observation'};
+  }
   async afterRun(result){
     if(!this.enabled()||result?.status==='disabled')return{status:'skipped_off'};
     const checkedAt=new Date(this.core.clock()).toISOString();const source=this.core.health();
@@ -70,6 +95,7 @@ export class ApiPrivateHealth{
       configuredMinuteCeiling:integer(config.grantedPerMinute)?config.grantedPerMinute:null,
       configuredDailyCeiling:caps.length?Math.min(...caps):null,
       completedReceipts:this.completedReceipts(config),
+      ...(this.core.observed?{observedFirstPass:this.observedFirstPassProgress(config)}:{}),
       ...(config.nxSchemaProbesEnabled===true?{nxSchemaProbes:this.nxSchemaProbeProgress(config),completedNxProbeReceipts:this.completedNxProbeReceipts(config)}:{}),
       dailyCeilingMeaning:'configured_restriction_not_an_inferred_provider_daily_grant'};
     this.ctx.storage.transactionSync(()=>{

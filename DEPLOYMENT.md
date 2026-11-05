@@ -149,6 +149,26 @@ Verify the deployed variables against the reviewed configuration, the existing
 Durable Object namespace and server-secret binding before declaring success.
 Never print the secret value to perform this verification.
 
+`API_OBSERVED_FIRSTPASS_JSON` is a separate, absent-by-default finite backfill
+switch. The compiled plan pins 1,551 observed item IDs, including 79 priorities
+and the 50 supplemental fashion identities. One detail and one retained-history
+request per ID produce 3,102 jobs. The raw plan SHA256 is
+`a271b2597096100cb8fa18c123f16a845ff9471b78deea2f61d0823ce427ccd8`.
+Enqueue at most 32 jobs per chunk with a 64-job pending high-water mark; all
+requests use the existing account-wide reservations, pacing and budgets.
+The operator's daily cap must be reviewed independently of the provider's
+displayed per-minute allowance; an unknown daily grant must remain unknown.
+Do not run a second collector or reset the existing round to obtain more quota.
+
+The finite plan binds registered keys, ordinals, item IDs and source-presence
+metadata before reserving a request. Unknown item names remain unknown.
+An item/history 404 becomes a per-job unavailable result; 401/403 still stops
+the account. Bounded retries retain their attempts and Retry-After cooldown.
+Track complete, unavailable and failed results separately: a terminal queue does
+not prove that every item has history. Chunks, leases and the cursor survive
+restarts. Existing bulk refreshes continue, while repeating the full per-item
+plan or publishing its raw data requires a separate implementation decision.
+
 ## Traffic and build planning
 
 Data checks do not rebuild the site: ten-minute scheduling is approximately 4,320 invocations per 30-day month, independently of visitor traffic. Deployments happen on code changes. The [Workers Static Assets billing documentation](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) describes static requests as free and unlimited; JSON Worker invocations, CPU and R2 operations are separately metered under the account's actual plan. See [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) and [R2 pricing](https://developers.cloudflare.com/r2/pricing/) for current terms.
