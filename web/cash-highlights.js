@@ -61,6 +61,40 @@
   const view = document.getElementById('view-index'); if (!view) return;
   const make = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
   const number = (value, decimals = 1) => Number.isFinite(value) ? value >= 1e6 ? value.toExponential(2).replace('e+', 'e') : value.toLocaleString('en-US', { maximumFractionDigits: decimals }) : 'Unavailable';
+  const clockBindings = new WeakMap();
+  let requestedZone = null, validatedZone = 'UTC', formatterZone = null, instantFormatter = null;
+  function selectedZone() {
+    const value = document.getElementById('display-timezone')?.value || 'UTC';
+    if (value !== requestedZone) {
+      requestedZone = value;
+      try { new Intl.DateTimeFormat('en-US', { timeZone: value }); validatedZone = value; } catch { validatedZone = 'UTC'; }
+    }
+    return validatedZone;
+  }
+  const calendarDay = value => day(value) ? `${value.slice(5, 7)}-${value.slice(8, 10)}-${value.slice(0, 4)}` : 'Unknown';
+  function instant(value) {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)
+        || !day(value.slice(0, 10)) || Number(value.slice(11, 13)) > 23 || Number(value.slice(14, 16)) > 59
+        || Number(value.slice(17, 19)) > 59 || !Number.isFinite(Date.parse(value))) return 'Unknown';
+    const zone = selectedZone();
+    if (zone !== formatterZone) {
+      instantFormatter = new Intl.DateTimeFormat('en-US', { timeZone: zone,
+        year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', timeZoneName: 'short' });
+      formatterZone = zone;
+    }
+    const parts = Object.fromEntries(instantFormatter.formatToParts(new Date(value)).filter(part => part.type !== 'literal').map(part => [part.type, part.value]));
+    return `(${parts.month}-${parts.day}-${parts.year} ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName}${parts.timeZoneName === zone ? '' : ' · ' + zone})`;
+  }
+  function bindClock(node, render, raw = {}) {
+    node.dataset.cashInstantLabel = 'true'; node.dataset.rawDate = 'true';
+    for (const [key, value] of Object.entries(raw)) if (typeof value === 'string') node.dataset[key] = value;
+    clockBindings.set(node, render); node.textContent = render(); return node;
+  }
+  function refreshClocks() {
+    for (const node of section.querySelectorAll('[data-cash-instant-label]')) {
+      const render = clockBindings.get(node); if (render) node.textContent = render();
+    }
+  }
   const signed = value => { const rounded = Math.abs(value) < .05 ? 0 : value; return (rounded > 0 ? '+' : '') + number(rounded) + '%'; };
   const section = make('section', undefined, 'cash-item-highlights'); section.id = 'cash-item-highlights'; section.setAttribute('aria-labelledby', 'cash-highlights-title');
   section.innerHTML = '<div class="section-heading"><div><p class="eyebrow">CASH COMPANION / INDIVIDUAL ITEM PRICES</p><h2 id="cash-highlights-title">Inside cash items</h2></div></div><div class="cash-highlights-content"><p class="cash-highlights-explanation">These individual cash-item dials are excluded from the goods MPI and the goods-based NX benchmark. Seasonal supply, demand and cosmetic mixes can move them separately.</p><p class="cash-highlights-status" role="status"></p><div class="cash-highlights-row" tabindex="0" role="region" aria-label="Individual cash-item price dials; scroll horizontally on narrow screens"></div><p class="cash-highlights-method"></p></div>';
@@ -110,7 +144,7 @@
       section.querySelector('.cash-highlights-method').textContent = ''; return;
     }
     const upper = scale(current.cards.map(card => card.index));
-    section.querySelector('.cash-highlights-status').textContent = `Reference week ${current.baseStart}–${current.baseEnd} = 100 for each item. Daily source published ${current.sourceUpdatedAt}; latest source-calendar day ${current.sourceDay}${current.partialSourceDay ? ' is partial' : ''}.${report.sourceStatus?.status === 'degraded' ? ' Source checks are degraded; the dated retained prices remain visible.' : ''}`;
+    bindClock(section.querySelector('.cash-highlights-status'), () => `Reference week (${calendarDay(current.baseStart)}–${calendarDay(current.baseEnd)}) = 100 for each item. Daily source published ${instant(current.sourceUpdatedAt)}; latest source-calendar day (${calendarDay(current.sourceDay)})${current.partialSourceDay ? ' is partial' : ''}.${report.sourceStatus?.status === 'degraded' ? ' Source checks are degraded; the dated retained prices remain visible.' : ''}`, { rawSourcePublicationAt: current.sourceUpdatedAt });
     for (const card of current.cards) {
       const article = make('article', undefined, 'cash-highlight-card'); article.dataset.cashHighlightSlug = card.slug;
       const heading = make('h3'), link = make('a'); link.href = '#item/' + encodeURIComponent(card.slug);
@@ -119,7 +153,7 @@
       link.append(image, make('span', card.name)); heading.append(link); article.append(heading);
       if (card.index !== null) {
         article.append(gauge(card.index, upper, card.name), make('strong', number(card.index), 'cash-highlight-index'), make('span', signed(card.change) + ' vs. reference week', 'cash-highlight-change'));
-        article.append(make('p', `${card.carried ? 'Carried qualifying price' : 'Qualified daily price'} · ${card.priceDay}${card.partial ? ' · partial source day' : ''}`, 'cash-highlight-date'));
+        article.append(bindClock(make('p', undefined, 'cash-highlight-date'), () => `${card.carried ? 'Carried qualifying price' : 'Qualified daily price'} · (${calendarDay(card.priceDay)})${card.partial ? ' · partial source day' : ''}`, { sourceDay: card.priceDay }));
         article.append(make('p', `${number(card.price, 0)} mesos · ${number(card.quantity, 0)} recorded source count`, 'cash-highlight-price'));
         if (card.carried) article.append(make('small', 'Carried from its dated observation; not a fresh sale.'));
       } else article.append(make('p', 'Price index unavailable', 'cash-highlight-unavailable'), make('p', 'No valid dated price with at least five recorded sales.'));
@@ -133,8 +167,8 @@
     const selection = { days: Number(document.getElementById('cash-lookback')?.value || 3), evidence: document.getElementById('cash-evidence')?.value || 'daily' };
     const current = bestModel(report, selection), status = section.querySelector('.cash-highlights-status'), method = section.querySelector('.cash-highlights-method');
     if (!current) { status.textContent = 'Best-value cash dials are unavailable until the cash-pricing table calculation is ready. No modelled benchmark is substituted.'; method.textContent = ''; return; }
-    const evidenceWindow = current.rolling ? `Rolling scanner capture pulled ${current.capturedAt || 'at an unavailable time'}; item-specific windows, not a resliced lookback.` : `${current.days}-source-day lookback · ${current.start || 'Unknown'}–${current.end || 'Unknown'} inclusive${current.partial ? ' · latest day partial' : ''}. Daily source published ${current.sourceUpdatedAt || 'at an unavailable time'}.`;
-    status.textContent = `${evidenceWindow} ${current.eligibleCount} / ${current.totalCount} fixed-price items have eligible evidence. ${current.eligibleCount < 5 ? 'Fewer than five eligible items; missing items are not filled.' : 'Up to five per side.'}${current.grossFallback?' Gross order shown; net unavailable until fee rules are set.':current.netRanking?' Fee assumptions: '+window.AstraTradeFees.label()+'. Only computable estimated costs/proceeds are ranked; no official fee rule is claimed.':''}`;
+    const evidenceWindow = () => current.rolling ? `Rolling scanner capture · Batch retrieved ${instant(current.capturedAt)}; item timestamps and lookbacks are separate. Retrieval times are not trade times; source times unavailable where not supplied.` : `${current.days}-source-day lookback · (${calendarDay(current.start)}–${calendarDay(current.end)}) inclusive${current.partial ? ' · latest day partial' : ''}. Daily source published ${instant(current.sourceUpdatedAt)}.`;
+    bindClock(status, () => `${evidenceWindow()} ${current.eligibleCount} / ${current.totalCount} fixed-price items have eligible evidence. ${current.eligibleCount < 5 ? 'Fewer than five eligible items; missing items are not filled.' : 'Up to five per side.'}${current.grossFallback?' Gross order shown; net unavailable until fee rules are set.':current.netRanking?' Fee assumptions: '+window.AstraTradeFees.label()+'. Only computable estimated costs/proceeds are ranked; no official fee rule is claimed.':''}`, { rawSourcePublicationAt: current.sourceUpdatedAt, rawBatchCapturedAt: current.rolling ? current.capturedAt : null });
     const upper = rateScale([...current.buy, ...current.sell].map(row => row.rate).concat(positive(current.reference) ? current.reference : []));
     for (const [side, title, rows] of [['sell', 'Best to Sell (Higher Meso/NX)', current.sell], ['buy', 'Best to Buy (Lower Meso/NX)', current.buy]]) {
       const group = make('section', undefined, 'cash-highlights-ranking'); group.dataset.cashRanking = side;
@@ -151,7 +185,20 @@
         card.append(make('strong', number(item.rate, 2), 'cash-highlight-index'), make('span', current.grossFallback?'Gross mesos/NX':current.netRanking?(side==='buy'?'Estimated cost · mesos / NX':'Estimated proceeds · mesos / NX'):'mesos / NX', 'cash-highlight-change'));
         if(current.netRanking)card.append(make('small',`Gross ${number(item.grossRate,2)} mesos / NX · ${item.feePreview.itemCount} copies · ${item.feePreview.assumptionProvenance==='user_reported'?'user-reported estimate':'manual estimate'}${item.feePreview.allocatedShopCost?' · allocated shop cost included':''}`));
         card.append(make('p', `${number(item.price, 1)} mesos · fixed ${number(item.nx, 0)} NX`, 'cash-highlight-price'));
-        card.append(make('p', current.rolling ? `Pulled ${current.capturedAt || 'time unavailable'} · ${number(item.windowDays)}-day source window` : `Selected dates ${current.start}–${current.end} · ${number(item.windowDays, 0)} qualifying days`, 'cash-highlight-date'));
+        const dateLabel = make('p', undefined, 'cash-highlight-date'); let sourceLabel = null;
+        if (current.rolling) {
+          const observation = report.rollingReference?.items?.find(entry => entry.name === item.name);
+          dateLabel.title = 'Retrieved is this item’s capture receipt, not a trade timestamp. A separate source-observation clock appears only when supplied and marked as known.';
+          bindClock(dateLabel, () => `Retrieved ${instant(observation?.capturedAt)} · ${number(item.windowDays)}-day lookback`,
+            { rawCapturedAt: observation?.capturedAt, rawSourceObservedAt: observation?.sourceObservedAt, captureTimeKind: observation?.captureTimeKind });
+          if (observation?.observationTimestampKnown === true && instant(observation.sourceObservedAt) !== 'Unknown') {
+            sourceLabel = make('small', undefined, 'cash-highlight-source-time');
+            bindClock(sourceLabel, () => `Source observed ${instant(observation.sourceObservedAt)}`, { rawSourceObservedAt: observation.sourceObservedAt });
+          }
+        } else bindClock(dateLabel, () => `Selected dates (${calendarDay(current.start)}–${calendarDay(current.end)}) · ${number(item.windowDays, 0)} qualifying days`,
+          { sourceStartDay: current.start, sourceEndDay: current.end });
+        card.append(dateLabel);
+        if (sourceLabel) card.append(sourceLabel);
         card.append(make('small', `${number(item.quantity, 0)} recorded source count${item.windowDays < current.days && !current.rolling ? ' · incomplete daily coverage' : ''}`)); row.append(card);
       }
       if (!rows.length) row.append(make('p',current.feeActive?'Estimated cost/proceeds ranking unavailable until eligible evidence and explicit manual assumptions are available. Gross view remains available.':'No eligible prices for this evidence window.','cash-highlight-unavailable'));
@@ -166,6 +213,8 @@
     method.textContent = (current.grossFallback?'Gross order shown; net unavailable until fee rules are set. No zero-fee assumption is made. ':current.netRanking?'The selected fee assumptions use the same shared AstraTradeFees model as the NX table. No official rate is verified; estimated buyer cost and seller proceeds are separate, and fixed shop-cost allocation is an explicit business-cost assumption. ':'')+'Same fixed-NX schedule and selected evidence calculation as Best NX items to Buy/Sell. Daily estimates weight qualifying daily sale medians by recorded volume; each day needs at least five recorded sales. Rolling medians retain their own windows; excluded roll/upgrade-premium references are not ranked. Missing prices and unknown NX costs are excluded. Ranking uses all eligible items before table search/verdict filters: low mesos / NX for buying, high for selling, '+(current.netRanking?'under the selected explicit fee assumptions.':'before fees.')+' The dial tick is the selected-evidence cash reference, not 100 or the goods-based benchmark. These estimates are not executable quotes or profit calculations.';
   }
   function draw() {
+    const status = section.querySelector('.cash-highlights-status'); clockBindings.delete(status);
+    for (const key of Object.keys(status.dataset)) if (key === 'cashInstantLabel' || key === 'rawDate' || key.startsWith('raw')) delete status.dataset[key];
     section.dataset.enabled = String(enabled); section.dataset.cashHighlightsMode = mode; section.querySelector('.cash-highlights-content').hidden = !enabled;
     toggle.setAttribute('aria-pressed', String(enabled)); toggle.textContent = enabled ? 'On · hide dials' : 'Off · show dials';
     for (const button of controls.querySelectorAll('[data-cash-highlights-mode]')) button.setAttribute('aria-pressed', String(button.dataset.cashHighlightsMode === mode));
@@ -173,6 +222,7 @@
   }
   toggle.addEventListener('click', () => { enabled = !enabled; try { localStorage.setItem(key, enabled ? 'on' : 'off'); } catch { /* Tab choice still works. */ } draw(); });
   document.addEventListener('astramarketsnapshot', event => { report = event.detail; draw(); });
+  document.getElementById('display-timezone')?.addEventListener('change', refreshClocks);
   document.addEventListener('astrafeeschange',draw);
   for (const id of ['cash-lookback', 'cash-evidence']) document.getElementById(id)?.addEventListener('change', draw);
   draw(); document.dispatchEvent(new Event('astramarkethighlightsready'));

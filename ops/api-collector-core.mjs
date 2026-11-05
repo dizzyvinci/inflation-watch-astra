@@ -1,6 +1,7 @@
 // Disabled-by-default hosted schema probes. No publication path or API schema inference.
 export const OPERATIONS = Object.freeze({status: '/api/status', prices: '/api/prices',
-  catalogue: '/api/items', overview: '/api/market/overview'});
+  catalogue: '/api/items', overview: '/api/market/overview',
+  'apple-detail': '/api/items/2010001', 'apple-history': '/api/items/2010001/history'});
 export const OWNER_NAME = 'maplestory-market-account-primary-v1';
 export const PRIVATE_PREFIX = '_private/provider-api/v1/';
 const ORIGIN = 'https://maplestory.market';
@@ -18,17 +19,17 @@ export function grantConfig(env) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('Invalid configuration');
   const fields = ['enabled', 'approvalRecorded', 'exclusiveAccountOwnerConfirmed', 'grantReference',
     'grantedPerMinute', 'grantedPerDay', 'minimumRequestIntervalSeconds',
-    'higherFrequencyExplicitlyGranted', 'allowedOperations', 'probeRound', 'publicationEnabled'];
+    'higherFrequencyExplicitlyGranted', 'allowedOperations', 'probeRound', 'publicationEnabled', 'operatorDailyRequestCap'];
   if (Object.keys(value).some(key => !fields.includes(key))) throw new TypeError('Unknown configuration');
   if (typeof value.enabled !== 'boolean') throw new TypeError('Explicit activation required');
   if (value.publicationEnabled !== false) throw new TypeError('Raw quarantine cannot publish');
   if (!value.enabled) return {enabled: false};
   if (value.approvalRecorded !== true || value.exclusiveAccountOwnerConfirmed !== true) throw new TypeError('Approval and account owner required');
   if (!REF.test(value.grantReference ?? '') || !REF.test(value.probeRound ?? '')) throw new TypeError('Nonsecret references required');
-  for (const key of ['grantedPerMinute', 'grantedPerDay']) {
-    if (!Number.isSafeInteger(value[key]) || value[key] < 1) throw new TypeError('Granted caps required');
-  }
-  if (!Number.isSafeInteger(value.minimumRequestIntervalSeconds) || value.minimumRequestIntervalSeconds < 0 ||
+  if (!Number.isSafeInteger(value.grantedPerMinute) || value.grantedPerMinute < 1) throw new TypeError('Actual minute allowance required');
+  const dailyCaps = [value.grantedPerDay, value.operatorDailyRequestCap].filter(cap => cap !== undefined && cap !== null);
+  if (!dailyCaps.length || dailyCaps.some(cap => !Number.isSafeInteger(cap) || cap < 1)) throw new TypeError('Explicit daily operator cap required');
+  if (!Number.isFinite(value.minimumRequestIntervalSeconds) || !Number.isSafeInteger(value.minimumRequestIntervalSeconds*1000) || value.minimumRequestIntervalSeconds < 0 ||
       value.minimumRequestIntervalSeconds > 86400) throw new TypeError('Invalid spacing');
   if (value.minimumRequestIntervalSeconds < 600 && value.higherFrequencyExplicitlyGranted !== true) throw new TypeError('Higher cadence not granted');
   if (!Array.isArray(value.allowedOperations) || !value.allowedOperations.length ||
@@ -146,6 +147,44 @@ export class ApiCollectorCore {
   clock() {const now = this.now(); if (!finiteTime(now)) throw new TypeError('Invalid clock'); return now;}
   row(query, ...args) {return this.sql.exec(query, ...args).toArray()[0];}
   config() {return grantConfig(this.env);}
+  dailyCap(config) {return Math.min(...[config.grantedPerDay,config.operatorDailyRequestCap].filter(cap=>cap!==undefined&&cap!==null));}
+  authorizationStatus() {
+    let config;try {config=this.config();} catch {return 'invalid_grant_configuration';}
+    if (!config.enabled) return 'disabled';
+    const key=secret(this.env);if(!key)return 'requires_approved_key';
+    try {safeReferences(config,key);} catch {return 'invalid_grant_configuration';}
+    if(!this.env.API_RAW_RECEIPTS?.put||!this.env.API_RAW_RECEIPTS?.get)return 'private_storage_unavailable';
+    return 'ready';
+  }
+  validateScheduleReferences(...values) {
+    const config=this.config();const key=secret(this.env);
+    if(!config.enabled||!key)throw new TypeError('Approved key required');
+    safeReferences(config,key,values);
+  }
+  enqueueScheduledOperation({jobKey,operation,availableAt}) {
+    if(this.authorizationStatus()!=='ready')throw new TypeError('Not authorized');
+    const config=this.config();this.validateScheduleReferences(jobKey);
+    if(!REF.test(jobKey)||!config.allowedOperations.includes(operation)||!finiteTime(availableAt))throw new TypeError('Invalid scheduled job');
+    this.sql.exec('INSERT OR IGNORE INTO api_jobs(job_key,operation,round_ref,available_at) VALUES(?,?,?,?)',
+      jobKey,operation,config.probeRound,availableAt);
+  }
+  nextAttemptAt(config) {
+    const now=this.clock(),control=this.row('SELECT * FROM api_control WHERE id=1');
+    if(control.auth_stopped)return null;
+    const slots=config.allowedOperations.map(()=>'?').join(',');
+    const running=this.row("SELECT MIN(lease_until) AS at FROM api_jobs WHERE state='running'").at;
+    if(running!==null)return Math.max(now+1,running);
+    const pending=this.row(`SELECT MIN(available_at) AS at FROM api_jobs WHERE state='pending' AND round_ref=? AND operation IN (${slots})`,
+      config.probeRound,...config.allowedOperations).at;
+    if(pending===null)return null;
+    let next=Math.max(now+1,pending,control.blocked_until,control.next_allowed);
+    for(const [window,cap] of [[60_000,config.grantedPerMinute],[86_400_000,this.dailyCap(config)]]){
+      if(this.row('SELECT COUNT(*) AS n FROM api_attempts WHERE at>?',now-window).n>=cap){
+        next=Math.max(next,this.row('SELECT at FROM api_attempts WHERE at>? ORDER BY at DESC LIMIT 1 OFFSET ?',now-window,cap-1).at+window);
+      }
+    }
+    return next;
+  }
 
   enqueueProbeRound(roundRef) {
     const config = this.config(); if (!config.enabled) return {status: 'disabled'};
@@ -177,7 +216,7 @@ export class ApiCollectorCore {
       }
       if (this.row("SELECT 1 AS n FROM api_jobs WHERE state='running' LIMIT 1")) return {status: 'leased'};
       const waits = [];
-      for (const [window, cap] of [[60_000, config.grantedPerMinute], [86_400_000, config.grantedPerDay]]) {
+      for (const [window, cap] of [[60_000, config.grantedPerMinute], [86_400_000, this.dailyCap(config)]]) {
         const count = this.row('SELECT COUNT(*) AS n FROM api_attempts WHERE at>?', now-window).n;
         if (count >= cap) {
           const at = this.row('SELECT at FROM api_attempts WHERE at>? ORDER BY at DESC LIMIT 1 OFFSET ?', now-window, cap-1).at;
@@ -284,7 +323,9 @@ export class ApiCollectorCore {
           requestStartedAt: stamp(startedAt), capturedAt, captureTimeKind: 'http_response_completed',
           sourceObservedAt: null, observationTimestampKnown: false,
           schemaVerified: false, publicationEligible: false, httpStatus: 200, attemptId: job.attempt_id,
-          roundReference: job.round_ref, ...data};
+          roundReference: job.round_ref,
+          ...(job.operation.startsWith('apple-') ? {expectedItemId:2010001,expectedItemName:'Apple',
+            identityStatus:'known_canonical_id_not_yet_verified_in_this_provider_response'} : {}), ...data};
         const receiptKey = PRIVATE_PREFIX+`receipts/${String(job.attempt_id).padStart(12, '0')}-${job.operation}-${data.responseSha256}.json`;
         const serialized = JSON.stringify(receipt);
         if (serialized.includes(key)) throw new TypeError('Credential in receipt metadata');

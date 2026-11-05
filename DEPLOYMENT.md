@@ -99,8 +99,8 @@ After an actual approval, record the granted scope and limits separately from
 the requested allowance. Configure the server-side secret
 `MAPLESTORY_MARKET_APPROVED_API_KEY` and an explicit reviewed grant only then.
 One fixed Durable Object owns the account-wide request budget; do not run a
-separate Python collector against the same allowance. The prepared four GET
-operations capture private raw schema receipts, with persisted spacing, rolling
+separate Python collector against the same allowance. The six documented GET
+probes include Apple detail/history and capture private raw schema receipts, with persisted spacing, rolling
 minute/day budgets, Retry-After and an authentication stop. Their existence is
 not evidence of historical coverage, sales quantities, item variants or a live
 intraday feed.
@@ -112,6 +112,19 @@ bytes and their hashes are retained for inspection; parsed JSON is explicitly
 only a potentially lossy view. Publication remains prohibited even after raw
 collection is enabled. Schema validation and normalization require a separate
 implementation once actual responses and provider permissions are available.
+
+An optional `API_SCHEDULE_JSON` enables alarm-assisted scheduling after explicit
+grant and operator-budget review. It remains absent/off by default. One alarm
+runs at most one metered request, preserving existing attempts, deadlines,
+authentication stops and Retry-After across restarts. Recurring raw checks require
+an explicit bounded plan. Faster scheduling does not activate normalized prices,
+historical backfill or public API data automatically.
+
+Private `_private/provider-api/v1/health.json` records owner checks, queue counts
+and a bounded index of the initial schema receipts. Its check time is separate
+from provider observations, and the public `/health.json` still describes the
+daily collector. Storage-only pointer repairs use durable exponential backoff
+without repeating a successful provider request.
 
 ## Traffic and build planning
 
