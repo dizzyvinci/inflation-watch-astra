@@ -444,10 +444,10 @@ export async function collect(env, options = {}) {
       sourceUnavailable = true;
       throw new Error(`Source redirect rejected (HTTP ${response.status}); configured source URL remains fixed`);
     }
-    if (response.status === 429) {
+    if (response.status === 429 || (response.status !== 304 && !response.ok && response.headers.has('Retry-After'))) {
       sourceUnavailable = true;
       const nextAllowedAt = retryTime(response.headers.get('Retry-After'), now());
-      const error = new Error('Source HTTP 429; retry cooldown honored');
+      const error = new Error('Source HTTP ' + response.status + '; retry cooldown honored');
       error.nextAllowedAt = nextAllowedAt;
       throw error;
     }

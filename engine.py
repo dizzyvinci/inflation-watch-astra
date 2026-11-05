@@ -3,6 +3,7 @@ import argparse
 import datetime as dt
 import hashlib
 import html
+from email.utils import parsedate_to_datetime
 import json
 import math
 import os
@@ -113,12 +114,29 @@ def validate_feed(feed):
     return feed
 
 
+
+def source_retry_deadline(value, checked, default=False):
+    """Honor the provider's delay without changing the last actual check clock."""
+    moment = dt.datetime.fromisoformat(checked.replace('Z', '+00:00'))
+    fallback = moment + dt.timedelta(minutes=10) if default else None
+    try:
+        text = value.strip() if isinstance(value, str) else ''
+        if len(text) > 128:
+            return fallback.isoformat() if fallback else None
+        target = moment + dt.timedelta(seconds=int(text)) if re.fullmatch(r'[0-9]+', text) else parsedate_to_datetime(text)
+        if target.tzinfo is None or target < moment:
+            target = fallback
+    except (ValueError, TypeError, OverflowError):
+        target = fallback
+    return target.astimezone(UTC).isoformat() if target else None
+
+
 def fetch_feed(offline=False):
     cache = ROOT / 'cache' / 'market.json'
     meta_path = ROOT / 'cache' / 'fetch.json'
     previous = read(meta_path, {})
     if offline:
-        return validate_feed(read(cache)), {'status': 'cached', 'checkedAt': previous.get('checkedAt'), 'detail': 'Offline verification; retained source timestamp.'}
+        return validate_feed(read(cache)), {**previous, 'status': previous.get('status', 'cached'), 'checkedAt': previous.get('checkedAt'), 'detail': previous.get('detail', 'Offline verification; retained source timestamp.')}
     cfg = read(ROOT / 'config.json')
     headers = {'User-Agent': 'inflation.gg/preview (local market-index research; https://inflation.gg/)', 'Accept': 'application/json'}
     if previous.get('etag'):
@@ -126,6 +144,16 @@ def fetch_feed(offline=False):
     if previous.get('lastModified'):
         headers['If-Modified-Since'] = previous['lastModified']
     checked = now()
+    deadline = previous.get('nextAllowedAt')
+    try:
+        cooling = isinstance(deadline, str) and dt.datetime.fromisoformat(deadline.replace('Z', '+00:00')) > dt.datetime.fromisoformat(checked.replace('Z', '+00:00'))
+    except (ValueError, TypeError):
+        cooling = False
+    if cooling:
+        if not cache.exists():
+            raise RuntimeError('Provider retry cooldown active; no valid source cache')
+        return validate_feed(read(cache)), {**previous, 'status': 'degraded'}
+    next_allowed = None
     try:
         with urllib.request.urlopen(urllib.request.Request(cfg['feed_url'], headers=headers), timeout=25) as response:
             body = response.read(5_000_001)
@@ -133,23 +161,28 @@ def fetch_feed(offline=False):
                 raise ValueError('Oversized feed')
             feed = validate_feed(json.loads(body))
             old = read(cache)
-            if old and feed['updatedAt'] < old['updatedAt']:
+            if old and dt.datetime.fromisoformat(feed['updatedAt'].replace('Z', '+00:00')) < dt.datetime.fromisoformat(old['updatedAt'].replace('Z', '+00:00')):
                 raise ValueError('Source timestamp moved backwards')
             atomic(cache, feed)
-            meta = {'status': 'ok', 'checkedAt': checked, 'etag': response.headers.get('ETag'), 'lastModified': response.headers.get('Last-Modified'), 'detail': 'Public developer feed; source publishes daily aggregates.'}
+            meta = {'status': 'ok', 'checkedAt': checked, 'etag': response.headers.get('ETag'), 'lastModified': response.headers.get('Last-Modified'), 'detail': 'Public developer feed; source publishes daily aggregates.', 'lastSuccessfulFetchAt': checked, 'nextAllowedAt': None}
             atomic(meta_path, meta)
             return feed, meta
     except urllib.error.HTTPError as error:
         if error.code == 304 and cache.exists():
-            meta = {**previous, 'status': 'unchanged', 'checkedAt': checked}
+            meta = {**previous, 'status': 'unchanged', 'checkedAt': checked, 'lastSuccessfulFetchAt': checked, 'nextAllowedAt': None}
             atomic(meta_path, meta)
             return validate_feed(read(cache)), meta
         message = f'HTTP {error.code}'
+        next_allowed = source_retry_deadline(error.headers.get('Retry-After') if error.headers else None, checked, default=error.code == 429)
+        if next_allowed:
+            message += '; provider retry delay honored'
     except Exception as error:
         message = type(error).__name__ + ': ' + str(error)[:160]
+    failure = {**previous, 'status': 'degraded', 'checkedAt': checked, 'nextAllowedAt': next_allowed, 'detail': 'Source unavailable; using last good data. ' + message}
+    atomic(meta_path, failure)
     if not cache.exists():
         raise RuntimeError('No good source cache; refusing to manufacture data: ' + message)
-    return validate_feed(read(cache)), {**previous, 'status': 'degraded', 'checkedAt': checked, 'detail': 'Source unavailable; using last good data. ' + message}
+    return validate_feed(read(cache)), failure
 
 
 def canonical_hash(value):

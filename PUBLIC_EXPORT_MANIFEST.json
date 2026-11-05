@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T08:14:10+00:00",
+  "exportedAt": "2026-11-05T08:46:35+00:00",
   "basketVersion": 2,
   "files": [
     {
@@ -25,6 +25,11 @@
       "sha256": "d686936b587963dd74cc3199a006760a0393e8ac112368c14abff8113edb2f7e"
     },
     {
+      "path": "ROLLING_CAPTURE_CONTRACT.txt",
+      "bytes": 9017,
+      "sha256": "278c4e0af16f2c89a2a305276ccd404ee98e0972828050c7fe83dc6d05619372"
+    },
+    {
       "path": "Start-Preview.ps1",
       "bytes": 102,
       "sha256": "810394cf84db466a7cbffcd15b7ca7953ae3eb2585621394d9ffee1a748dc85c"
@@ -36,8 +41,8 @@
     },
     {
       "path": "adapters.py",
-      "bytes": 7978,
-      "sha256": "e48a62fd700f1fd15e58c104d4e939af76eb1c3602d67f98e13c8328bd03bab4"
+      "bytes": 7776,
+      "sha256": "d08d86fc7afa7328891ca33e9ced0a6f076d9f4e7b84836a77b7e98986304117"
     },
     {
       "path": "assets/animal-fur-bundle.png",
@@ -777,7 +782,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "aa0de7959dac827c74adcd2a8c250cacc9a9a8e9be6cec983f57a1d02ecf668b"
+      "sha256": "45f41f1632dfdcb4726ef13ee64ccd30b4da1958ed2ff133d64b8442585ec4fc"
     },
     {
       "path": "dist/_headers",
@@ -791,8 +796,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 94576,
-      "sha256": "8ebebe662bfde59dc6dd4e7380e4e03c7d705906e3905f7c206df6e96504d1bb"
+      "bytes": 95956,
+      "sha256": "73cda8d3e42e96eab60b3cc239391bdafc15de975c32e928087a413436919147"
     },
     {
       "path": "dist/assets/animal-fur-bundle.png",
@@ -2075,6 +2080,11 @@
       "sha256": "59cde1eaa67472993b5da312c07d587252b57629b0ea845f07fcabe0e7c2ba2d"
     },
     {
+      "path": "dist/data-694b8a1854445fc0.json",
+      "bytes": 308808,
+      "sha256": "694b8a1854445fc08c26eddac6a4181a891052f245aec93bed0511e96b79e6f2"
+    },
+    {
       "path": "dist/data-6eda6c9c64ca1f05.json",
       "bytes": 267719,
       "sha256": "6eda6c9c64ca1f05e345d5611f9edee717a1b75a2a6a7b762ab115fcc8c8d7d9"
@@ -2111,13 +2121,13 @@
     },
     {
       "path": "dist/data.json",
-      "bytes": 268484,
-      "sha256": "f6c5ed14923531e41ca7483545d5bb63b049135652ceafa7361c549bd5349e89"
+      "bytes": 308808,
+      "sha256": "694b8a1854445fc08c26eddac6a4181a891052f245aec93bed0511e96b79e6f2"
     },
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "aa0de7959dac827c74adcd2a8c250cacc9a9a8e9be6cec983f57a1d02ecf668b"
+      "sha256": "45f41f1632dfdcb4726ef13ee64ccd30b4da1958ed2ff133d64b8442585ec4fc"
     },
     {
       "path": "dist/history/cpi-v1.json",
@@ -2161,8 +2171,8 @@
     },
     {
       "path": "dist/style.css",
-      "bytes": 56991,
-      "sha256": "11f055437e91eb149a2b1128721ccbf2576aa9a742f0761035635e91c873a19c"
+      "bytes": 57388,
+      "sha256": "0195e5b47990c68730430117f401436e646a174f019a755c1218d9ee734b5f45"
     },
     {
       "path": "dist/sw.js",
@@ -2172,12 +2182,12 @@
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "4f87626b54a5969cb36ba8c3d0d9e1014482d030efbde628ec3293b562be9a41"
+      "sha256": "22a8df8f68ce157990a11f152d38dd3defe9485441362e7ba64c6619d91dbfaa"
     },
     {
       "path": "engine.py",
-      "bytes": 33865,
-      "sha256": "d3f8ea6641904ada7f543e53eaa2a7cdc124bfe440d2b2aa48604d25887432d6"
+      "bytes": 35840,
+      "sha256": "85d984319fc9b374b69b3f21d41026132a189690f5db229e4d252c82d1ba8316"
     },
     {
       "path": "historical_backfill.py",
@@ -2226,8 +2236,8 @@
     },
     {
       "path": "ops/worker.mjs",
-      "bytes": 36487,
-      "sha256": "9f0a4771714dbb2bee47012d733c4576af5c5c49b81b5f63e3d3666c9a0d59e4"
+      "bytes": 36591,
+      "sha256": "6b035459b516b8cf5c2c3db55e3f115bb4dc83077fc46bee3434b77cfb8e247f"
     },
     {
       "path": "ops/wrangler.jsonc",
@@ -2253,6 +2263,16 @@
       "path": "requirements.txt",
       "bytes": 24,
       "sha256": "40ff0af8660569c61fb5c7a91ccd33983cf6e7d92b5b06c11c38dbdb2ca4dcd4"
+    },
+    {
+      "path": "rolling_history.py",
+      "bytes": 16576,
+      "sha256": "224eeec99a27a93d1a48d95f2db2c5d47b5d29b4f429de486151bc3966c3a8ac"
+    },
+    {
+      "path": "scanner_capture_plan.py",
+      "bytes": 9660,
+      "sha256": "971f87994edbb534fe7445821b624bf9f997030cadf11e22797155b4b9e6e63b"
     },
     {
       "path": "smega.py",
@@ -2316,8 +2336,8 @@
     },
     {
       "path": "tests/test_adapters.py",
-      "bytes": 5475,
-      "sha256": "a94c7501ce0d23765787e88fc7c1d97680e8018d3a190d96d8c1a4eb78e328e5"
+      "bytes": 5583,
+      "sha256": "7c87a3b0baf5e608a499655bd9deae73af395222297a93e820dc3ef97739f7e8"
     },
     {
       "path": "tests/test_basket_v2.py",
@@ -2350,9 +2370,24 @@
       "sha256": "16117df031e7c515d6caad744c5b4bbee62f3baa3843d1d7391b3f194de5ca79"
     },
     {
+      "path": "tests/test_rolling_history.py",
+      "bytes": 12854,
+      "sha256": "49525298d93b4a910313b74971f3d24e50660c6d5218f5d778e2b2cfe86d8a66"
+    },
+    {
+      "path": "tests/test_scanner_capture_plan.py",
+      "bytes": 4875,
+      "sha256": "7c3eeede3bc68c097c59ce6dd65bab3f1e0c516e05b21b5649c6beb052c6b953"
+    },
+    {
       "path": "tests/test_smega_history.py",
       "bytes": 10976,
       "sha256": "60dcf13e6815b89627d7628a089dd3b8eac165b7fc8bb60ecd72c448af455210"
+    },
+    {
+      "path": "tests/test_source_retry.py",
+      "bytes": 5591,
+      "sha256": "302ae3894d52af79be394303a4e844421b5fd7908fb8950fbde6ad77840865ba"
     },
     {
       "path": "tests/test_source_summary.py",
@@ -2371,8 +2406,8 @@
     },
     {
       "path": "tests/worker-runtime.test.mjs",
-      "bytes": 62314,
-      "sha256": "df6cf29c31b0e67dac8d7e86f0a5811aee861bcfcce681ea8b031b58db6c5568"
+      "bytes": 63379,
+      "sha256": "4ee6a895309cc618188e4edc8e3245142501c3458fd92c3744db4af4222c02f4"
     },
     {
       "path": "web/_headers",
@@ -2386,8 +2421,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 94576,
-      "sha256": "8ebebe662bfde59dc6dd4e7380e4e03c7d705906e3905f7c206df6e96504d1bb"
+      "bytes": 95956,
+      "sha256": "73cda8d3e42e96eab60b3cc239391bdafc15de975c32e928087a413436919147"
     },
     {
       "path": "web/author-portrait.css",
@@ -2456,8 +2491,8 @@
     },
     {
       "path": "web/style.css",
-      "bytes": 56991,
-      "sha256": "11f055437e91eb149a2b1128721ccbf2576aa9a742f0761035635e91c873a19c"
+      "bytes": 57388,
+      "sha256": "0195e5b47990c68730430117f401436e646a174f019a755c1218d9ee734b5f45"
     },
     {
       "path": "web/sw.js",

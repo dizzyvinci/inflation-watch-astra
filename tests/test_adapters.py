@@ -42,7 +42,7 @@ class PublicAdapterTests(unittest.TestCase):
     def test_rolling_history_deduplicates_unchanged_prices(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);payload=adapters.normalize_prices(self.prices());engine.atomic(root/'cache/public-browser-prices.json',payload)
-            rows=[{'name':'A','weight':1,'basePrice':50000}];cash=[{'name':name,'nx':5000} for name in ['A','B','C']]
+            rows=[{'name':'A','category':'Consumables','weight':1,'basePrice':50000}];cash=[{'name':name,'nx':5000} for name in ['A','B','C']]
             a,h1=adapters.rolling_reference(rows,cash,root)
             b,h2=adapters.rolling_reference(rows,cash,root)
             self.assertEqual(len(h1),1);self.assertEqual(len(h2),1)

@@ -1,0 +1,140 @@
+ROLLING REFERENCE CAPTURE INTAKE — READINESS, NOT A NEW CAPTURE
+November5,2026. No browser, provider request, import or deployment performed here.
+The latest browser pilot returned no usable price and must not be materialized.
+
+FILES AND STORAGE
+adapters.py delegates price normalization/import to rolling_history.py.
+incoming/rolling-captures.sqlite3 is the private append-only receipt/observation
+ledger. incoming/ is already Git-ignored and is not a public serving/export path.
+Only the current selected rolling reference projection remains at the existing
+cache/public-browser-prices.json path. The private ledger is not a bulk API mirror.
+Per-variant histories remain separate from aggregate rollingReferenceHistory;
+they are not added as same-time variant rows to that aggregate series.
+
+INPUT SHAPE FOR AN ACTUAL SUPPORTED-BROWSER CAPTURE
+{
+  "sourceUrl": "https://mesos.watch/",
+  "capturedAt": "<actual batch completion, timezone-aware>",
+  "captureStartedAt": "<optional actual batch start>",
+  "captureCompletedAt": "<optional actual completion; same instant as capturedAt>",
+  "scannerFreshnessText": "<actual displayed context, if available>",
+  "items": [
+    {
+      "requested": "<item name or exact ID requested>",
+      "expectedItemId": "<positive integer copied from the frozen request plan>",
+      "expectedItemName": "<expected item name copied from that plan>",
+      "capturedAt": "<actual time this tool result returned>",
+      "result": "<unmodified returned object or WebMCP text-content envelope>"
+    }
+  ]
+}
+The shown strings are schema descriptions, not a fabricated capture fixture.
+The legacy direct-item shape remains readable. A missing per-item timestamp is
+explicitly marked batch_timestamp_only; it is not promoted to an exact item time.
+When expectedItemId/expectedItemName are supplied, the returned positive ID must
+match exactly and the actual returned name must match by casefold. These guards
+run before any ledger creation. The expected name cannot stand in for a missing
+returned name. Never relabel a response to make it pass. Expectation metadata is
+retained in the capture receipt; it does not create a second source-price point.
+Optional per-entry sourceObservedAt/sourceWindowStartAt/sourceWindowEndAt are
+retained only when actually supplied from evidence. They are never inferred from
+windowDays, capture completion, import/build time or a daily date boundary.
+
+RETAINED RETURNED FIELDS
+Provider item ID/name; positive sale median; positive integer source sale count;
+reported rolling window; currency; stat_roll presence/null/exact label; actual
+item capture time and its precision; supplied source clocks/window bounds;
+listings_now; cheapest_listing price_each/channel/room. Listing offers stay
+separate from the sale median. Arbitrary owner/sender/token fields are discarded.
+No listing is claimed current after its capture, and no owner identity is needed.
+
+Only price_basis == median of sales enters eligible observations. Asking/no-sale
+results are excluded with reasons; a wholly unusable batch or failed browser text
+does not create a ledger. Zero/error prices do not replace last-good observations.
+Duplicate IDs/names, invalid windows/counts/rolls/listings and inconsistent clocks
+are rejected. Capture times must be nonfuture and within any declared batch span.
+
+IMMUTABILITY AND HISTORY IDENTITY
+- Append-only captures and observations, linked by receipt identity. Replaying
+  an identical capture does not duplicate records or rewrite an unchanged view.
+- An item+actual-capture-time conflict rolls back transactionally; it is not an
+  overwrite. Later captures preserve earlier prices. Older receipts can be added
+  without regressing the current projection. Ledger commits before projection;
+  replay can repair a local projection-write failure.
+- variantKey hashes source + item ID + reported roll status/exact label.
+  unknown_legacy, reported_null and an explicit label are distinct identities.
+- seriesKey additionally includes the reported window definition and sale basis.
+  A7-ATT and10-ATT glove do not become one quality-constant history. A3-day and
+  4-day estimate are explicitly different measurement series.
+- Every observation declares qualityConstant:false. Even a repeated label does
+  not establish full stat equivalence, quality adjustment or independent samples.
+- variant_history(db_path, variant_key, series_key=None, limit=500) reads indexed,
+  bounded private observations. Use series_key for one fixed-window series.
+  Neither stat values nor missing roll labels are reverse-engineered.
+
+LEGACY DATA
+On the first actual import, the existing accepted projection is retained in the
+private ledger. Its known prices/counts/windows and original capture timestamp
+remain intact. A discarded legacy stat_roll cannot be reconstructed: it remains
+unknown_legacy, not clean, not reported-null, and not an exact per-item clock.
+No production migration/import was performed in this readiness task.
+Legacy projection metadata can be normalized in memory for a report without
+rewriting its capture file or creating the private ledger.
+
+SEPARATE ROLLING-INDEX COMPARABILITY GUARD
+The daily basket contains aggregate gear prices without a matched provider roll
+baseline. The rolling MPI comparison now excludes captured Equipment, equipment
+Weapon IDs, and any explicitly reported roll without a matching daily baseline.
+Fungible Materials/Consumables/Scrolls and non-equipment Weapon IDs can remain
+eligible. Current fixed-cost cash inputs remain separate; explicit rolled cash
+would be excluded. Unknown category/variant scope is not guessed.
+
+rollingReference.comparison reports methodVersion2, capturedBasketCoverage,
+comparableBasketCoverage, comparable item counts, every excluded item/weight and
+its reason. It does not silently equate captured coverage with comparable coverage.
+The existing80% rolling-MPI threshold still applies to comparable weight.
+The primary fixed MPI, fixed cash index, NX headline, membership and weights are
+not changed. This is only a conservative guard on the separate rolling reference.
+
+READ-ONLY PREVIEW FOR THE EXISTING79-ITEM CAPTURE
+Actual capture2026-11-05T02:10:54.740Z, no new prices obtained.
+15 of the current50 names match: captured weight29.70535184%.
+After compatibility guard:11 comparable items, weight22.85284585%.
+Four captured gear rows account for6.85250599 percentage points of that coverage:
+Pan Lid2.81534192%; Emerald Earrings2.01601858%; Blue Sauna Robe1.31661855%;
+Squishy Shoes0.70452694%. Their daily baselines have unidentified roll mixes.
+35 current basket names were not captured; no aliases are guessed to fill them.
+Both old and new rolling MPI reference remain unavailable below80% coverage.
+All29 cash inputs remain eligible; the separate rolling NX reference remains
+13.6517311596 mesos/NX. Primary source MPI156.0789523579 and NX17.0860671368 remain
+the same recorded values. This preview did not call compute/build or write caches.
+
+AGGREGATE HISTORY / WORKER COMPATIBILITY
+Aggregate history remains one point per measured capture/method, never one row
+per variant. Measurement hashes exclude pull clocks and current-listing changes;
+an unchanged median/count/window/roll does not become a fictitious independent
+measurement merely because another pull occurred. Existing same-time points are
+not overwritten to retrofit the new method. Older aggregate rows retain their
+original values and may lack roll identity; that limitation is explicit metadata.
+New metadata stays inside rollingReference / rollingReferenceHistory, already
+covered by the existing Worker reference fingerprint. No runtime upload route,
+Worker history-key change, top-level variant array or source gate is introduced.
+
+Operator command AFTER an actual usable capture is reviewed:
+python adapters.py prices <local-approved-capture.json>
+This only reads a local file. It does not open a browser or contact a provider.
+Blocked OpeningRoom/Turnstile/promise/error output is not a valid price batch.
+
+CURRENT TARGET PLAN — OFFLINE, NOT NEW DATA
+Before a future batch, run: python scanner_capture_plan.py
+It writes ignored incoming/scanner-capture-plan.json with the current frozen50
+goods and all29 known-NX cash targets, expected IDs/names, exact tool arguments,
+basket/specification/source/schedule/input hashes and per-ID evidence.
+Changed prior plans are frozen in incoming/scanner-capture-plan-history/ by hash;
+unchanged replay preserves the plan file. Source/capture artifacts are read-only.
+The current plan resolves79 distinct targets:44 have prior actual scanner ID/name
+evidence;35 have only MCW/1 name-verified art candidate evidence.74 targets also
+have art provenance (including overlaps). Art identity is not proof that a provider
+will return that item: the real response must still pass both expectation guards.
+This replaces the targeting scope of the old v1-mix79, which matched only15 of the
+current50 names. It does not supply prices, a successful batch or new coverage.

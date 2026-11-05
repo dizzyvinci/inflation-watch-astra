@@ -112,3 +112,8 @@ footer.shell{display:grid;grid-template-columns:minmax(160px,1fr) minmax(0,640px
 
 /* Keep the main rate heading readable in either banner layout. */
 #overview-title{font-size:clamp(24px,1.6vw,32px);line-height:1.35}
+
+/* Readable tables keep horizontal scrolling inside their own wrapper. */
+.table-wrap td,.table-wrap .item-link,#cash-table .item-link{font-size:14px;line-height:1.65}
+.table-wrap th,.table-wrap th button{font-size:12px;line-height:1.5}
+@media(max-width:700px){.table-wrap td,.table-wrap .item-link,#cash-table .item-link{font-size:13px}.table-wrap th,.table-wrap th button{font-size:12px}}

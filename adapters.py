@@ -29,26 +29,13 @@ def check_stamp(stamp):
 
 
 def normalize_prices(payload):
-    check_stamp(payload['capturedAt'])
-    if payload.get('sourceUrl')!='https://mesos.watch/':raise ValueError('Unknown price source')
-    items=[];seen=set()
-    for entry in payload['items']:
-        raw=unpack_tool_result(entry.get('result',entry))
-        name=raw.get('item') or entry.get('requested')
-        if name in seen:raise ValueError('Duplicate item capture')
-        seen.add(name)
-        if raw.get('price_basis')!='median of sales':continue
-        if not all(positive(raw.get(k)) for k in ['typical_sale_price','sales_counted','window_days']):continue
-        if not 1<=raw['window_days']<=90:raise ValueError('Invalid sale window')
-        items.append({'name':name,'id':raw.get('id'),'price':raw['typical_sale_price'],'salesCounted':raw['sales_counted'],'windowDays':raw['window_days'],'salesPerHourProxy':raw['sales_counted']/(24*raw['window_days'])})
-    if not items:raise ValueError('No usable scanner sale medians')
-    return {'sourceUrl':payload['sourceUrl'],'capturedAt':payload['capturedAt'],'scannerFreshnessText':payload.get('scannerFreshnessText','Unknown'), 'observationTimestampKnown':False,'kind':'rolling_scanner_reference','items':items}
+    from rolling_history import normalize_capture
+    return normalize_capture(payload)
 
 
 def import_prices(path):
-    normalized=normalize_prices(read(path))
-    atomic(ROOT/'cache'/'public-browser-prices.json',normalized)
-    return normalized
+    from rolling_history import import_capture
+    return import_capture(ROOT,read(path))
 
 
 def rolling_reference(rows,cash,root=None):
@@ -56,18 +43,21 @@ def rolling_reference(rows,cash,root=None):
     basket_version=read(root/'config.json',{}).get('basket_version',1)
     payload=read(root/'cache'/'public-browser-prices.json')
     if not payload:return None,[]
-    by_name={i['name']:i for i in payload['items']}
-    coverage=sum(r['weight'] for r in rows if r['name'] in by_name)
-    cpi=sum(r['weight']*by_name[r['name']]['price']/r['basePrice'] for r in rows if r['name'] in by_name)/coverage*100 if coverage>=.8 else None
-    rate_rows=[(by_name[r['name']]['price']/r['nx'],by_name[r['name']]['salesPerHourProxy']) for r in cash if r['name'] in by_name]
+    from rolling_history import comparable_inputs,legacy_capture
+    if payload.get('schemaVersion')!=2:payload=legacy_capture(payload)
+    goods,cash_items,comparison=comparable_inputs(rows,cash,payload)
+    coverage=comparison['comparableBasketCoverage']
+    cpi=sum(r['weight']*goods[r['name']]['price']/r['basePrice'] for r in rows if r['name'] in goods)/coverage*100 if coverage>=.8 else None
+    rate_rows=[(cash_items[r['name']]['price']/r['nx'],cash_items[r['name']]['salesPerHourProxy']) for r in cash if r['name'] in cash_items]
     nx=sum(p*q for p,q in rate_rows)/sum(q for p,q in rate_rows) if len(rate_rows)>=3 else None
-    result={**payload,'basketVersion':basket_version,'cpiReference':cpi,'nxRateReference':nx,'coverage':coverage,'cashItems':len(rate_rows),'windowMinDays':min(r['windowDays'] for r in payload['items']),'windowMaxDays':max(r['windowDays'] for r in payload['items'])}
-    content=json.dumps(payload['items'],sort_keys=True,separators=(',',':'))
+    result={**payload,'basketVersion':basket_version,'cpiReference':cpi,'nxRateReference':nx,'coverage':coverage,'cashItems':len(rate_rows),'comparison':comparison,'aggregateHistoryNote':'Older aggregate points may lack roll identity; variant histories remain separate in the private capture ledger. No quality-constant history is claimed.','windowMinDays':min(r['windowDays'] for r in payload['items']),'windowMaxDays':max(r['windowDays'] for r in payload['items'])}
+    measurement=[{key:item.get(key) for key in ('name','id','price','salesCounted','windowDays','statRollStatus','statRoll','sourceObservedAt','sourceWindowStartAt','sourceWindowEndAt')} for item in payload['items']]
+    content=json.dumps({'comparisonMethodVersion':2,'items':measurement},sort_keys=True,separators=(',',':'))
     digest=hashlib.sha256(content.encode()).hexdigest()[:16]
     path=root/'cache'/('rolling-reference-history.json' if basket_version==1 else f'rolling-reference-history-v{basket_version}.json')
     history=read(path,[])
-    if not history or history[-1]['contentHash']!=digest:
-        history.append({'at':payload['capturedAt'],'cpi':cpi,'nxRate':nx,'contentHash':digest,'sourceUrl':payload['sourceUrl'],'timestampKind':'captured_at','observationTimestampKnown':False})
+    if not history or (history[-1]['contentHash']!=digest and check_stamp(history[-1]['at'])!=check_stamp(payload['capturedAt'])):
+        history.append({'at':payload['capturedAt'],'cpi':cpi,'nxRate':nx,'contentHash':digest,'sourceUrl':payload['sourceUrl'],'timestampKind':'captured_at','observationTimestampKnown':False,'comparisonMethodVersion':2,'comparableCoverage':coverage,'capturedCoverage':comparison['capturedBasketCoverage'],'qualityConstant':False})
         atomic(path,history[-10000:])
     return result,history
 

@@ -1018,3 +1018,22 @@ test('a declined cache upgrade during cooldown cannot erase the provider cooldow
   assert.equal(bucket.read(STATE).nextAllowedAt, state.nextAllowedAt);
   assert.deepEqual(bucket.read(POINTER), pointer);
 });
+
+
+test('503 and 521 Retry-After skip future source requests without renewing evidence clocks', async () => {
+  for (const status of [503, 521]) {
+    const { bucket, env, pointer } = await initialize();
+    const result = await collect(env, { now: NOW + 600_000,
+      fetcher: async () => new Response(null, { status, headers: { 'Retry-After': '1800' } }) });
+    assert.equal(result.status, 'degraded');
+    assert.equal(result.nextAllowedAt, new Date(NOW + 2_400_000).toISOString());
+    const retained = bucket.read(POINTER);
+    assert.equal(retained.version, pointer.version);
+    assert.equal(retained.sourceUpdatedAt, pointer.sourceUpdatedAt);
+    assert.equal(retained.lastSuccessfulFetchAt, pointer.lastSuccessfulFetchAt);
+    let calls = 0;
+    const skipped = await collect(env, { now: NOW + 1_200_000, fetcher: async () => { calls++; return response(); } });
+    assert.equal(skipped.status, 'cooldown'); assert.equal(calls, 0);
+    assert.equal(bucket.read(POINTER).sourceStatus.checkedAt, retained.sourceStatus.checkedAt);
+  }
+});
