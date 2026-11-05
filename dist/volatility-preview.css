@@ -3,4 +3,9 @@
 .volatility-preview-highlight[data-highlight-type="volatility-cash"]{--highlight-accent:var(--gold,#edc471)}
 .volatility-preview-highlight[data-highlight-type="volatility-goods"]{--highlight-accent:var(--blue,#87bdcf)}
 .volatility-preview-highlight .market-highlight-dates{white-space:normal}
+.volatility-preview-highlight .market-highlight-copy{text-align:center}
+.volatility-preview-highlight .market-highlight-title-line,.volatility-preview-highlight .market-highlight-value-line{justify-content:center;text-align:center}
+.volatility-preview-highlight .market-highlight-kind{font-weight:800}
+.volatility-preview-highlight .market-highlight-headline{font-weight:400;font-style:normal}
+.volatility-preview-highlight .volatility-icon-note{display:block;margin-top:3px;text-align:center;font:11px/1.6 system-ui,sans-serif;color:var(--muted)}
 @media(max-width:600px){.volatility-preview-badge{font-size:12px;padding:9px 3px}.volatility-preview-highlight .market-highlight-headline{font-size:15px}}

@@ -77,7 +77,7 @@
     const sourceDay=day(String(data.sourceUpdatedAt||'').slice(0,10)),windowDays=Math.round((Date.parse(data.recentEndExclusive)-Date.parse(data.recentStart))/86400000);
     const items = [], add = (row, type, label, value, date, detail = '', direction = 'neutral') => {
       if (!row)return;
-      const carried=sourceDay&&row.priceDay<sourceDay,frame=type==='turnover'||type==='volume'?`${windowDays>0?windowDays+'-day window':'Recorded activity window'} · complete source-calendar days`:type==='change'?'Reference week → latest qualifying price'+(carried?' · earlier price carried':''):carried?'Earlier qualifying daily observation':'Latest source-day observation';
+      const carried=sourceDay&&row.priceDay<sourceDay,frame=type==='turnover'||type==='volume'?`${windowDays>0?windowDays+'-day window':'Recorded activity window'} · complete source-calendar days`:type==='change'?'Starting price level → latest qualifying price'+(carried?' · earlier price carried':''):carried?'Earlier qualifying daily observation':'Latest source-day observation';
       const provenance=type==='change'?`Reference week ${data.baseStart}–${data.baseEnd} · ${date}`:date;
       const essential=type==='context'?detail:'';
       const displayDate=type==='turnover'||type==='volume'?date:row.priceDay;
@@ -109,9 +109,9 @@
     if(headingLevel){titleLine.setAttribute('role','heading');titleLine.setAttribute('aria-level',String(headingLevel));}
     titleLine.append(make('strong','market-highlight-headline',item.label));
     valueLine.append(make('span','market-highlight-item-name',item.name),make('span','market-highlight-value',' · '+item.value));
-    if(item.direction!=='neutral')valueLine.append(make('span','market-highlight-direction',item.direction==='up'?'↑ Up vs reference':item.direction==='down'?'↓ Down vs reference':'→ At reference'));fact.append(titleLine,valueLine);
-    const dates=make('small','market-highlight-dates');dates.append(make('strong','market-highlight-date',item.displayDate),make('span','',' · '+item.frame+(item.essential?' · '+item.essential:'')));
-    const details=make('span','market-highlight-details',' · '+item.date+(item.detail?' · '+item.detail:''));details.hidden=!calculationDetail;dates.append(details);
+    if(item.direction!=='neutral')valueLine.append(make('span','market-highlight-direction',item.direction==='up'?'↑ Increased':item.direction==='down'?'↓ Decreased':'→ Unchanged'));fact.append(titleLine,valueLine);
+    const dates=make('small','market-highlight-dates');dates.append(document.createTextNode('('),make('strong','market-highlight-date',item.displayDate),make('span','',' · '+item.frame+(item.essential?' · '+item.essential:'')));
+    const details=make('span','market-highlight-details',' · '+item.date+(item.detail?' · '+item.detail:''));details.hidden=!calculationDetail;dates.append(details,document.createTextNode(')'));
     copy.append(fact,dates);graphic.title=item.text;graphic.append(image,copy);return graphic;
   }
   function utc(value) {
@@ -230,6 +230,7 @@
     update();
   });
   calculationToggle.addEventListener('click',()=>{calculationDetail=!calculationDetail;calculationToggle.setAttribute('aria-pressed',String(calculationDetail));calculationToggle.textContent=calculationDetail?'Hide calculation details':'Show calculation details';document.querySelectorAll('.highlights-method-detail').forEach(note=>note.hidden=!calculationDetail);if(report){drawPage();if(enabled)draw();}});
+  const fontButton=make('button','','Heading: Inquisitive');fontButton.type='button';let inquisitive=true;try{inquisitive=localStorage.getItem('astra-highlights-font-v1')!=='plain'}catch{}const applyFont=()=>{panel.dataset.headingFont=inquisitive?'inquisitive':'plain';fontButton.textContent='Heading: '+(inquisitive?'Inquisitive':'Plain');fontButton.setAttribute('aria-pressed',String(inquisitive))};fontButton.addEventListener('click',()=>{inquisitive=!inquisitive;try{localStorage.setItem('astra-highlights-font-v1',inquisitive?'inquisitive':'plain')}catch{}applyFont()});calculationControls.append(fontButton);applyFont();
   publicationToggle.addEventListener('click',()=>{showPublication=!showPublication;publicationToggle.setAttribute('aria-pressed',String(showPublication));publicationToggle.textContent=showPublication?'Hide source publication':'Show source publication';publication.hidden=pagePublication.hidden=!showPublication;});
   contextToggle.addEventListener('click',()=>{showContext=!showContext;contextToggle.setAttribute('aria-pressed',String(showContext));contextToggle.textContent=showContext?'Hide Wolbi context':'Show Wolbi context';if(report){drawPage();if(enabled)draw();}});
   pause.addEventListener('click', () => { paused = !paused; update(); });

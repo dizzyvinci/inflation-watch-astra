@@ -1,0 +1,5 @@
+# Preserve exact bytes of provenance-checked upstream assets and immutable reports.
+* text=auto eol=lf
+assets/** -text
+dist/assets/** -text
+dist/data-*.json -text

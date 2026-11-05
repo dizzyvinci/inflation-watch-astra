@@ -52,10 +52,12 @@
   window.AstraVolatilityPreview = Object.freeze({ sourceWindow, dailyVolatility, model });
   const options = document.getElementById('display-options'); if (!options) return;
   const make = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
-  const key = 'astra-volatility-preview-v1'; let enabled = true, report, current, scheduled = false;
+  const key = 'astra-volatility-preview-v1', categoryKey = 'astra-category-member-volatility-v1'; let enabled = true, categoryEnabled = false, report, current, scheduled = false;
   try { enabled = localStorage.getItem(key) !== 'off'; } catch { /* The display remains usable in this tab. */ }
+  try { categoryEnabled = localStorage.getItem(categoryKey) === 'on'; } catch { /* Category member badges default off. */ }
   const controls = make('div', undefined, 'hero-layout-options volatility-preview-options'); controls.dataset.previewControls = ''; controls.setAttribute('role', 'group'); controls.setAttribute('aria-label', 'Daily price volatility preview');
-  const toggle = make('button'); toggle.type = 'button'; controls.append(toggle, make('small', 'Daily median-price dispersion over seven complete source days, not individual-trade volatility. Category labels summarize member volatilities, not category-index volatility.')); options.append(controls);
+  const toggle = make('button'), categoryToggle = make('button'); toggle.type = categoryToggle.type = 'button'; categoryToggle.dataset.categoryVolatility = ''; categoryToggle.setAttribute('aria-controls', 'category-cards');
+  controls.append(toggle, categoryToggle, make('small', 'Daily median-price dispersion over seven complete source days, not individual-trade volatility. Optional category labels summarize member volatilities, not category-index volatility.')); options.append(controls);
   const scopes = '#category-cards,#cash-item-highlights,#market-highlights-track,#highlights-fact-grid';
   const observer = new MutationObserver(records => {
     if (!enabled || !current || scheduled) return;
@@ -65,16 +67,27 @@
   });
   const watch = () => observer.observe(document.body, { childList: true, subtree: true });
   const owned = node => { node.dataset.volatilityOwned = ''; return node; };
+  const failedMegaphoneSprites = new Map();
   const percent = value => value === null || value === undefined ? 'Unavailable' : value.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%';
   function badge(card, text, detail) { const label = owned(make('p', text, 'volatility-preview-badge')); label.title = detail; card.append(label); }
   function graphic(item, kind) {
     const root = make('span', undefined, 'market-highlight-graphic'), image = make('img', undefined, 'market-highlight-sprite'); image.alt = ''; image.width = image.height = 42; image.loading = 'lazy';
-    const mapped = report.spriteMap?.[item.slug]; image.src = typeof mapped === 'string' && /^assets\/[A-Za-z0-9._-]+\.(?:png|webp|gif|svg)$/.test(mapped) ? mapped : `assets/${item.slug}.svg`;
-    image.addEventListener('error', () => { if (image.getAttribute('src') === 'assets/meso-pouch.png') image.hidden = true; else image.src = 'assets/meso-pouch.png'; });
+    const mapped = report.spriteMap?.[item.slug], local = typeof mapped === 'string' && /^assets\/[A-Za-z0-9._-]+\.(?:png|webp|gif|svg)$/.test(mapped), megaphone = /megaphone/.test(item.slug);
+    const generic = () => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('viewBox', '0 0 32 32'); svg.setAttribute('width', '42'); svg.setAttribute('height', '42'); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', 'Generic megaphone icon; verified game sprite unavailable'); svg.classList.add('market-highlight-sprite', 'volatility-generic-megaphone');
+      const title = document.createElementNS(svg.namespaceURI, 'title'); title.textContent = 'Original generic megaphone symbol, not a verified MapleStory item sprite'; svg.append(title);
+      for (const [d, fill] of [['M5 12h7l14-7v21l-14-7H5Z', '#d8bc74'], ['M11 19h6l-2 9h-5Z', '#9b7953'], ['M5 13h6v5H5Z', '#a8d6d2']]) { const path = document.createElementNS(svg.namespaceURI, 'path'); path.setAttribute('d', d); path.setAttribute('fill', fill); path.setAttribute('stroke', '#34443b'); path.setAttribute('stroke-width', '1.5'); svg.append(path); }
+      return svg;
+    };
+    const fallback = megaphone && (!local || /meso-pouch/.test(mapped) || failedMegaphoneSprites.get(item.slug) === mapped);
+    if (!fallback) image.src = local ? mapped : `assets/${item.slug}.svg`;
+    image.addEventListener('error', () => { if (megaphone) { failedMegaphoneSprites.set(item.slug, mapped); image.replaceWith(generic()); } else if (image.getAttribute('src') === 'assets/meso-pouch.png') image.hidden = true; else image.src = 'assets/meso-pouch.png'; });
     const copy = make('span', undefined, 'market-highlight-copy'), title = make('span', undefined, 'market-highlight-title-line'), value = make('span', undefined, 'market-highlight-value-line');
-    title.append(make('span', kind === 'cash' ? 'Most volatile · cash' : 'Most volatile · non-cash', 'market-highlight-kind'), make('strong', item.name, 'market-highlight-headline'));
+    title.append(make('strong', kind === 'cash' ? 'Most volatile cash' : 'Most volatile non-cash', 'market-highlight-kind'), make('span', item.name, 'market-highlight-headline'));
     value.append(make('strong', `${percent(item.value)} daily price volatility`, 'market-highlight-value'));
-    copy.append(title, value, make('small', `${current.window.start}–${current.window.end} · ${item.returns} consecutive daily returns · medians, not individual trades`, 'market-highlight-dates')); root.append(image, copy); return root;
+    copy.append(title, value, make('small', `${current.window.start}–${current.window.end} · ${item.returns} consecutive daily returns · medians, not individual trades`, 'market-highlight-dates'));
+    if (fallback) copy.append(make('small', 'Generic megaphone icon', 'volatility-icon-note'));
+    root.append(fallback ? generic() : image, copy); return root;
   }
   function highlight(item, kind, duplicate, panel) {
     const card = owned(make(panel ? 'article' : 'li', undefined, panel ? 'panel highlights-fact volatility-preview-highlight' : 'market-highlight volatility-preview-highlight'));
@@ -90,9 +103,10 @@
     try {
       for (const node of document.querySelectorAll('[data-volatility-owned]')) node.remove();
       toggle.textContent = 'Daily price volatility: ' + (enabled ? 'On' : 'Off'); toggle.setAttribute('aria-pressed', String(enabled));
+      categoryToggle.textContent = 'Category member volatility: ' + (categoryEnabled ? 'On' : 'Off'); categoryToggle.setAttribute('aria-pressed', String(categoryEnabled));
       if (!enabled || !current) return;
       const dates = `${current.window.start}–${current.window.end}; up to six within-window returns. Each daily median needs at least five recorded source sales. No missing-day bridge or carry-forward. Sample SD of daily log returns × 100; not annualized.`;
-      for (const card of document.querySelectorAll('.category-card')) {
+      for (const card of categoryEnabled ? document.querySelectorAll('.category-card') : []) {
         const name = card.querySelector('[data-category]')?.dataset.category, category = current.categories.find(row => row.name === name); if (!category) continue;
         badge(card, `7-day median member volatility: ${percent(category.value)} · ${category.eligible}/${category.total} items`, `${dates} Unweighted median of sufficiently sampled member volatilities; this is not the category index's volatility.`);
       }
@@ -108,6 +122,7 @@
     } finally { watch(); }
   }
   toggle.addEventListener('click', () => { enabled = !enabled; try { localStorage.setItem(key, enabled ? 'on' : 'off'); } catch {} current = enabled && report ? model(report) : null; decorate(); });
+  categoryToggle.addEventListener('click', () => { categoryEnabled = !categoryEnabled; try { localStorage.setItem(categoryKey, categoryEnabled ? 'on' : 'off'); } catch {} decorate(); });
   document.addEventListener('astramarketsnapshot', event => { if (event.detail && typeof event.detail === 'object') { report = event.detail; current = enabled ? model(report) : null; decorate(); } });
   decorate(); document.dispatchEvent(new Event('astramarkethighlightsready'));
 })();

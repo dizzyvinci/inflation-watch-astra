@@ -1,9 +1,14 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T13:36:10+00:00",
+  "exportedAt": "2026-11-05T13:52:17+00:00",
   "basketVersion": 2,
   "files": [
+    {
+      "path": ".gitattributes",
+      "bytes": 168,
+      "sha256": "deb41bc7a5935df7fa77164abc242b221d9f410e7e4833d055c59ee2f06fd845"
+    },
     {
       "path": ".github/workflows/validate.yml",
       "bytes": 700,
@@ -1787,7 +1792,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "5462dd85c9c4c937bd49f5ae52d1a024c209ed23aaeeba8c88c8ec0807db97d5"
+      "sha256": "709bf63875c51485a9268693cd3c1ecaad11cc3ab2a8695ba448838c0d502de4"
     },
     {
       "path": "cache/market.json",
@@ -1842,7 +1847,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "4d2f0d6feae25261b0d4dbc1d109c554c29be7fdc45976f7548af04352644eab"
+      "sha256": "2961790b049522384fe5114812483993b15c426a8c5299afcf70f9b99f39ed0e"
     },
     {
       "path": "dist/_headers",
@@ -1856,8 +1861,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 123089,
-      "sha256": "5d45d72e7457560dc8a24023ae0e92b784ca656777e348a08691913abaf78967"
+      "bytes": 123135,
+      "sha256": "6ff86b4684d03939d798287c98d6f966faa96abcb6d19312f4edc88dd7a83785"
     },
     {
       "path": "dist/assets/PixelifySans-9ba86cd010a4de30.ttf",
@@ -4171,8 +4176,8 @@
     },
     {
       "path": "dist/brand-preview.js",
-      "bytes": 6284,
-      "sha256": "99be027dfd5323bb8b9fef7445c65809e145382d4f41f578b52bbb89aee3bdfe"
+      "bytes": 6286,
+      "sha256": "9d652c6369a05aaee8e525e72068feac4d0c725e13da47614751a80ff54e1b6a"
     },
     {
       "path": "dist/cash-catalog.css",
@@ -4206,8 +4211,18 @@
     },
     {
       "path": "dist/category-link-preview.js",
-      "bytes": 1807,
-      "sha256": "3917f62710b503b1ef174dde231c8578c5c85cab4903fc1b0b169f78a8e81381"
+      "bytes": 2866,
+      "sha256": "dd4d7a2bf073c853c92941f24d9fa9da7e8f967ffee6873f3fbed98a9136e4db"
+    },
+    {
+      "path": "dist/category-reference-preview.css",
+      "bytes": 1071,
+      "sha256": "0b389b2c4644d40e1df26d2b406e22c29e3db3ecd124126781687c6a29eeba42"
+    },
+    {
+      "path": "dist/category-reference-preview.js",
+      "bytes": 9212,
+      "sha256": "51869912a9b3a03d2da961f27653d9147f5b18fbda1bc9b354d48c8c5da9cf63"
     },
     {
       "path": "dist/chart-interaction.css",
@@ -4243,6 +4258,11 @@
       "path": "dist/data-248ae6a8845719ef.json",
       "bytes": 308874,
       "sha256": "248ae6a8845719ef00aba6f986acfc56d5fba751906f7067f39d00cb35984665"
+    },
+    {
+      "path": "dist/data-297d534957a0d7e5.json",
+      "bytes": 797582,
+      "sha256": "297d534957a0d7e5c5b9e7a70b41869afdc3097817a687eea378225f5c84bd95"
     },
     {
       "path": "dist/data-2f954e383421ef95.json",
@@ -4310,6 +4330,11 @@
       "sha256": "ce6510bb9ae85dfe518b2c82a73ed6827d8e8860e70f6830f5c0920fd9d91b46"
     },
     {
+      "path": "dist/data-e7e31eb0bbae38f1.json",
+      "bytes": 797582,
+      "sha256": "e7e31eb0bbae38f12ad70e83473111f44d692767f85e8d9c123e6dc679108b5c"
+    },
+    {
       "path": "dist/data-eeebf04b6dfc455c.json",
       "bytes": 328649,
       "sha256": "eeebf04b6dfc455c438dbe6a2c105444ab2e24f058bcf14031254a3f1e70d125"
@@ -4332,17 +4357,27 @@
     {
       "path": "dist/data.json",
       "bytes": 797582,
-      "sha256": "6c4628228e2366f93dc0ebc09d568abbb5f91ddb4ad95fe50139e1c219a4302d"
+      "sha256": "e7e31eb0bbae38f12ad70e83473111f44d692767f85e8d9c123e6dc679108b5c"
     },
     {
       "path": "dist/date-presentation.js",
-      "bytes": 1470,
-      "sha256": "98498e865d0c3d6adfeb7aa775ccf022fc406019ae5121d686dca2a0b6e40af9"
+      "bytes": 2677,
+      "sha256": "2eb917c95f45b1383b6b10b069d42dded82c5fb6b7bc838f620df3006a64ea06"
     },
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "4d2f0d6feae25261b0d4dbc1d109c554c29be7fdc45976f7548af04352644eab"
+      "sha256": "2961790b049522384fe5114812483993b15c426a8c5299afcf70f9b99f39ed0e"
+    },
+    {
+      "path": "dist/fm-backdrop-preview.css",
+      "bytes": 2903,
+      "sha256": "c97c464e578aab632f7a2f71e129607931ce921fd4ef0ee4d32a0f8f42057988"
+    },
+    {
+      "path": "dist/fm-backdrop-preview.js",
+      "bytes": 3030,
+      "sha256": "de40fdb0d76cb781c37309afb4a29e62aa37d6c9d1f861e02b51c813e69005ff"
     },
     {
       "path": "dist/history/cpi-v1.json",
@@ -4351,8 +4386,8 @@
     },
     {
       "path": "dist/index.html",
-      "bytes": 50577,
-      "sha256": "1cf94058aab7a33fb4c27c75f9da826e1140dddd929ecb4edc08171b12eb5613"
+      "bytes": 50943,
+      "sha256": "e80b066e07a1ba628350f93e1bfadfdb8d3cfcac72a25e9d684793bc78e6d5a5"
     },
     {
       "path": "dist/layout-preview.css",
@@ -4366,13 +4401,13 @@
     },
     {
       "path": "dist/market-highlights.css",
-      "bytes": 10644,
-      "sha256": "5bd70a4559cb4e826a8a3e8f633d884b476c9b3ff0fcefb87f8b2458b34106b0"
+      "bytes": 10837,
+      "sha256": "fbc81bb24b8f376c3a9b38488d164cdaac611736d64eeca66d0146facf2d9f2f"
     },
     {
       "path": "dist/market-highlights.js",
-      "bytes": 24124,
-      "sha256": "957f50dd5bf81307dc16667b6ea04706e53bea10702e0f93bbba7670696ed5bf"
+      "bytes": 25049,
+      "sha256": "5325a69dc443baaef98e348d88fd0fea7db352e993465b756a5a506b45b49138"
     },
     {
       "path": "dist/mystery-boxes.css",
@@ -4456,8 +4491,8 @@
     },
     {
       "path": "dist/price-check.js",
-      "bytes": 18439,
-      "sha256": "6f5569beaf3b08939e1927769e7a939db224d307aeac457929f52cd60c7d03ce"
+      "bytes": 18452,
+      "sha256": "8c32a61be2eb4f8dba7c40588637a7149ed86b2b0391378a6dccb4a954f36fe5"
     },
     {
       "path": "dist/privacy-controls.css",
@@ -4491,8 +4526,8 @@
     },
     {
       "path": "dist/rate-title-preview.js",
-      "bytes": 1634,
-      "sha256": "0daec9d2af8ab8c7f936ce758d6a10f30cfa4b6ccccd9725883b1e45f424f81f"
+      "bytes": 2205,
+      "sha256": "94201fde0274bf86ad0f28237c3c457b218b23faf2ca304aaa745cafb2d00af0"
     },
     {
       "path": "dist/site-music.css",
@@ -4516,8 +4551,8 @@
     },
     {
       "path": "dist/style.css",
-      "bytes": 67731,
-      "sha256": "6e2581d145e9d88b67864c618b516d64b93f37067d3f36752cdb022dce507ae1"
+      "bytes": 68711,
+      "sha256": "b2bba9744f05df5946dc8a9b7f16a5a28dcfaca0fdd7d6f94a4d56c83d7c6680"
     },
     {
       "path": "dist/sw.js",
@@ -4537,7 +4572,7 @@
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "2b5493747553114a14306e1d05962b79a77c4e5803d1c753fb7e5434492e0c2d"
+      "sha256": "813d6a87a927865327cd28b03fcd47e067e04048ea3a1f3a0f1f2cc7845e6896"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -4551,18 +4586,18 @@
     },
     {
       "path": "dist/volatility-preview.css",
-      "bytes": 802,
-      "sha256": "8c4146f59db020ce9b482a692e6c406fa2ad2f3d11b23988d85d9c7d35553da8"
+      "bytes": 1350,
+      "sha256": "2acb15ccd7e7e2e539f38c1ce560648810256f649c838d083bfd6deb1fa42c1d"
     },
     {
       "path": "dist/volatility-preview.js",
-      "bytes": 11533,
-      "sha256": "d2054aa565e31519d06c9eef682d84f4b2b0792a8d363ccad463c19bcb3613c0"
+      "bytes": 13772,
+      "sha256": "f03f8f9382a5f5a14a2961c782cb954e21cfcc2170193674cba492dab14f2a2f"
     },
     {
       "path": "engine.py",
-      "bytes": 49479,
-      "sha256": "d09e99e9029e58dc661ee4824e5a0f26c456df3c94f59b96feedef47281a9854"
+      "bytes": 49599,
+      "sha256": "4410e1d9a1bfa1a1300f30ee5c9e349fae1164eb7dffdcc59539835a36e3cc91"
     },
     {
       "path": "historical_backfill.py",
@@ -4641,8 +4676,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 3129,
-      "sha256": "5a2b3f1e9dd2506f9d861224c05076baa5d35ca44f37fad9b5a65e53d53da483"
+      "bytes": 3305,
+      "sha256": "019b3af032742f7f9f463bb46e760384dfae2a06960817421c50527e91465ad9"
     },
     {
       "path": "preview.py",
@@ -4701,8 +4736,8 @@
     },
     {
       "path": "tests/brand-preview.cjs",
-      "bytes": 15430,
-      "sha256": "b77cae32fdf0f3bd8390a3766a2aeddd98347434e929bfd6ad8f4bf2ea2ac6e1"
+      "bytes": 15434,
+      "sha256": "bb5ae6c8f9bfa77e325b554e5454ecac095c42a38c802c9c136ec44f11417218"
     },
     {
       "path": "tests/cash-catalog.cjs",
@@ -4718,6 +4753,11 @@
       "path": "tests/cash-highlights.cjs",
       "bytes": 17669,
       "sha256": "adf4bbcce39ecdcab5dfb36cf7f8bbbd274f8c21a6607a2014dbfe4859748ef2"
+    },
+    {
+      "path": "tests/category-reference-preview.cjs",
+      "bytes": 8526,
+      "sha256": "7138b2341d1506f22d76a5ee1b1104f4db4d038d00bf6c12981055d74d642a30"
     },
     {
       "path": "tests/chart-axis-geometry.cjs",
@@ -4736,13 +4776,18 @@
     },
     {
       "path": "tests/date-presentation.cjs",
-      "bytes": 1346,
-      "sha256": "6b5b044e167769fe8660b02f964073ff5659bbb6988bb009c1e4aeac428fd8f2"
+      "bytes": 1352,
+      "sha256": "4f76cceec4588637fae5f25c8dd1fd6464c50311e769cd390e4b620ea0d945d7"
     },
     {
       "path": "tests/dom.cjs",
       "bytes": 97953,
       "sha256": "48df38e5d28aecee57355d33b17fba61ed48415450e3f8d8cd1bf6f056888286"
+    },
+    {
+      "path": "tests/fm-backdrop-preview.cjs",
+      "bytes": 7217,
+      "sha256": "bcc8c638d789a8327a87a0eaeb5f5fdeb68d84d40c86adf6794a19a7c46f2ac6"
     },
     {
       "path": "tests/headers.test.mjs",
@@ -4756,8 +4801,8 @@
     },
     {
       "path": "tests/market-highlights.cjs",
-      "bytes": 17112,
-      "sha256": "6aab02d2de500e573285d52154655bdde2b1aca8bc97de00698672ebcc3dd183"
+      "bytes": 17147,
+      "sha256": "d238bdce500ee4d5ac3aeaafc2f7a068570fd99a93c21727168fc12bdab3ca12"
     },
     {
       "path": "tests/mystery-boxes.cjs",
@@ -4846,8 +4891,8 @@
     },
     {
       "path": "tests/test_basket_v2.py",
-      "bytes": 10535,
-      "sha256": "231787c197ae7470b28e7df409eeed0668099d20a9f91be18d264e915c9e96bf"
+      "bytes": 10655,
+      "sha256": "6add04c3cc09df15a1dda2cdd125f13e9dc72c19d83587e45dbf5a2c4f1238e1"
     },
     {
       "path": "tests/test_cash_basket.py",
@@ -4916,8 +4961,8 @@
     },
     {
       "path": "tests/volatility-preview.cjs",
-      "bytes": 9561,
-      "sha256": "6331d99596b639890590bec67f55ab54938f9d2d4fda4bbce8a533bb1d57b7c6"
+      "bytes": 12514,
+      "sha256": "37ba93a5f3cbaa6aaa3c5c49388a91e680a6eecab898e910b84935fa99b89b1d"
     },
     {
       "path": "tests/worker-cash-basket.test.mjs",
@@ -4951,8 +4996,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 123089,
-      "sha256": "5d45d72e7457560dc8a24023ae0e92b784ca656777e348a08691913abaf78967"
+      "bytes": 123135,
+      "sha256": "6ff86b4684d03939d798287c98d6f966faa96abcb6d19312f4edc88dd7a83785"
     },
     {
       "path": "web/author-portrait.css",
@@ -4991,8 +5036,8 @@
     },
     {
       "path": "web/brand-preview.js",
-      "bytes": 6284,
-      "sha256": "99be027dfd5323bb8b9fef7445c65809e145382d4f41f578b52bbb89aee3bdfe"
+      "bytes": 6286,
+      "sha256": "9d652c6369a05aaee8e525e72068feac4d0c725e13da47614751a80ff54e1b6a"
     },
     {
       "path": "web/cash-catalog.css",
@@ -5026,8 +5071,18 @@
     },
     {
       "path": "web/category-link-preview.js",
-      "bytes": 1807,
-      "sha256": "3917f62710b503b1ef174dde231c8578c5c85cab4903fc1b0b169f78a8e81381"
+      "bytes": 2866,
+      "sha256": "dd4d7a2bf073c853c92941f24d9fa9da7e8f967ffee6873f3fbed98a9136e4db"
+    },
+    {
+      "path": "web/category-reference-preview.css",
+      "bytes": 1071,
+      "sha256": "0b389b2c4644d40e1df26d2b406e22c29e3db3ecd124126781687c6a29eeba42"
+    },
+    {
+      "path": "web/category-reference-preview.js",
+      "bytes": 9212,
+      "sha256": "51869912a9b3a03d2da961f27653d9147f5b18fbda1bc9b354d48c8c5da9cf63"
     },
     {
       "path": "web/chart-interaction.css",
@@ -5051,13 +5106,23 @@
     },
     {
       "path": "web/date-presentation.js",
-      "bytes": 1470,
-      "sha256": "98498e865d0c3d6adfeb7aa775ccf022fc406019ae5121d686dca2a0b6e40af9"
+      "bytes": 2677,
+      "sha256": "2eb917c95f45b1383b6b10b069d42dded82c5fb6b7bc838f620df3006a64ea06"
+    },
+    {
+      "path": "web/fm-backdrop-preview.css",
+      "bytes": 2903,
+      "sha256": "c97c464e578aab632f7a2f71e129607931ce921fd4ef0ee4d32a0f8f42057988"
+    },
+    {
+      "path": "web/fm-backdrop-preview.js",
+      "bytes": 3030,
+      "sha256": "de40fdb0d76cb781c37309afb4a29e62aa37d6c9d1f861e02b51c813e69005ff"
     },
     {
       "path": "web/index.html",
-      "bytes": 50577,
-      "sha256": "1cf94058aab7a33fb4c27c75f9da826e1140dddd929ecb4edc08171b12eb5613"
+      "bytes": 50943,
+      "sha256": "e80b066e07a1ba628350f93e1bfadfdb8d3cfcac72a25e9d684793bc78e6d5a5"
     },
     {
       "path": "web/layout-preview.css",
@@ -5071,13 +5136,13 @@
     },
     {
       "path": "web/market-highlights.css",
-      "bytes": 10644,
-      "sha256": "5bd70a4559cb4e826a8a3e8f633d884b476c9b3ff0fcefb87f8b2458b34106b0"
+      "bytes": 10837,
+      "sha256": "fbc81bb24b8f376c3a9b38488d164cdaac611736d64eeca66d0146facf2d9f2f"
     },
     {
       "path": "web/market-highlights.js",
-      "bytes": 24124,
-      "sha256": "957f50dd5bf81307dc16667b6ea04706e53bea10702e0f93bbba7670696ed5bf"
+      "bytes": 25049,
+      "sha256": "5325a69dc443baaef98e348d88fd0fea7db352e993465b756a5a506b45b49138"
     },
     {
       "path": "web/mystery-boxes.css",
@@ -5161,8 +5226,8 @@
     },
     {
       "path": "web/price-check.js",
-      "bytes": 18439,
-      "sha256": "6f5569beaf3b08939e1927769e7a939db224d307aeac457929f52cd60c7d03ce"
+      "bytes": 18452,
+      "sha256": "8c32a61be2eb4f8dba7c40588637a7149ed86b2b0391378a6dccb4a954f36fe5"
     },
     {
       "path": "web/privacy-controls.css",
@@ -5196,8 +5261,8 @@
     },
     {
       "path": "web/rate-title-preview.js",
-      "bytes": 1634,
-      "sha256": "0daec9d2af8ab8c7f936ce758d6a10f30cfa4b6ccccd9725883b1e45f424f81f"
+      "bytes": 2205,
+      "sha256": "94201fde0274bf86ad0f28237c3c457b218b23faf2ca304aaa745cafb2d00af0"
     },
     {
       "path": "web/site-music.css",
@@ -5221,8 +5286,8 @@
     },
     {
       "path": "web/style.css",
-      "bytes": 67731,
-      "sha256": "6e2581d145e9d88b67864c618b516d64b93f37067d3f36752cdb022dce507ae1"
+      "bytes": 68711,
+      "sha256": "b2bba9744f05df5946dc8a9b7f16a5a28dcfaca0fdd7d6f94a4d56c83d7c6680"
     },
     {
       "path": "web/sw.js",
@@ -5251,13 +5316,13 @@
     },
     {
       "path": "web/volatility-preview.css",
-      "bytes": 802,
-      "sha256": "8c4146f59db020ce9b482a692e6c406fa2ad2f3d11b23988d85d9c7d35553da8"
+      "bytes": 1350,
+      "sha256": "2acb15ccd7e7e2e539f38c1ce560648810256f649c838d083bfd6deb1fa42c1d"
     },
     {
       "path": "web/volatility-preview.js",
-      "bytes": 11533,
-      "sha256": "d2054aa565e31519d06c9eef682d84f4b2b0792a8d363ccad463c19bcb3613c0"
+      "bytes": 13772,
+      "sha256": "f03f8f9382a5f5a14a2961c782cb954e21cfcc2170193674cba492dab14f2a2f"
     }
   ]
 }

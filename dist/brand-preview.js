@@ -15,7 +15,7 @@
     logo: [['pouch', 'Pouch'], ['leaf', 'Maple leaf'], ['scroll', 'Scroll'], ['none', 'Wordmark only']],
     tagline: [['harnessed', 'Harnessed'], ['checked', 'Kept in check'], ['measured', 'Measured'], ['count', 'Every meso'], ['number', 'Put a number on it']],
   };
-  const defaults = { typeface: 'sans', placement: 'left', case: 'lower', logo: 'pouch', tagline: 'harnessed' };
+  const defaults = { typeface: 'sans', placement: 'center', case: 'lower', logo: 'pouch', tagline: 'harnessed' };
   const labels = { typeface: 'Wordmark typography', placement: 'Wordmark placement', case: 'Wordmark suffix', logo: 'Wordmark logo', tagline: 'Wordmark tagline' };
   const state = { ...defaults };
   const controls = document.createElement('fieldset');
