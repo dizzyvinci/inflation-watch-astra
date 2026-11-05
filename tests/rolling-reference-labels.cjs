@@ -62,6 +62,30 @@ const wait=async predicate=>{const end=Date.now()+1500;while(!predicate()&&Date.
  review.setReference(future);
  const futureCopy=doc.querySelector('.rolling-policy-note').textContent;
  assert.match(futureCopy,/Method 3: 7\/7/);assert.doesNotMatch(futureCopy,/unavailable|lack retained/);
+ const recovery={...future,captureStartedAt:'2026-11-05T09:01:45.815Z',
+  captureCompletedAt:'2026-11-05T10:10:10.823Z',capturedAt:'2026-11-05T10:10:10.823Z',
+  scannerFreshnessText:'Capture crossed source recovery: first64 receipts displayed delayed scans and maintenance. The user refreshed around10:03UTC; CUA/kernel operational note. Later receipts reported scans Just now. Listing availability not confirmed.'};
+ const rawRecovery=JSON.stringify(recovery);
+ review.setReference(recovery);
+ const publicContext=doc.getElementById('rolling-reference-card').textContent;
+ assert.match(publicContext,/Batch capture window:/);
+ assert.match(publicContext,/09:01.*10:10/s);
+ assert.match(publicContext,/delayed scans and maintenance, followed by resumed scans/);
+ assert.match(publicContext,/Per-item return clocks are retained/);
+ assert.match(publicContext,/underlying scan\/trade timestamps are unknown/);
+ assert.match(publicContext,/Listing availability is unconfirmed/);
+ assert.doesNotMatch(publicContext,/The user|CUA|kernel|first64|10:03/);
+ assert.equal(JSON.stringify(recovery),rawRecovery,'Public summary must not rewrite raw audit provenance');
+ const noRecoveryTag={...recovery,scannerFreshnessText:'Long batch; the user refreshed via CUA/kernel.'};
+ review.setReference(noRecoveryTag);
+ const noRecoveryCopy=doc.getElementById('rolling-reference-card').textContent;
+ assert.match(noRecoveryCopy,/batch window does not establish source freshness/);
+ assert.doesNotMatch(noRecoveryCopy,/followed by resumed scans|The user|CUA|kernel/);
+ const older={...future,scannerFreshnessText:'Source displayed 10h ago; maintenance delayed scans.'};
+ delete older.captureStartedAt;delete older.captureCompletedAt;
+ review.setReference(older);
+ assert(doc.getElementById('rolling-reference-card').textContent.includes(older.scannerFreshnessText));
+ assert.doesNotMatch(doc.getElementById('rolling-reference-card').textContent,/followed by resumed scans/);
  const futureMapped=review.points([futurePoint],'nxRate')[0];
  assert.equal(futureMapped.comparisonMethodVersion,3);assert.equal(futureMapped.qualityConstant,false);
  assert.doesNotMatch(futureMapped.seriesLabel,/Legacy|unverified/);
@@ -75,6 +99,6 @@ const wait=async predicate=>{const end=Date.now()+1500;while(!predicate()&&Date.
  assert.equal(JSON.stringify(fixture.history),unchanged.history);
  assert.equal(JSON.stringify(fixture.rollingReferenceHistory),unchanged.rolling);
  assert.equal(requests.length,2);assert.deepEqual(errors,[]);
- console.log('Rolling labels: legacy value/clocks/metadata, v3 unavailable, future eligibility, CSV and primary data unchanged; 0 DOM errors.');
+ console.log('Rolling labels: legacy value/clocks/metadata, v3 unavailable, future eligibility, neutral recovery copy with raw audit provenance retained, CSV and primary data unchanged; 0 DOM errors.');
  dom.window.close();
 })().catch(error=>{console.error(error);dom.window.close();process.exitCode=1;});

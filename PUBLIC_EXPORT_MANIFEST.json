@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T10:23:02+00:00",
+  "exportedAt": "2026-11-05T10:34:33+00:00",
   "basketVersion": 2,
   "files": [
     {
@@ -727,7 +727,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "b2d2b4d8e59f4da6c68960fe32bfe624871d3140a3ef75335a863b421539bc88"
+      "sha256": "5cff3213af35cc20facf97ca1ae7837cafede277df1a689ff7f6b65f7782fa16"
     },
     {
       "path": "cache/market.json",
@@ -782,7 +782,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "47f17191e756c77746255b1ea8195b9df98f7b09f112827fd11c854a279b6df3"
+      "sha256": "a08901796bcb09000efd91e68fbdc192269c7956ae0c0ffe9975e325c37d4a0e"
     },
     {
       "path": "dist/_headers",
@@ -796,8 +796,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 98952,
-      "sha256": "5942ac78e23cb1f85396bcb9e9351c3b6ae097622c6b2270ca9753ccce8ba7e3"
+      "bytes": 99618,
+      "sha256": "8abf623d958e6498eb1b3ffe997e439e3e95d997e70008d433ed4d39dcab6bb9"
     },
     {
       "path": "dist/assets/animal-fur-bundle.png",
@@ -2085,6 +2085,11 @@
       "sha256": "3f2adcafb484fc7d4fe92ddfacd16875a3e8da219e94c02398900a33e98da03b"
     },
     {
+      "path": "dist/data-47244f6668e38aa9.json",
+      "bytes": 330757,
+      "sha256": "47244f6668e38aa964b981d7dd07800d17310804d6d503a3322b443a7df17338"
+    },
+    {
       "path": "dist/data-59cde1eaa6747299.json",
       "bytes": 191501,
       "sha256": "59cde1eaa67472993b5da312c07d587252b57629b0ea845f07fcabe0e7c2ba2d"
@@ -2147,12 +2152,12 @@
     {
       "path": "dist/data.json",
       "bytes": 330757,
-      "sha256": "2f954e383421ef955a6ef069bea1bf486a283e1a242a9c845856f76dd9dc569a"
+      "sha256": "47244f6668e38aa964b981d7dd07800d17310804d6d503a3322b443a7df17338"
     },
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "47f17191e756c77746255b1ea8195b9df98f7b09f112827fd11c854a279b6df3"
+      "sha256": "a08901796bcb09000efd91e68fbdc192269c7956ae0c0ffe9975e325c37d4a0e"
     },
     {
       "path": "dist/history/cpi-v1.json",
@@ -2207,7 +2212,7 @@
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "f132e6acbb737496edef1e44ea86de8d423fc5283fabfcf7403e17e1083b49f1"
+      "sha256": "3238181544403612fa4403ac04dd3402e61db323bcd541bd538ac9fe83442f9e"
     },
     {
       "path": "engine.py",
@@ -2361,8 +2366,8 @@
     },
     {
       "path": "tests/rolling-reference-labels.cjs",
-      "bytes": 6791,
-      "sha256": "3c9d1aebd6c9cd88ca8b7d026b5de33cbe8da42b9a5ef52d10537313efc70cfe"
+      "bytes": 8804,
+      "sha256": "7a03a423126d15267656490d6d5d4eb48d4af43ae0557cc653d2f2b9fdf8f73c"
     },
     {
       "path": "tests/test_adapters.py",
@@ -2451,8 +2456,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 98952,
-      "sha256": "5942ac78e23cb1f85396bcb9e9351c3b6ae097622c6b2270ca9753ccce8ba7e3"
+      "bytes": 99618,
+      "sha256": "8abf623d958e6498eb1b3ffe997e439e3e95d997e70008d433ed4d39dcab6bb9"
     },
     {
       "path": "web/author-portrait.css",
