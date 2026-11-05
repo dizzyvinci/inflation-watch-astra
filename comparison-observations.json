@@ -17,5 +17,18 @@
     "sampleItemPrices": 362,
     "timestampKind": "captured_at",
     "observationTimestampKnown": false
+  },
+  {
+    "observedAt": "2026-11-05T10:19:04.271584+00:00",
+    "sourceUrl": "https://meowdb.com/msclassic/free-market",
+    "kind": "player_report",
+    "rate": 21.33415980239579,
+    "displayedRate": 21.3,
+    "sampleItemPrices": 121,
+    "sampleDistinctItems": 13,
+    "sourceIndicatorAsOf": "2026-11-05T10:17:23.077Z",
+    "timestampKind": "captured_at",
+    "observationTimestampKnown": false,
+    "note": "Current source-published indicator: 121 reported item prices across 13 items. Indicator as-of and capture clocks are distinct; neither is an individual trade timestamp. The separately dated November 4 report is retained unchanged."
   }
 ]
