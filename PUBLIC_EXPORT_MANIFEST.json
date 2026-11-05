@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T18:28:31+00:00",
+  "exportedAt": "2026-11-05T18:34:29+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -2148,7 +2148,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "e17fc58eaf6de8818538062e8cb287b5bea45a30a6ade4b40675a65acd7f720d"
+      "sha256": "a1c48ff5c66d650c9d9ed0b4662401c8a8a760b563b948a439e7e7c48b7d433f"
     },
     {
       "path": "dist/_headers",
@@ -2162,8 +2162,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 146378,
-      "sha256": "d1ff8b44825142887e692a2d5d80bd720e08827e934b9b3d195c4f5253a1e365"
+      "bytes": 146430,
+      "sha256": "e52371e95194de1a4bf9feacfbcb87ae2ce177bf898deb1411a919333cd8084c"
     },
     {
       "path": "dist/assets/PixelifySans-9ba86cd010a4de30.ttf",
@@ -4726,6 +4726,11 @@
       "sha256": "d1ff8b44825142887e692a2d5d80bd720e08827e934b9b3d195c4f5253a1e365"
     },
     {
+      "path": "dist/astra-app-e52371e95194de1a.js",
+      "bytes": 146430,
+      "sha256": "e52371e95194de1a4bf9feacfbcb87ae2ce177bf898deb1411a919333cd8084c"
+    },
+    {
       "path": "dist/astra-ui-16d9fcd97bc840d2.css",
       "bytes": 181583,
       "sha256": "16d9fcd97bc840d2fc5c248f80d05a896277d0aa7f4eb7e230ec6c7170258db7"
@@ -4744,6 +4749,11 @@
       "path": "dist/astra-ui-3095db1252b1e2f6.js",
       "bytes": 352258,
       "sha256": "3095db1252b1e2f6c035a94468bf53f33fef6813b39ec5a72fa126b6800b6977"
+    },
+    {
+      "path": "dist/astra-ui-31fe81bbe7a36ad7.css",
+      "bytes": 182951,
+      "sha256": "31fe81bbe7a36ad741ee0ca8dc387ff453c22ad30105ce5947759a2a8e14a783"
     },
     {
       "path": "dist/astra-ui-3abb899ef492c471.js",
@@ -4774,6 +4784,11 @@
       "path": "dist/astra-ui-a366088d719ae719.js",
       "bytes": 345699,
       "sha256": "a366088d719ae7192e67bebde8861fd1b902d4cc61dcfbaca3d7ea2a8124f11e"
+    },
+    {
+      "path": "dist/astra-ui-b200a798e0daeb53.js",
+      "bytes": 354557,
+      "sha256": "b200a798e0daeb5365ff140789250761585357dced07905e2c285a34029dc9d7"
     },
     {
       "path": "dist/astra-ui-ec4c031544d31830.css",
@@ -4882,8 +4897,8 @@
     },
     {
       "path": "dist/community.css",
-      "bytes": 14298,
-      "sha256": "1fd1b82887491eb4e08046e6ace9979474d80217d6f929fd50a5d32ce9bd9339"
+      "bytes": 14613,
+      "sha256": "451780057dea670067ffa65d55af4b4d2586d108cd9024ab33325546d78d33f1"
     },
     {
       "path": "dist/community.js",
@@ -4944,6 +4959,11 @@
       "path": "dist/data-59cde1eaa6747299.json",
       "bytes": 191501,
       "sha256": "59cde1eaa67472993b5da312c07d587252b57629b0ea845f07fcabe0e7c2ba2d"
+    },
+    {
+      "path": "dist/data-614121ecf29587d1.json",
+      "bytes": 848579,
+      "sha256": "614121ecf29587d13dff138989fefba884368ac08e38eda3197863333768e14a"
     },
     {
       "path": "dist/data-65830356cf3981b9.json",
@@ -5048,7 +5068,7 @@
     {
       "path": "dist/data.json",
       "bytes": 848579,
-      "sha256": "6aa90e25b163778fd118135358b08de331b04e20b59102b27ffac300ac545b5e"
+      "sha256": "614121ecf29587d13dff138989fefba884368ac08e38eda3197863333768e14a"
     },
     {
       "path": "dist/date-presentation.js",
@@ -5068,7 +5088,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "e17fc58eaf6de8818538062e8cb287b5bea45a30a6ade4b40675a65acd7f720d"
+      "sha256": "a1c48ff5c66d650c9d9ed0b4662401c8a8a760b563b948a439e7e7c48b7d433f"
     },
     {
       "path": "dist/fee-preview.css",
@@ -5077,8 +5097,8 @@
     },
     {
       "path": "dist/fee-preview.js",
-      "bytes": 15214,
-      "sha256": "9f94ceb25e3bd178cc1335564e10c3703f15776bda3f6b6209839381e72aba5e"
+      "bytes": 15289,
+      "sha256": "32e0bacf46bb964cb04522177ceb90aa746c41d674e092b206c4305c6dbf3b68"
     },
     {
       "path": "dist/fm-backdrop-preview.css",
@@ -5102,8 +5122,8 @@
     },
     {
       "path": "dist/index.html",
-      "bytes": 48392,
-      "sha256": "f8ab279d273235ee2495611649639cb82bb44ad16035381fbb9f58f6562e2ae2"
+      "bytes": 48539,
+      "sha256": "47568364b261020946272ab46db64840afa47f7ded0df5288dfcbde1a34de6c3"
     },
     {
       "path": "dist/layout-preview.css",
@@ -5313,12 +5333,12 @@
     {
       "path": "dist/ui-bundles.json",
       "bytes": 9515,
-      "sha256": "954c55a79a6960a027771c41991948ffefc15975c57ede65fd8163d99c88da3d"
+      "sha256": "f2c5118755ef6ee731d6c4da4ea3368d0f8dc43c2ea9087c969ecfd801600bb7"
     },
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "34b927d27c4b29090609d59536015445aa02966e405d7ab34fcfe29af3d33057"
+      "sha256": "55e3d87cbd5d9807a1fb5343779607c644b9f8c331bb375b871f10934c7d0f2c"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -5337,13 +5357,13 @@
     },
     {
       "path": "dist/volatility-preview.js",
-      "bytes": 23128,
-      "sha256": "c8bc08299ca2f9ffe448bb617b6d67aef543edf046f39600fbf551a3ca387fb7"
+      "bytes": 23146,
+      "sha256": "2d5fbe0078ae699a74ea8ae29ac760f395b3eafc05541f0a0f6000c58360c3df"
     },
     {
       "path": "engine.py",
-      "bytes": 57192,
-      "sha256": "650abd9c0ca74dfc7d58fd16aff85ef43fb9e141e1cfbc8a6740186b3112f806"
+      "bytes": 57382,
+      "sha256": "a534c4c0850dd80295cd8746dbcdd2def29f9869fb56898162a2a8881b2ef342"
     },
     {
       "path": "historical_backfill.py",
@@ -5577,8 +5597,8 @@
     },
     {
       "path": "tests/community.cjs",
-      "bytes": 29790,
-      "sha256": "3be461a977e53f93e3d2106bdb567039b199c2f016720684d2fa120146d04f04"
+      "bytes": 30565,
+      "sha256": "90a7b3b3c1539ed67b79c353f254b7bdec60e6f7b636ca6069b117381f21b86c"
     },
     {
       "path": "tests/date-presentation.cjs",
@@ -5587,8 +5607,8 @@
     },
     {
       "path": "tests/dom.cjs",
-      "bytes": 101881,
-      "sha256": "fb6f23d454ba87a01559cf64d238f41233e49cb724df494654081c5cd3c7cbbe"
+      "bytes": 102170,
+      "sha256": "bafb22640506713011da5137295fc31d4dd3278cf0743fbe7d748d32f1dfe3e5"
     },
     {
       "path": "tests/ellinia-backdrop-preview.cjs",
@@ -5597,8 +5617,8 @@
     },
     {
       "path": "tests/fee-preview.cjs",
-      "bytes": 14276,
-      "sha256": "f82afb6af07b6337c3377d0ac8745a2d43151f724839a89a96f6210502adb695"
+      "bytes": 16055,
+      "sha256": "63e79e84b0b7f472c0ff0f39f1bb010b3707b8d0bdc5d70fc3dc491df2ee8441"
     },
     {
       "path": "tests/fm-backdrop-preview.cjs",
@@ -5792,8 +5812,8 @@
     },
     {
       "path": "tests/test_footer_privacy_lock.py",
-      "bytes": 6781,
-      "sha256": "6c71f2c9e074b1550c74bb2f3149e3b3b944fce3b56455c5ba6752d454feb86f"
+      "bytes": 7516,
+      "sha256": "b7ae096a848ab5b3b24034dcee3546e82572492da96aba69c1ebfd1bbb85cf27"
     },
     {
       "path": "tests/test_historical_backfill.py",
@@ -5862,8 +5882,8 @@
     },
     {
       "path": "tests/volatility-preview.cjs",
-      "bytes": 23492,
-      "sha256": "ada44610b294d0eb16aa828feb93ef7e943d43bf783183f257756e6959a69682"
+      "bytes": 23489,
+      "sha256": "5238bc08827ddda7d9208ebd3d127882b6ddf3459873a13f26b4020063ba598e"
     },
     {
       "path": "tests/worker-cash-basket.test.mjs",
@@ -5907,8 +5927,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 146378,
-      "sha256": "d1ff8b44825142887e692a2d5d80bd720e08827e934b9b3d195c4f5253a1e365"
+      "bytes": 146430,
+      "sha256": "e52371e95194de1a4bf9feacfbcb87ae2ce177bf898deb1411a919333cd8084c"
     },
     {
       "path": "web/author-portrait.css",
@@ -6012,8 +6032,8 @@
     },
     {
       "path": "web/community.css",
-      "bytes": 14298,
-      "sha256": "1fd1b82887491eb4e08046e6ace9979474d80217d6f929fd50a5d32ce9bd9339"
+      "bytes": 14613,
+      "sha256": "451780057dea670067ffa65d55af4b4d2586d108cd9024ab33325546d78d33f1"
     },
     {
       "path": "web/community.js",
@@ -6042,8 +6062,8 @@
     },
     {
       "path": "web/fee-preview.js",
-      "bytes": 15214,
-      "sha256": "9f94ceb25e3bd178cc1335564e10c3703f15776bda3f6b6209839381e72aba5e"
+      "bytes": 15289,
+      "sha256": "32e0bacf46bb964cb04522177ceb90aa746c41d674e092b206c4305c6dbf3b68"
     },
     {
       "path": "web/fm-backdrop-preview.css",
@@ -6287,8 +6307,8 @@
     },
     {
       "path": "web/volatility-preview.js",
-      "bytes": 23128,
-      "sha256": "c8bc08299ca2f9ffe448bb617b6d67aef543edf046f39600fbf551a3ca387fb7"
+      "bytes": 23146,
+      "sha256": "2d5fbe0078ae699a74ea8ae29ac760f395b3eafc05541f0a0f6000c58360c3df"
     }
   ]
 }

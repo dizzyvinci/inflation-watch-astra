@@ -250,7 +250,8 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 {
   const raw=fs.readFileSync(path.join(__dirname,'../web/index.html'),'utf8');
   const markup=raw.replace(/<footer\b[^>]*>[\s\S]*?<\/footer>/, '<footer class="shell footer-privacy-locked" data-footer-privacy-lock="on" data-preview-analytics-default="on"><article class="footer-review-note" aria-labelledby="footer-review-draft"><h2 class="footer-review-draft" id="footer-review-draft">{DRAFT}</h2><p>Author note and full credits will appear here after review.</p></article><div class="footer-links"><a href="#sources">Sources</a><a href="#privacy">Privacy policy</a></div></footer>');
-  const dom=new JSDOM(markup,{url:'https://inflation.gg/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,doc=w.document;let network=0;
+  const lockedMarkup=markup.replace('<body>','<body><aside class="shell review-demo-notice" id="review-demo-notice" role="note">{DRAFT} Demo values — not representative of the live market.</aside>');
+  const dom=new JSDOM(lockedMarkup,{url:'https://inflation.gg/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,doc=w.document;let network=0;
   w.localStorage.setItem('inflation-optional-analytics-consent-v1','off');
   w.localStorage.setItem('inflation-footer-style','personal');
   w.localStorage.setItem('inflation-author-portrait-v2','transparent-large');
@@ -278,6 +279,11 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
   const palettes=[base,...[...themeStyles.matchAll(/body\[data-color-scheme="(?:maple-amber|moonlit-ludibrium)"\]\{([^}]*)\}/g)].map(rule=>applyVars({...base},rule[1]))];
   const lum=color=>color.slice(1).match(/../g).map(hex=>parseInt(hex,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
   const contrast=(a,b)=>(Math.max(lum(a),lum(b))+.05)/(Math.min(lum(a),lum(b))+.05);
+  const demoNotice=doc.getElementById('review-demo-notice');
+  assert.equal(demoNotice.textContent,'{DRAFT} Demo values — not representative of the live market.');
+  assert.equal(demoNotice.getAttribute('role'),'note');assert.equal(doc.body.firstElementChild,demoNotice);
+  assert.equal(w.getComputedStyle(demoNotice).textAlign,'center');assert.equal(w.getComputedStyle(demoNotice).overflowWrap,'anywhere');
+  assert.equal(w.getComputedStyle(demoNotice).borderTopWidth,'3px');assert(contrast('#fff3f5','#461c27')>=7,'Top draft notice high contrast in all themes');
   assert.equal(palettes.length,3);for(const palette of palettes){assert(contrast(palette.text,palette.surface)>=7,'Review message high contrast in each palette');assert(contrast(palette.gold,palette.surface)>=4.5,'DRAFT badge high contrast in each palette');}
 
   const cacheNote=doc.querySelector('#view-privacy [data-privacy-browser-storage]');

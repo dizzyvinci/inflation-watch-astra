@@ -142,7 +142,7 @@
     if (!fallback) image.src = local ? mapped : `assets/${item.slug}.svg`;
     image.addEventListener('error', () => { if (megaphone) { failedMegaphoneSprites.set(item.slug, mapped); image.replaceWith(generic()); } else if (image.getAttribute('src') === 'assets/meso-pouch.png') image.hidden = true; else image.src = 'assets/meso-pouch.png'; });
     const copy = make('span', undefined, 'market-highlight-copy'), title = make('span', undefined, 'market-highlight-title-line'), value = make('span', undefined, 'market-highlight-value-line');
-    title.append(make('strong', kind === 'cash' ? 'Most volatile cash item' : 'Most volatile non-cash item', 'market-highlight-kind'), make('span', item.name, 'market-highlight-headline'));
+    title.append(make('strong', kind === 'cash' ? 'Most volatile cash item' : 'Most volatile goods item', 'market-highlight-kind'), make('span', item.name, 'market-highlight-headline'));
     value.append(make('strong', `${percent(item.value)} daily price volatility`, 'market-highlight-value'));
     copy.append(title, value, make('small', `${current.window.start}–${current.window.end} · ${item.returns} consecutive daily returns · medians, not individual trades`, 'market-highlight-dates'));
     if (fallback) copy.append(make('small', 'Generic megaphone icon', 'volatility-icon-note'));
@@ -153,7 +153,7 @@
     card.dataset.highlightType = 'volatility-' + kind;
     const link = make(duplicate ? 'span' : 'a');
     if (!duplicate) { const known = [...(report.rows || []), ...(report.cash || []), ...(report.contextItems || [])].some(row => row.slug === item.slug); link.href = known ? '#item/' + encodeURIComponent(item.slug) : '#cash-catalog'; }
-    link.setAttribute('aria-label', `Highest observed daily price volatility in ${kind === 'cash' ? 'the captured cash catalog' : 'the captured non-cash basket/context cohort'}: ${item.name}; ${percent(item.value)}; ${current.window.start}–${current.window.end}; ${item.returns} daily returns.`);
+    link.setAttribute('aria-label', `Highest observed daily price volatility in ${kind === 'cash' ? 'the captured cash catalog' : 'the captured goods-basket/context cohort (source-category scope)'}: ${item.name}; ${percent(item.value)}; ${current.window.start}–${current.window.end}; ${item.returns} daily returns.`);
     link.title = 'Sample standard deviation of consecutive qualified daily-median log returns × 100. Minimum five returns; no annualization. Ranking is limited to the captured cohort.';
     link.append(graphic(item, kind)); card.append(link); return card;
   }

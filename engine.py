@@ -743,7 +743,7 @@ def write_ui_version(dist, web_files):
 
 
 def apply_footer_privacy_lock(dist, *, enabled=False):
-    """Replace only copied entry HTML's author footer during temporary review.
+    """Lock copied entry HTML's author footer and label temporary review values.
 
     Original web sources/snapshots remain untouched for explicit restoration.
     Missing/ambiguous attribution fails the build rather than publishing an
@@ -825,7 +825,8 @@ def apply_footer_privacy_lock(dist, *, enabled=False):
 </footer>'''
     temporary = index.with_name('index.html.tmp')
     output = text[:start] + replacement + text[end:]
-    output = output[:body_start] + body_tag + output[body_end:]
+    demo_notice = '<aside class="shell review-demo-notice" id="review-demo-notice" role="note">{DRAFT} Demo values — not representative of the live market.</aside>'
+    output = output[:body_start] + body_tag + '\n' + demo_notice + output[body_end:]
     temporary.write_bytes(output.encode('utf-8'))
     os.replace(temporary, index)
     return True
