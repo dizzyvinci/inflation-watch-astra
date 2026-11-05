@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T19:29:04+00:00",
+  "exportedAt": "2026-11-05T20:07:08+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7518,7 +7518,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "695a3db7683357603eb5899f9c3e1ff42238f5ab7d81ed06f4dbb69946654964"
+      "sha256": "19d0c91b8987b22159c9067658f23537c4df9a099ca4fab2a54a7ac51e60a590"
     },
     {
       "path": "cache/market.json",
@@ -7603,7 +7603,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "3841185b537279de49cca2b63c03824cbab09292f3e6ed4ae30cf5dc304dfc8c"
+      "sha256": "29ffd9dbda9b38bab0069b5da87fd95dfb46e2f0a9be3d8c1ecafd2097b29e76"
     },
     {
       "path": "dist/_headers",
@@ -15686,6 +15686,11 @@
       "sha256": "6eb3cd0250cef79f7648c130e89d5e86e611f3acfe2c0db6ccd9759f7f84a546"
     },
     {
+      "path": "dist/astra-ui-7421498d215a30d7.js",
+      "bytes": 359502,
+      "sha256": "7421498d215a30d74e5be99ee3befc227fc56758cfd216ec7c3c1451ce781256"
+    },
+    {
       "path": "dist/astra-ui-85b41362aa500592.js",
       "bytes": 50850,
       "sha256": "85b41362aa500592299f0fc3e988a87e675db3f54cb7258a71635283172af507"
@@ -15694,6 +15699,11 @@
       "path": "dist/astra-ui-8c661a8719b1da7d.js",
       "bytes": 354428,
       "sha256": "8c661a8719b1da7dc4317403999287f304edec6c5793a7eb971bab12159bd149"
+    },
+    {
+      "path": "dist/astra-ui-961e4de3f030f9c0.css",
+      "bytes": 184680,
+      "sha256": "961e4de3f030f9c0ddd0173fe593aa3942b252298c1b22d05c6e23995770fc24"
     },
     {
       "path": "dist/astra-ui-a366088d719ae719.js",
@@ -15946,6 +15956,11 @@
       "sha256": "ce6510bb9ae85dfe518b2c82a73ed6827d8e8860e70f6830f5c0920fd9d91b46"
     },
     {
+      "path": "dist/data-dad836796be9b3be.json",
+      "bytes": 992513,
+      "sha256": "dad836796be9b3be73ed80cbf43f45e67ec5b25e907b63909fe4d798669a51b5"
+    },
+    {
       "path": "dist/data-e0e48192cbe74adf.json",
       "bytes": 844798,
       "sha256": "e0e48192cbe74adf6b2ef5d4db050cca160f29eb7f5a44116e8b156eda60678b"
@@ -15988,7 +16003,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992513,
-      "sha256": "a661413653e1d2e2e47b2549402a2f8128f9d4c1ab8b7ecc574e619bb0c87132"
+      "sha256": "dad836796be9b3be73ed80cbf43f45e67ec5b25e907b63909fe4d798669a51b5"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16008,7 +16023,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "3841185b537279de49cca2b63c03824cbab09292f3e6ed4ae30cf5dc304dfc8c"
+      "sha256": "29ffd9dbda9b38bab0069b5da87fd95dfb46e2f0a9be3d8c1ecafd2097b29e76"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16043,7 +16058,7 @@
     {
       "path": "dist/index.html",
       "bytes": 48791,
-      "sha256": "d8da60c54422953b94e4f869048b898cc226c532ccb79ea60ee875a5eb9fd750"
+      "sha256": "6a6ca22012a77f7a05b29c6331b0b42101c81963670c2c093d018d9527d89ba4"
     },
     {
       "path": "dist/layout-preview.css",
@@ -16147,13 +16162,13 @@
     },
     {
       "path": "dist/price-check.css",
-      "bytes": 4271,
-      "sha256": "f3332ff745b9d7bc078024c094140cba338ecb22d1ad866717c485b43ef2ec87"
+      "bytes": 4702,
+      "sha256": "fdd654de2b3f576a98d7588d150361794a43b4dd930beb5fb135310fec9114d9"
     },
     {
       "path": "dist/price-check.js",
-      "bytes": 23841,
-      "sha256": "6f389a36d4fbeb9a60416d1400437c7670e3b926cf97ea22f39d3d91910af8e0"
+      "bytes": 26180,
+      "sha256": "41947b5b2694c8fb54fd0cbae437091c6f61f1b31b6026bef95c39c994e788e5"
     },
     {
       "path": "dist/privacy-controls.css",
@@ -16263,12 +16278,12 @@
     {
       "path": "dist/ui-bundles.json",
       "bytes": 9766,
-      "sha256": "8f1bbc0ce5cc1985e9cfff47d48d6faea708d08295e657a721aca0bd9f141a14"
+      "sha256": "3d6236ad4a854686daaec4b5594ef62a5170b6ee4bbf071f1682dc3cd1f7784d"
     },
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "9916959c442782a197d0b94e032b3b8ddad72e89b181dca32537b943e08cb4fc"
+      "sha256": "686001837edb7cca26150a17d60a548ef4182ecb93a23a0965b3927dbfdb2b77"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16407,8 +16422,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 4512,
-      "sha256": "9821c79a441e681417da3994f66d0c28f0c7362d5a38de0e006d6962d79373a6"
+      "bytes": 4551,
+      "sha256": "cd79e3316c20f5d2ea6d2b9f6d0db67829343527c0e72b0d92667a3db88968b9"
     },
     {
       "path": "portable_hash.py",
@@ -16654,6 +16669,11 @@
       "path": "tests/preview-runtime.cjs",
       "bytes": 3411,
       "sha256": "637ccb1d239bf4c681d4b853266c890bc3142d2b325595bbe363bf20edc1a34d"
+    },
+    {
+      "path": "tests/price-check-category.cjs",
+      "bytes": 7808,
+      "sha256": "9dea8047019a81078943f30f0a1e30bd264105e90ef311df92c9bb65a1eb2b55"
     },
     {
       "path": "tests/price-check.cjs",
@@ -17147,13 +17167,13 @@
     },
     {
       "path": "web/price-check.css",
-      "bytes": 4271,
-      "sha256": "f3332ff745b9d7bc078024c094140cba338ecb22d1ad866717c485b43ef2ec87"
+      "bytes": 4702,
+      "sha256": "fdd654de2b3f576a98d7588d150361794a43b4dd930beb5fb135310fec9114d9"
     },
     {
       "path": "web/price-check.js",
-      "bytes": 23841,
-      "sha256": "6f389a36d4fbeb9a60416d1400437c7670e3b926cf97ea22f39d3d91910af8e0"
+      "bytes": 26180,
+      "sha256": "41947b5b2694c8fb54fd0cbae437091c6f61f1b31b6026bef95c39c994e788e5"
     },
     {
       "path": "web/privacy-controls.css",
