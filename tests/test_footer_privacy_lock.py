@@ -45,6 +45,7 @@ class FooterPrivacyLockTests(unittest.TestCase):
             self.assertIn(f'data-preview-analytics-default="{default}"', output)
             self.assertIn(default.title() + ' by default', output)
             self.assertIn('data-footer-privacy-lock="on"', output)
+            self.assertIn('<h2 class="footer-review-draft" id="footer-review-draft">{DRAFT}</h2>', output)
             self.assertIn('<body class="original" data-viewer-preview="on">', output)
             self.assertEqual(output.count('data-viewer-preview='), 1)
             self.assertNotIn('Private author paragraph', output)
@@ -76,6 +77,9 @@ class FooterPrivacyLockTests(unittest.TestCase):
                 for private in ('surgery', 'cancer treatment', 'grad job', signature, 'footer-signature', 'footer-story', 'footer-intro'):
                     self.assertNotIn(private, output, 'Locked HTML must exclude the original personal footer even without JavaScript')
                 self.assertIn('Author note and full credits will appear here after review.', output)
+                self.assertIn('aria-labelledby="footer-review-draft"', output)
+                self.assertIn('>{DRAFT}</h2>', output)
+                self.assertLess(output.index('>{DRAFT}</h2>'), output.index('Author note and full credits will appear here after review.'))
                 self.assertIn(credits.replace('\r\n', '\n'), output)
                 self.assertIn('href="#privacy"', output)
                 self.assertIn('href="#method"', output)
@@ -93,6 +97,7 @@ class FooterPrivacyLockTests(unittest.TestCase):
                 self.assertIn(signature, restored)
                 self.assertIn('surgery for cancer treatment', restored)
                 self.assertNotIn('data-footer-privacy-lock="on"', restored)
+                self.assertNotIn('id="footer-review-draft"', restored)
                 self.assertNotRegex(restored, r'<body\b[^>]*data-viewer-preview=')
                 self.assertNotEqual(locked_marker, json.loads((self.dist / 'ui-version.json').read_bytes())['version'])
             for name, digest in source_hashes.items():

@@ -700,6 +700,18 @@ def compute(feed, status):
     report['cashCatalog'] = cash_catalog(feed, cfg, report['cashBasket'], report.get('rollingReference'),
                                          catalog_identities,
                                          read(ROOT/'cache'/'cash-catalog-metadata.json', {}))
+    # Bind the optional full lookup to this exact accepted source and reviewed
+    # identity map. Only hashes/counts enter the main report, never all histories.
+    from market_catalog import MarketCatalog
+    from portable_hash import HASH_METHOD, portable_hash
+    identities = read(ROOT/'catalog-identities-v1.json', [])
+    catalog = MarketCatalog(feed, identities)
+    report['marketCatalog'] = {
+        'schemaVersion': 1, 'hashMethod': HASH_METHOD, 'catalogHash': catalog.catalog_hash,
+        'sourceProjectionHash': catalog.source_projection_hash,
+        'sourceUpdatedAt': catalog.source_updated_at, 'itemCount': len(feed['items']),
+        'identityVersion': portable_hash({'hashMethod': HASH_METHOD, 'identityMap': identities}),
+    }
     return report
 
 
@@ -806,7 +818,7 @@ def apply_footer_privacy_lock(dist, *, enabled=False):
     disclosure = ('Optional browser performance measurements follow the existing preview privacy setting.' if default is None
                   else f'Optional browser performance measurements are {default.title()} by default in this review preview; saved choices still apply.')
     replacement = f'''<footer class="shell footer-privacy-locked" data-footer-privacy-lock="on"{analytics_attr}>
-  <article class="footer-review-note" aria-label="Footer pending review"><p>Author note and full credits will appear here after review.</p></article>
+  <article class="footer-review-note" aria-labelledby="footer-review-draft"><h2 class="footer-review-draft" id="footer-review-draft">{{DRAFT}}</h2><p>Author note and full credits will appear here after review.</p></article>
   <p class="footer-privacy-note">{disclosure} <a href="#privacy">Privacy policy and controls</a>.</p>
   {parsed.credits[0]}
   <div class="footer-links"><a href="#method">Methodology</a><a href="#sources">Source status</a><a href="fallback.html">Lightweight snapshot</a><a href="#privacy">Privacy</a></div>
@@ -831,7 +843,7 @@ def write_site(report):
         (dist / 'history').mkdir(exist_ok=True)
         shutil.copyfile(legacy_history, dist / 'history' / 'cpi-v1.json')
     web_files = []
-    for name in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', 'privacy-controls.js', 'privacy-controls.css', 'analytics-config.json', 'preview-runtime.js', 'preview-runtime.css', 'author-portrait.js', 'author-portrait.css', 'market-highlights.js', 'market-highlights.css', 'brand-preview.js', 'brand-preview.css', 'banner-art.js', 'banner-art.css', 'theme-preview.js', 'theme-preview.css', 'preview-controls.css', 'cash-catalog.js', 'cash-catalog.css', 'nx-benchmark.js', 'nx-benchmark.css', 'cash-client-catalog.js', 'cash-client-catalog.css', 'rate-arrival.js', 'rate-arrival.css', 'panel-size-preview.js', 'panel-size-preview.css', 'price-check.js', 'price-check.css', 'cash-highlights.js', 'cash-highlights.css', 'basket-history-layout.js', 'basket-history-layout.css', 'rate-clock.js', 'rate-clock.css', 'overview-basket.js', 'overview-basket.css', 'nav-preview.js', 'nav-preview.css', 'site-music.js', 'site-music.css', 'viewer-preview.js', 'viewer-preview.css', 'rate-title-preview.js', 'category-link-preview.js', 'category-link-preview.css', 'date-presentation.js', 'mystery-boxes.js', 'mystery-boxes.css', 'speculation.js', 'speculation.css', 'popular-fashion.js', 'popular-fashion.css', 'volatility-preview.js', 'volatility-preview.css', 'fm-backdrop-preview.js', 'fm-backdrop-preview.css', 'category-reference-preview.js', 'category-reference-preview.css', 'rolling-benchmark-preview.js', 'rolling-benchmark-preview.css', 'fee-preview.js', 'fee-preview.css', 'short-window-preview.js', 'short-window-preview.css', 'ellinia-backdrop-preview.js', 'ellinia-backdrop-preview.css', 'local-preview-refresh.js', '_headers', 'sw.js'):
+    for name in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', 'privacy-controls.js', 'privacy-controls.css', 'analytics-config.json', 'preview-runtime.js', 'preview-runtime.css', 'full-market-client.js', 'author-portrait.js', 'author-portrait.css', 'market-highlights.js', 'market-highlights.css', 'brand-preview.js', 'brand-preview.css', 'banner-art.js', 'banner-art.css', 'theme-preview.js', 'theme-preview.css', 'preview-controls.css', 'cash-catalog.js', 'cash-catalog.css', 'nx-benchmark.js', 'nx-benchmark.css', 'cash-client-catalog.js', 'cash-client-catalog.css', 'rate-arrival.js', 'rate-arrival.css', 'panel-size-preview.js', 'panel-size-preview.css', 'price-check.js', 'price-check.css', 'cash-highlights.js', 'cash-highlights.css', 'basket-history-layout.js', 'basket-history-layout.css', 'rate-clock.js', 'rate-clock.css', 'overview-basket.js', 'overview-basket.css', 'nav-preview.js', 'nav-preview.css', 'site-music.js', 'site-music.css', 'viewer-preview.js', 'viewer-preview.css', 'rate-title-preview.js', 'category-link-preview.js', 'category-link-preview.css', 'date-presentation.js', 'mystery-boxes.js', 'mystery-boxes.css', 'speculation.js', 'speculation.css', 'popular-fashion.js', 'popular-fashion.css', 'volatility-preview.js', 'volatility-preview.css', 'fm-backdrop-preview.js', 'fm-backdrop-preview.css', 'category-reference-preview.js', 'category-reference-preview.css', 'rolling-benchmark-preview.js', 'rolling-benchmark-preview.css', 'fee-preview.js', 'fee-preview.css', 'short-window-preview.js', 'short-window-preview.css', 'ellinia-backdrop-preview.js', 'ellinia-backdrop-preview.css', 'local-preview-refresh.js', '_headers', 'sw.js'):
         shutil.copyfile(ROOT / 'web' / name, dist / name)
         web_files.append(name)
     data_text = json.dumps(report, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
@@ -844,7 +856,7 @@ def write_site(report):
     fallback = f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="120"><title>inflation.gg · Last known data</title><style>body{{background:#101c26;color:#e9e5d9;font:17px system-ui;max-width:660px;margin:10vh auto;padding:28px}}h1{{color:#edc471}}a{{color:#9dd3cd}}strong{{font-size:34px}}dt{{color:#a0b3b8;margin-top:20px}}</style><h1>inflation.gg</h1><p>Last known snapshot · treat these figures as historical.</p><p><strong>1:{rate:.1f}</strong> NX : mesos</p><p>{rate*1000:,.0f} mesos per 1,000 NX · MPI {cpi:.1f}</p><dl><dt>Market source updated</dt><dd>{html.escape(report['sourceUpdatedAt'])}</dd><dt>Page generated</dt><dd>{html.escape(report['builtAt'])}</dd><dt>Source checked</dt><dd>{html.escape(str(report['sourceStatus'].get('checkedAt') or 'unknown'))}</dd></dl><p>A source or connection may be unavailable. A fresh build does not imply fresh market data. This lightweight page retries every two minutes.</p><a href="/">Try full dashboard</a> · <a href="https://maplestory-classic.com/market">Data source</a></html>'''
     (dist / 'fallback.html').write_text(fallback, encoding='utf-8')
     (dist / '404.html').write_text(fallback, encoding='utf-8')
-    atomic(dist / 'version.json', {'version': digest, 'data': 'data-' + digest + '.json', 'builtAt': report['builtAt'], 'sourceUpdatedAt': report['sourceUpdatedAt']})
+    atomic(dist / 'version.json', {'version': digest, 'data': 'data-' + digest + '.json', 'builtAt': report['builtAt'], 'sourceUpdatedAt': report['sourceUpdatedAt'], 'marketCatalog': report.get('marketCatalog')})
     # Offline and opt-in. Originals remain present; only dist's entry HTML is
     # switched to ordered content-addressed bundles after every input is copied.
     from asset_bundles import bundle_site

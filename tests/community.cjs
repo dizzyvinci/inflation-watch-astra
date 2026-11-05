@@ -249,7 +249,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 // Review lock is server/build markup, not a hideable client preference.
 {
   const raw=fs.readFileSync(path.join(__dirname,'../web/index.html'),'utf8');
-  const markup=raw.replace(/<footer\b[^>]*>[\s\S]*?<\/footer>/, '<footer data-footer-privacy-lock="on" data-preview-analytics-default="on"><p>Author note and full credits will appear here after review.</p><div class="footer-links"><a href="#sources">Sources</a><a href="#privacy">Privacy policy</a></div></footer>');
+  const markup=raw.replace(/<footer\b[^>]*>[\s\S]*?<\/footer>/, '<footer class="shell footer-privacy-locked" data-footer-privacy-lock="on" data-preview-analytics-default="on"><article class="footer-review-note" aria-labelledby="footer-review-draft"><h2 class="footer-review-draft" id="footer-review-draft">{DRAFT}</h2><p>Author note and full credits will appear here after review.</p></article><div class="footer-links"><a href="#sources">Sources</a><a href="#privacy">Privacy policy</a></div></footer>');
   const dom=new JSDOM(markup,{url:'https://inflation.gg/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,doc=w.document;let network=0;
   w.localStorage.setItem('inflation-optional-analytics-consent-v1','off');
   w.localStorage.setItem('inflation-footer-style','personal');
@@ -262,6 +262,30 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
   assert(doc.querySelector('#view-market-comparison'));assert(doc.querySelector('#view-privacy'));assert(doc.querySelector('#privacy-controls'));
   assert(!/surgery|cancer|grad job|DishWasher|dizzyvinci/i.test(doc.body.textContent));
   assert(doc.querySelector('footer').textContent.includes('will appear here after review'));
+  const reviewStyles=fs.readFileSync(path.join(__dirname,'../web/community.css'),'utf8');
+  const reviewStyle=doc.createElement('style');reviewStyle.textContent=reviewStyles;doc.head.append(reviewStyle);
+  const reviewNote=doc.querySelector('.footer-review-note'),draft=doc.getElementById('footer-review-draft');
+  assert.equal(draft.textContent,'{DRAFT}');assert.equal(reviewNote.getAttribute('aria-labelledby'),draft.id);
+  assert.equal(draft.nextElementSibling.textContent,'Author note and full credits will appear here after review.');
+  assert.equal(w.getComputedStyle(reviewNote).textAlign,'center');
+  assert.equal(w.getComputedStyle(reviewNote).maxWidth,'100%');assert.equal(parseFloat(w.getComputedStyle(reviewNote).minWidth),0);
+  assert.equal(w.getComputedStyle(reviewNote).boxSizing,'border-box');
+  assert.equal(w.getComputedStyle(reviewNote.querySelector('p')).overflowWrap,'anywhere');
+  assert(reviewStyles.includes('clamp(26px,3.5vw,42px)'));assert(reviewStyles.includes('footer[data-footer-privacy-lock="on"] .footer-review-note>p'));
+  const baseStyles=fs.readFileSync(path.join(__dirname,'../web/style.css'),'utf8'),themeStyles=fs.readFileSync(path.join(__dirname,'../web/theme-preview.css'),'utf8');
+  const applyVars=(target,body)=>{for(const hit of body.matchAll(/--(surface|text|gold):\s*(#[0-9a-f]{6})/gi))target[hit[1]]=hit[2];return target;};
+  const base={};for(const rule of baseStyles.matchAll(/:root\s*\{([^}]*)\}/g))applyVars(base,rule[1]);
+  const palettes=[base,...[...themeStyles.matchAll(/body\[data-color-scheme="(?:maple-amber|moonlit-ludibrium)"\]\{([^}]*)\}/g)].map(rule=>applyVars({...base},rule[1]))];
+  const lum=color=>color.slice(1).match(/../g).map(hex=>parseInt(hex,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4).reduce((sum,v,i)=>sum+v*[.2126,.7152,.0722][i],0);
+  const contrast=(a,b)=>(Math.max(lum(a),lum(b))+.05)/(Math.min(lum(a),lum(b))+.05);
+  assert.equal(palettes.length,3);for(const palette of palettes){assert(contrast(palette.text,palette.surface)>=7,'Review message high contrast in each palette');assert(contrast(palette.gold,palette.surface)>=4.5,'DRAFT badge high contrast in each palette');}
+
+  const cacheNote=doc.querySelector('#view-privacy [data-privacy-browser-storage]');
+  assert(cacheNote.textContent.includes('Versioned public interface and market files'));
+  assert(cacheNote.textContent.includes('browser’s private HTTP cache'));
+  assert(cacheNote.textContent.includes('Pages, mutable status responses and password-control responses remain private and no-store'));
+  assert(cacheNote.textContent.includes('does not create a visitor account or change your optional performance choice'));
+  assert(!cacheNote.textContent.includes('Preview responses are marked private and no-store'));
   assert.equal(network,0);dom.window.close();
   console.log('PASS temporary footer review lock: personal story/signature/portrait/contact/options absent, saved preferences cannot reveal them, comparison/privacy/consent retained.');
 }

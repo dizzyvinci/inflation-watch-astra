@@ -65,3 +65,8 @@ The authenticated-provider application remains **DRAFT ONLY**. This runtime does
 ## Attribution
 
 Market sources include [MapleStory Classic](https://maplestory-classic.com/market), [mesos.watch](https://mesos.watch/), [MapleStory Market](https://maplestory.market/ads?tab=services) and [NiaDB](https://meowdb.com/msclassic/free-market), with their individual provenance shown in the dashboard. Game names and sprites belong to Nexon; community sprite delivery is credited to [maplestory.io](https://maplestory.io/). Asset provenance is recorded alongside the local assets. The [BLS CPI methodology](https://www.bls.gov/opub/hom/cpi/calculation.htm) is a comparison reference, not a claim of equivalence to a household CPI.
+
+
+The full item lookup lazily loads every item in the accepted public daily developer feed, including items without a qualifying daily price. Its own-site index and exact-item endpoints share the report’s portable catalogue hash and reviewed identity map; visitors never trigger a provider collection. Summary medians, qualified daily prices, thin observations and unknown NX costs remain separate. The fixed 50-item MPI and its weights are unchanged.
+
+During the current public review, the main chart defaults to observed cash-item-derived NX history while the headline remains the goods-inflation benchmark. The personal footer remains omitted from generated HTML, and preview design controls require the preview password. Verified content-addressed UI and report files may be retained in a private browser cache; HTML, controls, catalogue responses and mutable pointers retain no-store. Compression is unchanged.

@@ -3,6 +3,14 @@ import seedVersion from '../dist/version.json' with { type: 'json' };
 import config from '../config.json' with { type: 'json' };
 import { computeReport } from './worker-core.mjs';
 import { withPreviewGate } from './preview-gate.mjs';
+import catalogFeed from '../cache/market.json' with { type: 'json' };
+import catalogIdentities from '../catalog-identities-v1.json' with { type: 'json' };
+import { createCachedProjectionFactory, HASH_METHOD } from './market-catalog.mjs';
+import { createCatalogRoutes } from './catalog-routes.mjs';
+
+const catalogProject = createCachedProjectionFactory(catalogIdentities);
+export const catalogIdentityVersion = catalogProject.identityVersion;
+const catalogFetch = createCatalogRoutes({ projectionFactory: catalogProject, compiledFeed: catalogFeed, identityMap: catalogIdentities });
 
 const POINTER = 'version.json';
 const STATE = '_private/collector-state.json';
@@ -60,6 +68,7 @@ export async function calculationFingerprint(baseline = seed) {
   // Build/check/source clocks and dated comparison captures are not definitions.
   return digest(JSON.stringify({
     calculationModelVersion: CALCULATION_MODEL_VERSION,
+    catalogHashMethod: HASH_METHOD, catalogIdentityVersion: await catalogIdentityVersion,
     basketVersion: baseline.basketVersion, basketHash: baseline.basketHash ?? null,
     specificationHash: baseline.specificationHash ?? null,
     baseStart: baseline.baseStart, baseEnd: baseline.baseEnd, baseNxRate: baseline.baseNxRate,
@@ -343,6 +352,7 @@ async function writeReport(bucket, lease, now, report, status, definitionFingerp
     if (!existing || await existing.text() !== text) throw new Error('Snapshot content-address conflict; refusing overwrite');
   }
   return { version, data, basketVersion: report.basketVersion, builtAt: report.builtAt,
+    marketCatalog: clone(report.marketCatalog),
     sourceUpdatedAt: report.sourceUpdatedAt, sourceStatus: status, mode: 'collector',
     lastSuccessfulFetchAt, nextAllowedAt: nextAllowedAt === null ? null : iso(nextAllowedAt),
     calculationFingerprint: definitionFingerprint, referenceFingerprint: references };
@@ -394,6 +404,7 @@ async function upgradeFromAcceptedCache({ bucket, lease, now, baseline, pointer,
   report.calculationModelVersion = CALCULATION_MODEL_VERSION;
   report.calculationFingerprint = definition;
   report.referenceFingerprint = references;
+  report.marketCatalog = await catalogProject.metadata(feed);
   const nextPointer = await writeReport(bucket, lease, now, report, failure, definition, references, lastSuccessfulFetchAt, nextAllowedAt);
   const nextState = { ...state, checkedAt: failure.checkedAt, nextAllowedAt, lastError: status.detail,
     publishedVersion: nextPointer.version, calculationFingerprint: definition,
@@ -501,6 +512,7 @@ export async function collect(env, options = {}) {
       report.calculationModelVersion = CALCULATION_MODEL_VERSION;
       report.calculationFingerprint = definitionFingerprint;
       report.referenceFingerprint = references;
+      report.marketCatalog = await catalogProject.metadata(feed);
     }
     // Full validated history is archived before any new public report or state.
     // This is storage time, never a renewed source/trade observation clock.
@@ -619,9 +631,10 @@ async function serveSnapshot(request, env, data) {
 }
 
 async function handleFetch(request, env, ctx) {
-  if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
   const url = new URL(request.url);
   const path = url.pathname;
+  if (path === '/market-index.json' || path.startsWith('/market-item/')) return catalogFetch(request, env, ctx);
+  if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
   const dynamic = ['/version.json', '/data.json', '/health.json'].includes(path);
   const namedSnapshot = /^\/data-[a-f0-9]{16}\.json$/.test(path);
   if (!dynamic && !namedSnapshot) {

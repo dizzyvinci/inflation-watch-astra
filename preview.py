@@ -9,6 +9,9 @@ import time
 from pathlib import Path
 from urllib.parse import urlsplit
 from engine import ROOT, build, read
+from catalog_local import LocalCatalog
+
+_catalog = LocalCatalog(ROOT)
 
 def ui_version(root):
     """Read only the last completed UI build, never live half-copied files."""
@@ -32,6 +35,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,directory=str(ROOT/'dist'),**kwargs)
     def do_GET(self):
+        if self._serve_catalog():return
         if urlsplit(self.path).path == '/__ui_version':
             status, value = ui_version(ROOT)
             body = json.dumps(value, separators=(',', ':')).encode('utf-8')
@@ -56,13 +60,28 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._etag=tag
         super().do_GET()
     def do_HEAD(self):
+        if self._serve_catalog():return
         if urlsplit(self.path).path == '/__ui_version':
             self.send_response(405);self.send_header('Allow','GET');self.send_header('Content-Length','0');self.end_headers();return
         super().do_HEAD()
+    def _serve_catalog(self):
+        self._catalog_response = False
+        response = _catalog.handle(self.command, self.path, self.headers)
+        if response is None:return False
+        self._catalog_response = True
+        self.send_response(response.status)
+        for name, value in response.headers.items():self.send_header(name, value)
+        self.end_headers()
+        if response.body:self.wfile.write(response.body)
+        return True
+    def _catalog_or_unsupported(self):
+        if not self._serve_catalog():self.send_error(501, 'Unsupported method')
+    do_POST = do_PUT = do_DELETE = do_PATCH = do_OPTIONS = _catalog_or_unsupported
     def end_headers(self):
         if getattr(self,'_etag',None):self.send_header('ETag',self._etag);self._etag=None
-        self.send_header('Cache-Control','no-store' if urlsplit(self.path).path == '/__ui_version' else 'no-cache' if not self.path.startswith('/data-') else 'public, max-age=31536000, immutable')
-        self.send_header('X-Content-Type-Options','nosniff')
+        if not getattr(self, '_catalog_response', False):
+            self.send_header('Cache-Control','no-store' if urlsplit(self.path).path == '/__ui_version' else 'no-cache' if not self.path.startswith('/data-') else 'public, max-age=31536000, immutable')
+            self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Referrer-Policy','strict-origin-when-cross-origin')
         super().end_headers()
     def log_message(self,fmt,*args):

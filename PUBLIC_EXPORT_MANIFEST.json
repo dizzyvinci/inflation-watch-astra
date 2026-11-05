@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T17:27:35+00:00",
+  "exportedAt": "2026-11-05T18:28:31+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -37,8 +37,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 7532,
-      "sha256": "50216d4b4ebd8521271a82efd71225d4a2f77cd1a1bfd95f76ec2ee4c55ef5e9"
+      "bytes": 8450,
+      "sha256": "6ef9ba0a06e6c5d7ae5a495d5b9b42d2f81470ea214574d342f5a540557b739d"
     },
     {
       "path": "ROLLING_CAPTURE_CONTRACT.txt",
@@ -47,8 +47,8 @@
     },
     {
       "path": "Start-Preview.ps1",
-      "bytes": 102,
-      "sha256": "810394cf84db466a7cbffcd15b7ca7953ae3eb2585621394d9ffee1a748dc85c"
+      "bytes": 130,
+      "sha256": "15f19314faad716fee1e10651aa2f6e9cd942200b50d195f6c08f4b493efe209"
     },
     {
       "path": "Stop-Preview.ps1",
@@ -2073,7 +2073,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "8c56ea08bcbb86867f0b6f13734baf46a89bb24165ee857455c477f38e4495dc"
+      "sha256": "5d40fe4b818572ea31c47101a51e391892434298f7a9e2c289d1c92a19a2f7d8"
     },
     {
       "path": "cache/market.json",
@@ -2121,6 +2121,16 @@
       "sha256": "b0e2bd56a4139d74814d70b6d65659ea517d88cab3f8f98890dee4ac32518fc6"
     },
     {
+      "path": "catalog-identities-v1.json",
+      "bytes": 14835,
+      "sha256": "c7b56e5744ec4e94514a17caf68f1a136e7c2148186a6b5d1048b46da2a5b2bd"
+    },
+    {
+      "path": "catalog_local.py",
+      "bytes": 11224,
+      "sha256": "3a5f088e6ea8427a31833c015ef3eaf4398769bee1820bc6ac11cf434f96e65f"
+    },
+    {
       "path": "comparison-observations.json",
       "bytes": 2089,
       "sha256": "2e8ec21383fec06c03d22129f6b6428ba130df2295e337faee145008eaf1c65b"
@@ -2138,7 +2148,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "d750047e3f2856efa65219a751c6d10b5007bae436ab2f281ff64b35cb54dd2d"
+      "sha256": "e17fc58eaf6de8818538062e8cb287b5bea45a30a6ade4b40675a65acd7f720d"
     },
     {
       "path": "dist/_headers",
@@ -2152,8 +2162,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 139896,
-      "sha256": "452892c0be27ebb377567eb2e5a94bf7fd522cd763de1e7edc3b71387e0e159b"
+      "bytes": 146378,
+      "sha256": "d1ff8b44825142887e692a2d5d80bd720e08827e934b9b3d195c4f5253a1e365"
     },
     {
       "path": "dist/assets/PixelifySans-9ba86cd010a4de30.ttf",
@@ -4701,6 +4711,21 @@
       "sha256": "452892c0be27ebb377567eb2e5a94bf7fd522cd763de1e7edc3b71387e0e159b"
     },
     {
+      "path": "dist/astra-app-7ff7338f3a264210.js",
+      "bytes": 145841,
+      "sha256": "7ff7338f3a26421007ce80535b6fcce4eb8d0790005c1b470e3f7a1e7241c45c"
+    },
+    {
+      "path": "dist/astra-app-ca4a937b045b9260.js",
+      "bytes": 146358,
+      "sha256": "ca4a937b045b9260ea8cf47be64252a980c16acc2a7ff98e3c84e2ac612dbebc"
+    },
+    {
+      "path": "dist/astra-app-d1ff8b4482514288.js",
+      "bytes": 146378,
+      "sha256": "d1ff8b44825142887e692a2d5d80bd720e08827e934b9b3d195c4f5253a1e365"
+    },
+    {
       "path": "dist/astra-ui-16d9fcd97bc840d2.css",
       "bytes": 181583,
       "sha256": "16d9fcd97bc840d2fc5c248f80d05a896277d0aa7f4eb7e230ec6c7170258db7"
@@ -4711,9 +4736,24 @@
       "sha256": "1c1e845b49120c1623ef47b0eda41dfbe0492199ebd5207eb5c832b84dae81fa"
     },
     {
+      "path": "dist/astra-ui-26898d75a38d6f6c.css",
+      "bytes": 182636,
+      "sha256": "26898d75a38d6f6ce9dcda765e644afc2263eb2a1631e6480e2800f545725665"
+    },
+    {
       "path": "dist/astra-ui-3095db1252b1e2f6.js",
       "bytes": 352258,
       "sha256": "3095db1252b1e2f6c035a94468bf53f33fef6813b39ec5a72fa126b6800b6977"
+    },
+    {
+      "path": "dist/astra-ui-3abb899ef492c471.js",
+      "bytes": 70027,
+      "sha256": "3abb899ef492c471771c918b993282ead5e402e2b5a84e84de812401f060f381"
+    },
+    {
+      "path": "dist/astra-ui-3cf0978a372916ec.js",
+      "bytes": 354464,
+      "sha256": "3cf0978a372916ec1c73ad9340ae4f8fb4ddc1daee38b59c56db477420080bf4"
     },
     {
       "path": "dist/astra-ui-6eb3cd0250cef79f.js",
@@ -4724,6 +4764,11 @@
       "path": "dist/astra-ui-85b41362aa500592.js",
       "bytes": 50850,
       "sha256": "85b41362aa500592299f0fc3e988a87e675db3f54cb7258a71635283172af507"
+    },
+    {
+      "path": "dist/astra-ui-8c661a8719b1da7d.js",
+      "bytes": 354428,
+      "sha256": "8c661a8719b1da7dc4317403999287f304edec6c5793a7eb971bab12159bd149"
     },
     {
       "path": "dist/astra-ui-a366088d719ae719.js",
@@ -4802,8 +4847,8 @@
     },
     {
       "path": "dist/cash-highlights.js",
-      "bytes": 22379,
-      "sha256": "32d87a3ec9d4dadd8d88a1692db0f10687433d880634b36557afcf1753e9b5b4"
+      "bytes": 22415,
+      "sha256": "46c8c5d024a228e291fb79b9b580c920b6b5e0285c2a8a0b3552a40ee3a2a6ac"
     },
     {
       "path": "dist/category-link-preview.css",
@@ -4837,13 +4882,13 @@
     },
     {
       "path": "dist/community.css",
-      "bytes": 13245,
-      "sha256": "454d27d02482e067fcddea8c2eb5e6819f98fb30affab862f423117be7a9adeb"
+      "bytes": 14298,
+      "sha256": "1fd1b82887491eb4e08046e6ace9979474d80217d6f929fd50a5d32ce9bd9339"
     },
     {
       "path": "dist/community.js",
-      "bytes": 29844,
-      "sha256": "6e6f37194fd5e8b6d24d7306881ce689369157e9dc94c47d2cd37c2876b44f28"
+      "bytes": 30580,
+      "sha256": "cc6623a73aa655ffb5524f23e81497e5fc388d6f55b7d89cff85d3c6feb98375"
     },
     {
       "path": "dist/data-025260607b3c3b6c.json",
@@ -4901,9 +4946,19 @@
       "sha256": "59cde1eaa67472993b5da312c07d587252b57629b0ea845f07fcabe0e7c2ba2d"
     },
     {
+      "path": "dist/data-65830356cf3981b9.json",
+      "bytes": 848579,
+      "sha256": "65830356cf3981b9b120b2c6f677ebca8c833f4f200e52a45ee124490b53f599"
+    },
+    {
       "path": "dist/data-694b8a1854445fc0.json",
       "bytes": 308808,
       "sha256": "694b8a1854445fc08c26eddac6a4181a891052f245aec93bed0511e96b79e6f2"
+    },
+    {
+      "path": "dist/data-6aa90e25b163778f.json",
+      "bytes": 848579,
+      "sha256": "6aa90e25b163778fd118135358b08de331b04e20b59102b27ffac300ac545b5e"
     },
     {
       "path": "dist/data-6c4628228e2366f9.json",
@@ -4986,9 +5041,14 @@
       "sha256": "fc928ab9f9ed014d82f3cc847f1359d26f9a5626f4183d1538cf6afbe995d392"
     },
     {
+      "path": "dist/data-ffd0031187edbcc7.json",
+      "bytes": 848579,
+      "sha256": "ffd0031187edbcc7e7f56efefce5b84f7624db55e9143bd8b8c3998c853c8faa"
+    },
+    {
       "path": "dist/data.json",
-      "bytes": 848186,
-      "sha256": "f419e20e43c777295a33fa295b914ca2ac1a35f40aab798dc94311a4022cc3b4"
+      "bytes": 848579,
+      "sha256": "6aa90e25b163778fd118135358b08de331b04e20b59102b27ffac300ac545b5e"
     },
     {
       "path": "dist/date-presentation.js",
@@ -5008,7 +5068,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "d750047e3f2856efa65219a751c6d10b5007bae436ab2f281ff64b35cb54dd2d"
+      "sha256": "e17fc58eaf6de8818538062e8cb287b5bea45a30a6ade4b40675a65acd7f720d"
     },
     {
       "path": "dist/fee-preview.css",
@@ -5018,7 +5078,7 @@
     {
       "path": "dist/fee-preview.js",
       "bytes": 15214,
-      "sha256": "adba7ecb5c9564ec430ea78d0febf31bd7e768983d7f88d18026625bdd3496b0"
+      "sha256": "9f94ceb25e3bd178cc1335564e10c3703f15776bda3f6b6209839381e72aba5e"
     },
     {
       "path": "dist/fm-backdrop-preview.css",
@@ -5031,14 +5091,19 @@
       "sha256": "de40fdb0d76cb781c37309afb4a29e62aa37d6c9d1f861e02b51c813e69005ff"
     },
     {
+      "path": "dist/full-market-client.js",
+      "bytes": 17374,
+      "sha256": "1a51d4847341f16cf646123446537eb0d8d8b8453873bba77a193d2c7860661a"
+    },
+    {
       "path": "dist/history/cpi-v1.json",
       "bytes": 13243,
       "sha256": "8915561fdd66b964a154a9d1fbff73689388d0ee66791ded4f2c1e8e7804579b"
     },
     {
       "path": "dist/index.html",
-      "bytes": 48249,
-      "sha256": "fe6ae6412ad42484fed101c3f66adb515019bbadc1736d5c3251770139f312d7"
+      "bytes": 48392,
+      "sha256": "f8ab279d273235ee2495611649639cb82bb44ad16035381fbb9f58f6562e2ae2"
     },
     {
       "path": "dist/layout-preview.css",
@@ -5147,8 +5212,8 @@
     },
     {
       "path": "dist/price-check.js",
-      "bytes": 21671,
-      "sha256": "ae374f1f4de454adcc662030d3dfe2f48ae61ff98ce6c9d08e8299672a178d26"
+      "bytes": 23841,
+      "sha256": "6f389a36d4fbeb9a60416d1400437c7670e3b926cf97ea22f39d3d91910af8e0"
     },
     {
       "path": "dist/privacy-controls.css",
@@ -5247,13 +5312,13 @@
     },
     {
       "path": "dist/ui-bundles.json",
-      "bytes": 9392,
-      "sha256": "0430fc85335da2bb670d3f9376b85b916990c226c6ac79bba9759b9f6a062c66"
+      "bytes": 9515,
+      "sha256": "954c55a79a6960a027771c41991948ffefc15975c57ede65fd8163d99c88da3d"
     },
     {
       "path": "dist/version.json",
-      "bytes": 150,
-      "sha256": "f9ad16875446acf02fab63f9821de221dcaccc558f12c4d0b11f07d4491f7940"
+      "bytes": 543,
+      "sha256": "34b927d27c4b29090609d59536015445aa02966e405d7ab34fcfe29af3d33057"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -5277,8 +5342,8 @@
     },
     {
       "path": "engine.py",
-      "bytes": 56297,
-      "sha256": "ceed4c117a1cc7b1465f5943874d0ba38d44b48d0f6ba8cf6153391beeabc01f"
+      "bytes": 57192,
+      "sha256": "650abd9c0ca74dfc7d58fd16aff85ef43fb9e141e1cfbc8a6740186b3112f806"
     },
     {
       "path": "historical_backfill.py",
@@ -5306,6 +5371,11 @@
       "sha256": "2b73fd646e5a01da533715371475eda8aff63d1b1474529af4219de96d99b6c7"
     },
     {
+      "path": "market_catalog.py",
+      "bytes": 12152,
+      "sha256": "a0da1dfe2e91ac5707ff89ef8fb6c040e194ae6c59db262118b9fcfa16768258"
+    },
+    {
       "path": "mfm_adapter.py",
       "bytes": 14782,
       "sha256": "b27336e2fc16400022aa22c13df95f94f33237426a2bbe0d2741a6561499d4d5"
@@ -5331,14 +5401,29 @@
       "sha256": "5cf1f6170ee26b9efc7b6d31580236b26836e40ab1dba62946c8c951a41cca3c"
     },
     {
+      "path": "ops/catalog-routes.mjs",
+      "bytes": 12177,
+      "sha256": "41e73dc1707ed900fd84e88689df6d62a95dea04b2989e098018fc53ac36600d"
+    },
+    {
       "path": "ops/fallback-worker.js",
       "bytes": 2435,
       "sha256": "a5675857799556e5c9e09d2c58a79c91b1bb86db4ab1d26af2964a90b537d4e7"
     },
     {
+      "path": "ops/market-catalog.mjs",
+      "bytes": 12404,
+      "sha256": "764d338a2fee1948fe10562e6045ea7c3ac56d4b37183950cba008175ee5d220"
+    },
+    {
+      "path": "ops/portable-hash.mjs",
+      "bytes": 2207,
+      "sha256": "97549f7ff3aae7e67352ff811505eb8bac246ecf65ec5c3601182e378342680e"
+    },
+    {
       "path": "ops/preview-gate.mjs",
-      "bytes": 11427,
-      "sha256": "569b7bbde9643404b355f02658e82e441fa0bfa638c7a26e2d7f53ef1f216065"
+      "bytes": 12472,
+      "sha256": "5de9e9bce8e0dc19b844ca1629290902f16e699f1a69420700d5135bb0184ff9"
     },
     {
       "path": "ops/worker-core.mjs",
@@ -5346,14 +5431,19 @@
       "sha256": "b569412e7fac715cc1720beb36c5f3ac4f706df598c22ebfeb2d532fe181f591"
     },
     {
+      "path": "ops/worker-entry.mjs",
+      "bytes": 130,
+      "sha256": "9cfa59f279d3fc1726f8c6b99e5f12d538ca853a44ced5312305f27044db49d3"
+    },
+    {
       "path": "ops/worker.mjs",
-      "bytes": 36969,
-      "sha256": "52b95e8a3c7d749d43a7cc527f8c1c2c4b116f08d4b4334ab09246bac9f29f24"
+      "bytes": 37930,
+      "sha256": "a68a15fb4bc1462447f9af441258e9cb43a300ec1c3e98a63af48f5d74800869"
     },
     {
       "path": "ops/wrangler.jsonc",
-      "bytes": 636,
-      "sha256": "bf0498248355adccebbcaa9a86d07ff104a40743f3a0c1341e9b4627e5d496e7"
+      "bytes": 698,
+      "sha256": "b625781a197e05119171518e2d954354307decba7a2a2dd3c508147f07299b81"
     },
     {
       "path": "package-lock.json",
@@ -5362,13 +5452,18 @@
     },
     {
       "path": "package.json",
-      "bytes": 3929,
-      "sha256": "77cbc0c0cc53d800106cb20d50180193aff720b9463b44c2807c0840b6a448c0"
+      "bytes": 4307,
+      "sha256": "1bb36a8dacbbf400251885255f7a33bec26a754f86e3c37772bbe4ca49a687c4"
+    },
+    {
+      "path": "portable_hash.py",
+      "bytes": 1324,
+      "sha256": "0ff9383c84f25a8a028ff53677d6cf47d43d070d99c21b3ac8b6f45a4541742f"
     },
     {
       "path": "preview.py",
-      "bytes": 4494,
-      "sha256": "93ad6889880c15a597922f9558888e27c4ecaf3c2d482c3dba7f7d149576c87a"
+      "bytes": 5364,
+      "sha256": "65cce9c4e49b402910b7971a142f8018792c6ff140d2f4256f94b67278ea92b5"
     },
     {
       "path": "public_api.py",
@@ -5407,8 +5502,8 @@
     },
     {
       "path": "tests/asset-bundles.cjs",
-      "bytes": 12895,
-      "sha256": "06a26a69a34e7c1ef6071b0a93e414f004351c37ee8429f6ebd57acaade4c373"
+      "bytes": 13275,
+      "sha256": "75ebe0bd8c05a7eb1eaec84d91eb9a0878f1eb05bcd30fae91c749f16fc2a3db"
     },
     {
       "path": "tests/author-portrait.cjs",
@@ -5451,6 +5546,16 @@
       "sha256": "2e4a837d2346cb4d2d91859e6f10aa2d3bb122acb97cd87e765317da9a804824"
     },
     {
+      "path": "tests/catalog-routes.test.mjs",
+      "bytes": 13363,
+      "sha256": "e4e583f0eeb67f27c766814bafa0175988466acefa8d1e1dd3321e7a90f3fbc3"
+    },
+    {
+      "path": "tests/catalog_parity_fixtures.py",
+      "bytes": 5106,
+      "sha256": "eca0b0cf7b89d918e7d89203f6d9fb6d953153b233b37b817c206bffd14fd2ca"
+    },
+    {
       "path": "tests/category-link-preview.cjs",
       "bytes": 3421,
       "sha256": "c80f8b53d9f61f8ea14e16618b1373ad90f8b201beaf750fbd4df56a15bbeae1"
@@ -5472,8 +5577,8 @@
     },
     {
       "path": "tests/community.cjs",
-      "bytes": 26830,
-      "sha256": "2d6536b0a6730c5cee7038e6004a38dbe3d0174c15e2ff0d91a23161d14e4b33"
+      "bytes": 29790,
+      "sha256": "3be461a977e53f93e3d2106bdb567039b199c2f016720684d2fa120146d04f04"
     },
     {
       "path": "tests/date-presentation.cjs",
@@ -5492,13 +5597,28 @@
     },
     {
       "path": "tests/fee-preview.cjs",
-      "bytes": 13401,
-      "sha256": "15acaf6e0b41c18a48b7bf35c7df00c2340fb2ff8ccfe17a281f4b15752f96b2"
+      "bytes": 14276,
+      "sha256": "f82afb6af07b6337c3377d0ac8745a2d43151f724839a89a96f6210502adb695"
     },
     {
       "path": "tests/fm-backdrop-preview.cjs",
       "bytes": 7217,
       "sha256": "bcc8c638d789a8327a87a0eaeb5f5fdeb68d84d40c86adf6794a19a7c46f2ac6"
+    },
+    {
+      "path": "tests/full-market-client.cjs",
+      "bytes": 6175,
+      "sha256": "d2456016b0e11731d4264c24a87c9997f2a12d911b586c3755701b8e4a6d1cdc"
+    },
+    {
+      "path": "tests/full-market-fixture.cjs",
+      "bytes": 1812,
+      "sha256": "2574c814f34ebbee37edd340c044877b38eb538c88d71320e6953ff64e13bcb8"
+    },
+    {
+      "path": "tests/full-market-integration.cjs",
+      "bytes": 13528,
+      "sha256": "abe352ee0f843d2e28cec5e3a4d75276005ef8aaeed497cfaf1f9bdd4786cd38"
     },
     {
       "path": "tests/headers.test.mjs",
@@ -5514,6 +5634,11 @@
       "path": "tests/local-preview-refresh.cjs",
       "bytes": 7338,
       "sha256": "9ce89804b9e26a24c46f2be2c17d90c59efee92ac081d5158f236a7669d61db7"
+    },
+    {
+      "path": "tests/market-catalog-parity.test.mjs",
+      "bytes": 9676,
+      "sha256": "8d342cf164dcc895e64d0b7edfd17b29cf9dcec7d4e0d8125534895617d62ebb"
     },
     {
       "path": "tests/market-highlights.cjs",
@@ -5557,8 +5682,8 @@
     },
     {
       "path": "tests/preview-gate.test.mjs",
-      "bytes": 21343,
-      "sha256": "06cc63d4600601879ea8ecfa11f0b0e362a631a96460251cbb67282c3ac52748"
+      "bytes": 27074,
+      "sha256": "61d0a031065e780c62a7c004879c44f9868609328b41b8191091b549181b4771"
     },
     {
       "path": "tests/preview-runtime.cjs",
@@ -5572,8 +5697,8 @@
     },
     {
       "path": "tests/privacy-controls.cjs",
-      "bytes": 15981,
-      "sha256": "aa4f9274b96905a9a33ae6d9a608b29ac1a86bbd392630a6011e2282c915e259"
+      "bytes": 16251,
+      "sha256": "b17a9c88be7563e80f59d2e3d5953796d99e4bf61c2866960ad65d5a2261f32f"
     },
     {
       "path": "tests/rate-arrival.cjs",
@@ -5584,6 +5709,11 @@
       "path": "tests/rate-clock.cjs",
       "bytes": 6026,
       "sha256": "a3a076504a096d0cfc4c0eef5d470bba9c44164a3d81e8eabfd7c8217ad6af5f"
+    },
+    {
+      "path": "tests/review-observed-nx.cjs",
+      "bytes": 4496,
+      "sha256": "4abec9d924ac1fbc7bd1dc78700d1bd7422832c21b3deacb2d91990ef95b76bd"
     },
     {
       "path": "tests/rolling-benchmark-preview.cjs",
@@ -5632,8 +5762,8 @@
     },
     {
       "path": "tests/test_basket_v2.py",
-      "bytes": 11051,
-      "sha256": "7baa8e5c62aceeeba8f7e3273f17cc859b75876e3980d7050ed39114d6ef240c"
+      "bytes": 11076,
+      "sha256": "1c69b83ff8d314b18ae11860fa9c2639868d3555ab46dcdda40613edf9ce6b02"
     },
     {
       "path": "tests/test_cash_basket.py",
@@ -5651,14 +5781,19 @@
       "sha256": "d14cdab299ad068b64d766404e87b0651de4c2dc68fd54961f79a5f30eea47ab"
     },
     {
+      "path": "tests/test_catalog_local.py",
+      "bytes": 14292,
+      "sha256": "bc8a9bd67bb0bd907f9a9925dff5531f72e79d97dae93b2bdffe2a2f60027c68"
+    },
+    {
       "path": "tests/test_engine.py",
       "bytes": 11403,
       "sha256": "da354d96dd22e8b02e1e34db623dada98f36addcf19f9736098f872463ec9156"
     },
     {
       "path": "tests/test_footer_privacy_lock.py",
-      "bytes": 6329,
-      "sha256": "75638da6bd6022a500108dfed98db298c0b9e6b11126605e60c46c47c8876839"
+      "bytes": 6781,
+      "sha256": "6c71f2c9e074b1550c74bb2f3149e3b3b944fce3b56455c5ba6752d454feb86f"
     },
     {
       "path": "tests/test_historical_backfill.py",
@@ -5671,9 +5806,19 @@
       "sha256": "e4294a89febcd119dc70c2285d4ea1335bc5fe9838ee846bbdd7dca3cb2327cd"
     },
     {
+      "path": "tests/test_market_catalog.py",
+      "bytes": 13255,
+      "sha256": "1fd4166f1eef7a73d141d73a41a5f5c2739894adda6f84cc121a239440885fae"
+    },
+    {
       "path": "tests/test_mfm_adapter.py",
       "bytes": 9159,
       "sha256": "841da1330b96c0b26d9f9d7b32fe2ed2cc62fbab62abc198ec1fb51ac6e46209"
+    },
+    {
+      "path": "tests/test_portable_hash.py",
+      "bytes": 2264,
+      "sha256": "f87f566e69af4726f09981fbcf23c6856f69b80bf35612f0113a3792ac5cd776"
     },
     {
       "path": "tests/test_public_api.py",
@@ -5742,8 +5887,8 @@
     },
     {
       "path": "tests/worker-runtime.test.mjs",
-      "bytes": 63271,
-      "sha256": "195ccaac57d30dfc233b948cf467525fed07765a21b6ff91b5f34e0fd7608fb2"
+      "bytes": 66598,
+      "sha256": "ca92bde7cd837da2386e7cb334a726dd223757a57ede30dd800e419a47b1dc43"
     },
     {
       "path": "tests/worker-ui-assets.test.mjs",
@@ -5762,8 +5907,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 139896,
-      "sha256": "452892c0be27ebb377567eb2e5a94bf7fd522cd763de1e7edc3b71387e0e159b"
+      "bytes": 146378,
+      "sha256": "d1ff8b44825142887e692a2d5d80bd720e08827e934b9b3d195c4f5253a1e365"
     },
     {
       "path": "web/author-portrait.css",
@@ -5832,8 +5977,8 @@
     },
     {
       "path": "web/cash-highlights.js",
-      "bytes": 22379,
-      "sha256": "32d87a3ec9d4dadd8d88a1692db0f10687433d880634b36557afcf1753e9b5b4"
+      "bytes": 22415,
+      "sha256": "46c8c5d024a228e291fb79b9b580c920b6b5e0285c2a8a0b3552a40ee3a2a6ac"
     },
     {
       "path": "web/category-link-preview.css",
@@ -5867,13 +6012,13 @@
     },
     {
       "path": "web/community.css",
-      "bytes": 13245,
-      "sha256": "454d27d02482e067fcddea8c2eb5e6819f98fb30affab862f423117be7a9adeb"
+      "bytes": 14298,
+      "sha256": "1fd1b82887491eb4e08046e6ace9979474d80217d6f929fd50a5d32ce9bd9339"
     },
     {
       "path": "web/community.js",
-      "bytes": 29844,
-      "sha256": "6e6f37194fd5e8b6d24d7306881ce689369157e9dc94c47d2cd37c2876b44f28"
+      "bytes": 30580,
+      "sha256": "cc6623a73aa655ffb5524f23e81497e5fc388d6f55b7d89cff85d3c6feb98375"
     },
     {
       "path": "web/date-presentation.js",
@@ -5898,7 +6043,7 @@
     {
       "path": "web/fee-preview.js",
       "bytes": 15214,
-      "sha256": "adba7ecb5c9564ec430ea78d0febf31bd7e768983d7f88d18026625bdd3496b0"
+      "sha256": "9f94ceb25e3bd178cc1335564e10c3703f15776bda3f6b6209839381e72aba5e"
     },
     {
       "path": "web/fm-backdrop-preview.css",
@@ -5911,9 +6056,14 @@
       "sha256": "de40fdb0d76cb781c37309afb4a29e62aa37d6c9d1f861e02b51c813e69005ff"
     },
     {
+      "path": "web/full-market-client.js",
+      "bytes": 17374,
+      "sha256": "1a51d4847341f16cf646123446537eb0d8d8b8453873bba77a193d2c7860661a"
+    },
+    {
       "path": "web/index.html",
-      "bytes": 53287,
-      "sha256": "26b9eb17e9326b2a3b85983f51787016548be7f075b41399d19ed7b5eb480c81"
+      "bytes": 53412,
+      "sha256": "2dea8023b7d7ef4673a2b94c74c68601c4c3820c6fba8f6253cc5f7616b98e06"
     },
     {
       "path": "web/layout-preview.css",
@@ -6022,8 +6172,8 @@
     },
     {
       "path": "web/price-check.js",
-      "bytes": 21671,
-      "sha256": "ae374f1f4de454adcc662030d3dfe2f48ae61ff98ce6c9d08e8299672a178d26"
+      "bytes": 23841,
+      "sha256": "6f389a36d4fbeb9a60416d1400437c7670e3b926cf97ea22f39d3d91910af8e0"
     },
     {
       "path": "web/privacy-controls.css",

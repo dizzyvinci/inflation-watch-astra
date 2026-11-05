@@ -2,6 +2,7 @@
 const COOKIE = '__Host-astra-preview';
 const SESSION_SECONDS = 8 * 60 * 60;
 const MAX_BODY = 4096;
+const REVIEW_IMMUTABLE_PATH = /^\/(?:astra-ui-[a-f0-9]{16}\.(?:js|css)|astra-app-[a-f0-9]{16}\.js|data-[a-f0-9]{16}\.json)$/;
 const PREVIEW_CSS = `:root{color-scheme:dark;font-family:Segoe UI,system-ui,sans-serif;color:#edf4e7;background:#10251b}*{box-sizing:border-box}body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;line-height:1.6}main{width:min(100%,440px);padding:32px;background:#193526;border:1px solid #48634a;border-radius:18px;box-shadow:0 18px 60px #06130c66;text-align:center}h1{margin:0 0 12px;font-size:32px;line-height:1.2;letter-spacing:-.5px}p{margin:0 0 24px;color:#c4d6bf}form{display:grid;gap:18px}label{display:grid;gap:8px;text-align:left;font-size:16px;font-weight:600}input,button{font:inherit;font-size:18px;border-radius:9px;min-height:52px;width:100%}input{padding:12px 14px;background:#10291c;color:#fff;border:1px solid #71906b}button{padding:12px 18px;background:#b9d897;color:#152815;border:1px solid #d3e9b6;font-weight:700;cursor:pointer}button:hover{background:#cbe4ad}input:focus-visible,button:focus-visible{outline:3px solid #edc471;outline-offset:4px}small{display:block;margin-top:20px;color:#b3c8ad;font-size:13px}@media(max-width:420px){main{padding:26px 22px}h1{font-size:28px}}`;
 const PREVIEW_STYLE_HASH = 'sha256-BpOjXFXviQTga1JEPFA1dr76Q48eKE71szRPsqqs//8=';
 const encoder = new TextEncoder();
@@ -90,6 +91,14 @@ async function formBody(request) {
 function sessionCookie(value, age) {
   return `${COOKIE}=${value}; Path=/; Max-Age=${age}; Secure; HttpOnly; SameSite=Strict`;
 }
+function immutableReviewResponse(request, url, response) {
+  if (!['GET', 'HEAD'].includes(request.method) || url.search || !REVIEW_IMMUTABLE_PATH.test(url.pathname)
+      || response.status !== 200 || response.headers.has('Set-Cookie')) return false;
+  const type = response.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase();
+  if (url.pathname.endsWith('.js')) return type === 'application/javascript' || type === 'text/javascript';
+  if (url.pathname.endsWith('.css')) return type === 'text/css';
+  return type === 'application/json';
+}
 function controlsResponse(status, unlocked = false, mode = 'password') {
   const headers = privateHeaders(mode);
   headers['Content-Type'] = 'application/json; charset=utf-8';
@@ -150,7 +159,12 @@ export function withPreviewGate(next, { now = Date.now } = {}) {
     if (mode === 'password' && !await validSession(request, env.PREVIEW_SESSION_SECRET, time)) return gateResponse(request, 401);
     const response = await next(request, env, ctx);
     const headers = new Headers(response.headers);
-    headers.set('Cache-Control', 'private, no-store, no-transform');
+    // Only anonymous public content-addressed resources get browser reuse.
+    // HTML/fallbacks, mutable data, controls/errors and password mode retain
+    // no-store. Shared CDN storage and transformations remain disabled.
+    headers.set('Cache-Control', mode === 'review' && immutableReviewResponse(request, url, response)
+      ? 'private, max-age=31536000, immutable, no-transform'
+      : 'private, no-store, no-transform');
     headers.set('CDN-Cache-Control', 'no-store'); headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
     headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
     headers.set('X-Astra-Preview', mode);

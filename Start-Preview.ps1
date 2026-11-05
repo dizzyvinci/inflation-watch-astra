@@ -1,3 +1,3 @@
 $ErrorActionPreference = 'Stop'
 Set-Location -LiteralPath $PSScriptRoot
-python preview.py --port 8765
+python (Join-Path $PSScriptRoot 'preview.py') --port 8765

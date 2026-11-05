@@ -2,11 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import worker, { collect, calculationFingerprint, referenceFingerprint, retainHistories, CALCULATION_MODEL_VERSION, MAX_PUBLIC_READ_FLIGHTS, MAX_SHARED_REPORT_BYTES } from '../ops/worker.mjs';
+import {createCachedProjectionFactory} from '../ops/market-catalog.mjs';
 
 const seed = JSON.parse(readFileSync(new URL('../dist/data.json', import.meta.url), 'utf8'));
 const compiledVersion = JSON.parse(readFileSync(new URL('../dist/version.json', import.meta.url), 'utf8'));
 const feed = JSON.parse(readFileSync(new URL('../cache/market.json', import.meta.url), 'utf8'));
 const cfg = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf8'));
+const catalogIdentities = JSON.parse(readFileSync(new URL('../catalog-identities-v1.json', import.meta.url), 'utf8'));
 const POINTER = 'version.json';
 const STATE = '_private/collector-state.json';
 const LOCK = '_private/collector-lock.json';
@@ -1046,4 +1048,50 @@ test('503 and 521 Retry-After skip future source requests without renewing evide
     assert.equal(skipped.status, 'cooldown'); assert.equal(calls, 0);
     assert.equal(bucket.read(POINTER).sourceStatus.checkedAt, retained.sourceStatus.checkedAt);
   }
+});
+
+
+test('published report and pointer bind catalogue metadata to the full accepted source, not the bounded calculation feed', async () => {
+  const input=clone(feed),raw=input.items.find(item=>item.s==='apple');
+  const start=Date.parse('2000-01-01T00:00:00Z');
+  raw.h=Array.from({length:7305},(_,i)=>[new Date(start+i*86400000).toISOString().slice(0,10),10+i,1]);
+  const bucket=new FakeR2(),env=envFor(bucket);
+  const result=await collect(env,{now:NOW,fetcher:async()=>response(input)});
+  assert.equal(result.status,'published',result.detail);
+  const pointer=bucket.read(POINTER),report=bucket.read(pointer.data);
+  const expected=await createCachedProjectionFactory(catalogIdentities).metadata(input);
+  assert.deepEqual(report.marketCatalog,expected);assert.deepEqual(pointer.marketCatalog,expected);
+  const responseIndex=await request(env,'/market-index.json'),index=await responseIndex.json();
+  assert.equal(index.catalogHash,expected.catalogHash);assert.equal(index.sourceProjectionHash,expected.sourceProjectionHash);
+  assert.equal(index.rows.find(item=>item.slug==='apple').historyDays,7305);
+  const detail=await (await request(env,'/market-item/apple.json?catalog='+index.catalogHash)).json();
+  assert.equal(detail.history.length,7305);assert.equal(detail.price,null);
+  const oldVersion=pointer.version,sourceClock=pointer.sourceUpdatedAt;
+  const replay=await collect(env,{now:NOW+600000,fetcher:async()=>new Response(null,{status:304})});
+  assert.equal(replay.status,'unchanged');assert.equal(bucket.read(POINTER).version,oldVersion);
+  assert.equal(bucket.read(POINTER).sourceUpdatedAt,sourceClock);assert.deepEqual(bucket.read(POINTER).marketCatalog,expected);
+});
+
+test('catalogue projection failure retains the last-good main report and cannot archive or acknowledge the rejected feed', async () => {
+  const {bucket,env,pointer}=await initialize(),before=bucket.read(pointer.data),input=clone(feed);
+  input.items.find(item=>item.s==='apple').n='X'.repeat(201);
+  const sourceBefore=bucket.read(STATE).feedHash;
+  const result=await collect(env,{now:NOW+600000,fetcher:async()=>response(input)});
+  assert.equal(result.status,'degraded');
+  const retained=bucket.read(POINTER);
+  assert.equal(retained.version,pointer.version);assert.equal(retained.sourceUpdatedAt,pointer.sourceUpdatedAt);
+  assert.equal(retained.lastSuccessfulFetchAt,pointer.lastSuccessfulFetchAt);
+  assert.deepEqual(bucket.read(pointer.data),before);assert.equal(bucket.read(STATE).feedHash,sourceBefore);
+  assert.equal(bucket.events.filter(event=>event.op==='put'&&/^data-[a-f0-9]{16}\.json$/.test(event.key)).length,1);
+});
+
+
+test('deployed runtime entry exports only the tested default handler', async () => {
+  const config = JSON.parse(readFileSync(new URL('../ops/wrangler.jsonc', import.meta.url), 'utf8'));
+  assert.equal(config.main, './worker-entry.mjs');
+  const entry = await import('../ops/worker-entry.mjs');
+  assert.deepEqual(Object.keys(entry), ['default']);
+  assert.equal(entry.default, worker);
+  assert.equal(typeof entry.default.fetch, 'function');
+  assert.equal(typeof entry.default.scheduled, 'function');
 });

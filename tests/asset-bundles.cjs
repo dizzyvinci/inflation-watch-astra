@@ -3,6 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),os=require('node:os'),asse
 const {JSDOM,requestInterceptor,VirtualConsole}=require('jsdom');
 const root=path.resolve(__dirname,'..'),temporary=fs.mkdtempSync(path.join(os.tmpdir(),'astra-ui-bundle-test-'));
 const source=fs.readFileSync(path.join(root,'web/index.html'),'utf8'),report=JSON.parse(fs.readFileSync(path.join(root,'dist/data.json'),'utf8')),unchanged=JSON.stringify(report);
+let fullIndex;
 const scripts=[...source.matchAll(/<script src="([^"]+)" defer><\/script>/g)].map(m=>m[1]);
 const styles=[...source.matchAll(/<link rel="stylesheet" href="([^"]+)">/g)].map(m=>m[1]);
 for(const name of ['index.html',...scripts,...styles])fs.copyFileSync(path.join(root,'web',name),path.join(temporary,name));
@@ -27,7 +28,7 @@ async function open(html,{immediate=false,activeManifest=manifest,appFailure=fal
   w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};
   w.matchMedia=()=>({matches:true,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}});
   w.AbortSignal.timeout=()=>undefined;
-  w.fetch=async relative=>{const url=new URL(relative,w.location.href);if(url.origin!=='https://inflation.gg'){calls.provider++;throw Error('No source-provider calls');}calls.fetch.push(url.pathname);assert(['/version.json','/data-0123456789abcdef.json'].includes(url.pathname),'Unexpected fetch: '+url.pathname);if(!immediate)await new Promise(resolve=>setTimeout(resolve,0));return{ok:true,status:200,headers:{get:()=>null},json:async()=>url.pathname==='/version.json'?{version:'fixture',data:'data-0123456789abcdef.json'}:JSON.parse(unchanged)};};
+  w.fetch=async relative=>{const url=new URL(relative,w.location.href);if(url.origin!=='https://inflation.gg'){calls.provider++;throw Error('No source-provider calls');}calls.fetch.push(url.pathname);assert(['/version.json','/data-0123456789abcdef.json','/market-index.json'].includes(url.pathname),'Unexpected fetch: '+url.pathname);if(!immediate)await new Promise(resolve=>setTimeout(resolve,0));return{ok:true,status:200,headers:{get:name=>name.toLowerCase()==='content-type'?'application/json':null},text:async()=>JSON.stringify(fullIndex),json:async()=>url.pathname==='/version.json'?{version:'fixture',data:'data-0123456789abcdef.json'}:JSON.parse(unchanged)};};
   w.XMLHttpRequest=function(){calls.xhr++;throw Error('No XHR');};w.navigator.sendBeacon=()=>{calls.beacon++;throw Error('No tracking');};
  }});
  const w=dom.window,doc=w.document;
@@ -52,12 +53,13 @@ async function open(html,{immediate=false,activeManifest=manifest,appFailure=fal
   w.location.hash='#method-basket-size';w.dispatchEvent(new w.Event('hashchange'));await until(()=>!doc.getElementById('view-method').hidden);assert(doc.getElementById('method-basket-size'));
   w.location.hash='#privacy';w.dispatchEvent(new w.Event('hashchange'));await until(()=>!doc.getElementById('view-privacy').hidden);assert(doc.querySelector('#view-privacy .privacy-choice-options'));assert.equal(doc.querySelectorAll('script[src^="https://static.cloudflareinsights.com/"]').length,0);
   const ids=[...doc.querySelectorAll('[id]')].map(n=>n.id);assert.equal(new Set(ids).size,ids.length,'No duplicated IDs after bundled module initialization');
-  assert.deepEqual(calls.fetch,['/version.json','/data-0123456789abcdef.json']);assert.equal(calls.provider+calls.xhr+calls.beacon,0);assert.equal(JSON.stringify(report),unchanged);
+  assert.deepEqual(calls.fetch,['/version.json','/data-0123456789abcdef.json','/market-index.json']);assert.equal(calls.provider+calls.xhr+calls.beacon,0);assert.equal(JSON.stringify(report),unchanged);
   assert.deepEqual(errors,[]);assert.equal(calls.moduleFailures.length,optionalFailure?1:0);if(optionalFailure){assert.equal(JSON.stringify(calls.moduleFailures),JSON.stringify([{module:'author-portrait.js',status:'initialization_failed'}]));assert(!JSON.stringify(calls.moduleFailures).includes('synthetic-private-diagnostic'));}
   return{resources:calls.resources.length,scripts:calls.resources.filter(n=>n.endsWith('.js')).length,styles:calls.resources.filter(n=>n.endsWith('.css')).length,rate:doc.getElementById('main-rate').textContent,categories:doc.querySelectorAll('#category-cards .category-card').length,optionalFailureIsolated:optionalFailure};
  }finally{w.close();}
 }
 (async()=>{try{
+ fullIndex=await(await import('../ops/market-catalog.mjs')).buildIndex(JSON.parse(fs.readFileSync(path.join(root,'cache/market.json'),'utf8')),JSON.parse(fs.readFileSync(path.join(root,'catalog-identities-v1.json'),'utf8')));
  const original=await open(source),combined=await open(bundled),immediate=await open(bundled,{immediate:true});
  assert.equal(original.scripts,scripts.length);assert.equal(original.styles,styles.length);assert.equal(combined.scripts,3);assert.equal(combined.styles,1);assert.equal(combined.rate,original.rate);assert.equal(immediate.rate,original.rate);
  function generate(){fs.writeFileSync(path.join(temporary,'index.html'),source);const result=spawnSync(process.env.PYTHON||'python',[path.join(root,'asset_bundles.py'),'--dist',temporary,'--enable'],{encoding:'utf8'});assert.equal(result.status,0,result.stderr);return{html:fs.readFileSync(path.join(temporary,'index.html'),'utf8'),activeManifest:JSON.parse(fs.readFileSync(path.join(temporary,'ui-bundles.json'),'utf8'))};}

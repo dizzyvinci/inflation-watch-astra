@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import worker from '../ops/worker.mjs';
 import { safeReturnTo, withPreviewGate } from '../ops/preview-gate.mjs';
 
@@ -238,6 +239,96 @@ test('controls bounded form, encoding, duplicate fields and expired session cann
 });
 
 const reviewEnv = { ...env, PREVIEW_ACCESS: 'review' };
+const immutableResponse = response => {
+  assert.equal(response.headers.get('Cache-Control'), 'private, max-age=31536000, immutable, no-transform');
+  assert.equal(response.headers.get('CDN-Cache-Control'), 'no-store');
+  assert.equal(response.headers.get('Cloudflare-CDN-Cache-Control'), 'no-store');
+  assert.equal(response.headers.get('X-Astra-Preview'), 'review');
+  assert.equal(response.headers.get('X-Robots-Tag'), 'noindex, nofollow, noarchive');
+};
+const immutableCases = [
+  ['/astra-ui-0123456789abcdef.js', 'application/javascript; charset=utf-8'],
+  ['/astra-app-0123456789abcdef.js', 'text/javascript'],
+  ['/astra-ui-0123456789abcdef.css', 'text/css; charset=utf-8'],
+  ['/data-0123456789abcdef.json', 'application/json; charset=utf-8'],
+];
+
+test('review browser caching is limited to successful typed content-addressed resources and preserves independent bodies', async () => {
+  for (const [path, type] of immutableCases) {
+    const handler = withPreviewGate(req => new Response(req.method === 'HEAD' ? null : 'unchanged public payload', {
+      headers: { 'Content-Type': type, ETag: '"original"', Expires: 'tomorrow', Vary: 'Accept-Encoding' },
+    }));
+    for (const method of ['GET', 'HEAD']) {
+      const responses = await Promise.all(Array.from({ length: 8 }, () => handler(request(path, { method }), reviewEnv)));
+      for (const response of responses) {
+        immutableResponse(response);
+        assert.equal(await response.text(), method === 'HEAD' ? '' : 'unchanged public payload');
+        assert.equal(response.headers.get('ETag'), '"original"');
+        assert.equal(response.headers.get('Vary'), 'Accept-Encoding');
+        assert.equal(response.headers.get('Expires'), null);
+        assert.equal(response.headers.get('Content-Encoding'), null, 'No compression is introduced');
+      }
+    }
+  }
+});
+
+test('review HTML, mutable/catalog paths and noncanonical hash URLs remain no-store', async () => {
+  const handler = withPreviewGate(() => new Response('unchanged', { headers: { 'Content-Type': 'application/json' } }));
+  for (const path of ['/', '/index.html', '/fallback.html', '/version.json', '/health.json', '/data.json', '/ui-bundles.json',
+    '/analytics-config.json', '/cash-catalog.json', '/assets/cash-client-catalog-0123456789abcdef.json', '/app.js', '/style.css',
+    '/astra-ui-0123456789abcde.js', '/astra-ui-0123456789abcdef0.js', '/astra-ui-0123456789ABCDEf.js',
+    '/astra-ui-0123456789abcdef.js.map', '/astra-ui-0123456789abcdef.js/extra', '/astra-app-0123456789abcdef.css',
+    '/data-0123456789abcdef.json?variant=unverified', '/_private/data-0123456789abcdef.json']) {
+    privateResponse(await handler(request(path), reviewEnv), 'review');
+  }
+  privateResponse(await handler(request('/data-0123456789abcdef.json', { method: 'POST' }), reviewEnv), 'review');
+});
+
+test('hash-shaped fallbacks, wrong MIME, cookies and every unmatched status retain review no-store', async () => {
+  for (const [path] of immutableCases) {
+    for (const type of ['text/html', 'application/octet-stream', 'application/problem+json', '']) {
+      const handler = withPreviewGate(() => new Response('fallback', { headers: type ? { 'Content-Type': type } : {} }));
+      privateResponse(await handler(request(path), reviewEnv), 'review');
+    }
+  }
+  for (const [path, type] of immutableCases) {
+    for (const cookieValue of ['private=value; HttpOnly', '']) {
+      const handler = withPreviewGate(() => new Response('not shared', { headers: { 'Content-Type': type, 'Set-Cookie': cookieValue } }));
+      const response = await handler(request(path), reviewEnv);
+      privateResponse(response, 'review'); assert.equal(response.headers.get('Set-Cookie'), cookieValue);
+    }
+    for (const status of [201, 204, 206, 301, 302, 304, 400, 401, 403, 404, 429, 500, 503]) {
+      const handler = withPreviewGate(() => new Response([204, 304].includes(status) ? null : 'retained status', { status, headers: { 'Content-Type': type, ETag: '"same"' } }));
+      const response = await handler(request(path, { headers: { 'If-None-Match': '"same"' } }), reviewEnv);
+      assert.equal(response.status, status); privateResponse(response, 'review');
+    }
+  }
+});
+
+test('password mode never enables immutable browser caching even after valid authentication', async () => {
+  for (const [path, type] of immutableCases) {
+    const handler = withPreviewGate(req => new Response(req.method === 'HEAD' ? null : 'authorized only', { headers: { 'Content-Type': type } }), { now: () => NOW });
+    const token = await cookie(handler);
+    for (const method of ['GET', 'HEAD']) {
+      const response = await handler(request(path, { method, headers: { Cookie: token } }), env);
+      privateResponse(response); assert.equal(response.status, 200);
+      assert.equal((await handler(request(path, { method }), env)).status, 401);
+    }
+  }
+});
+
+test('review phase1 leaves existing gzip bytes, encoding, variation and validators unchanged', async () => {
+  const compressed = gzipSync('public immutable content');
+  const handler = withPreviewGate(() => new Response(compressed, { headers: {
+    'Content-Type': 'application/javascript', 'Content-Encoding': 'gzip', Vary: 'Accept-Encoding', ETag: 'W/"encoded"',
+  } }));
+  const response = await handler(request('/astra-ui-0123456789abcdef.js', { headers: { 'Accept-Encoding': 'gzip' } }), reviewEnv);
+  immutableResponse(response);
+  assert.equal(response.headers.get('Content-Encoding'), 'gzip');
+  assert.equal(response.headers.get('Vary'), 'Accept-Encoding');
+  assert.equal(response.headers.get('ETag'), 'W/"encoded"');
+  assert.deepEqual(new Uint8Array(await response.arrayBuffer()), new Uint8Array(compressed));
+});
 test('review mode serves pages and assets without a cookie while preserving response and private review headers', async () => {
   const calls = [];
   const handler = withPreviewGate(req => {
