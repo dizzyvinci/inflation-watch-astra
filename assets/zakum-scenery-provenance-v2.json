@@ -1,0 +1,17 @@
+{
+  "tool": "built-in image_gen",
+  "reference": "https://maplestory.io/api/GMS/83/mob/8800000/render/stand/0",
+  "notes": "Decorative fan illustrations, not source market data or verified drop tables. Old altar art retained for history.",
+  "assets": [
+    {
+      "file": "zakum-dark-v2.png",
+      "bytes": 2733223,
+      "sha256": "b192316e1ca6c2061874c24d99f26c0171fc53769362dfcdfd260df93a98e066"
+    },
+    {
+      "file": "zakum-bright-v2.png",
+      "bytes": 2735685,
+      "sha256": "8cd6c8f86a6bf256ec3d0660d56a609a3c1c3cacaa4636d6b7c1579fcecdad3d"
+    }
+  ]
+}

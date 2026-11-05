@@ -79,7 +79,9 @@ const assertOff = f => {
   f.w.eval(source); assert.equal(f.doc.querySelectorAll('.privacy-controls-panel').length, 2);
   click(f, 'on'); await flush();
   assert.equal(f.calls.fetch.length, 1); assert.equal(f.calls.fetch[0].request, '/analytics-config.json');
-  assert.equal(f.calls.fetch[0].options.credentials, 'omit'); assert.equal(f.calls.fetch[0].options.redirect, 'error');
+  assert.match(f.calls.fetch[0].request, /^\/(?!\/)/);
+  assert.equal(new URL(f.calls.fetch[0].request, f.w.location.href).origin, f.w.location.origin);
+  assert.equal(f.calls.fetch[0].options.credentials, 'same-origin'); assert.equal(f.calls.fetch[0].options.redirect, 'error');
   assert.equal(preferences.get(preferenceKey), 'on'); assert.equal(scripts(f).length, 1);
   const script = scripts(f)[0]; assert.equal(script.type, 'module'); assert.equal(script.src, validConfig.scriptUrl);
   assert.deepEqual(JSON.parse(script.dataset.cfBeacon), { token, spa: false });

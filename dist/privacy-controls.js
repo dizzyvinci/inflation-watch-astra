@@ -120,7 +120,7 @@
       try {
         // No request is made at all before consent (or for an OFF/invalid choice).
         const response = await window.fetch('/analytics-config.json', {
-          cache: 'no-store', credentials: 'omit', redirect: 'error', signal: controller.signal,
+          cache: 'no-store', credentials: 'same-origin', redirect: 'error', signal: controller.signal,
         });
         if (response.status === 401 || response.status === 403) throw new Error('Unlock this site again before enabling optional metrics.');
         if (!response.ok) throw new Error('Optional analytics configuration is unavailable.');
