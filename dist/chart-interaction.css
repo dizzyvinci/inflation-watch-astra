@@ -1,0 +1,14 @@
+.chart-inspector-host{position:relative}
+.chart-inspector-ready{touch-action:pan-y;cursor:crosshair}
+.chart-inspector-ready:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.chart-inspector-ui{position:absolute;inset:0;pointer-events:none;z-index:4}
+.chart-inspector-toggle{position:absolute;right:8px;top:5px;pointer-events:auto;font:10px/1.4 var(--font);padding:3px 7px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--muted);cursor:pointer}
+.chart-inspector-toggle[aria-pressed="true"]{color:var(--gold)}
+.chart-inspector-tooltip{position:absolute;top:35px;max-width:min(360px,calc(100% - 16px));padding:9px 12px;border:1px solid var(--gold);border-radius:6px;background:var(--surface);color:var(--text);box-shadow:0 4px 16px #07100dc0;font:12px/1.6 var(--font);white-space:pre-line;overflow-wrap:anywhere;pointer-events:none}
+.chart-inspector-tooltip[hidden]{display:none}
+.chart-inspector-guide{pointer-events:none}
+.chart-inspector-guide line{stroke:var(--gold);stroke-width:1;stroke-dasharray:4 4;vector-effect:non-scaling-stroke}
+.chart-inspector-guide circle{fill:var(--surface);stroke:var(--gold);stroke-width:2;vector-effect:non-scaling-stroke}
+.chart-inspector-help{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.chart-inspector-pinned .chart-inspector-tooltip{border-color:var(--mint)}
+@media(max-width:600px){.chart-inspector-tooltip{font-size:11px;padding:7px 9px}.chart-inspector-toggle{font-size:9px}}

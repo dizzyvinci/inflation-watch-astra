@@ -8,8 +8,10 @@ const w=dom.window;w.scrollTo=()=>{};w.HTMLDialogElement.prototype.showModal=fun
 w.HTMLElement.prototype.scrollIntoView=function(){};
 w.fetch=async url=>{const p=path.join(project,'dist',url);return {ok:fs.existsSync(p),status:200,json:async()=>JSON.parse(fs.readFileSync(p,'utf8'))}};
 w.AbortSignal.timeout=()=>undefined;
-w.eval(fs.readFileSync(path.join(project,'web/app.js'),'utf8')+';window.__deriveSmegaSpreads=deriveSmegaSpreads;');
+w.eval(fs.readFileSync(path.join(project,'web/community.js'),'utf8'));
+w.eval(fs.readFileSync(path.join(project,'web/app.js'),'utf8')+';window.__deriveSmegaSpreads=deriveSmegaSpreads;window.__buildCashPricing=buildCashPricing;window.__categoryGauge=categoryGauge;window.__sourceHealth=sourceHealth;window.__smegaWindow=smegaWindow;window.__enhanceTables=enhanceTables;');
 const click=(selector)=>{const el=w.document.querySelector(selector);assert(el,selector);el.click()};
+const until=async predicate=>{const deadline=Date.now()+1500;while(!predicate()&&Date.now()<deadline)await new Promise(r=>setTimeout(r,5));assert(predicate(),'Expected route state did not settle');};
 (async()=>{
  await new Promise(r=>setTimeout(r,30));
  const doc=w.document;
@@ -20,6 +22,31 @@ const click=(selector)=>{const el=w.document.querySelector(selector);assert(el,s
  assert.equal(doc.querySelectorAll('#basket-table tbody tr').length,50);
  assert.equal(doc.querySelectorAll('#cash-table tbody tr').length,29);
  assert.equal(doc.querySelectorAll('#category-cards .category-card').length,5);
+ assert(doc.querySelector('.cpi-card .eyebrow').textContent.includes('MPI'));
+ assert(doc.getElementById('mpi-explanation').textContent.includes('56.1% higher'));assert(doc.getElementById('mpi-explanation').textContent.includes('not the amount of mesos'));
+ assert(doc.querySelector('.cpi-rule').textContent.includes('Reference week = 100'));
+ assert(doc.querySelector('.hero-bottom a').textContent.includes('How this value was calculated'));
+ assert.equal(doc.querySelectorAll('#category-cards .weight-help a').length,5);
+ assert([...doc.querySelectorAll('#category-cards .weight-help a')].every(a=>!a.closest('button')));
+ assert(doc.querySelector('.category-gauge-legend').textContent.includes('Mint: below reference'));
+ const gauge=w.__categoryGauge,probe=doc.createElement('div'),gaugeValues=[80,100,160,350];
+ let lastX=-Infinity;
+ for(const value of gaugeValues){probe.innerHTML=gauge(value,400);const svg=probe.querySelector('svg'),needle=probe.querySelector('.category-needle');assert.equal(Number(svg.dataset.index),value);assert.equal(Number(svg.dataset.scaleMax),400);const x=Number(needle.getAttribute('x2'));assert(x>lastX);lastX=x;assert(Math.abs(x-(70+43*Math.cos(-Math.PI+value/400*Math.PI)))<1e-9);const arc=probe.querySelector('.category-value-arc');if(value===100)assert.equal(arc,null);else assert.equal(arc.getAttribute('stroke'),value<100?'#89c6b0':'#edc471');}
+ assert.equal(new Set([...doc.querySelectorAll('#category-cards svg')].map(svg=>svg.dataset.scaleMax)).size,1);
+ const sourceHealth=w.__sourceHealth,clock=Date.parse('2026-11-05T09:00:00Z'),healthy={sourceUpdatedAt:'2026-11-04T10:00:00Z',sourceStatus:{status:'unchanged',checkedAt:'2026-11-05T08:55:00Z'},intraday:[],rollingReference:{capturedAt:'2026-11-05T08:59:00Z'}};
+ let health=sourceHealth(healthy,clock);assert.equal(health.daily.tone,'green');assert.equal(health.collector.tone,'green');assert.equal(health.reference.tone,'amber');assert.equal(health.intraday.tone,'amber');assert(health.intraday.state.includes('0 qualified'));
+ health=sourceHealth({...healthy,sourceStatus:{...healthy.sourceStatus,status:'degraded'}},clock);assert.equal(health.collector.tone,'red');assert.equal(health.daily.tone,'amber');assert(health.collector.state.includes('last good retained'));
+ assert.equal(sourceHealth({...healthy,sourceUpdatedAt:'2026-11-02T00:00:00Z'},clock).daily.tone,'red');assert.equal(sourceHealth({...healthy,sourceStatus:{checkedAt:'2026-11-05T08:29:00Z'}},clock).collector.tone,'amber');
+ assert.equal(doc.querySelector('[data-status-key="reference"]').dataset.statusTone,'amber');assert.equal(doc.querySelector('[data-status-key="intraday"]').dataset.statusTone,'amber');assert(doc.getElementById('source-status-legend').textContent.includes('not provider guarantees'));
+ const hourly=Array.from({length:26},(_,i)=>({at:new Date(Date.parse('2026-11-01T00:00:00Z')+i*3600000).toISOString(),rate:20}));
+ assert.equal(w.__smegaWindow(hourly,'24').length,24);assert.equal(w.__smegaWindow(hourly,'8').length,8);assert.equal(w.__smegaWindow(hourly,'all').length,26);assert.equal(w.__smegaWindow(hourly,'24')[0].at,hourly[2].at);
+ assert.equal(doc.querySelectorAll('#smega-offer-chart circle[data-chart-value]').length,48);assert.equal(doc.querySelectorAll('#smega-spread-chart circle[data-chart-value]').length,24);
+ const hourlyStats=doc.getElementById('smega-stats').textContent;click('[data-smega-range="8"]');assert.equal(doc.querySelectorAll('#smega-offer-chart circle[data-chart-value]').length,16);assert.equal(doc.querySelectorAll('#smega-spread-chart circle[data-chart-value]').length,8);assert.equal(doc.getElementById('smega-stats').textContent,hourlyStats);assert(doc.getElementById('smega-history-note').textContent.includes('not summed into unique people'));click('[data-smega-range="24"]');
+ const generic=doc.createElement('div');generic.id='sorting-fixture';generic.innerHTML='<table><thead><tr><th>Item</th><th>Value</th></tr></thead><tbody><tr data-id="missing"><td>Unknown</td><td>—</td></tr><tr data-id="ratio"><td><a href="#nx">Ratio item</a></td><td>1:13.5</td></tr><tr data-id="large"><td>Large item</td><td>1,200</td></tr><tr data-id="percent"><td>Percent item</td><td>8.4%</td></tr><tr data-id="precise"><td>Precise item</td><td data-sort-value="8.39">8.4%</td></tr></tbody></table>';doc.body.append(generic);w.__enhanceTables();
+ const genericSort=generic.querySelector('th:nth-child(2) button');assert.equal(genericSort.type,'button');genericSort.focus();assert.equal(doc.activeElement,genericSort);genericSort.click();assert.equal(genericSort.parentElement.getAttribute('aria-sort'),'ascending');assert.equal([...generic.querySelectorAll('tbody tr')].map(r=>r.dataset.id).join(','),'precise,percent,ratio,large,missing');genericSort.click();assert.equal(genericSort.parentElement.getAttribute('aria-sort'),'descending');assert.equal([...generic.querySelectorAll('tbody tr')].map(r=>r.dataset.id).join(','),'large,ratio,percent,precise,missing');assert(generic.querySelector('a[href="#nx"]'));generic.remove();
+ assert(doc.querySelector('script[src="chart-interaction.js"]'));assert(doc.querySelector('link[href="chart-interaction.css"]'));
+ const chartPoint=doc.querySelector('#main-chart circle[data-chart-value]');assert(chartPoint.dataset.chartSeries);assert(chartPoint.dataset.chartDateLabel);assert.equal(chartPoint.dataset.chartDatePrecision,'day');assert.equal(chartPoint.dataset.chartUnit,'mesos per NX');assert(Number.isFinite(Number(chartPoint.dataset.chartValue)));
+
  assert(doc.getElementById('rolling-reference-card').textContent.includes('2–30 days'));
  const published=JSON.parse(fs.readFileSync(path.join(project,'dist/data.json'),'utf8'));
  assert(doc.getElementById('smega-source-card').textContent.includes(published.smega.length+' published hourly'));
@@ -33,7 +60,45 @@ const click=(selector)=>{const el=w.document.querySelector(selector);assert(el,s
  assert(!doc.getElementById('comparison-card').textContent.includes('mesos.watch reports'));
  assert(doc.getElementById('rolling-reference-card').textContent.includes('not a source-published NX headline'));
  const referenced=new Set(published.rollingReference.items.map(i=>i.name));assert.equal(doc.querySelectorAll('#basket-table .ref-cell').length,published.rows.filter(r=>referenced.has(r.name)).length);
- assert.equal(doc.querySelectorAll('#cash-table .ref-cell').length,29);
+ // The explorer keeps the full fixed schedule, even when a source item has no usable evidence.
+ const pricing=w.__buildCashPricing;
+ const fixture={sourceUpdatedAt:'2026-11-04T08:30:56+00:00',latest:{partial:true},cash:[
+  {slug:'selective-5-slot-coupon',history:[['2026-11-01',1,100],['2026-11-02',100,5],['2026-11-03',400,10],['2026-11-04',9999,4],['2026-11-05',80000,999],['2026-11-31',700,100],['2026-11-04',-1,500],['2026-11-04',NaN,500]]},
+  {slug:'ap-reset-scroll',history:[['2026-11-03',1400,5]]}],rollingReference:{capturedAt:'2026-11-05T02:10:54Z',items:[
+   {name:'Selective 5-slot Coupon',price:500,salesCounted:24,windowDays:3},
+   {name:'AP Reset Scroll',price:1400,salesCounted:48,windowDays:30}]}};
+ const chosen=pricing(fixture),first=chosen.rows[0];
+ assert.equal(chosen.rows.length,29);assert.equal(chosen.start,'2026-11-02');assert.equal(chosen.end,'2026-11-04');assert.equal(chosen.partial,true);
+ assert.equal(first.price,300);assert.equal(first.quantity,15);assert.equal(first.windowDays,2);assert.equal(first.lowRate,.02);assert.equal(first.highRate,.08);
+ assert(Math.abs(chosen.reference-.095)<1e-12);assert.equal(first.verdict,'less-favorable');assert.equal(chosen.rows[1].verdict,'favorable');assert.equal(chosen.rows[2].verdict,'unknown');assert.equal(chosen.rows[2].price,null);
+ assert.equal(pricing(fixture,{side:'buy'}).rows[0].verdict,'favorable');
+ assert.equal(pricing(fixture,{days:1}).reference,null);assert.equal(pricing(fixture,{days:7}).rows[0].quantity,115);
+ const shifted=pricing({...fixture,sourceUpdatedAt:'2026-11-05T01:00:00Z'});assert.equal(shifted.start,'2026-11-03');assert.equal(shifted.rows[0].quantity,1009);
+ assert.equal(pricing({...fixture,sourceUpdatedAt:'not-a-date'}).reference,null);
+ const rolling=pricing(fixture,{evidence:'rolling',days:1}),rolling30=pricing(fixture,{evidence:'rolling',days:30});
+ assert.equal(rolling.rows[0].price,500);assert.equal(rolling.rows[0].windowDays,3);assert.equal(rolling.rows[1].windowDays,30);assert.equal(rolling.rows[0].lowRate,null);assert.equal(rolling.rows[0].highRate,null);
+ assert(Math.abs(rolling.reference-(.1/3+.2/15)/(.4))<1e-12);assert.equal(rolling.reference,rolling30.reference);
+ const schedule=chosen.rows.map(r=>r.slug+':'+r.nx).sort().join('|');assert.equal(schedule,published.cash.map(r=>r.slug+':'+r.nx).sort().join('|'));
+ assert.equal(doc.getElementById('cash-lookback').value,'3');assert.equal(doc.getElementById('cash-lookback').disabled,false);
+ assert(doc.getElementById('cash-window-note').textContent.includes('2026-11-02–2026-11-04'));assert(doc.getElementById('cash-window-note').textContent.includes('partial'));
+ assert(doc.getElementById('cash-pricing-note').textContent.includes('Higher mesos / NX'));
+ const tableRates=()=>[...doc.querySelectorAll('#cash-table tbody tr[data-rate]')].map(r=>Number(r.dataset.rate)).filter(v=>v>0);
+ const ordered=(values,asc)=>values.every((v,i)=>!i||(asc?values[i-1]<=v:values[i-1]>=v));
+ assert(ordered(tableRates(),false));assert.equal(doc.querySelector('#cash-table [data-cash-sort="rate"]').parentElement.getAttribute('aria-sort'),'descending');
+ click('[data-cash-sort="rate"]');assert(ordered(tableRates(),true));assert.equal(doc.querySelector('#cash-table [data-cash-sort="rate"]').parentElement.getAttribute('aria-sort'),'ascending');
+ click('[data-cash-sort="name"]');const names=[...doc.querySelectorAll('#cash-table .item-link span')].map(el=>el.firstChild.textContent);assert.equal(names.join('|'),[...names].sort((a,b)=>a.localeCompare(b)).join('|'));
+ click('[data-cash-side="buy"]');assert(ordered(tableRates(),true));assert.equal(doc.querySelector('[data-cash-side="buy"]').getAttribute('aria-pressed'),'true');assert(doc.getElementById('cash-pricing-note').textContent.includes('Lower mesos / NX'));
+ const verdicts=()=>Object.fromEntries([...doc.querySelectorAll('#cash-table tr[data-cash-item]')].map(r=>[r.dataset.cashItem,r.dataset.verdict]));const buyVerdicts=verdicts();
+ click('[data-cash-side="sell"]');assert(ordered(tableRates(),false));for(const [slug,verdict] of Object.entries(verdicts())){if(verdict==='favorable')assert.equal(buyVerdicts[slug],'less-favorable');if(verdict==='less-favorable')assert.equal(buyVerdicts[slug],'favorable');}
+ const cashFilter=doc.getElementById('cash-filter');cashFilter.value='favorable';cashFilter.dispatchEvent(new w.Event('change'));assert(doc.querySelectorAll('#cash-table tr[data-verdict]').length>0);assert([...doc.querySelectorAll('#cash-table tr[data-verdict]')].every(r=>r.dataset.verdict==='favorable'&&r.querySelector('.cash-favorable')));
+ cashFilter.value='less-favorable';cashFilter.dispatchEvent(new w.Event('change'));assert([...doc.querySelectorAll('#cash-table tr[data-verdict]')].every(r=>r.dataset.verdict==='less-favorable'));
+ cashFilter.value='all';cashFilter.dispatchEvent(new w.Event('change'));
+ const evidence=doc.getElementById('cash-evidence');evidence.value='rolling';evidence.dispatchEvent(new w.Event('change'));assert.equal(doc.getElementById('cash-lookback').disabled,true);assert(doc.getElementById('cash-window-note').textContent.includes('cannot be resliced'));assert.equal(doc.querySelectorAll('#cash-table tr[data-cash-item]').length,29);assert([...doc.querySelectorAll('#cash-table tbody tr')].every(r=>r.children[6].textContent==='Unavailable'&&r.children[7].textContent==='Unavailable'));
+ evidence.value='daily';evidence.dispatchEvent(new w.Event('change'));const lookback=doc.getElementById('cash-lookback');lookback.value='1';lookback.dispatchEvent(new w.Event('change'));assert(doc.getElementById('cash-window-note').textContent.includes('2026-11-04–2026-11-04'));assert.equal(doc.querySelectorAll('#cash-table tr[data-verdict="unknown"]').length,9);assert.equal(doc.getElementById('main-rate').textContent,'17.1');
+ lookback.value='3';lookback.dispatchEvent(new w.Event('change'));assert.equal(lookback.disabled,false);assert(doc.getElementById('cash-goods-comparison').textContent.includes('not directly comparable'));
+ assert(doc.title.startsWith('inflation.gg'));assert(doc.querySelector('.brand-watch').textContent==='.gg');assert(!doc.getElementById('sources-cards').textContent.includes('draft'));
+ assert(doc.querySelector('#view-method a[href="https://www.statcan.gc.ca/en/subjects-start/prices_and_price_indexes/consumer_price_indexes/faq"]'));
+
  assert(doc.querySelector('#main-chart svg'));
  assert(!doc.getElementById('exact-rate').textContent.includes('mesos per NX'));
  assert(!doc.getElementById('main-chart').textContent.includes('Smega'));
@@ -41,7 +106,54 @@ const click=(selector)=>{const el=w.document.querySelector(selector);assert(el,s
  assert(doc.querySelector('#smega-spread-chart svg'));
  assert.equal(doc.querySelectorAll('#reported-chart circle').length,16+published.comparisons.filter(p=>p.kind==='player_report').length);
  assert(doc.getElementById('reported-history-sources').textContent.includes('day precision'));
- assert.equal(doc.querySelectorAll('#basket-table .weight-help a').length,51);
+ assert.equal(doc.querySelectorAll('#basket-table .weight-help a').length,1);
+ assert.equal(doc.querySelectorAll('#basket-table tbody .weight-help').length,0);
+ assert.equal(doc.querySelector('.footer-story p').textContent,'This page is an overnight passion project by a Mapler that is also navigating the job  market, recovering from a surgery for cancer treatment, and simultaneously trying to find an open map to farm on.');
+ assert.equal(doc.querySelector('.nav-link[href="#basket"]').textContent,'The Basket 50');
+ assert.equal(doc.querySelector('.nav-link[href="#nx"]').textContent,'Cash Item Rates');
+ assert.equal(doc.querySelector('#nx-calculator').closest('.view').id,'view-nx');
+ assert(doc.getElementById('cash-table').compareDocumentPosition(doc.getElementById('nx-calculator')) & w.Node.DOCUMENT_POSITION_FOLLOWING);
+ click('a.nav-link[href="#nx-calculator"]');
+ await until(()=>!doc.getElementById('view-nx').hidden);
+ assert.equal(w.location.hash,'#nx-calculator');
+ assert.equal(doc.querySelector('.nav-link[href="#sources"]').textContent,'Data & Status');
+ assert(doc.querySelector('.nav-link[href="#cash-basket"]'));
+ assert.equal(doc.querySelectorAll('#view-index .wolbi-callout').length,0);
+ assert.equal(doc.querySelectorAll('#view-method .wolbi-callout').length,0);
+ assert(doc.querySelector('#basket-context img'));
+ assert(doc.querySelector('.method-supply-note').textContent.includes('No exact first unlock date'));
+ const scripts=[...doc.querySelectorAll('script[src]')].map(s=>s.getAttribute('src'));
+ assert(scripts.indexOf('community.js')<scripts.indexOf('app.js'));
+ assert(doc.querySelector('link[href="community.css"]'));
+ w.location.hash='#privacy';w.dispatchEvent(new w.Event('hashchange'));
+ assert.equal(doc.getElementById('view-privacy').hidden,false);
+ assert(doc.getElementById('view-privacy').textContent.includes('localStorage'));
+ const copied=[];Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async value=>{copied.push(value);}}});
+ click('#open-contact');assert(doc.getElementById('contact-dialog').open);
+ click('#copy-contact-username');await new Promise(r=>setTimeout(r,0));assert.equal(copied.at(-1),'dizzyvinci');
+ const message=doc.getElementById('contact-message');message.value='A local test note';message.dispatchEvent(new w.Event('input'));
+ assert.equal(doc.getElementById('copy-contact-message').disabled,false);
+ click('#copy-contact-message');await new Promise(r=>setTimeout(r,0));assert.equal(copied.at(-1),'A local test note');
+ click('#close-contact');assert(!doc.getElementById('contact-dialog').open);
+ w.location.hash='#cash-basket';w.dispatchEvent(new w.Event('hashchange'));
+ assert.equal(doc.getElementById('view-cash-basket').hidden,false);
+ if(published.cashBasket?.status==='ok'){
+  assert.equal(doc.getElementById('cash-basket-body').hidden,false);
+  assert.equal(doc.querySelectorAll('#cash-basket-table tbody tr').length,published.cashBasket.itemCount);
+  w.__enhanceTables();assert.equal(doc.querySelectorAll('#cash-basket-table th button').length,8);
+  const cashBaseSort=doc.querySelector('#cash-basket-table th:nth-child(3) button');cashBaseSort.click();let cashBaseValues=[...doc.querySelectorAll('#cash-basket-table tbody tr')].map(row=>Number(row.cells[2].dataset.sortValue));assert(cashBaseValues.every((v,i)=>!i||cashBaseValues[i-1]<=v));cashBaseSort.click();cashBaseValues=[...doc.querySelectorAll('#cash-basket-table tbody tr')].map(row=>Number(row.cells[2].dataset.sortValue));assert(cashBaseValues.every((v,i)=>!i||cashBaseValues[i-1]>=v));
+
+  assert(doc.querySelector('#cash-basket-chart svg'));
+  assert(doc.getElementById('cash-basket-chart-note').textContent.includes('same reference week'));
+  assert(doc.getElementById('cash-basket-exclusions').textContent.includes('Red Hat'));
+  assert(doc.getElementById('cash-basket-definition').textContent.includes(published.cashBasket.basketHash));
+  assert(doc.getElementById('cash-basket-stats').textContent.includes('FIXED CASH ITEMS'));
+ }else{
+  assert.equal(doc.getElementById('cash-basket-body').hidden,true);
+  assert(/unavailable|does not yet include/.test(doc.getElementById('cash-basket-status').textContent));
+ }
+ assert(doc.getElementById('view-cash-basket').textContent.includes('changing daily recorded-volume weights'));
+ w.location.hash='#index';w.dispatchEvent(new w.Event('hashchange'));
  assert(doc.getElementById('smega-stats').textContent.includes('5.5'));
  const spreadUnit=doc.getElementById('smega-spread-unit');spreadUnit.value='percent';spreadUnit.dispatchEvent(new w.Event('change'));assert(doc.querySelector('#smega-spread-chart svg title').textContent.includes('% of midpoint'));
  assert(doc.getElementById('cpi-detail-chart').compareDocumentPosition(doc.getElementById('market-stats'))&w.Node.DOCUMENT_POSITION_FOLLOWING);
@@ -70,14 +182,14 @@ const click=(selector)=>{const el=w.document.querySelector(selector);assert(el,s
  const chartIds=[...doc.querySelectorAll('svg [id]')].map(e=>e.id);assert.equal(chartIds.length,new Set(chartIds).size);
  const amount=doc.getElementById('convert-amount');amount.value='1000';amount.dispatchEvent(new w.Event('input'));assert(doc.getElementById('convert-result').textContent.includes('17,086'));
  amount.value='-1';amount.dispatchEvent(new w.Event('input'));assert(doc.getElementById('convert-result').textContent.includes('valid'));
- const search=doc.getElementById('basket-search');search.value='wolbi';search.dispatchEvent(new w.Event('input'));assert.equal(doc.querySelectorAll('#basket-table tbody tr').length,1);assert(doc.querySelector('#basket-context').textContent.includes('Wolbi Throwing Stars*'));assert(doc.querySelector('#basket-context').textContent.includes('zero CPI weight'));
+ const search=doc.getElementById('basket-search');search.value='wolbi';search.dispatchEvent(new w.Event('input'));assert.equal(doc.querySelectorAll('#basket-table tbody tr').length,1);assert(doc.querySelector('#basket-context').textContent.includes('Wolbi Throwing Stars*'));assert(doc.querySelector('#basket-context').textContent.includes('zero MPI weight'));
  search.value='';search.dispatchEvent(new w.Event('input'));click('[data-sort="recentQuantity"]');assert.equal(doc.querySelectorAll('#basket-table tbody tr').length,50);
  click('[data-layout="tiles"]');assert.equal(doc.getElementById('basket-tiles').hidden,false);assert.equal(doc.querySelectorAll('#basket-tiles .item-tile').length,50);
  click('[data-category="Materials"]');w.dispatchEvent(new w.Event('hashchange'));assert.equal(doc.getElementById('category-filter').value,'Materials');assert.equal(doc.getElementById('view-basket').hidden,false);
  click('#basket-tiles [data-item]');assert(doc.getElementById('item-dialog').open);assert(doc.querySelector('#item-detail .chart svg'));
  assert(doc.getElementById('item-detail').textContent.includes('Source snapshot: sale-price distribution'));
  assert(doc.getElementById('item-detail').textContent.includes('No buyer-bid feed or item-specific smega history'));
- click('.item-full-link');await new Promise(r=>setTimeout(r,20));assert.equal(doc.getElementById('view-item').hidden,false);assert(!doc.getElementById('item-dialog').open);assert(doc.querySelector('#item-page-detail .chart svg'));assert(doc.querySelectorAll('#item-page-detail tbody tr').length>1);
+ click('.item-full-link');await until(()=>!doc.getElementById('view-item').hidden);assert(!doc.getElementById('item-dialog').open);assert(doc.querySelector('#item-page-detail .chart svg'));assert(doc.querySelectorAll('#item-page-detail tbody tr').length>1);
  click('[data-range="2"]');assert(doc.querySelector('#main-chart svg'));
  const metric=doc.getElementById('chart-metric');metric.value='cpi';metric.dispatchEvent(new w.Event('change'));assert(doc.getElementById('main-chart').getAttribute('aria-label').includes('price index'));
  w.location.hash='#method';w.dispatchEvent(new w.Event('hashchange'));assert.equal(doc.getElementById('view-method').hidden,false);
@@ -88,9 +200,11 @@ const click=(selector)=>{const el=w.document.querySelector(selector);assert(el,s
  const images=[...doc.querySelectorAll('img')].map(img=>img.getAttribute('src'));for(const src of images)assert(fs.existsSync(path.join(project,'dist',src)),'Missing asset '+src);
  const reload=new JSDOM(fs.readFileSync(path.join(project,'web/index.html'),'utf8'),{url:'http://127.0.0.1:8765/#method-basket-size',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc});
  const restored=reload.window;restored.localStorage.setItem('astra-scenery','on');restored.scrollTo=()=>{};restored.HTMLElement.prototype.scrollIntoView=()=>{};restored.AbortSignal.timeout=()=>undefined;restored.fetch=w.fetch;
+ restored.eval(fs.readFileSync(path.join(project,'web/community.js'),'utf8'));
  restored.eval(fs.readFileSync(path.join(project,'web/app.js'),'utf8'));await new Promise(r=>setTimeout(r,30));
  assert.equal(restored.document.getElementById('scenery-toggle').getAttribute('aria-pressed'),'true');assert.equal(restored.document.body.classList.contains('scenery-on'),true);
  assert.equal(restored.document.getElementById('view-method').hidden,false);assert.equal(restored.document.activeElement.id,'method-basket-size');reload.window.close();
+ w.eval(fs.readFileSync(path.join(project,'web/chart-interaction.js'),'utf8'));await new Promise(r=>setTimeout(r,20));assert(doc.querySelector('#main-chart svg.chart-inspector-ready'));assert.equal(doc.querySelector('#main-chart svg').getAttribute('tabindex'),'0');assert(doc.querySelector('#main-chart .chart-inspector-toggle')||doc.querySelector('#main-chart').parentElement.querySelector('.chart-inspector-toggle'));
  assert.equal(errors.length,0,errors.join('\n'));
  console.log(JSON.stringify({basketRows:50,cashRows:29,localImageReferences:images.length,domErrors:errors.length,mainRate:doc.getElementById('main-rate').textContent,smegaRows:published.smega.length,calculators:'both directions verified',spreads:'paired / missing / crossed / source isolation / conflicts verified',timezone:'selection and persistence verified'}));
  dom.window.close();

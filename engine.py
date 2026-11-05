@@ -475,6 +475,8 @@ def compute(feed, status):
     report['eligibleBaseTurnoverCoverageProxy'] = basket.get('eligibleBaseTurnoverCoverageProxy')
     report['legacyCpiHistoryUrl'] = '/history/cpi-v1.json' if (ROOT / 'history' / 'cpi-v1.json').exists() else None
     report['reportedNxHistory'] = read(ROOT / 'history' / 'niadb-reported-nx-history.json', {})
+    from cash_basket import compute_cash_basket
+    report['cashBasket'] = compute_cash_basket(feed, cfg, ROOT)
     return report
 
 
@@ -489,7 +491,7 @@ def write_site(report):
     if legacy_history.exists():
         (dist / 'history').mkdir(exist_ok=True)
         shutil.copyfile(legacy_history, dist / 'history' / 'cpi-v1.json')
-    for name in ('index.html', 'app.js', 'style.css', '_headers', 'sw.js'):
+    for name in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'chart-interaction.js', 'chart-interaction.css', '_headers', 'sw.js'):
         shutil.copyfile(ROOT / 'web' / name, dist / name)
     data_text = json.dumps(report, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
     digest = hashlib.sha256(data_text.encode()).hexdigest()[:16]
@@ -498,7 +500,7 @@ def write_site(report):
     atomic(dist / 'data.json', report)
     rate = report['live']['nxRate'] if report['live'] and report['live']['nxRate'] is not None else report['latest']['nxRate']
     cpi = report['live']['cpi'] if report['live'] and report['live']['cpi'] is not None else report['latest']['cpi']
-    fallback = f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="120"><title>inflation.watch · Last known data</title><style>body{{background:#101c26;color:#e9e5d9;font:17px system-ui;max-width:660px;margin:10vh auto;padding:28px}}h1{{color:#edc471}}a{{color:#9dd3cd}}strong{{font-size:34px}}dt{{color:#a0b3b8;margin-top:20px}}</style><h1>inflation.watch</h1><p>Last known snapshot · treat these figures as historical.</p><p><strong>1:{rate:.1f}</strong> NX : mesos</p><p>{rate*1000:,.0f} mesos per 1,000 NX · CPI {cpi:.1f}</p><dl><dt>Market source updated</dt><dd>{html.escape(report['sourceUpdatedAt'])}</dd><dt>Page generated</dt><dd>{html.escape(report['builtAt'])}</dd><dt>Source checked</dt><dd>{html.escape(str(report['sourceStatus'].get('checkedAt') or 'unknown'))}</dd></dl><p>A source or connection may be unavailable. A fresh build does not imply fresh market data. This lightweight page retries every two minutes.</p><a href="/">Try full dashboard</a> · <a href="https://maplestory-classic.com/market">Data source</a></html>'''
+    fallback = f'''<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="120"><title>inflation.gg · Last known data</title><style>body{{background:#101c26;color:#e9e5d9;font:17px system-ui;max-width:660px;margin:10vh auto;padding:28px}}h1{{color:#edc471}}a{{color:#9dd3cd}}strong{{font-size:34px}}dt{{color:#a0b3b8;margin-top:20px}}</style><h1>inflation.gg</h1><p>Last known snapshot · treat these figures as historical.</p><p><strong>1:{rate:.1f}</strong> NX : mesos</p><p>{rate*1000:,.0f} mesos per 1,000 NX · MPI {cpi:.1f}</p><dl><dt>Market source updated</dt><dd>{html.escape(report['sourceUpdatedAt'])}</dd><dt>Page generated</dt><dd>{html.escape(report['builtAt'])}</dd><dt>Source checked</dt><dd>{html.escape(str(report['sourceStatus'].get('checkedAt') or 'unknown'))}</dd></dl><p>A source or connection may be unavailable. A fresh build does not imply fresh market data. This lightweight page retries every two minutes.</p><a href="/">Try full dashboard</a> · <a href="https://maplestory-classic.com/market">Data source</a></html>'''
     (dist / 'fallback.html').write_text(fallback, encoding='utf-8')
     (dist / '404.html').write_text(fallback, encoding='utf-8')
     atomic(dist / 'version.json', {'version': digest, 'data': 'data-' + digest + '.json', 'builtAt': report['builtAt'], 'sourceUpdatedAt': report['sourceUpdatedAt']})

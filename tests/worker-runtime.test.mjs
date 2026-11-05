@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import worker, { collect } from '../ops/worker.mjs';
+import worker, { collect, calculationFingerprint, retainHistories, CALCULATION_MODEL_VERSION } from '../ops/worker.mjs';
 
 const seed = JSON.parse(readFileSync(new URL('../dist/data.json', import.meta.url), 'utf8'));
 const compiledVersion = JSON.parse(readFileSync(new URL('../dist/version.json', import.meta.url), 'utf8'));
@@ -166,6 +166,18 @@ test('successful collection writes an immutable snapshot before the final public
   const publicWrites = bucket.events.filter(event => event.op === 'put' && !event.key.startsWith('_private/'));
   assert.deepEqual(publicWrites.map(event => event.key), [pointer.data, POINTER]);
   assert.ok(bucket.read(STATE).feed.items.length > 1000);
+  const state = bucket.read(STATE);
+  assert.match(state.archivedSourceKey, /^_private\/sources\/2026-11-04\/[a-f0-9]{64}\.json$/);
+  const archived = bucket.read(state.archivedSourceKey);
+  assert.deepEqual(archived.feed, feed);
+  assert.equal(archived.sourceUpdatedAt, feed.updatedAt);
+  assert.equal(archived.archiveAt, new Date(NOW).toISOString());
+  assert.equal(archived.feedHash, state.feedHash);
+  assert.equal(state.archivedFeedHash, state.feedHash);
+  assert.equal(report.calculationModelVersion, CALCULATION_MODEL_VERSION);
+  assert.equal(report.calculationFingerprint, state.calculationFingerprint);
+  const writes = bucket.events.filter(event => event.op === 'put').map(event => event.key);
+  assert.ok(writes.indexOf(state.archivedSourceKey) < writes.indexOf(pointer.data));
   assert.equal(bucket.read(LOCK).released, true);
   assert.ok(bucket.read(LOCK).expiresAt <= NOW);
 });
@@ -173,6 +185,7 @@ test('successful collection writes an immutable snapshot before the final public
 test('304 sends validators, preserves source/build/fetch clocks and writes no new snapshot', async () => {
   const { bucket, env, pointer } = await initialize();
   const beforeSnapshots = [...bucket.values.keys()].filter(key => key.startsWith('data-'));
+  const archiveWrites = bucket.events.filter(event => event.op === 'put' && event.key.startsWith('_private/sources/')).length;
   let headers;
   const result = await collect(env, { now: NOW + 600_000, fetcher: async (_url, init) => {
     headers = init.headers;
@@ -186,6 +199,7 @@ test('304 sends validators, preserves source/build/fetch clocks and writes no ne
   assert.equal(next.sourceStatus.checkedAt, new Date(NOW + 600_000).toISOString());
   assert.equal(next.sourceStatus.status, 'unchanged');
   assert.deepEqual([...bucket.values.keys()].filter(key => key.startsWith('data-')), beforeSnapshots);
+  assert.equal(bucket.events.filter(event => event.op === 'put' && event.key.startsWith('_private/sources/')).length, archiveWrites);
 });
 
 test('collection start, successful fetch completion and source observation clocks remain separate', async () => {
@@ -401,6 +415,9 @@ test('bounded source histories retain 365 days and daily series retain at most 7
   assert.equal(report.sourceSnapshotHash, seed.sourceSnapshotHash);
   assert.deepEqual(report.smega.find(point => point.sourceUrl === offer.sourceUrl), offer);
   close(report.latest.cpi, seed.latest.cpi, 'bounded-history latest CPI');
+  const archive = bucket.read(bucket.read(STATE).archivedSourceKey);
+  assert.deepEqual(archive.feed, changed);
+  assert.ok(archive.feed.items.find(item => item.s === row.s).h.length > 365);
 });
 
 test('snapshot storage failure never advances the public pointer to a missing object', async () => {
@@ -443,7 +460,7 @@ test('visitor routes only expose allowlisted snapshots and use edge cache withou
     const health = await (await request(env, '/health.json')).json();
     assert.equal(health.sourceUpdatedAt, feed.updatedAt);
     assert.ok(!('feed' in health));
-    for (const path of ['/data-evil.json', '/data-../../_private/collector-state.json', '/data-%2f_private.json', '/_private/collector-state.json', '/collect', '/admin']) {
+    for (const path of ['/data-evil.json', '/data-../../_private/collector-state.json', '/data-%2f_private.json', '/_private/collector-state.json', `/${bucket.read(STATE).archivedSourceKey}`, '/collect', '/admin']) {
       const result = await request(env, path);
       assert.equal(result.status, 404, path);
       assert.doesNotMatch(await result.text(), /items|etag|collector-state/);
@@ -467,6 +484,133 @@ test('missing raw cache on 304 degrades honestly and an initial failure keeps se
   assert.equal(pointer.sourceStatus.status, 'degraded');
   assert.equal(pointer.lastSuccessfulFetchAt, null);
   assert.equal((await (await request(env, `/${pointer.data}`)).json()).sourceUpdatedAt, seed.sourceUpdatedAt);
+});
+
+test('legacy calculation state migrates on 304 once, archives once, and preserves all market/fetch clocks', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const legacy = bucket.read(STATE);
+  const oldArchive = legacy.archivedSourceKey;
+  for (const key of ['calculationFingerprint', 'archivedFeedHash', 'archivedSourceKey', 'archivedAt']) delete legacy[key];
+  bucket.raw(STATE, legacy);
+  bucket.values.delete(oldArchive);
+  const prior = bucket.read(pointer.data);
+  delete prior.cashBasket;
+  delete prior.calculationFingerprint;
+  delete prior.calculationModelVersion;
+  bucket.raw(pointer.data, prior);
+  const offset = bucket.events.length;
+  const result = await collect(env, { now: NOW + 600_000, fetcher: async () => new Response(null, { status: 304 }) });
+  assert.equal(result.status, 'published', result.detail);
+  const next = bucket.read(POINTER), state = bucket.read(STATE), report = bucket.read(next.data);
+  assert.notEqual(next.version, pointer.version);
+  assert.equal(next.sourceUpdatedAt, pointer.sourceUpdatedAt);
+  assert.equal(next.lastSuccessfulFetchAt, pointer.lastSuccessfulFetchAt);
+  assert.equal(next.builtAt, new Date(NOW + 600_000).toISOString());
+  assert.ok(report.cashBasket);
+  assert.equal(report.cashBasket.status, seed.cashBasket?.status ?? 'unavailable');
+  assert.equal(report.cashBasket.sourceUpdatedAt, feed.updatedAt);
+  for (const key of ['history', 'intraday', 'smega', 'comparisons', 'rollingReferenceHistory']) assert.deepEqual(report[key], prior[key], key);
+  assert.equal(state.calculationFingerprint, await calculationFingerprint());
+  assert.equal(state.archivedAt, new Date(NOW + 600_000).toISOString());
+  assert.equal(state.lastSuccessfulFetchAt, pointer.lastSuccessfulFetchAt);
+  const puts = bucket.events.slice(offset).filter(event => event.op === 'put');
+  assert.equal(puts.filter(event => event.key.startsWith('_private/sources/')).length, 1);
+  const after = bucket.events.length;
+  const repeat = await collect(env, { now: NOW + 1_200_000, fetcher: async () => new Response(null, { status: 304 }) });
+  assert.equal(repeat.status, 'unchanged');
+  assert.equal(bucket.read(POINTER).version, next.version);
+  assert.equal(bucket.read(POINTER).builtAt, next.builtAt);
+  assert.ok(!bucket.events.slice(after).some(event => event.op === 'put' && (event.key.startsWith('data-') || event.key.startsWith('_private/sources/'))));
+});
+
+test('archive storage failure retains last-good publication and cannot advance the accepted source marker', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const state = bucket.read(STATE), changed = clone(feed);
+  changed.items[0].sold++;
+  const offset = bucket.events.length;
+  bucket.beforePut = key => { if (key.startsWith('_private/sources/')) throw new Error('Injected private archive failure'); };
+  const result = await collect(env, { now: NOW + 600_000, fetcher: async () => response(changed) });
+  assert.equal(result.status, 'degraded');
+  assert.match(result.detail, /archive failure/);
+  const next = bucket.read(POINTER), retained = bucket.read(STATE);
+  assert.equal(next.version, pointer.version);
+  assert.equal(next.sourceUpdatedAt, pointer.sourceUpdatedAt);
+  assert.equal(retained.feedHash, state.feedHash);
+  assert.equal(retained.archivedFeedHash, state.archivedFeedHash);
+  assert.equal(retained.archivedAt, state.archivedAt);
+  assert.ok(!bucket.events.slice(offset).some(event => event.op === 'put' && event.key.startsWith('data-')));
+});
+
+test('invalid input cannot enter the private accepted-source archive', async () => {
+  const bucket = new FakeR2(), malformed = clone(feed);
+  malformed.items[0].h[0][2] = -1;
+  const result = await collect(envFor(bucket), { now: NOW, fetcher: async () => response(malformed) });
+  assert.equal(result.status, 'degraded');
+  assert.ok(![...bucket.values.keys()].some(key => key.startsWith('_private/sources/')));
+});
+
+test('an existing content-addressed source archive is reused and never overwritten on marker recovery', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const originalState = bucket.read(STATE), key = originalState.archivedSourceKey;
+  const archivedText = bucket.values.get(key).text;
+  const clearMarker = () => {
+    const state = bucket.read(STATE);
+    for (const field of ['archivedFeedHash', 'archivedSourceKey', 'archivedAt']) delete state[field];
+    bucket.raw(STATE, state);
+  };
+  clearMarker();
+  const reused = await collect(env, { now: NOW + 600_000, fetcher: async () => new Response(null, { status: 304 }) });
+  assert.equal(reused.status, 'unchanged');
+  assert.equal(bucket.values.get(key).text, archivedText);
+  assert.equal(bucket.read(STATE).archivedAt, originalState.archivedAt);
+  assert.equal(bucket.read(POINTER).version, pointer.version);
+  const corrupted = bucket.read(key); corrupted.feed.items[0].sold++;
+  bucket.raw(key, corrupted);
+  clearMarker();
+  const rejected = await collect(env, { now: NOW + 1_200_000, fetcher: async () => new Response(null, { status: 304 }) });
+  assert.equal(rejected.status, 'degraded');
+  assert.match(rejected.detail, /archive content-address conflict/);
+  assert.equal(bucket.read(POINTER).version, pointer.version);
+  assert.deepEqual(bucket.read(key), corrupted);
+});
+
+test('calculation fingerprint tracks definitions and ignores build, source and check clocks', async () => {
+  const base = clone(seed), value = await calculationFingerprint(base);
+  base.builtAt = '2030-01-01T00:00:00Z';
+  base.sourceUpdatedAt = '2029-12-31T00:00:00Z';
+  base.sourceStatus = { checkedAt: '2030-01-01T00:00:01Z' };
+  base.history = [];
+  base.comparisons = [];
+  assert.equal(await calculationFingerprint(base), value);
+  const nx = clone(seed); nx.cash[0].nx += 1;
+  assert.notEqual(await calculationFingerprint(nx), value);
+  const cash = clone(seed); cash.cashBasket = { version: 1, basketHash: 'a'.repeat(64) };
+  assert.notEqual(await calculationFingerprint(cash), value);
+  const goods = clone(seed); goods.basketHash = 'b'.repeat(64);
+  assert.notEqual(await calculationFingerprint(goods), value);
+});
+
+test('cash history retains at most 7300 dates only for the identical independent cash definition', () => {
+  const hash = 'c'.repeat(64), day = feed.updatedAt.slice(0, 10);
+  const point = { day, at: feed.updatedAt, cpi: 123, coverage: .9, pricedCoverage: 1, partial: true };
+  const report = { basketVersion: 2, basketHash: 'goods-v2', sourceUpdatedAt: feed.updatedAt,
+    history: [point], volumeHistory: [], rows: [], cash: [],
+    cashBasket: { status: 'ok', kind: 'cash_price_index', version: 1, basketHash: hash, rows: [], history: [point], latest: point } };
+  const end = Date.parse('2026-10-06T00:00:00Z');
+  const older = Array.from({ length: 7301 }, (_, i) => ({ day: new Date(end - (7301 - i) * 86_400_000).toISOString().slice(0, 10), cpi: 100 }));
+  const previous = { basketVersion: 1, basketHash: 'goods-v1', history: [{ day: '1999-01-01', cpi: 999 }],
+    cashBasket: { status: 'ok', kind: 'cash_price_index', version: 1, basketHash: hash, history: [...older, { ...point, cpi: -999 }] } };
+  const retained = retainHistories(clone(report), previous);
+  assert.equal(retained.cashBasket.history.length, 7300);
+  assert.equal(retained.cashBasket.history.at(-1).cpi, 123);
+  assert.equal(retained.cashBasket.latest.cpi, 123);
+  assert.deepEqual(retained.history, [point]);
+  const changed = clone(previous); changed.cashBasket.basketHash = 'd'.repeat(64);
+  assert.deepEqual(retainHistories(clone(report), changed).cashBasket.history, [point]);
+  const wrongVersion = clone(previous); wrongVersion.cashBasket.version = 2;
+  assert.deepEqual(retainHistories(clone(report), wrongVersion).cashBasket.history, [point]);
+  const unavailable = clone(report); unavailable.cashBasket = { status: 'unavailable', rows: [], history: [], latest: null };
+  assert.deepEqual(retainHistories(unavailable, previous).cashBasket.history, []);
 });
 
 test('runtime/config contain no credentials or public collection endpoint', () => {

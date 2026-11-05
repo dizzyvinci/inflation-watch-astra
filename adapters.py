@@ -20,7 +20,9 @@ def unpack_tool_result(result):
 
 
 def check_stamp(stamp):
-    parsed=dt.datetime.fromisoformat(stamp.replace('Z','+00:00'))
+    if not isinstance(stamp,str):raise ValueError('Capture needs an actual capturedAt timestamp')
+    try:parsed=dt.datetime.fromisoformat(stamp.replace('Z','+00:00'))
+    except ValueError as error:raise ValueError('Invalid capture timestamp') from error
     if parsed.tzinfo is None or parsed>dt.datetime.now(UTC)+dt.timedelta(minutes=5):
         raise ValueError('Capture needs a timezone-aware, nonfuture timestamp')
     return parsed
@@ -74,7 +76,7 @@ CELL=re.compile(r'^1:([\d.]+)\s*\(([\d.]+)[–-]([\d.]+)\)\s*·\s*(\d+)$')
 
 
 def normalize_smega_table(payload):
-    check_stamp(payload['capturedAt'])
+    check_stamp(payload.get('capturedAt'))
     if payload.get('sourceUrl')!='https://maplestory.market/ads?tab=services':raise ValueError('Unknown smega source')
     # Offset is explicit because the source table prints local dates without zone.
     # Callers must split a capture at DST transitions or provide per-row offsets.
@@ -97,9 +99,8 @@ def normalize_smega_table(payload):
 
 def import_smega_table(path):
     payload=read(path);points=normalize_smega_table(payload)
-    atomic(ROOT/'cache'/'published-smega-series.json',points)
-    atomic(ROOT/'cache'/'published-smega-summary.json',{k:v for k,v in payload.items() if k!='rows'})
-    return points
+    from smega_history import import_capture
+    return import_capture(ROOT,payload,points,normalize_raw=normalize_smega_table)
 
 
 if __name__=='__main__':

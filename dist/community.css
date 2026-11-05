@@ -1,0 +1,23 @@
+.community-prose{max-width:850px;margin-bottom:30px}
+.community-prose h2{margin-top:29px;font-size:19px}
+.community-prose p{max-width:75ch;line-height:1.85}
+.community-prose a,.community-contact p a,.community-back{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+.community-inline-link,.community-footer-button{border:0;background:transparent;color:var(--gold);padding:0;font:inherit;cursor:pointer}
+.community-inline-link{text-decoration:underline;text-underline-offset:3px}
+.community-footer-button{color:inherit;text-align:left}
+.community-footer-button:hover{color:var(--gold)}
+.community-back{display:inline-block;margin-top:13px;font-size:12px}
+dialog.community-contact{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;padding:30px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:12px}
+.community-contact::backdrop{background:#08110dcc;backdrop-filter:blur(3px)}
+.community-contact h2{max-width:430px;font-size:25px;line-height:1.35;padding-right:18px}
+.community-contact p{font-size:13px;line-height:1.8}
+.community-contact .dialog-close{top:12px;right:13px}
+.community-username{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 0 21px}
+.community-username strong{color:var(--gold);font-size:19px;user-select:text}
+.community-contact label{display:block;font-size:12px;margin-bottom:8px}
+.community-contact textarea{display:block;width:100%;resize:vertical;min-height:110px;max-height:300px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:12px;color:var(--text);font:inherit;line-height:1.6}
+.community-contact textarea:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.community-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:17px 0}
+.community-discord{display:inline-block;text-decoration:none;line-height:1.6}
+.community-contact .community-feedback{min-height:2.8em;margin:15px 0 0;color:var(--mint);font-size:12px}
+@media(max-width:600px){dialog.community-contact{padding:25px 20px}.community-contact h2{font-size:22px}.community-contact p{font-size:12px}.community-username{align-items:flex-start;flex-wrap:wrap}.community-prose h2{font-size:17px}}

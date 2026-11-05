@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T04:20:42+00:00",
+  "exportedAt": "2026-11-05T05:44:26+00:00",
   "basketVersion": 2,
   "files": [
     {
@@ -21,8 +21,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 5923,
-      "sha256": "02b01af5aa8476f5597d5d2b33b8e9633b6fb061ba1d5f30b13c4c6df8a0478f"
+      "bytes": 5833,
+      "sha256": "b074a949bc46a902abe905994647da21e34b704e5cfde3b3b8c1918ad7b9562f"
     },
     {
       "path": "Start-Preview.ps1",
@@ -36,8 +36,8 @@
     },
     {
       "path": "adapters.py",
-      "bytes": 6059,
-      "sha256": "03bfce27a70f856f8886e21185e6e3ab47665b88f49e929d41308cc676f5fe03"
+      "bytes": 6199,
+      "sha256": "bac6971fcb0a5b5e724f0aa205e203db9599c25457897e82b732d840a97af164"
     },
     {
       "path": "assets/animal-fur-bundle.png",
@@ -655,9 +655,14 @@
       "sha256": "efc9dba67121521d430d9fc0576c88f87bbb907a2c0f0ff37ea17fb2a3f3d26a"
     },
     {
+      "path": "cache/cash-basket-v1.json",
+      "bytes": 7708,
+      "sha256": "d0328cb6d55aef376bf9b0381cade1b0b8cf5711d1041b59cd10b314657c4d67"
+    },
+    {
       "path": "cache/fetch.json",
       "bytes": 211,
-      "sha256": "a8f2c07534b2a1096ec06981e564bd0dd9e9ca295296c9432dca7a3db12bcf14"
+      "sha256": "03b3ce9da6eccf593d621ae94e5a2177e1695415313825477b1c0f53e047a861"
     },
     {
       "path": "cache/market.json",
@@ -676,13 +681,13 @@
     },
     {
       "path": "cache/published-smega-series.json",
-      "bytes": 37975,
-      "sha256": "3bcc68b26fd9b82ebf61cba64efeca019d07324378d404461cee32b64e53eb01"
+      "bytes": 35737,
+      "sha256": "20f56b429bb54ae966924cfd1ef32a0870f9a5cd8bbe84dad1075191d10e38a9"
     },
     {
       "path": "cache/published-smega-summary.json",
       "bytes": 313,
-      "sha256": "5824f4a4fdadcdf030ee792350b1f20e07b1695d9dadc82b0b9fe118dbac64b6"
+      "sha256": "a677e065896f9b9c7e151476183fe0b6f8ea6de345bd338095c611433928a667"
     },
     {
       "path": "cache/rolling-reference-history-v2.json",
@@ -693,6 +698,11 @@
       "path": "cache/rolling-reference-history.json",
       "bytes": 219,
       "sha256": "0d610ec1fece4646d21703cd834b343a16783557a2fcf47881c607531af3b711"
+    },
+    {
+      "path": "cash_basket.py",
+      "bytes": 10331,
+      "sha256": "2fdb040dda9802bd79aceeeba5878e3a1e1799fad656e546ebddd81d3fc3e8d6"
     },
     {
       "path": "comparison-observations.json",
@@ -706,8 +716,8 @@
     },
     {
       "path": "dist/404.html",
-      "bytes": 1032,
-      "sha256": "28440882e518969b1e298a4a9d67598809fcfee1d419b915f9ea757bfaeb60b1"
+      "bytes": 1026,
+      "sha256": "5f0e30d2a0be03a1e5a73c94c480d8920e13dda14d7fd83ff2630079dd733c5c"
     },
     {
       "path": "dist/_headers",
@@ -716,8 +726,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 49859,
-      "sha256": "71371914586bb660c254d48592b3aaa5f0b87a93b03a2c9712431368840553ed"
+      "bytes": 75174,
+      "sha256": "7fd4d6a19128e7b31690b8f645444c6fcc23b4b9d6a9912612b8c13f2c8b4db2"
     },
     {
       "path": "dist/assets/animal-fur-bundle.png",
@@ -1890,19 +1900,44 @@
       "sha256": "35bda723356c3f1fbeef3b19d108e06b266882ced25c22e84432f9db4153b2e1"
     },
     {
+      "path": "dist/chart-interaction.css",
+      "bytes": 1531,
+      "sha256": "a077e1e776fd33e6ac302a6b4882a5d1dcd366fd70e5cfd03b22eb325d018ac5"
+    },
+    {
+      "path": "dist/chart-interaction.js",
+      "bytes": 9069,
+      "sha256": "0c9d980ca7fda0057585c8f66f00d1a951b00932f08ed7c96e572539e705aaa5"
+    },
+    {
+      "path": "dist/community.css",
+      "bytes": 2256,
+      "sha256": "8904fbc74ba6b17ec7cc7358efac13aea44394ea51fe7dc2a16162a2c8c0ce34"
+    },
+    {
+      "path": "dist/community.js",
+      "bytes": 7092,
+      "sha256": "e6ab5661d6b930ea0e10766ed86a63e73d36d727b930b1e2bc9507d737db0ae5"
+    },
+    {
+      "path": "dist/data-025260607b3c3b6c.json",
+      "bytes": 218967,
+      "sha256": "025260607b3c3b6c74c54b11e4b03aa60d5bbc78b2a700d95bc4c1e6bacf20ad"
+    },
+    {
       "path": "dist/data-59cde1eaa6747299.json",
       "bytes": 191501,
       "sha256": "59cde1eaa67472993b5da312c07d587252b57629b0ea845f07fcabe0e7c2ba2d"
     },
     {
       "path": "dist/data.json",
-      "bytes": 191501,
-      "sha256": "59cde1eaa67472993b5da312c07d587252b57629b0ea845f07fcabe0e7c2ba2d"
+      "bytes": 218967,
+      "sha256": "025260607b3c3b6c74c54b11e4b03aa60d5bbc78b2a700d95bc4c1e6bacf20ad"
     },
     {
       "path": "dist/fallback.html",
-      "bytes": 1032,
-      "sha256": "28440882e518969b1e298a4a9d67598809fcfee1d419b915f9ea757bfaeb60b1"
+      "bytes": 1026,
+      "sha256": "5f0e30d2a0be03a1e5a73c94c480d8920e13dda14d7fd83ff2630079dd733c5c"
     },
     {
       "path": "dist/history/cpi-v1.json",
@@ -1911,13 +1946,13 @@
     },
     {
       "path": "dist/index.html",
-      "bytes": 26549,
-      "sha256": "1ec19f524516560b0890649ae6c92a61909d7ff23a107816b24ff9f62836134f"
+      "bytes": 35709,
+      "sha256": "a17d35961b27b8df3edbfed1084795d81b0c6a14016bcdc9e47cec71494f0152"
     },
     {
       "path": "dist/style.css",
-      "bytes": 33249,
-      "sha256": "c9f0e19b18bfb35bfad6b113382874897a83c0aac6472ad786b3ba5bbe4c9eca"
+      "bytes": 44606,
+      "sha256": "382ba0f6ea585e6ef8fbbcb5fbc0abb2f8bbdfe3e01ffbdeadf0d8526628e35a"
     },
     {
       "path": "dist/sw.js",
@@ -1927,12 +1962,12 @@
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "d9fe3afa46e7c1097910f571ad0f21b4073faa3f2e9f7b284c9e2b23f7507287"
+      "sha256": "44a37b3279a6ae417c29eac48722ccd1e4b2e01dd6a286ac76353e757ec2e1f6"
     },
     {
       "path": "engine.py",
-      "bytes": 33450,
-      "sha256": "d65549859b996afe73aea67a08868c6406d1f36d7d22df57c0b7dbefd4a1d644"
+      "bytes": 33640,
+      "sha256": "c623cc20b6b0a06ee6078c53d35db7cb523517ed80960aaf937e683bd11214fa"
     },
     {
       "path": "historical_backfill.py",
@@ -1971,13 +2006,13 @@
     },
     {
       "path": "ops/worker-core.mjs",
-      "bytes": 19232,
-      "sha256": "670b1fc5aed99ab40b3b8dcd6e30a80299ea5d40278488efec428635136672f6"
+      "bytes": 25788,
+      "sha256": "5269c76ba27b73926d11f5b659070217d424818ae8aba84eaccdd8be4ebf9814"
     },
     {
       "path": "ops/worker.mjs",
-      "bytes": 22294,
-      "sha256": "d2217e1f96cb4ea03a8224d8788fa2eeaacbf86c0160cd8f0f9995fe21ccc88d"
+      "bytes": 25771,
+      "sha256": "26376e618c74acfe4af28bbb09127689db53943ea9a66cb4d724e6a6bae956eb"
     },
     {
       "path": "ops/wrangler.jsonc",
@@ -1986,8 +2021,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 774,
-      "sha256": "cf73db168098db3d77c557756b0c8772c7e4228acf5fcd18ae99cbebfe5fc275"
+      "bytes": 946,
+      "sha256": "a4e3cf71868576db8bf59eb601e1de8fdcad77ffd9692a09aba67987ea633eec"
     },
     {
       "path": "preview.py",
@@ -2010,14 +2045,29 @@
       "sha256": "1833ebbca3eb0dd508917c98c63dbb26c8f0958714e2d5de547b1082dc6d2d88"
     },
     {
+      "path": "smega_history.py",
+      "bytes": 15286,
+      "sha256": "da358cf888c0152df998497bb19bcdd3aa4e28a6410833f76b1956b5682e1631"
+    },
+    {
       "path": "sprite_fetch.py",
       "bytes": 4016,
       "sha256": "a1da712aac3b470de5d265e909b62db0e4732139871ff157a2ab56f9538a5162"
     },
     {
+      "path": "tests/chart-interaction.cjs",
+      "bytes": 6432,
+      "sha256": "6da0be7a6a126b63443a32a52fb161c4f491fd8205dafc291f0b707461f66c68"
+    },
+    {
+      "path": "tests/community.cjs",
+      "bytes": 5915,
+      "sha256": "e42424a62891978f1fe8e4692599a15ce2d0fa48493991a9f2d7d68f1c4e7c0b"
+    },
+    {
       "path": "tests/dom.cjs",
-      "bytes": 12707,
-      "sha256": "822871173767710383421a7eac602d1569994de5ab88dba7d633c8a8f0003dee"
+      "bytes": 29784,
+      "sha256": "cb91c97b3373e308e9e0da60f2dfbeee47053cf8b15788e07d70adc2bb666933"
     },
     {
       "path": "tests/test_adapters.py",
@@ -2026,8 +2076,13 @@
     },
     {
       "path": "tests/test_basket_v2.py",
-      "bytes": 8832,
-      "sha256": "9c0bb4620d910c561286628a0c67a727b79858441d90940d8a7baf36d34913b6"
+      "bytes": 9123,
+      "sha256": "775a9c239ad60afdb371703600fd92c82a5bebefe77c1d931167e15835f94c8c"
+    },
+    {
+      "path": "tests/test_cash_basket.py",
+      "bytes": 7024,
+      "sha256": "3bf9f05b1424d9a4e2d4cae9713bb808c3b3c39fa43cbdf7751e64d4337557ed"
     },
     {
       "path": "tests/test_engine.py",
@@ -2050,9 +2105,19 @@
       "sha256": "16117df031e7c515d6caad744c5b4bbee62f3baa3843d1d7391b3f194de5ca79"
     },
     {
+      "path": "tests/test_smega_history.py",
+      "bytes": 9177,
+      "sha256": "a2fe03db68698a78878b03c20eea5325991616840a277bb4d4b29e7f27ca25f2"
+    },
+    {
       "path": "tests/test_source_summary.py",
       "bytes": 4854,
       "sha256": "2365410a140325408b2c2b482e8947dfc05ecb36d7c10714dbb148fbff981fa7"
+    },
+    {
+      "path": "tests/worker-cash-basket.test.mjs",
+      "bytes": 6189,
+      "sha256": "5b2fdeffb3964281e77f398d328e050106aacec1e449803ff4c82b62fdbbe32a"
     },
     {
       "path": "tests/worker-core.test.mjs",
@@ -2061,8 +2126,8 @@
     },
     {
       "path": "tests/worker-runtime.test.mjs",
-      "bytes": 25703,
-      "sha256": "ffe97b1ff1a5f3ce1bbd0c99be34baf02fe59f1b9601686027a34f07bfba8dca"
+      "bytes": 35005,
+      "sha256": "1eecd4047f36395752600cebef14a2d76e7839f0218df8b05bfbaaa941ebf970"
     },
     {
       "path": "web/_headers",
@@ -2071,25 +2136,43 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 49859,
-      "sha256": "71371914586bb660c254d48592b3aaa5f0b87a93b03a2c9712431368840553ed"
+      "bytes": 75174,
+      "sha256": "7fd4d6a19128e7b31690b8f645444c6fcc23b4b9d6a9912612b8c13f2c8b4db2"
+    },
+    {
+      "path": "web/chart-interaction.css",
+      "bytes": 1531,
+      "sha256": "a077e1e776fd33e6ac302a6b4882a5d1dcd366fd70e5cfd03b22eb325d018ac5"
+    },
+    {
+      "path": "web/chart-interaction.js",
+      "bytes": 9069,
+      "sha256": "0c9d980ca7fda0057585c8f66f00d1a951b00932f08ed7c96e572539e705aaa5"
+    },
+    {
+      "path": "web/community.css",
+      "bytes": 2256,
+      "sha256": "8904fbc74ba6b17ec7cc7358efac13aea44394ea51fe7dc2a16162a2c8c0ce34"
+    },
+    {
+      "path": "web/community.js",
+      "bytes": 7092,
+      "sha256": "e6ab5661d6b930ea0e10766ed86a63e73d36d727b930b1e2bc9507d737db0ae5"
     },
     {
       "path": "web/index.html",
-      "bytes": 26549,
-      "sha256": "1ec19f524516560b0890649ae6c92a61909d7ff23a107816b24ff9f62836134f"
+      "bytes": 35709,
+      "sha256": "a17d35961b27b8df3edbfed1084795d81b0c6a14016bcdc9e47cec71494f0152"
     },
     {
       "path": "web/style.css",
-      "bytes": 33249,
-      "sha256": "c9f0e19b18bfb35bfad6b113382874897a83c0aac6472ad786b3ba5bbe4c9eca"
+      "bytes": 44606,
+      "sha256": "382ba0f6ea585e6ef8fbbcb5fbc0abb2f8bbdfe3e01ffbdeadf0d8526628e35a"
     },
     {
       "path": "web/sw.js",
       "bytes": 851,
       "sha256": "00b464af5e19764786eb04cf76874441594624994fad193aebad734ac035e52d"
     }
-  ],
-  "codeUpdatedAt": "2026-11-05T04:53:01.125046+00:00",
-  "seedPolicy": "The initially verified dated seed is preserved between code checkpoints; live collection publishes separate R2 versions."
+  ]
 }

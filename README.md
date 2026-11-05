@@ -2,7 +2,7 @@
 
 A MapleStory Classic market dashboard: a fixed-basket price index, a daily meso-per-NX estimate, recorded market-volume charts and separately dated scanner/offer references. Independent fan project; no Nexon affiliation.
 
-Public test: [inflation-watch-astra.dizzyvinci.workers.dev](https://inflation-watch-astra.dizzyvinci.workers.dev/). Source repository: [dizzyvinci/inflation-watch-astra](https://github.com/dizzyvinci/inflation-watch-astra). `README.txt` contains historical local-preview notes, including the superseded v1 method.
+Public test: [inflation-watch-astra.dizzyvinci.workers.dev](https://inflation-watch-astra.dizzyvinci.workers.dev/). Source repository: [dizzyvinci/inflation-watch-astra](https://github.com/dizzyvinci/inflation-watch-astra).
 
 Scheduled production collection was verified on November 5, 2026 at 04:43 UTC: the public pointer reported `status: ok`, `mode: collector` and report version `59106aecbc3821ba`; its referenced report contained the fixed 50-item basket and 29 cash items. The check began at `04:43:46.813Z` and the successful fetch completed at `04:43:49.137Z`. The source publication remained **November 4 at 08:30:56 UTC**. A successful collection does not turn those daily observations into fresh trades or a connected intraday feed. See [health status](https://inflation-watch-astra.dizzyvinci.workers.dev/health.json) and [the operational record](DEPLOYMENT.md).
 

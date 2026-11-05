@@ -240,6 +240,106 @@ function volumeHistory(items, basketSlugs, sourceDay) {
  * Live/intraday normalization is deliberately outside this public-feed adapter:
  * a daily check never creates scanner sales or renews their observation times.
  */
+export function computeCashBasket(feed, seedBasket, config = {}) {
+  const unavailable = reason => ({
+    status: 'unavailable', reason, kind: 'cash_price_index', experimental: true,
+    version: 1, methodVersion: 1, baseStart: seedBasket?.baseStart ?? config.base_start ?? null,
+    baseEnd: seedBasket?.baseEnd ?? config.base_end ?? null, baseIndex: 100,
+    configuredItemCount: seedBasket?.configuredItemCount ?? Object.keys(config.nx_prices ?? {}).length,
+    missingBaselineCount: null, missingBaselineNames: [], itemCount: 0,
+    sourceUpdatedAt: feed.updatedAt, rows: [], history: [], latest: null, historyKind: 'reconstructed',
+  });
+  try {
+    if (!object(seedBasket) || seedBasket.status !== 'ok') return unavailable('Frozen cash baseline is unavailable in the compiled seed');
+    const spec = seedBasket.indexSpecification;
+    if (seedBasket.version !== 1 || seedBasket.kind !== 'cash_price_index' || !object(spec)
+        || spec.methodVersion !== 1 || spec.weightCap !== 0.08 || spec.minimumBaseDailyVolume !== 5
+        || spec.minimumBaseObservationDays !== 1 || !Array.isArray(spec.configuredCashSchedule)) {
+      return unavailable('Unsupported frozen cash basket specification');
+    }
+    dayTime(spec.baseStart, 'cash base start');
+    dayTime(spec.baseEnd, 'cash base end');
+    if (spec.baseStart > spec.baseEnd || seedBasket.baseStart !== spec.baseStart || seedBasket.baseEnd !== spec.baseEnd) {
+      return unavailable('Invalid frozen cash reference period');
+    }
+    for (const [key, field] of [['base_start', 'baseStart'], ['base_end', 'baseEnd'], ['feed_url', 'sourceUrl'], ['weight_cap', 'weightCap']]) {
+      if (config[key] !== undefined && config[key] !== spec[field]) return unavailable('Frozen cash basket configuration changed; explicit new version required');
+    }
+    const schedule = new Map(spec.configuredCashSchedule.map(row => [row.name, row.nx]));
+    if (schedule.size !== spec.configuredCashSchedule.length || [...schedule.values()].some(nx => !positive(nx))) {
+      return unavailable('Invalid frozen cash schedule');
+    }
+    if (config.nx_prices !== undefined && (Object.keys(config.nx_prices).length !== schedule.size
+        || [...schedule].some(([name, nx]) => config.nx_prices[name] !== nx))) {
+      return unavailable('Frozen cash basket configuration changed; explicit new version required');
+    }
+    for (const key of ['specificationHash', 'basketHash', 'sourceSnapshotHash']) {
+      if (!/^[a-f0-9]{64}$/.test(seedBasket[key] ?? '')) return unavailable('Missing frozen cash integrity metadata');
+    }
+    // The bundled seed is trusted and Python checks its canonical hashes at
+    // creation/load. Validate its numerical definition here without rebasing it.
+    const bases = seedBasket.rows;
+    if (!Array.isArray(bases) || bases.length < 13 || new Set(bases.map(row => row.slug)).size !== bases.length
+        || new Set(bases.map(row => row.name)).size !== bases.length) return unavailable('Invalid frozen cash cohort');
+    if (bases.some(row => !object(row) || typeof row.slug !== 'string' || !row.slug || schedule.get(row.name) !== row.nx
+        || ['basePrice', 'baseQuantity', 'baseExpenditure', 'weight'].some(key => !positive(row[key]))
+        || row.weight > 0.08 + 1e-10 || !Number.isSafeInteger(row.baseObservationDays) || row.baseObservationDays < 1)
+        || Math.abs(safeSum(bases.map(row => row.weight), 'cash weights') - 1) > 1e-9) {
+      return unavailable('Invalid frozen cash baseline weights or prices');
+    }
+    const sourceDay = feed.updatedAt.slice(0, 10);
+    const bySlug = new Map(feed.items.map(item => [item.s, item]));
+    const frozenFields = ['slug', 'name', 'nx', 'basePrice', 'baseQuantity', 'baseExpenditure', 'baseObservationDays', 'weight'];
+    const rows = bases.map(base => {
+      const frozen = Object.fromEntries(frozenFields.map(key => [key, base[key]]));
+      const item = bySlug.get(base.slug);
+      const valid = item?.k === 'Cash Shop' && item.n === base.name;
+      const history = valid ? item.h.filter(point => point[0] <= sourceDay && point[2] >= 5).map(point => [...point]) : [];
+      const last = history.at(-1), price = last?.[1] ?? null;
+      return {
+        ...frozen, history, price, priceDay: last?.[0] ?? null, quantity: last?.[2] ?? null,
+        sourceUpdatedAt: feed.updatedAt, missingSource: !valid,
+        changeBase: last ? (price / base.basePrice - 1) * 100 : null,
+        indexContribution: last ? 100 * base.weight * price / base.basePrice : null,
+        changeContribution: last ? 100 * base.weight * (price / base.basePrice - 1) : null,
+      };
+    });
+    const dates = [...new Set([sourceDay, ...feed.items.flatMap(item => item.h.filter(point => point[2] >= 5 && point[0] <= sourceDay).map(point => point[0]))])].sort();
+    const history = dates.map(day => {
+      const points = [];
+      let priced = 0, observed = 0;
+      for (const row of rows) {
+        let last;
+        for (const point of row.history) {
+          if (point[0] > day) break;
+          last = point;
+        }
+        if (last) {
+          points.push(row.weight * last[1] / row.basePrice);
+          priced += row.weight;
+          if (last[0] === day) observed += row.weight;
+        }
+      }
+      return { at: day === sourceDay ? feed.updatedAt : `${day}T23:59:59Z`, day,
+        cpi: priced > 0.999999 ? 100 * safeSum(points, 'cash index') : null,
+        coverage: observed, pricedCoverage: priced, partial: day === sourceDay };
+    });
+    const metadata = Object.fromEntries(['indexSpecification', 'specificationHash', 'basketHash', 'sourceSnapshotHash',
+      'selectionSourceUpdatedAt', 'selectedAt'].map(key => [key, seedBasket[key]]));
+    return {
+      status: 'ok', reason: null, kind: 'cash_price_index', experimental: true,
+      version: 1, methodVersion: 1, baseStart: spec.baseStart, baseEnd: spec.baseEnd, baseIndex: 100,
+      configuredItemCount: schedule.size, missingBaselineCount: seedBasket.missingBaselineNames.length,
+      missingBaselineNames: [...seedBasket.missingBaselineNames], itemCount: rows.length, ...metadata,
+      baseExpenditure: safeSum(rows.map(row => row.baseExpenditure), 'cash base expenditure'),
+      baseQuantity: safeSum(rows.map(row => row.baseQuantity), 'cash base quantity'),
+      sourceUpdatedAt: feed.updatedAt, historyKind: 'reconstructed', rows, history, latest: history.at(-1),
+    };
+  } catch (error) {
+    return unavailable(`Cash basket unavailable: ${error.message}`);
+  }
+}
+
 export function computeReport(feed, seedReport, {
   checkedAt, builtAt, sourceStatus, config = {},
 } = {}) {
@@ -399,6 +499,7 @@ export function computeReport(feed, seedReport, {
     turnoverCoverageProxy: allTurnover ? basketTurnover / allTurnover : null,
     latest: history.at(-1), baseNxRate: seedReport.baseNxRate, rows, contextItems, cash, categories, history,
     volumeHistory: volumeHistory(feed.items, new Set(rows.map(row => row.slug)), sourceDay),
+    cashBasket: computeCashBasket(feed, seedReport.cashBasket, config),
   });
   // Catch arithmetic overflow in any computed field. Independent references,
   // qualified live data and their original dates pass through unchanged.

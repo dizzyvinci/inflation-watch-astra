@@ -6,6 +6,7 @@ import { computeReport } from './worker-core.mjs';
 const POINTER = 'version.json';
 const STATE = '_private/collector-state.json';
 const LOCK = '_private/collector-lock.json';
+export const CALCULATION_MODEL_VERSION = 'daily-fixed-baskets-v3-cash1-source-summary1';
 const MAX_BYTES = 5_000_000;
 const LEASE_MS = 120_000;
 const SNAPSHOT = /^data-[a-f0-9]{16}\.json$/;
@@ -31,6 +32,43 @@ function clock(options) {
 async function digest(text) {
   const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
   return [...new Uint8Array(bytes)].map(value => value.toString(16).padStart(2, '0')).join('');
+}
+
+export async function calculationFingerprint(baseline = seed) {
+  // Definition changes require a publication even if upstream returned 304.
+  // Build/check/source clocks and dated comparison captures are not definitions.
+  return digest(JSON.stringify({
+    calculationModelVersion: CALCULATION_MODEL_VERSION,
+    basketVersion: baseline.basketVersion, basketHash: baseline.basketHash ?? null,
+    specificationHash: baseline.specificationHash ?? null,
+    baseStart: baseline.baseStart, baseEnd: baseline.baseEnd, baseNxRate: baseline.baseNxRate,
+    goods: baseline.rows.map(row => [row.slug, row.basePrice, row.weight]).sort((a, b) => a[0].localeCompare(b[0])),
+    cashBasketVersion: baseline.cashBasket?.version ?? null,
+    cashBasketHash: baseline.cashBasket?.basketHash ?? null,
+    nxSchedule: baseline.cash.map(row => [row.slug, row.name, row.nx]).sort((a, b) => a[0].localeCompare(b[0])),
+  }));
+}
+
+async function archiveSource(bucket, feed, feedHash, state, archiveAt) {
+  const key = `_private/sources/${feed.updatedAt.slice(0, 10)}/${feedHash}.json`;
+  if (state.archivedFeedHash === feedHash && state.archivedSourceKey === key) {
+    return { archivedFeedHash: feedHash, archivedSourceKey: key, archivedAt: state.archivedAt ?? null };
+  }
+  const record = { archiveVersion: 1, archiveAt, sourceUpdatedAt: feed.updatedAt, feedHash, feed };
+  const written = await bucket.put(key, JSON.stringify(record), {
+    ...metadata, onlyIf: new Headers({ 'If-None-Match': '*' }),
+  });
+  let acceptedAt = archiveAt;
+  if (!written) {
+    const existing = await getJson(bucket, key);
+    if (!existing.value || existing.value.feedHash !== feedHash
+        || existing.value.sourceUpdatedAt !== feed.updatedAt
+        || await digest(JSON.stringify(existing.value.feed)) !== feedHash) {
+      throw new Error('Private source archive content-address conflict; refusing overwrite');
+    }
+    acceptedAt = existing.value.archiveAt;
+  }
+  return { archivedFeedHash: feedHash, archivedSourceKey: key, archivedAt: acceptedAt };
 }
 
 async function getJson(bucket, key) {
@@ -195,7 +233,7 @@ function mergeDays(previous, current, limit) {
 
 function recordTime(row) { return stamp(row?.observedAt ?? row?.at ?? row?.capturedAt); }
 
-function retainHistories(report, previous) {
+export function retainHistories(report, previous) {
   if (sameMethod(previous, report)) {
     report.history = mergeDays(previous.history, report.history, 7300);
     report.volumeHistory = mergeDays(previous.volumeHistory, report.volumeHistory, 7300);
@@ -221,10 +259,19 @@ function retainHistories(report, previous) {
       return context;
     });
   }
+  if (report.cashBasket?.status === 'ok') {
+    const cash = report.cashBasket, old = previous?.cashBasket;
+    if (old?.status === 'ok' && cash.kind === 'cash_price_index' && old.kind === cash.kind
+        && old.version === cash.version && /^[a-f0-9]{64}$/.test(cash.basketHash ?? '')
+        && old.basketHash === cash.basketHash) {
+      cash.history = mergeDays(old.history, cash.history, 7300);
+    }
+    cash.history = cash.history.slice(-7300);
+  }
   report.history = report.history.slice(-7300);
   report.volumeHistory = report.volumeHistory.slice(-7300);
   const cutoff = stamp(`${report.sourceUpdatedAt.slice(0, 10)}T00:00:00Z`) - 364 * 86_400_000;
-  for (const row of [...report.rows, ...report.cash, ...(report.contextItems ?? [])]) {
+  for (const row of [...report.rows, ...report.cash, ...(report.contextItems ?? []), ...(report.cashBasket?.rows ?? [])]) {
     // A retained context history keeps its original date/window. Cap length
     // rather than moving its old observations into the current source window.
     row.history = row.retained ? row.history.slice(-365)
@@ -297,14 +344,19 @@ export async function collect(env, options = {}) {
       lastSuccessfulFetchAt = iso(now());
     }
     if (pointer && stamp(feed.updatedAt) < stamp(pointer.sourceUpdatedAt)) throw new Error('Source timestamp moved backwards');
+    const feedText = JSON.stringify(feed);
+    if (new TextEncoder().encode(feedText).byteLength > MAX_BYTES) throw new Error('Oversized cached source feed');
+    const definitionFingerprint = await calculationFingerprint();
     const status = {
       status: response.status === 304 ? 'unchanged' : 'ok', checkedAt,
       lastSuccessfulFetchAt, detail: 'Public daily source checked by the scheduled collector; source observation time remains separately dated.',
     };
     const unchanged = pointer && state.publishedVersion === pointer.version
-      && feedHash === state.feedHash && pointer.sourceUpdatedAt === feed.updatedAt;
+      && feedHash === state.feedHash && pointer.sourceUpdatedAt === feed.updatedAt
+      && state.calculationFingerprint === definitionFingerprint;
     const computeFeed = boundedComputeFeed(feed);
     let nextPointer;
+    let report;
     if (unchanged) {
       // Validate again without creating a new snapshot or new market clock.
       computeReport(computeFeed, seed, { checkedAt, builtAt: pointer.builtAt, sourceStatus: status, config });
@@ -313,7 +365,15 @@ export async function collect(env, options = {}) {
     } else {
       const computed = computeReport(computeFeed, seed, { checkedAt, builtAt: iso(now()), sourceStatus: status, config });
       const previous = await previousReport(bucket, pointer);
-      const report = retainHistories(computed, previous);
+      report = retainHistories(computed, previous);
+      report.calculationModelVersion = CALCULATION_MODEL_VERSION;
+      report.calculationFingerprint = definitionFingerprint;
+    }
+    // Full validated history is archived before any new public report or state.
+    // This is storage time, never a renewed source/trade observation clock.
+    await checkLease(bucket, lease, now());
+    const archived = await archiveSource(bucket, feed, feedHash, state, iso(now()));
+    if (report) {
       const text = JSON.stringify(report);
       const version = (await digest(text)).slice(0, 16);
       const data = `data-${version}.json`;
@@ -330,11 +390,13 @@ export async function collect(env, options = {}) {
         version, data, basketVersion: report.basketVersion, builtAt: report.builtAt,
         sourceUpdatedAt: report.sourceUpdatedAt, sourceStatus: status, mode: 'collector',
         lastSuccessfulFetchAt, nextAllowedAt: null,
+        calculationFingerprint: definitionFingerprint,
       };
     }
     const nextState = {
       feed, feedHash, etag, lastModified, checkedAt, lastSuccessfulFetchAt,
       nextAllowedAt: null, publishedVersion: nextPointer.version,
+      calculationFingerprint: definitionFingerprint, ...archived,
     };
     await checkLease(bucket, lease, now());
     await casJson(bucket, STATE, nextState, stateRecord.etag);
