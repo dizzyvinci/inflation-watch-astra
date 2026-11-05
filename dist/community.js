@@ -213,7 +213,9 @@
     </article>`;
   if (footerLocked) {
     const paragraphs = privacy.querySelectorAll('.community-prose > p');
-    if (paragraphs[0]) paragraphs[0].textContent = paragraphs[0].textContent.replace(', maintained by DishWasher', '');
+    if (paragraphs[0]) paragraphs[0].textContent = 'This note describes inflation.gg. There are no visitor accounts or ads. Optional Cloudflare browser performance metrics are On by default in this review preview unless you saved Off. You can change that choice below.';
+    const unlockNote=[...paragraphs].find(p=>p.textContent.startsWith('Unlocking this private preview'));
+    if(unlockNote)unlockNote.textContent='Design controls require a password confirmation and unlock only for the current tab. This page does not store the password or an unlock flag in browser storage; refreshing or relocking hides the controls again.';
     const contactNote = privacy.querySelector('[data-open-contact]')?.closest('p');
     if (contactNote) contactNote.textContent = 'Author contact details are temporarily hidden during API review. This note describes the current build and hosting; it is not a guarantee that no data is processed.';
     const contactHeading = [...privacy.querySelectorAll('h2')].find(n => n.textContent === 'Contact and external links');

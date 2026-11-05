@@ -40,20 +40,20 @@ export function safeReturnTo(value) {
   } catch { return '/'; }
 }
 const escape = value => value.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-function privateHeaders() {
+function privateHeaders(mode = 'password') {
   return {
     'Cache-Control': 'private, no-store, no-transform',
     'CDN-Cache-Control': 'no-store', 'Cloudflare-CDN-Cache-Control': 'no-store',
     'Content-Type': 'text/html; charset=utf-8', 'X-Content-Type-Options': 'nosniff',
     'Referrer-Policy': 'same-origin', 'X-Robots-Tag': 'noindex, nofollow, noarchive',
-    'X-Astra-Preview': 'password',
+    'X-Astra-Preview': mode,
     'Content-Security-Policy': `default-src 'none'; script-src 'none'; style-src '${PREVIEW_STYLE_HASH}'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'`,
   };
 }
-function gateResponse(request, status, message = 'Enter the preview password to continue.') {
+function gateResponse(request, status, message = 'Enter the preview password to continue.', mode = 'password') {
   const url = new URL(request.url);
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Private preview</title><style>${PREVIEW_CSS}</style></head><body><main aria-labelledby="preview-title"><h1 id="preview-title">Private preview</h1><p id="preview-message" role="status">${escape(message)}</p><form method="post" action="/__preview_login"><input type="hidden" name="returnTo" value="${escape(safeReturnTo(url.pathname + url.search))}"><label>Preview password <input type="password" name="password" required maxlength="256" autocomplete="current-password" aria-describedby="preview-message" autofocus></label><button type="submit">Unlock preview</button></form><small>Access lasts eight hours in this browser.</small></main></body></html>`;
-  return new Response(request.method === 'HEAD' ? null : html, { status, headers: privateHeaders() });
+  return new Response(request.method === 'HEAD' ? null : html, { status, headers: privateHeaders(mode) });
 }
 async function validSession(request, secret, now) {
   const header = request.headers.get('Cookie') ?? '';
@@ -90,8 +90,8 @@ async function formBody(request) {
 function sessionCookie(value, age) {
   return `${COOKIE}=${value}; Path=/; Max-Age=${age}; Secure; HttpOnly; SameSite=Strict`;
 }
-function controlsResponse(status, unlocked = false) {
-  const headers = privateHeaders();
+function controlsResponse(status, unlocked = false, mode = 'password') {
+  const headers = privateHeaders(mode);
   headers['Content-Type'] = 'application/json; charset=utf-8';
   if (status === 405) headers.Allow = 'POST';
   return new Response(JSON.stringify({ unlocked }), { status, headers });
@@ -100,57 +100,60 @@ export function withPreviewGate(next, { now = Date.now } = {}) {
   return async function previewFetch(request, env, ctx) {
     const url = new URL(request.url), controls = url.pathname === '/__preview_controls';
     if (env.PREVIEW_ACCESS === undefined) return controls ? controlsResponse(503) : next(request, env, ctx);
-    if (env.PREVIEW_ACCESS !== 'password' || !bindingsReady(env)) return controls ? controlsResponse(503) : gateResponse(request, 503, 'Preview access is temporarily unavailable.');
+    const mode = env.PREVIEW_ACCESS === 'review' ? 'review' : 'password';
+    if (!['password', 'review'].includes(env.PREVIEW_ACCESS) || !bindingsReady(env)) return controls ? controlsResponse(503, false, mode) : gateResponse(request, 503, 'Preview access is temporarily unavailable.', mode);
     const time = now();
     if (controls) {
       if (request.method !== 'POST') {
-        const response = controlsResponse(405);
+        const response = controlsResponse(405, false, mode);
         return request.method === 'HEAD' ? new Response(null, response) : response;
       }
-      if (url.protocol !== 'https:' || request.headers.get('Origin') !== url.origin) return controlsResponse(403);
-      if (!await validSession(request, env.PREVIEW_SESSION_SECRET, time)) return controlsResponse(401);
+      if (url.protocol !== 'https:' || request.headers.get('Origin') !== url.origin) return controlsResponse(403, false, mode);
+      if (mode === 'password' && !await validSession(request, env.PREVIEW_SESSION_SECRET, time)) return controlsResponse(401, false, mode);
       let form;
       try { form = await formBody(request); }
-      catch { return controlsResponse(400); }
+      catch { return controlsResponse(400, false, mode); }
       const password = form.get('password');
       if (form.getAll('password').length !== 1 || typeof password !== 'string' || password.length > 256
-        || !equal(await digest(password), await digest(env.PREVIEW_PASSWORD))) return controlsResponse(401);
+        || !equal(await digest(password), await digest(env.PREVIEW_PASSWORD))) return controlsResponse(401, false, mode);
       // Browser UI owns only an in-memory unlocked state. No cookie, session
       // extension, new credential or server-side unlock flag is created here.
-      return controlsResponse(200, true);
+      return controlsResponse(200, true, mode);
     }
     if (url.pathname === '/__preview_login' || url.pathname === '/__preview_logout') {
       if (request.method !== 'POST') {
-        const response = gateResponse(request, 405, 'Use the preview form to continue.');
+        const response = gateResponse(request, 405, 'Use the preview form to continue.', mode);
         response.headers.set('Allow', 'POST'); return response;
       }
-      if (url.protocol !== 'https:' || request.headers.get('Origin') !== url.origin) return gateResponse(request, 403, 'The preview form must be submitted from this site.');
+      if (url.protocol !== 'https:' || request.headers.get('Origin') !== url.origin) return gateResponse(request, 403, 'The preview form must be submitted from this site.', mode);
       if (url.pathname === '/__preview_logout') {
-        const headers = privateHeaders();
+        const headers = privateHeaders(mode);
         headers.Location = '/'; headers['Set-Cookie'] = sessionCookie('', 0);
         return new Response(null, { status: 303, headers });
       }
       let form;
       try { form = await formBody(request); }
-      catch { return gateResponse(request, 400, 'The preview form could not be read.'); }
+      catch { return gateResponse(request, 400, 'The preview form could not be read.', mode); }
       const password = form.get('password');
       if (form.getAll('password').length !== 1 || form.getAll('returnTo').length > 1 || typeof password !== 'string' || password.length > 256 ||
-        !equal(await digest(password), await digest(env.PREVIEW_PASSWORD))) return gateResponse(request, 401, 'That preview password was not accepted.');
+        !equal(await digest(password), await digest(env.PREVIEW_PASSWORD))) return gateResponse(request, 401, 'That preview password was not accepted.', mode);
       const expires = Math.floor(time / 1000) + SESSION_SECONDS;
       const nonce = b64(crypto.getRandomValues(new Uint8Array(16)));
       const payload = `${expires}.${nonce}`;
-      const headers = privateHeaders();
+      const headers = privateHeaders(mode);
       headers.Location = safeReturnTo(form.get('returnTo'));
       headers['Set-Cookie'] = sessionCookie(`${payload}.${b64(await signature(payload, env.PREVIEW_SESSION_SECRET))}`, SESSION_SECONDS);
       return new Response(null, { status: 303, headers });
     }
-    if (!await validSession(request, env.PREVIEW_SESSION_SECRET, time)) return gateResponse(request, 401);
+    // Review pages are public; only password mode requires the whole-site session.
+    // Neither mode grants access to the controls endpoint without the password.
+    if (mode === 'password' && !await validSession(request, env.PREVIEW_SESSION_SECRET, time)) return gateResponse(request, 401);
     const response = await next(request, env, ctx);
     const headers = new Headers(response.headers);
     headers.set('Cache-Control', 'private, no-store, no-transform');
     headers.set('CDN-Cache-Control', 'no-store'); headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
     headers.set('X-Robots-Tag', 'noindex, nofollow, noarchive');
-    headers.set('X-Astra-Preview', 'password');
+    headers.set('X-Astra-Preview', mode);
     headers.delete('Expires');
     return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
   };

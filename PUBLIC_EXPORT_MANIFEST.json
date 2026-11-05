@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T17:13:27+00:00",
+  "exportedAt": "2026-11-05T17:27:35+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -2073,7 +2073,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "b02cb148ed0631ec42bfdd01fa05549a39d9668269b1aef9111eed79e8c8f935"
+      "sha256": "8c56ea08bcbb86867f0b6f13734baf46a89bb24165ee857455c477f38e4495dc"
     },
     {
       "path": "cache/market.json",
@@ -2138,7 +2138,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "bc572eb8aed00816e41ec1fa2946d49f21b7a9808566b3745fa46542e84e943a"
+      "sha256": "d750047e3f2856efa65219a751c6d10b5007bae436ab2f281ff64b35cb54dd2d"
     },
     {
       "path": "dist/_headers",
@@ -4716,6 +4716,11 @@
       "sha256": "3095db1252b1e2f6c035a94468bf53f33fef6813b39ec5a72fa126b6800b6977"
     },
     {
+      "path": "dist/astra-ui-6eb3cd0250cef79f.js",
+      "bytes": 51691,
+      "sha256": "6eb3cd0250cef79f7648c130e89d5e86e611f3acfe2c0db6ccd9759f7f84a546"
+    },
+    {
       "path": "dist/astra-ui-85b41362aa500592.js",
       "bytes": 50850,
       "sha256": "85b41362aa500592299f0fc3e988a87e675db3f54cb7258a71635283172af507"
@@ -4837,8 +4842,8 @@
     },
     {
       "path": "dist/community.js",
-      "bytes": 29332,
-      "sha256": "12369a5792ce0a7fbb8670fe8fe09033d817be6db573e78f6ee852e9a2cff527"
+      "bytes": 29844,
+      "sha256": "6e6f37194fd5e8b6d24d7306881ce689369157e9dc94c47d2cd37c2876b44f28"
     },
     {
       "path": "dist/data-025260607b3c3b6c.json",
@@ -4961,6 +4966,11 @@
       "sha256": "eeebf04b6dfc455c438dbe6a2c105444ab2e24f058bcf14031254a3f1e70d125"
     },
     {
+      "path": "dist/data-f419e20e43c77729.json",
+      "bytes": 848186,
+      "sha256": "f419e20e43c777295a33fa295b914ca2ac1a35f40aab798dc94311a4022cc3b4"
+    },
+    {
       "path": "dist/data-f6c5ed14923531e4.json",
       "bytes": 268484,
       "sha256": "f6c5ed14923531e41ca7483545d5bb63b049135652ceafa7361c549bd5349e89"
@@ -4978,7 +4988,7 @@
     {
       "path": "dist/data.json",
       "bytes": 848186,
-      "sha256": "bdc0fb99cc92ea25964f5640348ce9f9387b5b1cd19a0570540658c926bf61dc"
+      "sha256": "f419e20e43c777295a33fa295b914ca2ac1a35f40aab798dc94311a4022cc3b4"
     },
     {
       "path": "dist/date-presentation.js",
@@ -4998,7 +5008,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "bc572eb8aed00816e41ec1fa2946d49f21b7a9808566b3745fa46542e84e943a"
+      "sha256": "d750047e3f2856efa65219a751c6d10b5007bae436ab2f281ff64b35cb54dd2d"
     },
     {
       "path": "dist/fee-preview.css",
@@ -5027,8 +5037,8 @@
     },
     {
       "path": "dist/index.html",
-      "bytes": 48252,
-      "sha256": "131f8bb41136ad0f8d934b39b5cbe1463ed158383ade6ebcf53e55f23799899d"
+      "bytes": 48249,
+      "sha256": "fe6ae6412ad42484fed101c3f66adb515019bbadc1736d5c3251770139f312d7"
     },
     {
       "path": "dist/layout-preview.css",
@@ -5147,8 +5157,8 @@
     },
     {
       "path": "dist/privacy-controls.js",
-      "bytes": 13565,
-      "sha256": "cd06012a0b54b99025c45d4dcb34e0da135c9670dd458bb74da15bea5668dd2e"
+      "bytes": 13894,
+      "sha256": "5f86f20f5a91524cfe2a30bacb97a35f8feaeaaaba8be28574b6778233de7e76"
     },
     {
       "path": "dist/rate-arrival.css",
@@ -5238,12 +5248,12 @@
     {
       "path": "dist/ui-bundles.json",
       "bytes": 9392,
-      "sha256": "3fb4faf08215041a7b878d853a65e1f21ee01c34b4774b44a80f1d94b17e0c6c"
+      "sha256": "0430fc85335da2bb670d3f9376b85b916990c226c6ac79bba9759b9f6a062c66"
     },
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "c9781ea7bac0dd68854e1b11fa503341b8363aff9e6dcdc69146d4d1750b1c68"
+      "sha256": "f9ad16875446acf02fab63f9821de221dcaccc558f12c4d0b11f07d4491f7940"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -5267,8 +5277,8 @@
     },
     {
       "path": "engine.py",
-      "bytes": 56300,
-      "sha256": "2cba95168ef93a6a171353356c731e0dc3c03babfbeed9c8212894787c5732d5"
+      "bytes": 56297,
+      "sha256": "ceed4c117a1cc7b1465f5943874d0ba38d44b48d0f6ba8cf6153391beeabc01f"
     },
     {
       "path": "historical_backfill.py",
@@ -5327,8 +5337,8 @@
     },
     {
       "path": "ops/preview-gate.mjs",
-      "bytes": 10950,
-      "sha256": "73aab6a77dfc1dae3d447f01c7f645a066133c49f71a09fc864b78c39c917a00"
+      "bytes": 11427,
+      "sha256": "569b7bbde9643404b355f02658e82e441fa0bfa638c7a26e2d7f53ef1f216065"
     },
     {
       "path": "ops/worker-core.mjs",
@@ -5342,8 +5352,8 @@
     },
     {
       "path": "ops/wrangler.jsonc",
-      "bytes": 638,
-      "sha256": "26a1640c230935228d71108677b7200d5411e93cf25ec67be1a194fb1ef9d181"
+      "bytes": 636,
+      "sha256": "bf0498248355adccebbcaa9a86d07ff104a40743f3a0c1341e9b4627e5d496e7"
     },
     {
       "path": "package-lock.json",
@@ -5547,8 +5557,8 @@
     },
     {
       "path": "tests/preview-gate.test.mjs",
-      "bytes": 16049,
-      "sha256": "49064da7071d0bb70000c78c3f2c8017cfd2805fbf6f2340fced59c911564712"
+      "bytes": 21343,
+      "sha256": "06cc63d4600601879ea8ecfa11f0b0e362a631a96460251cbb67282c3ac52748"
     },
     {
       "path": "tests/preview-runtime.cjs",
@@ -5562,8 +5572,8 @@
     },
     {
       "path": "tests/privacy-controls.cjs",
-      "bytes": 14844,
-      "sha256": "3c6235ff20f80818b759c956a8fb7090b7202f878845114ae01edd2b79094d5e"
+      "bytes": 15981,
+      "sha256": "aa4f9274b96905a9a33ae6d9a608b29ac1a86bbd392630a6011e2282c915e259"
     },
     {
       "path": "tests/rate-arrival.cjs",
@@ -5862,8 +5872,8 @@
     },
     {
       "path": "web/community.js",
-      "bytes": 29332,
-      "sha256": "12369a5792ce0a7fbb8670fe8fe09033d817be6db573e78f6ee852e9a2cff527"
+      "bytes": 29844,
+      "sha256": "6e6f37194fd5e8b6d24d7306881ce689369157e9dc94c47d2cd37c2876b44f28"
     },
     {
       "path": "web/date-presentation.js",
@@ -6022,8 +6032,8 @@
     },
     {
       "path": "web/privacy-controls.js",
-      "bytes": 13565,
-      "sha256": "cd06012a0b54b99025c45d4dcb34e0da135c9670dd458bb74da15bea5668dd2e"
+      "bytes": 13894,
+      "sha256": "5f86f20f5a91524cfe2a30bacb97a35f8feaeaaaba8be28574b6778233de7e76"
     },
     {
       "path": "web/rate-arrival.css",

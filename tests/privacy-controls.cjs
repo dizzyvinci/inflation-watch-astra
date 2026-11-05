@@ -14,7 +14,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 
 function fixture({ preferences = new Map(), blocked = false, readonly = false,
   config = validConfig, responseOk = true, responseStatus = 200, contentType = 'application/json', pending = false, url = 'https://inflation.gg/?existing=kept#nx-calculator',
-  injected = false, latePrivacy = false, previewDefault = false, previewHeader = 'password' } = {}) {
+  injected = false, latePrivacy = false, previewDefault = false, previewHeader = 'password', footerLock = false } = {}) {
   const navigation = [], errors = [], console = new VirtualConsole();
   console.on('jsdomError', error => {
     if (error.message.includes('navigation')) navigation.push(error.message);
@@ -27,6 +27,7 @@ function fixture({ preferences = new Map(), blocked = false, readonly = false,
   // Most cases exercise explicit-choice behavior with the preview default
   // disabled. Dedicated cases below exercise the actual marked preview default.
   if (!previewDefault) delete doc.querySelector('footer').dataset.previewAnalyticsDefault;
+  if(footerLock)doc.querySelector('footer').dataset.footerPrivacyLock='on';
   const calls = { fetch: [], beacon: 0, xhr: 0, writes: [] };
   const storage = { blocked, readonly };
   Object.defineProperty(w, 'localStorage', { value: {
@@ -84,6 +85,8 @@ const assertOff = f => {
   const publicDefault=fixture({previewDefault:true,previewHeader:null});await flush();assertOff(publicDefault);
   assert.equal(scripts(publicDefault).length,0,'external default-on script requires server-confirmed password preview');publicDefault.close();
   const blockedDefault=fixture({previewDefault:true,blocked:true});await flush();assertOff(blockedDefault);assert.equal(blockedDefault.calls.fetch.length,0);blockedDefault.close();
+  const reviewDefault=fixture({previewDefault:true,previewHeader:'review',footerLock:true});await flush();assert.equal(scripts(reviewDefault).length,1);assert(reviewDefault.doc.querySelector('.privacy-choice-description').textContent.includes('review preview defaults to On'));assert(reviewDefault.doc.getElementById('view-privacy').textContent.includes('unlock only for the current tab'));assert(!reviewDefault.doc.getElementById('view-privacy').textContent.includes('eight hours'));assert(!reviewDefault.doc.getElementById('view-privacy').textContent.includes('password-protected preview'));assert.equal(reviewDefault.preferences.has(preferenceKey),false);reviewDefault.close();
+  for(const settings of [{previewHeader:'review',footerLock:false},{previewHeader:'unknown',footerLock:true},{previewHeader:null,footerLock:true}]){const denied=fixture({previewDefault:true,...settings});await flush();assertOff(denied);assert.equal(scripts(denied).length,0,'unknown/mismatched server scope cannot enable the preview default');denied.close();}
   const preferences = new Map([['astra-scenery', 'on'], ['astra-hero-layout', 'dials-first']]);
   const f = fixture({ preferences });
   assertOff(f); assert.equal(f.calls.fetch.length, 0); assert.equal(scripts(f).length, 0);

@@ -804,7 +804,7 @@ def apply_footer_privacy_lock(dist, *, enabled=False):
         raise ValueError('Unknown preview privacy default')
     analytics_attr = '' if default is None else f' data-preview-analytics-default="{default}"'
     disclosure = ('Optional browser performance measurements follow the existing preview privacy setting.' if default is None
-                  else f'Optional browser performance measurements are {default.title()} by default in this protected preview; saved choices still apply.')
+                  else f'Optional browser performance measurements are {default.title()} by default in this review preview; saved choices still apply.')
     replacement = f'''<footer class="shell footer-privacy-locked" data-footer-privacy-lock="on"{analytics_attr}>
   <article class="footer-review-note" aria-label="Footer pending review"><p>Author note and full credits will appear here after review.</p></article>
   <p class="footer-privacy-note">{disclosure} <a href="#privacy">Privacy policy and controls</a>.</p>

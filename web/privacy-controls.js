@@ -12,6 +12,7 @@
   // Preview-only default. A server-confirmed preview response is required
   // before loading the external script; saved Off always wins.
   const previewDefaultOn = footer.dataset.previewAnalyticsDefault === 'on';
+  const reviewMarkup=footer.dataset.footerPrivacyLock==='on',previewLabel=reviewMarkup?'review preview':'password-protected preview';
   const panels = [];
   let choice = 'off';
   let previewDefaultActive = false;
@@ -127,7 +128,7 @@
     previewDefaultActive = fromPreviewDefault;
     const current = ++generation;
     controller = new AbortController();
-    message = fromPreviewDefault ? 'This password-protected preview defaults to On. Loading the disclosed Cloudflare metrics; choose Off to disable them.'
+    message = fromPreviewDefault ? 'This '+previewLabel+' defaults to On. Loading the disclosed Cloudflare metrics; choose Off to disable them.'
       : savedConsent ? 'Restoring your saved On choice. Loading optional Cloudflare metrics.' : 'Your choice is on. Loading optional Cloudflare metrics.';
     update();
     loading = (async () => {
@@ -137,14 +138,15 @@
         const response = await window.fetch('/analytics-config.json', {
           cache: 'no-store', credentials: 'same-origin', redirect: 'error', signal: controller.signal,
         });
-        if (response.status === 401 || response.status === 403) throw new Error('Unlock this site again before enabling optional metrics.');
+        if (response.status === 401 || response.status === 403) throw new Error(reviewMarkup?'Review analytics configuration is unavailable; optional metrics remain Off.':'Unlock this site again before enabling optional metrics.');
         if (!response.ok) throw new Error('Optional analytics configuration is unavailable.');
-        if (fromPreviewDefault && response.headers?.get?.('x-astra-preview') !== 'password') {
-          throw new Error('The On default applies only to the password-protected preview.');
+        const serverPreview=response.headers?.get?.('x-astra-preview');
+        if (fromPreviewDefault && !(serverPreview==='password'||reviewMarkup&&serverPreview==='review')) {
+          throw new Error('The On default requires a server-confirmed review or password preview.');
         }
         const contentType = response.headers?.get?.('content-type');
         if (contentType && !/\bapplication\/(?:[a-z0-9.+-]*\+)?json\b/i.test(contentType)) {
-          throw new Error('Configuration is not JSON; unlock this site again if your session expired.');
+          throw new Error(reviewMarkup?'Configuration is not JSON; optional metrics remain Off.':'Configuration is not JSON; unlock this site again if your session expired.');
         }
         const config = validateConfig(await response.json());
         if (choice !== 'on' || current !== generation) return;
@@ -187,7 +189,7 @@
     panel.setAttribute('aria-labelledby', id + '-title');
     const heading = make('h2', '', headingText); heading.id = id + '-title';
     const state = make('p', 'privacy-choice-state');
-    const explanation = make('p', 'privacy-choice-description', 'With On, Cloudflare may process page views, visited/referring URLs, device and browser information, and performance measurements. This password-protected preview defaults to On unless you saved Off. Prices, market feeds and features work in either mode.');
+    const explanation = make('p', 'privacy-choice-description', 'With On, Cloudflare may process page views, visited/referring URLs, device and browser information, and performance measurements. This '+previewLabel+' defaults to On unless you saved Off. Prices, market feeds and features work in either mode.');
     explanation.id = id + '-description';
     const options = make('div', 'privacy-choice-options');
     options.setAttribute('role', 'group'); options.setAttribute('aria-label', 'Optional Cloudflare browser metrics');
@@ -212,7 +214,7 @@
     const prose = privacy?.querySelector('.community-prose');
     if (!prose || document.getElementById('privacy-analytics-controls')) return !!prose;
     const intro = prose.querySelector('p');
-    if (intro) intro.textContent = (footer.dataset.footerPrivacyLock === 'on' ? 'This note describes inflation.gg.' : 'This note describes inflation.gg, maintained by DishWasher.') + ' There are no visitor accounts or ads. Optional Cloudflare browser metrics are On by default in this password-protected preview unless you saved Off. The controls below explain the data and let you turn them Off or On.';
+    if (intro) intro.textContent = (reviewMarkup ? 'This note describes inflation.gg.' : 'This note describes inflation.gg, maintained by DishWasher.') + ' There are no visitor accounts or ads. Optional Cloudflare browser metrics are On by default in this '+previewLabel+' unless you saved Off. The controls below explain the data and let you turn them Off or On.';
     const panel = addPanel(prose, 'privacy-analytics-controls', 'Optional performance metrics');
     if (intro) intro.after(panel);
     const sources = make('p', 'privacy-choice-sources');
