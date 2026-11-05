@@ -325,6 +325,77 @@ async function previousReport(bucket, pointer) {
   } catch { return null; }
 }
 
+async function writeReport(bucket, lease, now, report, status, definitionFingerprint, references, lastSuccessfulFetchAt, nextAllowedAt = null) {
+  const text = JSON.stringify(report), version = (await digest(text)).slice(0, 16), data = `data-${version}.json`;
+  await checkLease(bucket, lease, now());
+  const written = await bucket.put(data, text, {
+    httpMetadata: { ...metadata.httpMetadata, cacheControl: 'public, max-age=31536000, immutable' },
+    onlyIf: new Headers({ 'If-None-Match': '*' }),
+  });
+  if (!written) {
+    const existing = await bucket.get(data);
+    if (!existing || await existing.text() !== text) throw new Error('Snapshot content-address conflict; refusing overwrite');
+  }
+  return { version, data, basketVersion: report.basketVersion, builtAt: report.builtAt,
+    sourceUpdatedAt: report.sourceUpdatedAt, sourceStatus: status, mode: 'collector',
+    lastSuccessfulFetchAt, nextAllowedAt: nextAllowedAt === null ? null : iso(nextAllowedAt),
+    calculationFingerprint: definitionFingerprint, referenceFingerprint: references };
+}
+
+async function commitReport(bucket, lease, now, stateRecord, pointerRecord, nextState, nextPointer, references) {
+  await checkLease(bucket, lease, now());
+  const staged = await casJson(bucket, STATE, nextState, stateRecord.etag);
+  await checkLease(bucket, lease, now());
+  await casJson(bucket, POINTER, nextPointer, pointerRecord.etag);
+  if (nextState.referenceFingerprint !== references) {
+    try {
+      await checkLease(bucket, lease, now());
+      await casJson(bucket, STATE, { ...nextState, referenceFingerprint: references }, staged.etag);
+    } catch { /* The committed public pointer is authoritative; later checks repair acknowledgement. */ }
+  }
+}
+
+async function upgradeFromAcceptedCache({ bucket, lease, now, baseline, pointer, pointerRecord, state, stateRecord, status, nextAllowedAt }) {
+  if (!pointer) return null;
+  const definition = await calculationFingerprint(baseline), references = await referenceFingerprint(baseline);
+  if (pointer.calculationFingerprint === definition && pointer.referenceFingerprint === references) return null;
+  const feed = state.feed, text = JSON.stringify(feed);
+  if (!feed || !/^[a-f0-9]{64}$/.test(state.feedHash ?? '') || !text
+      || new TextEncoder().encode(text).byteLength > MAX_BYTES || await digest(text) !== state.feedHash
+      || feed.updatedAt !== pointer.sourceUpdatedAt) throw new Error('Accepted daily cache hash/source clock cannot be verified');
+  const committed = state.publishedVersion === pointer.version
+    || (state.cachedUpgradeSourceVersion === pointer.version && state.cachedUpgradeSourceHash === state.feedHash);
+  if (!committed) throw new Error('Accepted daily cache publication marker cannot be verified');
+  // Legacy accepted state predates raw archives. Its committed feed hash is
+  // still valid provenance; when archive markers exist, verify their immutable
+  // object as well. No new archive/acceptance marker is made after a failed fetch.
+  if (state.archivedFeedHash !== undefined || state.archivedSourceKey !== undefined) {
+    const key = `_private/sources/${feed.updatedAt.slice(0, 10)}/${state.feedHash}.json`;
+    if (state.archivedFeedHash !== state.feedHash || state.archivedSourceKey !== key) throw new Error('Accepted daily archive marker mismatch');
+    const archived = await getJson(bucket, key);
+    if (archived.value?.feedHash !== state.feedHash || archived.value?.sourceUpdatedAt !== feed.updatedAt
+        || await digest(JSON.stringify(archived.value.feed)) !== state.feedHash) throw new Error('Accepted daily archive cannot be verified');
+  }
+  const previous = await previousReport(bucket, pointer);
+  if (!previous || previous.sourceUpdatedAt !== feed.updatedAt) throw new Error('Last-good daily publication is unavailable');
+  const lastSuccessfulFetchAt = state.lastSuccessfulFetchAt ?? pointer.lastSuccessfulFetchAt ?? null;
+  const failure = { ...status, status: 'degraded', lastSuccessfulFetchAt,
+    detail: status.detail + ' Updated dated references/calculations using the verified last accepted daily feed; no new daily fetch succeeded.' };
+  const computed = computeReport(boundedComputeFeed(feed), baseline, {
+    checkedAt: failure.checkedAt, builtAt: iso(now()), sourceStatus: failure, config,
+  });
+  const report = retainHistories(computed, previous);
+  report.calculationModelVersion = CALCULATION_MODEL_VERSION;
+  report.calculationFingerprint = definition;
+  report.referenceFingerprint = references;
+  const nextPointer = await writeReport(bucket, lease, now, report, failure, definition, references, lastSuccessfulFetchAt, nextAllowedAt);
+  const nextState = { ...state, checkedAt: failure.checkedAt, nextAllowedAt, lastError: status.detail,
+    publishedVersion: nextPointer.version, calculationFingerprint: definition,
+    cachedUpgradeSourceVersion: pointer.version, cachedUpgradeSourceHash: state.feedHash };
+  await commitReport(bucket, lease, now, stateRecord, pointerRecord, nextState, nextPointer, references);
+  return nextPointer;
+}
+
 /** Scheduled-only collector. Tests may inject fetcher, now and compiled baseline; visitors cannot. */
 export async function collect(env, options = {}) {
   const now = clock(options);
@@ -337,6 +408,7 @@ export async function collect(env, options = {}) {
   let stateRecord;
   let pointer;
   let state;
+  let sourceUnavailable = false;
   try {
     lease = await acquire(bucket, now(), options.owner ?? crypto.randomUUID());
     if (!lease) return { status: 'locked', checkedAt };
@@ -345,26 +417,40 @@ export async function collect(env, options = {}) {
     stateRecord = await getJson(bucket, STATE);
     state = stateRecord.value ?? {};
     if (Number.isFinite(state.nextAllowedAt) && state.nextAllowedAt > now()) {
+      const status = { ...(pointer?.sourceStatus ?? {}), status: 'degraded',
+        checkedAt: state.checkedAt ?? pointer?.sourceStatus?.checkedAt ?? checkedAt,
+        detail: state.lastError ?? 'Provider retry cooldown remains active.' };
+      let upgraded;
+      try {
+        upgraded = await upgradeFromAcceptedCache({ bucket, lease, now, baseline, pointer, pointerRecord, state, stateRecord, status, nextAllowedAt: state.nextAllowedAt });
+      } catch (error) {
+        if (error instanceof LeaseLost) return { status: 'lease_lost', checkedAt: status.checkedAt };
+        return { status: 'cooldown', checkedAt: status.checkedAt, nextAllowedAt: iso(state.nextAllowedAt), upgradeDeclined: String(error.message).slice(0, 120) };
+      }
+      if (upgraded) return { status: 'cooldown', upgraded: true, version: upgraded.version, checkedAt: status.checkedAt, nextAllowedAt: iso(state.nextAllowedAt) };
       return { status: 'cooldown', checkedAt: state.checkedAt ?? null, nextAllowedAt: iso(state.nextAllowedAt) };
     }
     const headers = new Headers({ Accept: 'application/json', 'User-Agent': USER_AGENT });
     if (state.etag) headers.set('If-None-Match', state.etag);
     if (state.lastModified) headers.set('If-Modified-Since', state.lastModified);
-    const response = await (options.fetcher ?? fetch)(config.feed_url, {
+    let response;
+    try { response = await (options.fetcher ?? fetch)(config.feed_url, {
       // workerd supports follow/manual, not the browser/Node 'error' mode.
       // Handle redirects ourselves so collection never follows an unknown host.
       headers, signal: AbortSignal.timeout(20_000), redirect: 'manual',
-    });
+    }); } catch (error) { sourceUnavailable = true; throw error; }
     if (response.status >= 300 && response.status < 400 && response.status !== 304) {
+      sourceUnavailable = true;
       throw new Error(`Source redirect rejected (HTTP ${response.status}); configured source URL remains fixed`);
     }
     if (response.status === 429) {
+      sourceUnavailable = true;
       const nextAllowedAt = retryTime(response.headers.get('Retry-After'), now());
       const error = new Error('Source HTTP 429; retry cooldown honored');
       error.nextAllowedAt = nextAllowedAt;
       throw error;
     }
-    if (response.status !== 304 && !response.ok) throw new Error(`Source HTTP ${response.status}`);
+    if (response.status !== 304 && !response.ok) { sourceUnavailable = true; throw new Error(`Source HTTP ${response.status}`); }
     let feed;
     let feedHash;
     let etag = state.etag ?? null;
@@ -414,27 +500,7 @@ export async function collect(env, options = {}) {
     // This is storage time, never a renewed source/trade observation clock.
     await checkLease(bucket, lease, now());
     const archived = await archiveSource(bucket, feed, feedHash, state, iso(now()));
-    if (report) {
-      const text = JSON.stringify(report);
-      const version = (await digest(text)).slice(0, 16);
-      const data = `data-${version}.json`;
-      await checkLease(bucket, lease, now());
-      const written = await bucket.put(data, text, {
-        httpMetadata: { ...metadata.httpMetadata, cacheControl: 'public, max-age=31536000, immutable' },
-        onlyIf: new Headers({ 'If-None-Match': '*' }),
-      });
-      if (!written) {
-        const existing = await bucket.get(data);
-        if (!existing || await existing.text() !== text) throw new Error('Snapshot content-address conflict; refusing overwrite');
-      }
-      nextPointer = {
-        version, data, basketVersion: report.basketVersion, builtAt: report.builtAt,
-        sourceUpdatedAt: report.sourceUpdatedAt, sourceStatus: status, mode: 'collector',
-        lastSuccessfulFetchAt, nextAllowedAt: null,
-        calculationFingerprint: definitionFingerprint,
-        referenceFingerprint: references,
-      };
-    }
+    if (report) nextPointer = await writeReport(bucket, lease, now, report, status, definitionFingerprint, references, lastSuccessfulFetchAt);
     const nextState = {
       feed, feedHash, etag, lastModified, checkedAt, lastSuccessfulFetchAt,
       nextAllowedAt: null, publishedVersion: nextPointer.version,
@@ -443,20 +509,7 @@ export async function collect(env, options = {}) {
       // new reference evidence until its public pointer actually commits.
       ...(state.referenceFingerprint ? { referenceFingerprint: state.referenceFingerprint } : {}),
     };
-    await checkLease(bucket, lease, now());
-    const stagedState = await casJson(bucket, STATE, nextState, stateRecord.etag);
-    await checkLease(bucket, lease, now());
-    // The public pointer is the final publication write; immutable payload exists.
-    await casJson(bucket, POINTER, nextPointer, pointerRecord.etag);
-    if (nextState.referenceFingerprint !== references) {
-      try {
-        await checkLease(bucket, lease, now());
-        await casJson(bucket, STATE, { ...nextState, referenceFingerprint: references }, stagedState.etag);
-      } catch {
-        // Publication already succeeded. Its pointer is authoritative; a later
-        // unchanged check repairs this private acknowledgement without rebuild.
-      }
-    }
+    await commitReport(bucket, lease, now, stateRecord, pointerRecord, nextState, nextPointer, references);
     return { status: unchanged ? 'unchanged' : 'published', version: nextPointer.version, checkedAt };
   } catch (error) {
     if (error instanceof LeaseLost) return { status: 'lease_lost', checkedAt };
@@ -467,6 +520,17 @@ export async function collect(env, options = {}) {
         const nextAllowedAt = error.nextAllowedAt ?? null;
         const detail = `${String(error.message ?? 'Source collection failed').slice(0, 160)}. Retaining the last valid dated snapshot.`;
         const status = { status: 'degraded', checkedAt, lastSuccessfulFetchAt: state.lastSuccessfulFetchAt ?? retained.lastSuccessfulFetchAt ?? null, detail };
+        let upgradeDeclined;
+        if (sourceUnavailable) {
+          try {
+            const upgraded = await upgradeFromAcceptedCache({ bucket, lease, now, baseline, pointer, pointerRecord, state, stateRecord, status, nextAllowedAt });
+            if (upgraded) return { status: 'degraded', upgraded: true, version: upgraded.version, checkedAt, detail: upgraded.sourceStatus.detail, nextAllowedAt: upgraded.nextAllowedAt };
+          } catch (upgradeError) {
+            if (upgradeError instanceof LeaseLost) return { status: 'lease_lost', checkedAt };
+            upgradeDeclined = String(upgradeError.message).slice(0, 120);
+            status.detail += ' Reference/calculation upgrade held: ' + upgradeDeclined + '.';
+          }
+        }
         const nextState = { ...state, checkedAt, nextAllowedAt, lastError: detail };
         const nextPointer = {
           ...retained, sourceStatus: status, lastSuccessfulFetchAt: status.lastSuccessfulFetchAt,
@@ -475,7 +539,7 @@ export async function collect(env, options = {}) {
         await casJson(bucket, STATE, nextState, stateRecord.etag);
         await checkLease(bucket, lease, now());
         await casJson(bucket, POINTER, nextPointer, pointerRecord.etag);
-        return { status: 'degraded', checkedAt, detail, nextAllowedAt: nextPointer.nextAllowedAt };
+        return { status: 'degraded', checkedAt, detail: status.detail, nextAllowedAt: nextPointer.nextAllowedAt, ...(upgradeDeclined ? { upgradeDeclined } : {}) };
       } catch { /* R2/CAS failure: existing public pointer is left untouched. */ }
     }
     return { status: 'storage_unavailable', checkedAt, detail: 'Collector could not safely update storage; existing snapshots remain available.' };

@@ -7,6 +7,18 @@
 .community-footer-button{color:inherit;text-align:left}
 .community-footer-button:hover{color:var(--gold)}
 .community-back{display:inline-block;margin-top:13px;font-size:12px}
+footer.community-footer{text-align:center;justify-items:center}
+footer.community-footer .footer-story{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:18px;font-weight:400;line-height:1.85;text-align:center}
+footer.community-footer[data-footer-style="personal"] .footer-story{font-family:Georgia,"Times New Roman",serif;line-height:1.9}
+footer.community-footer[data-footer-style="personal"] .footer-story>p:first-child{font-style:italic}
+footer.community-footer[data-footer-style="emphasis"] .footer-story{font-weight:600;line-height:1.9}
+footer.community-footer .community-footer-styles{grid-column:1/-1;display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:4px auto 0;max-width:100%;text-align:center}
+.community-footer-styles>span{font:12px/1.5 system-ui,sans-serif;margin-right:4px;color:var(--muted)}
+.community-footer-styles button{font:12px/1.5 system-ui,sans-serif;padding:6px 11px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--text);cursor:pointer}
+.community-footer-styles button[aria-pressed="true"]{border-color:var(--gold);background:var(--surface2);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.community-footer-styles button:hover{border-color:var(--gold)}
+.community-footer-styles button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+@media(max-width:700px){footer.community-footer .footer-story{font-size:16px}footer.community-footer .community-footer-styles{order:4;gap:5px}.community-footer-styles button{padding:7px 10px}}
 dialog.community-contact{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;padding:30px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:12px}
 .community-contact::backdrop{background:#08110dcc;backdrop-filter:blur(3px)}
 .community-contact h2{max-width:430px;font-size:25px;line-height:1.35;padding-right:18px}

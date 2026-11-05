@@ -491,7 +491,7 @@ def write_site(report):
     if legacy_history.exists():
         (dist / 'history').mkdir(exist_ok=True)
         shutil.copyfile(legacy_history, dist / 'history' / 'cpi-v1.json')
-    for name in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'chart-interaction.js', 'chart-interaction.css', '_headers', 'sw.js'):
+    for name in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', '_headers', 'sw.js'):
         shutil.copyfile(ROOT / 'web' / name, dist / name)
     data_text = json.dumps(report, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
     digest = hashlib.sha256(data_text.encode()).hexdigest()[:16]

@@ -153,14 +153,14 @@ class BasketV2Tests(unittest.TestCase):
         engine.atomic(self.root / 'history' / 'private-source.json', {'secret': 'private'})
         web = self.root / 'web'
         web.mkdir()
-        for filename in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'chart-interaction.js', 'chart-interaction.css', '_headers', 'sw.js'):
+        for filename in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', '_headers', 'sw.js'):
             (web / filename).write_text('fixture', encoding='utf-8')
         with patch('icons.write_icons'):
             engine.write_site(report)
         self.assertTrue((self.root / 'dist' / 'history' / 'cpi-v1.json').exists())
         self.assertFalse((self.root / 'dist' / 'history' / 'private-source.json').exists())
         self.assertFalse((self.root / 'dist' / 'cache').exists())
-        for filename in ('community.js', 'community.css', 'chart-interaction.js', 'chart-interaction.css'):
+        for filename in ('community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css'):
             self.assertEqual((self.root / 'dist' / filename).read_text(encoding='utf-8'), 'fixture')
 
 

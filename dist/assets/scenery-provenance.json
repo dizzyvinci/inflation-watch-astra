@@ -45,6 +45,28 @@
       "height": 548,
       "sha256": "fc66fa52542870405178ff9126e6538c13edff85faae8f55435cda0fc74a304f",
       "transformation": "None; original layer0 render PNG downloaded without editing. Full-map render exceeded3MB; documented layer render used."
+    },
+    {
+      "file": "zakum-scenery.png",
+      "name": "Zakum's Altar",
+      "streetName": "Last Mission",
+      "mapId": 280030000,
+      "isTown": false,
+      "region": "GMS",
+      "version": "83",
+      "frame": 0,
+      "metadataUrl": "https://maplestory.io/api/GMS/83/map/280030000",
+      "url": "https://maplestory.io/api/GMS/83/map/280030000/render/0",
+      "catalogUrl": "https://maplestory.io/api/wz",
+      "downloadedAt": "2026-11-05T06:53:18+00:00",
+      "copyright": "Nexon",
+      "provider": "maplestory.io",
+      "bytes": 221959,
+      "width": 1211,
+      "height": 582,
+      "sha256": "b41c8755d5be0528952d6b836404869c6c7b786f960ca94f59ad3149b5bd7353",
+      "transformation": "None; original full-map frame0 PNG downloaded without editing.",
+      "scopeNote": "GMS83 scenery artwork for appearance only. MCW/1 search returned no Zakum map; this does not establish Zakum availability in Classic World."
     }
   ]
 }

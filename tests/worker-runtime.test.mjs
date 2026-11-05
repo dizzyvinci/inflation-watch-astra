@@ -11,7 +11,7 @@ const POINTER = 'version.json';
 const STATE = '_private/collector-state.json';
 const LOCK = '_private/collector-lock.json';
 const clone = value => structuredClone(value);
-const NOW = Date.parse('2026-11-05T05:00:00Z');
+const NOW = Math.max(Date.parse('2026-11-05T05:00:00Z'), Date.parse(seed.builtAt)) + 60_000;
 // Cross-runtime derived sums may differ in their last bits (Python 3.12 vs
 // JavaScript). Keep source/frozen fields exact; only derived CPI uses tolerance.
 const close = (actual, expected, label) => {
@@ -877,4 +877,144 @@ test('reports above the sharing size bound keep independent streams without buff
     assert((await Promise.all(tasks)).every(length => length === value.text.length));
     assert.equal(bucket.events.filter(event => event.op === 'get' && event.key === name).length, 8);
   } finally { release(); if (saved === undefined) delete globalThis.caches; else globalThis.caches = saved; }
+});
+
+test('HTTP521 or network failure publishes newer references once from verified accepted cache without freshening daily evidence', async () => {
+  for (const offline of [async () => new Response(null, { status: 521 }), async () => { throw new Error('Network unavailable'); }]) {
+    const { bucket, env, pointer } = await initialize();
+    const old = bucket.read(pointer.data), capturedAt = new Date(NOW + 300_000).toISOString(), baseline = captureBaseline(capturedAt);
+    const state = bucket.read(STATE), offset = bucket.events.length;
+    let calls = 0;
+    const options = { now: NOW + 600_000, baseline, fetcher: async () => { calls++; return offline(); } };
+    const result = await collect(env, options);
+    assert.equal(result.status, 'degraded', result.detail);
+    assert.equal(result.upgraded, true);
+    assert.equal(calls, 1);
+    const next = bucket.read(POINTER), report = bucket.read(next.data);
+    assert.notEqual(next.version, pointer.version);
+    assert.equal(next.sourceStatus.status, 'degraded');
+    assert.match(next.sourceStatus.detail, /no new daily fetch succeeded/);
+    assert.equal(next.sourceUpdatedAt, pointer.sourceUpdatedAt);
+    assert.equal(next.lastSuccessfulFetchAt, pointer.lastSuccessfulFetchAt);
+    assert.equal(report.sourceUpdatedAt, old.sourceUpdatedAt);
+    assert.equal(report.comparisons.at(-1).observedAt, capturedAt);
+    assert.equal(report.smegaSource.capturedAt, capturedAt);
+    for (const key of ['latest', 'rows', 'cash', 'cashBasket', 'history', 'volumeHistory', 'intraday']) assert.deepEqual(report[key], old[key], key);
+    assert.equal(bucket.read(STATE).feedHash, state.feedHash);
+    assert.equal(bucket.read(STATE).archivedAt, state.archivedAt);
+    assert.equal(bucket.read(STATE).referenceFingerprint, await referenceFingerprint(baseline));
+    const writes = bucket.events.slice(offset).filter(event => event.op === 'put');
+    assert.equal(writes.filter(event => event.key.startsWith('data-')).length, 1);
+    assert.equal(writes.filter(event => event.key.startsWith('_private/sources/')).length, 0);
+    assert.ok(writes.findIndex(event => event.key === next.data) < writes.findIndex(event => event.key === POINTER));
+    const after = bucket.events.length;
+    const repeat = await collect(env, { ...options, now: NOW + 1_200_000 });
+    assert.equal(repeat.status, 'degraded');
+    assert.equal(repeat.upgraded, undefined);
+    assert.equal(bucket.read(POINTER).version, next.version);
+    assert.equal(bucket.read(POINTER).builtAt, next.builtAt);
+    assert.ok(!bucket.events.slice(after).some(event => event.op === 'put' && event.key.startsWith('data-')));
+  }
+});
+
+test('a calculation upgrade also uses accepted cache on source failure and legacy committed feed hashes need no new archive', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const state = bucket.read(STATE);
+  for (const key of ['archivedFeedHash', 'archivedSourceKey', 'archivedAt']) delete state[key];
+  state.calculationFingerprint = 'old-calculation';
+  const legacy = clone(pointer); delete legacy.calculationFingerprint;
+  bucket.raw(STATE, state); bucket.raw(POINTER, legacy);
+  const offset = bucket.events.length;
+  const result = await collect(env, { now: NOW + 600_000, fetcher: async () => new Response(null, { status: 521 }) });
+  assert.equal(result.status, 'degraded'); assert.equal(result.upgraded, true);
+  const next = bucket.read(POINTER);
+  assert.equal(next.calculationFingerprint, await calculationFingerprint());
+  assert.equal(next.sourceUpdatedAt, pointer.sourceUpdatedAt);
+  assert.equal(next.lastSuccessfulFetchAt, pointer.lastSuccessfulFetchAt);
+  assert.ok(!bucket.events.slice(offset).some(event => event.op === 'put' && event.key.startsWith('_private/sources/')));
+  assert.equal(bucket.read(STATE).archivedFeedHash, undefined);
+});
+
+test('429 upgrade retains Retry-After and another independent reference upgrade can publish during cooldown without a fetch', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const first = captureBaseline(new Date(NOW + 300_000).toISOString()), second = captureBaseline(new Date(NOW + 900_000).toISOString());
+  const result = await collect(env, { now: NOW + 600_000, baseline: first,
+    fetcher: async () => new Response(null, { status: 429, headers: { 'Retry-After': '1800' } }) });
+  assert.equal(result.status, 'degraded'); assert.equal(result.upgraded, true);
+  const failed = bucket.read(POINTER), checkClock = failed.sourceStatus.checkedAt;
+  assert.equal(failed.nextAllowedAt, new Date(NOW + 2_400_000).toISOString());
+  let calls = 0;
+  const skipped = await collect(env, { now: NOW + 1_200_000, baseline: second, fetcher: async () => { calls++; return response(); } });
+  assert.equal(skipped.status, 'cooldown'); assert.equal(skipped.upgraded, true); assert.equal(calls, 0);
+  const next = bucket.read(POINTER), report = bucket.read(next.data);
+  assert.notEqual(next.version, failed.version);
+  assert.equal(next.sourceStatus.status, 'degraded');
+  assert.equal(next.sourceStatus.checkedAt, checkClock, 'A skipped fetch does not create a new source check');
+  assert.equal(next.nextAllowedAt, failed.nextAllowedAt);
+  assert.equal(next.lastSuccessfulFetchAt, pointer.lastSuccessfulFetchAt);
+  assert.equal(report.smegaSource.capturedAt, second.smegaSource.capturedAt);
+  const repeated = await collect(env, { now: NOW + 1_800_000, baseline: second, fetcher: async () => { calls++; return response(); } });
+  assert.equal(repeated.status, 'cooldown'); assert.equal(repeated.upgraded, undefined); assert.equal(calls, 0);
+  assert.equal(bucket.read(POINTER).version, next.version);
+});
+
+test('cached reference publication storage/CAS failures retain last-good state and can retry without another accepted source fetch', async () => {
+  for (const phase of ['snapshot', 'pointer']) {
+    const { bucket, env, pointer } = await initialize();
+    const oldFingerprint = pointer.referenceFingerprint, baseline = captureBaseline('2026-11-05T04:45:00Z');
+    let failed = false;
+    bucket.beforePut = key => {
+      if (!failed && (phase === 'snapshot' ? key.startsWith('data-') : key === POINTER)) {
+        failed = true;
+        if (phase === 'snapshot') throw new Error('Snapshot unavailable');
+        bucket.raw(POINTER, { ...pointer, raceWinner: true });
+      }
+    };
+    const options = { now: NOW + 600_000, baseline, fetcher: async () => new Response(null, { status: 521 }) };
+    const rejected = await collect(env, options);
+    assert.equal(rejected.status, phase === 'snapshot' ? 'degraded' : 'lease_lost');
+    assert.equal(bucket.read(POINTER).version, pointer.version);
+    assert.equal(bucket.read(POINTER).referenceFingerprint, oldFingerprint);
+    assert.equal(bucket.read(STATE).referenceFingerprint, oldFingerprint);
+    bucket.beforePut = null;
+    const retry = await collect(env, { ...options, now: NOW + 1_200_000 });
+    assert.equal(retry.status, 'degraded', retry.detail); assert.equal(retry.upgraded, true);
+    assert.equal(bucket.read(POINTER).referenceFingerprint, await referenceFingerprint(baseline));
+    assert.equal(bucket.read(POINTER).lastSuccessfulFetchAt, pointer.lastSuccessfulFetchAt);
+  }
+});
+
+test('unverifiable or invalid cached feeds cannot publish new references after a source failure', async () => {
+  const hash = async value => crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(value)))
+    .then(buffer => [...new Uint8Array(buffer)].map(byte => byte.toString(16).padStart(2, '0')).join(''));
+  for (const mode of ['hash', 'structure', 'commit', 'archive']) {
+    const { bucket, env, pointer } = await initialize();
+    const state = bucket.read(STATE);
+    if (mode === 'hash') state.feed.items[0].h.at(-1)[1] *= 2;
+    if (mode === 'structure') {
+      state.feed.items[0].h[0][2] = -1;
+      state.feedHash = await hash(state.feed);
+      for (const key of ['archivedFeedHash', 'archivedSourceKey', 'archivedAt']) delete state[key];
+    }
+    if (mode === 'commit') state.publishedVersion = '0'.repeat(16);
+    if (mode === 'archive') bucket.values.delete(state.archivedSourceKey);
+    bucket.raw(STATE, state);
+    const offset = bucket.events.length;
+    const result = await collect(env, { now: NOW + 600_000, baseline: captureBaseline('2026-11-05T04:45:00Z'), fetcher: async () => new Response(null, { status: 521 }) });
+    assert.equal(result.status, 'degraded', mode);
+    assert.ok(result.upgradeDeclined, mode);
+    assert.equal(bucket.read(POINTER).version, pointer.version, mode);
+    assert.ok(!bucket.events.slice(offset).some(event => event.op === 'put' && (event.key.startsWith('data-') || event.key.startsWith('_private/sources/'))), mode);
+  }
+});
+
+test('a declined cache upgrade during cooldown cannot erase the provider cooldown or source failure clock', async () => {
+  const { bucket, env } = await initialize();
+  await collect(env, { now: NOW + 600_000, fetcher: async () => new Response(null, { status: 429, headers: { 'Retry-After': '1800' } }) });
+  const pointer = bucket.read(POINTER), state = bucket.read(STATE);
+  state.feedHash = '0'.repeat(64); bucket.raw(STATE, state);
+  const result = await collect(env, { now: NOW + 1_200_000, baseline: captureBaseline('2026-11-05T04:45:00Z'), fetcher: async () => { throw new Error('Cooldown must skip fetch'); } });
+  assert.equal(result.status, 'cooldown'); assert.ok(result.upgradeDeclined);
+  assert.equal(bucket.read(STATE).nextAllowedAt, state.nextAllowedAt);
+  assert.deepEqual(bucket.read(POINTER), pointer);
 });

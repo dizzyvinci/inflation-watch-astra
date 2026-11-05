@@ -4,8 +4,8 @@
   "private": true,
   "description": "MapleStory Classic CPI and NX dashboard with scheduled collection and CDN snapshot delivery",
   "scripts": {
-    "check": "node --check web/app.js && node --check web/community.js && node --check web/chart-interaction.js && node --check web/sw.js && node --check ops/worker-core.mjs && node --check ops/worker.mjs",
-    "test:dom": "node tests/dom.cjs && node tests/community.cjs && node tests/chart-interaction.cjs",
+    "check": "node --check web/app.js && node --check web/community.js && node --check web/layout-preview.js && node --check web/chart-interaction.js && node --check web/sw.js && node --check ops/worker-core.mjs && node --check ops/worker.mjs",
+    "test:dom": "node tests/dom.cjs && node tests/community.cjs && node tests/layout-preview.cjs && node tests/chart-interaction.cjs",
     "test:worker": "node --test tests/worker-core.test.mjs tests/worker-runtime.test.mjs tests/worker-cash-basket.test.mjs",
     "build:offline": "python engine.py --offline",
     "preview": "python preview.py",

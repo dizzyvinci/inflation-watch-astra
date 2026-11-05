@@ -4,6 +4,41 @@
   const footer = document.querySelector('footer');
   if (!content || !footer || document.getElementById('view-privacy')) return;
 
+  const footerStyles = ['clear', 'personal', 'emphasis'];
+  const footerStyleKey = 'inflation-footer-style';
+  footer.classList.add('community-footer');
+  const styleControls = document.createElement('div');
+  styleControls.className = 'community-footer-styles';
+  styleControls.setAttribute('role', 'group');
+  styleControls.setAttribute('aria-label', 'Footer text style');
+  const styleLabel = document.createElement('span');
+  styleLabel.textContent = 'Footer text';
+  styleControls.append(styleLabel);
+  const descriptions = { clear: 'Clear: larger system text', personal: 'Personal: larger serif text with an italic introduction', emphasis: 'Emphasis: larger semibold text' };
+  const applyFooterStyle = value => {
+    footer.dataset.footerStyle = footerStyles.includes(value) ? value : 'clear';
+    for (const button of styleControls.querySelectorAll('button')) {
+      button.setAttribute('aria-pressed', String(button.dataset.footerStyleChoice === footer.dataset.footerStyle));
+    }
+  };
+  for (const value of footerStyles) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.footerStyleChoice = value;
+    button.textContent = value[0].toUpperCase() + value.slice(1);
+    button.setAttribute('aria-label', descriptions[value]);
+    button.title = descriptions[value];
+    button.addEventListener('click', () => {
+      applyFooterStyle(value);
+      try { localStorage.setItem(footerStyleKey, value); } catch { /* Display choices still work when storage is blocked. */ }
+    });
+    styleControls.append(button);
+  }
+  footer.append(styleControls);
+  let savedFooterStyle;
+  try { savedFooterStyle = localStorage.getItem(footerStyleKey); } catch { /* Use Clear without persistent storage. */ }
+  applyFooterStyle(savedFooterStyle);
+
   const privacy = document.createElement('section');
   privacy.id = 'view-privacy';
   privacy.className = 'view community-privacy';
@@ -17,7 +52,7 @@
       <p>Cloudflare delivers and protects the site. Normal request metadata can include your IP address, browser information, requested URL and request time. Cloudflare may process that information and use security cookies to operate its services and prevent abuse. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer">Cloudflare’s privacy policy</a> and <a href="https://developers.cloudflare.com/fundamentals/reference/policies-compliances/cloudflare-cookies/" target="_blank" rel="noopener noreferrer">cookie documentation</a>.</p>
       <p>We may review aggregate hosting counts to understand capacity and reliability. A request count is not a count of distinct visitors or people: one visit can request several files, and automated traffic can make requests too.</p>
       <h2>What stays in your browser</h2>
-      <p>Your display-timezone and scenery choices are saved in localStorage on this browser. The browser and service worker can cache public snapshots, the fallback page, JavaScript, CSS and other public assets so the site can load efficiently. You can remove these preferences and cached files through your browser’s site-data settings.</p>
+      <p>Your display-timezone, scenery and footer text-style choices are saved in localStorage on this browser. The browser and service worker can cache public snapshots, the fallback page, JavaScript, CSS and other public assets so the site can load efficiently. You can remove these preferences and cached files through your browser’s site-data settings.</p>
       <h2>Contact and external links</h2>
       <p>The Contact box keeps an optional message in this tab; it does not submit or save that text to a server. Copy buttons write only what you choose to your clipboard. Opening Discord does not send a message or friend request. If you choose to contact me there, Discord handles that interaction under <a href="https://discord.com/privacy" target="_blank" rel="noopener noreferrer">its own privacy policy</a>. Other outbound sites have their own policies too.</p>
       <h2>Market data is separate</h2>
