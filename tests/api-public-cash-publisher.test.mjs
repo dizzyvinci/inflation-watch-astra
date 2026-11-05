@@ -25,7 +25,7 @@ test('crash after private completion before public enqueue recovers from durable
  const f=await fixture(t);f.seed(rawReceipt());await f.owner.privateCash.beforeProviderEvent();
  f.owner.privateCash.materializer.reconcileCompletedPrices();await f.owner.privateCash.materializer.drainOne();
  const rawReads=f.reads.filter(k=>k.includes('/receipts/')).length;assert.equal(f.row('SELECT target_attempt FROM api_public_cash_outbox WHERE id=1').target_attempt,0);
- await f.restart();assert.equal((await f.fire()).eventKind,'private_projection');assert.equal((await f.fire()).status,'public_published');
+ await f.restart();const recovered=await f.fire();assert.equal(recovered.eventKind,'public_subset');assert.equal(recovered.status,'public_published');
  assert.equal(f.reads.filter(k=>k.includes('/receipts/')).length,rawReads);assert.equal(f.calls.length,0);
 });
 test('public body write failure retains private completion; restart publishes saved bytes without private/raw reread',async t=>{
@@ -112,4 +112,15 @@ test('pointer already committed before SQL acknowledgement recovers idempotently
  await f.restart();assert.equal((await f.fire()).status,'public_published');
  assert.deepEqual(f.objects.get(PUBLIC_POINTER),before);
  assert.ok(f.reads.slice(reads).every(k=>!k.includes('/receipts/')&&!k.includes('/cash-projections/')));assert.equal(f.calls.length,0);
+});
+
+
+test('public flag adoption recovers a completed retained private outbox without another provider event',async t=>{
+ const f=await fixture(t,{publicFlag:{enabled:false}});f.seed(rawReceipt());
+ await f.owner.kickScheduledCollection();await f.fire();
+ assert.equal(f.row('SELECT pending FROM private_cash_outbox WHERE id=1').pending,0);
+ assert.equal(f.publicPointer(),null);f.env.API_PUBLIC_CASH_JSON=JSON.stringify(PUBLIC_FLAG);
+ await f.restart();assert.equal(f.row('SELECT state FROM api_public_cash_outbox WHERE id=1').state,'pending');
+ assert.equal((await f.fire()).status,'public_published');assert.equal(f.calls.length,0);
+ assert.equal(f.publicPointer().capturedAt,JSON.parse(rawReceipt().body).capturedAt);
 });

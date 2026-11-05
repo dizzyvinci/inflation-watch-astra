@@ -1,3 +1,4 @@
+import {publicCashStatus} from './api-public-cash-contract.mjs';
 // Optional private diagnostics only. Never a provider request or public health replacement.
 const KEY='_private/provider-api/v1/health.json';
 const SCHEMA_OPERATIONS=['status','prices','catalogue','overview','apple-detail','apple-history'];
@@ -77,6 +78,22 @@ export class ApiPrivateHealth{
       runningCount:counts.running,authStoppedCount:counts.auth_stopped,
       clockKind:'operator_queue_progress_not_market_observation'};
   }
+  publicCashProgress(){
+    const configuration=publicCashStatus(this.env);
+    const base={configuration,clockKind:'operator_publication_queue_not_market_observation'};
+    if(configuration!=='ready')return{...base,outboxState:'not_enabled'};
+    try{
+      if(!this.core.row("SELECT name FROM sqlite_master WHERE type='table' AND name='api_public_cash_outbox'"))return{...base,outboxState:'not_initialized'};
+      const row=this.core.row('SELECT state,target_attempt,published_attempt,retry_at,lease_until FROM api_public_cash_outbox WHERE id=1');
+      const states=new Set(['idle','pending','ready','published','superseded','quarantined']);
+      const clock=value=>value===null||value===0?null:Number.isSafeInteger(value)&&value>0?iso(new Date(value).toISOString()):null;
+      if(!row||!states.has(row.state)||![row.target_attempt,row.published_attempt,row.retry_at].every(integer)||(row.lease_until!==null&&!integer(row.lease_until)))return{...base,outboxState:'invalid_state'};
+      const retryAt=clock(row.retry_at),leaseUntil=clock(row.lease_until);
+      if(row.retry_at>0&&!retryAt||row.lease_until>0&&!leaseUntil)return{...base,outboxState:'invalid_state'};
+      return{...base,outboxState:row.state,targetAttempt:row.target_attempt,publishedAttempt:row.published_attempt,
+        retryAt,leaseUntil,nextEligibleAt:['pending','ready'].includes(row.state)?clock(Math.max(this.core.clock(),row.retry_at,row.lease_until??0)):null};
+    }catch{return{...base,outboxState:'diagnostic_unavailable'};}
+  }
   async afterRun(result){
     if(!this.enabled()||result?.status==='disabled')return{status:'skipped_off'};
     const checkedAt=new Date(this.core.clock()).toISOString();const source=this.core.health();
@@ -95,6 +112,7 @@ export class ApiPrivateHealth{
       configuredMinuteCeiling:integer(config.grantedPerMinute)?config.grantedPerMinute:null,
       configuredDailyCeiling:caps.length?Math.min(...caps):null,
       completedReceipts:this.completedReceipts(config),
+      publicCashPublication:this.publicCashProgress(),
       ...(this.core.observed?{observedFirstPass:this.observedFirstPassProgress(config)}:{}),
       ...(config.nxSchemaProbesEnabled===true?{nxSchemaProbes:this.nxSchemaProbeProgress(config),completedNxProbeReceipts:this.completedNxProbeReceipts(config)}:{}),
       dailyCeilingMeaning:'configured_restriction_not_an_inferred_provider_daily_grant'};

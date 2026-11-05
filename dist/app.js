@@ -641,9 +641,9 @@ function renderItemPage(slug){
   const current=()=>ticket===itemPageRequest&&location.hash==='#item/'+encodeURIComponent(slug);
   void full.loadItem(slug,snapshot).then(model=>{if(!current())return;if(!full.matchesReport(snapshot,model))throw Object.assign(new Error('Catalog and displayed snapshot versions differ'),{code:'VERSION_MISMATCH'});renderItemPage(slug);enhanceTables();}).catch(error=>{if(!current())return;$('item-page-title').textContent='Item evidence unavailable';$('item-page-detail').removeAttribute('aria-busy');$('item-page-detail').textContent=error.code==='NOT_FOUND'?'No exact collected provider record is available here. This does not establish absence from the game.':['VERSION_MISMATCH','REPORT_PENDING'].includes(error.code)?'Awaiting the matching versioned full catalog. Existing dated records remain available; no item history is inferred.':'The own-site catalog could not be loaded. The dated overview data remain unchanged.';});return;
  }
- $('item-page-detail').removeAttribute('aria-busy');$('item-page-title').textContent=r?r.name+(r.slug==='wolbi-throwing-stars'?'*':''):'Item unavailable';$('item-page-detail').innerHTML=r?itemDetailHTML(r,true):'<p>No matching tracked item in this snapshot.</p>';renderItemChart($('item-page-detail'));
+ $('item-page-detail').removeAttribute('aria-busy');$('item-page-title').textContent=r?r.name+(r.slug==='wolbi-throwing-stars'?'*':''):'Item unavailable';$('item-page-detail').innerHTML=r?itemDetailHTML(r,true):'<p>No matching tracked item in this snapshot.</p>';renderItemChart($('item-page-detail'));if(r)window.AstraApiCashUi?.appendItemEvidence($('item-page-detail'),r);
 }
-function showItem(slug){const r=findItem(slug);if(!r)return;$('item-detail').innerHTML=itemDetailHTML(r);$('item-dialog').showModal();renderItemChart($('item-detail'));}
+function showItem(slug){const r=findItem(slug);if(!r)return;$('item-detail').innerHTML=itemDetailHTML(r);$('item-dialog').showModal();renderItemChart($('item-detail'));window.AstraApiCashUi?.appendItemEvidence($('item-detail'),r);}
 function tableCellValue(cell,forceText=false){
  if(!cell)return null;
  const nested=cell.querySelector('[data-sort-value]');if(nested&&!Object.hasOwn(cell.dataset,'sortValue'))return tableCellValue(nested,forceText);

@@ -39,7 +39,9 @@ export class ApiPrivateCashAlarm{
     // On resumption, provider metadata already reflects every off-mode legacy
     // scheduler change. Re-arm the earliest retained deadline without guessing
     // that a native private/recovery alarm belongs to the provider.
-    await this.arm();
+    // Recover completed private/public SQL handoffs on adoption or restart.
+    // This performs no raw decode, R2 I/O or provider transport.
+    await this.scheduleStoredWork();
   }
   status(){
     let config;try{config=privateCashConfig(this.env);}catch{return'invalid_private_projection_configuration';}

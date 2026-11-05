@@ -39,7 +39,7 @@
   function bestModel(report, selection = {}) {
     if (!report || typeof window.buildCashPricing !== 'function') return null;
     const options = { days: selection.days, evidence: selection.evidence, side: 'buy' };
-    const pricing = window.buildCashPricing(report, options);
+    const pricing = window.AstraApiCash?.pricing(report, options) || window.buildCashPricing(report, options);
     if (!Array.isArray(pricing?.rows)) return null;
     const eligible = pricing.rows.filter(row => row && /^[a-z0-9][a-z0-9-]*$/.test(row.slug) && typeof row.name === 'string'
       && positive(row.nx) && positive(row.price) && positive(row.rate) && positive(row.referenceWeight)
@@ -48,8 +48,9 @@
     const fees=window.AstraTradeFees,feeState=fees?.getState(),feeActive=!!fees&&feeState.mode!=='gross',grossFallback=feeActive&&feeState.rules?.[feeState.mode]?.enabled!==true,netRanking=feeActive&&!grossFallback;
     const chosen=side=>netRanking?fees.rank(eligible,side).slice(0,5).map(row=>({...row,grossRate:row.rate,rate:row.netRate})):(side==='buy'?[...eligible].sort(compare):[...eligible].sort((a,b)=>b.rate-a.rate||a.name.localeCompare(b.name)||a.slug.localeCompare(b.slug))).slice(0,5);
     const buy=chosen('buy'),sell=chosen('sell');
-    return { ...pricing, buy, sell, feeActive,grossFallback,netRanking,feeMode:feeState?.mode,feeReferences:netRanking?{buy:fees.reference(eligible,'buy'),sell:fees.reference(eligible,'sell')}:null,eligibleCount: eligible.length, totalCount: pricing.rows.length,
-      sourceUpdatedAt: report.sourceUpdatedAt, capturedAt: report.rollingReference?.capturedAt || null };
+    const fullFeeReference=!pricing.api||(eligible.length===29&&(!netRanking||(fees.rank(eligible,'buy').length===29&&fees.rank(eligible,'sell').length===29)));
+    return { ...pricing, buy, sell, feeActive,grossFallback,netRanking,feeMode:feeState?.mode,feeReferences:netRanking&&fullFeeReference?{buy:fees.reference(eligible,'buy'),sell:fees.reference(eligible,'sell')}:null,eligibleCount: eligible.length, totalCount: pricing.rows.length,
+      sourceUpdatedAt: pricing.api?null:report.sourceUpdatedAt, capturedAt: pricing.api?pricing.capturedAt:report.rollingReference?.capturedAt || null, apiFallbackReason:pricing.api?null:window.AstraApiCash?.fallbackReason()||null };
   }
   function rateScale(values = []) {
     const highest = Math.max(1, ...values.filter(positive));
@@ -98,6 +99,7 @@
   const signed = value => { const rounded = Math.abs(value) < .05 ? 0 : value; return (rounded > 0 ? '+' : '') + number(rounded) + '%'; };
   const section = make('section', undefined, 'cash-item-highlights'); section.id = 'cash-item-highlights'; section.setAttribute('aria-labelledby', 'cash-highlights-title');
   section.innerHTML = '<div class="section-heading"><div><p class="eyebrow">CASH COMPANION / INDIVIDUAL ITEM PRICES</p><h2 id="cash-highlights-title">Inside cash items</h2></div></div><div class="cash-highlights-content"><p class="cash-highlights-explanation">These individual cash-item dials are excluded from the goods MPI and the goods-based NX benchmark. Seasonal supply, demand and cosmetic mixes can move them separately.</p><p class="cash-highlights-status" role="status"></p><div class="cash-highlights-row" tabindex="0" role="region" aria-label="Individual cash-item price dials; scroll horizontally on narrow screens"></div><p class="cash-highlights-method"></p></div>';
+  const apiCredit=make('p',undefined,'cash-highlights-api-credit'),apiCreditLink=make('a','Prices from maplestory.market ↗');apiCreditLink.href='https://maplestory.market/?ref=v6kkdvp6';apiCreditLink.target='_blank';apiCreditLink.rel='noopener noreferrer';apiCredit.append(apiCreditLink);apiCredit.hidden=true;section.querySelector('.cash-highlights-content').append(apiCredit);
   const controls = make('div', undefined, 'cash-highlights-controls'); controls.dataset.previewControls = 'true';
   controls.setAttribute('role', 'group'); controls.setAttribute('aria-label', 'Cash-item dial preview');
   controls.append(make('span', 'Cash-item dials'));
@@ -137,6 +139,7 @@
     return svg;
   }
   function drawReference() {
+    section.dataset.apiEvidence='false';apiCredit.hidden=true;
     cardsRoot.className = 'cash-highlights-row';
     const current = model(report), row = cardsRoot; row.replaceChildren();
     if (!current || !current.cards.length) {
@@ -167,15 +170,16 @@
     const selection = { days: Number(document.getElementById('cash-lookback')?.value || 3), evidence: document.getElementById('cash-evidence')?.value || 'daily' };
     const current = bestModel(report, selection), status = section.querySelector('.cash-highlights-status'), method = section.querySelector('.cash-highlights-method');
     if (!current) { status.textContent = 'Best-value cash dials are unavailable until the cash-pricing table calculation is ready. No modelled benchmark is substituted.'; method.textContent = ''; return; }
-    const evidenceWindow = () => current.rolling ? `Rolling scanner capture · Batch retrieved ${instant(current.capturedAt)}; item timestamps and lookbacks are separate. Retrieval times are not trade times; source times unavailable where not supplied.` : `${current.days}-source-day lookback · (${calendarDay(current.start)}–${calendarDay(current.end)}) inclusive${current.partial ? ' · latest day partial' : ''}. Daily source published ${instant(current.sourceUpdatedAt)}.`;
-    bindClock(status, () => `${evidenceWindow()} ${current.eligibleCount} / ${current.totalCount} fixed-price items have eligible evidence. ${current.eligibleCount < 5 ? 'Fewer than five eligible items; missing items are not filled.' : 'Up to five per side.'}${current.grossFallback?' Gross order shown; net unavailable until fee rules are set.':current.netRanking?' Fee assumptions: '+window.AstraTradeFees.label()+'. Only computable estimated costs/proceeds are ranked; no official fee rule is claimed.':''}`, { rawSourcePublicationAt: current.sourceUpdatedAt, rawBatchCapturedAt: current.rolling ? current.capturedAt : null });
+    section.dataset.apiEvidence=String(current.api===true);apiCredit.hidden=current.api!==true;
+    const evidenceWindow = () => current.api ? `${current.retained?'Retained API reference':'API sale medians'} · reported 3-day window (exact bounds unknown) · API retrieved ${instant(current.capturedAt)}; individual sale/scan times unknown.` : current.rolling ? `Rolling scanner capture · Batch retrieved ${instant(current.capturedAt)}; item timestamps and lookbacks are separate. Retrieval times are not trade times; source times unavailable where not supplied.` : `${current.days}-source-day lookback · (${calendarDay(current.start)}–${calendarDay(current.end)}) inclusive${current.partial ? ' · latest day partial' : ''}. Daily source published ${instant(current.sourceUpdatedAt)}.`;
+    bindClock(status, () => `${current.apiFallbackReason?current.apiFallbackReason+'. ':''}${evidenceWindow()} ${current.eligibleCount} / ${current.totalCount} fixed-price items have eligible evidence. ${current.eligibleCount < 5 ? 'Fewer than five eligible items; missing items are not filled.' : 'Up to five per side.'}${current.grossFallback?' Gross order shown; net unavailable until fee rules are set.':current.netRanking?' Fee assumptions: '+window.AstraTradeFees.label()+'. Only computable estimated costs/proceeds are ranked; no official fee rule is claimed.':''}`, { rawSourcePublicationAt: current.sourceUpdatedAt, rawBatchCapturedAt: current.rolling ? current.capturedAt : null });
     const upper = rateScale([...current.buy, ...current.sell].map(row => row.rate).concat(positive(current.reference) ? current.reference : []));
     for (const [side, title, rows] of [['sell', 'Best to Sell (Higher Meso/NX)', current.sell], ['buy', 'Best to Buy (Lower Meso/NX)', current.buy]]) {
       const group = make('section', undefined, 'cash-highlights-ranking'); group.dataset.cashRanking = side;
       group.append(make('h3', title));group.dataset.cashRankingBasis=current.grossFallback?'gross_unset_fees':current.netRanking?'manual_net':'gross';if(current.grossFallback)group.append(make('span','Gross ranking · fees unset','cash-highlights-gross-badge'));
       const row = make('div', undefined, 'cash-highlights-row'); row.tabIndex = 0; row.setAttribute('role', 'region'); row.setAttribute('aria-label', `${title} cash dials; scroll horizontally on narrow screens`);
       for (const item of rows) {
-        const card = make('article', undefined, 'cash-highlight-card'); card.dataset.cashHighlightSlug = item.slug; card.dataset.cashRate = item.rate; card.dataset.cashSide = side;if(item.grossRate!==undefined)card.dataset.cashGrossRate=item.grossRate;
+        const card = make('article', undefined, 'cash-highlight-card'); card.dataset.cashHighlightSlug = item.slug; card.dataset.cashRate = item.rate; card.dataset.cashCardSide = side;if(item.grossRate!==undefined)card.dataset.cashGrossRate=item.grossRate;
         const heading = make('h4'), link = make('a'); link.href = '#item/' + encodeURIComponent(item.slug);
         const image = make('img'); image.alt = ''; image.width = 40; image.height = 40; image.loading = 'lazy';
         const mapped = report.spriteMap?.[item.slug]; image.src = typeof mapped === 'string' && /^assets\/[A-Za-z0-9._-]+\.(?:png|webp|gif|svg)$/.test(mapped) ? mapped : 'assets/' + item.slug + '.svg';
@@ -186,7 +190,10 @@
         if(current.netRanking)card.append(make('small',`Gross ${number(item.grossRate,2)} mesos / NX · ${item.feePreview.itemCount} copies · ${item.feePreview.assumptionProvenance==='user_reported'?'user-reported estimate':'manual estimate'}${item.feePreview.allocatedShopCost?' · allocated shop cost included':''}`));
         card.append(make('p', `${number(item.price, 1)} mesos · fixed ${number(item.nx, 0)} NX`, 'cash-highlight-price'));
         const dateLabel = make('p', undefined, 'cash-highlight-date'); let sourceLabel = null;
-        if (current.rolling) {
+        if (current.api) {
+          dateLabel.title='API receipt time, not an individual sale timestamp. Item-level qualities can mix.';
+          bindClock(dateLabel,()=>`API retrieved ${instant(current.capturedAt)} · reported 3-day lookback`,{rawApiCapturedAt:current.capturedAt});
+        } else if (current.rolling) {
           const observation = report.rollingReference?.items?.find(entry => entry.name === item.name);
           dateLabel.title = 'Retrieved is this item’s capture receipt, not a trade timestamp. A separate source-observation clock appears only when supplied and marked as known.';
           bindClock(dateLabel, () => `Retrieved ${instant(observation?.capturedAt)} · ${number(item.windowDays)}-day lookback`,
@@ -199,18 +206,19 @@
           { sourceStartDay: current.start, sourceEndDay: current.end });
         card.append(dateLabel);
         if (sourceLabel) card.append(sourceLabel);
-        card.append(make('small', `${number(item.quantity, 0)} recorded source count${item.windowDays < current.days && !current.rolling ? ' · incomplete daily coverage' : ''}`)); row.append(card);
+        card.append(make('small', `${number(item.quantity, 0)} ${current.api?'reported sales (not physical units)':'recorded source count'}${item.windowDays < current.days && !current.rolling&&!current.api ? ' · incomplete daily coverage' : ''}`)); row.append(card);
       }
       if (!rows.length) row.append(make('p',current.feeActive?'Estimated cost/proceeds ranking unavailable until eligible evidence and explicit manual assumptions are available. Gross view remains available.':'No eligible prices for this evidence window.','cash-highlight-unavailable'));
       const fullList = make('button', `View full ${side === 'sell' ? 'sell' : 'buy'} list`, 'cash-ranking-full-list'); fullList.type = 'button'; fullList.dataset.cashRankingLink = side;
       fullList.addEventListener('click', () => {
+        if(current.api&&window.AstraApiCashUi){window.AstraApiCashUi.focusList(side);return;}
         // Use the table's existing native button, preserving its sorting and fee events.
         const sideButton = document.querySelector(`button[data-cash-side="${side}"]`);
         sideButton?.click(); window.location.hash = '#nx';
       });
       group.append(row, fullList); cardsRoot.append(group);
     }
-    method.textContent = (current.grossFallback?'Gross order shown; net unavailable until fee rules are set. No zero-fee assumption is made. ':current.netRanking?'The selected fee assumptions use the same shared AstraTradeFees model as the NX table. No official rate is verified; estimated buyer cost and seller proceeds are separate, and fixed shop-cost allocation is an explicit business-cost assumption. ':'')+'Same fixed-NX schedule and selected evidence calculation as Best NX items to Buy/Sell. Daily estimates weight qualifying daily sale medians by recorded volume; each day needs at least five recorded sales. Rolling medians retain their own windows; excluded roll/upgrade-premium references are not ranked. Missing prices and unknown NX costs are excluded. Ranking uses all eligible items before table search/verdict filters: low mesos / NX for buying, high for selling, '+(current.netRanking?'under the selected explicit fee assumptions.':'before fees.')+' The dial tick is the selected-evidence cash reference, not 100 or the goods-based benchmark. These estimates are not executable quotes or profit calculations.';
+    method.textContent = current.api ? (current.grossFallback?'Gross order shown; net unavailable until fee rules are set. ':current.netRanking?'Same shared user-reported/manual fee assumptions as the API table. ':'')+'API per-item sale medians divided by the verified fixed NX cost; reported 3-day lookback, exact bounds and individual sale times unknown. Counts are reported sales, not physical units or unique players. All eligible API rows are ranked before filters; missing rows are never filled with daily or rolling prices. '+(current.eligibleCount===29?'The dial reference is the reported-sale-count weighted mean of all 29 item ratios.':'Full 29-item reference unavailable; partial coverage is not renormalized. Individual eligible prices remain visible.')+' Item-level qualities can mix. This is separate from the daily/rolling source views and the fixed Cash Basket. It changes no goods benchmark, MPI or history and is not an executable exchange quote.' : (current.grossFallback?'Gross order shown; net unavailable until fee rules are set. No zero-fee assumption is made. ':current.netRanking?'The selected fee assumptions use the same shared AstraTradeFees model as the NX table. No official rate is verified; estimated buyer cost and seller proceeds are separate, and fixed shop-cost allocation is an explicit business-cost assumption. ':'')+'Same fixed-NX schedule and selected evidence calculation as Best NX items to Buy/Sell. Daily estimates weight qualifying daily sale medians by recorded volume; each day needs at least five recorded sales. Rolling medians retain their own windows; excluded roll/upgrade-premium references are not ranked. Missing prices and unknown NX costs are excluded. Ranking uses all eligible items before table search/verdict filters: low mesos / NX for buying, high for selling, '+(current.netRanking?'under the selected explicit fee assumptions.':'before fees.')+' The dial tick is the selected-evidence cash reference, not 100 or the goods-based benchmark. These estimates are not executable quotes or profit calculations.';
   }
   function draw() {
     const status = section.querySelector('.cash-highlights-status'); clockBindings.delete(status);
@@ -224,6 +232,7 @@
   document.addEventListener('astramarketsnapshot', event => { report = event.detail; draw(); });
   document.getElementById('display-timezone')?.addEventListener('change', refreshClocks);
   document.addEventListener('astrafeeschange',draw);
+  document.addEventListener('astraapicashchange',draw);document.addEventListener('astraapicashchoice',draw);
   for (const id of ['cash-lookback', 'cash-evidence']) document.getElementById(id)?.addEventListener('change', draw);
   draw(); document.dispatchEvent(new Event('astramarkethighlightsready'));
 })();
