@@ -1,0 +1,892 @@
+{
+  "schemaVersion": 1,
+  "kind": "official_classic_world_mystery_box_editions",
+  "evidenceCapturedAt": "2026-11-05T13:19:55.317031+00:00",
+  "editionIdentity": "announcement + sale window + captured rate-body hash; names and original publication dates alone are insufficient",
+  "probabilityPolicy": "Published rounded probabilities are retained without renormalization. All four verified tables sum to100 as displayed; this does not recover extra precision. No equal-odds assumption.",
+  "editions": [
+    {
+      "id": "mystery-fashion-2026-11-04",
+      "name": "Mystery Fashion Crate",
+      "title": "Mystery Fashion Crate · Nov 4 rotation",
+      "game": "MapleStory Classic World",
+      "region": "Global",
+      "saleStart": "2026-11-04T08:00:00Z",
+      "saleEnd": null,
+      "saleWindow": "Nov 4, 08:00 UTC → Nov 18, start of maintenance",
+      "crateDurationDays": 7,
+      "cost": {
+        "currency": "NX",
+        "single": 3500,
+        "bundle": 35000,
+        "bundleCount": 11
+      },
+      "announcement": {
+        "pageUrl": "https://www.nexon.com/maplestory/news/47031",
+        "contentUrl": "https://g.nexonstatic.com/maplestory/cms/v1/news/47031",
+        "publishedAt": "2026-11-03T16:00:00Z",
+        "capturedAt": "2026-11-05T13:19:54.273863+00:00",
+        "sha256": "027f2ced10bca9eae520cfc078cd7023314730b44c5ae89e4d3b9f012acaabe1"
+      },
+      "probabilitySource": {
+        "pageUrl": "https://www.nexon.com/maplestory/general-post/46331",
+        "contentUrl": "https://g.nexonstatic.com/maplestory/cms/v1/general-posts/46331",
+        "publishedAt": "2026-10-20T16:00:00Z",
+        "capturedAt": "2026-11-05T13:19:55.597466+00:00",
+        "sha256": "f965e9e5385bc7a2f8a42324e71aa25758b6dd5d43a824b97e58e1a0c1603a19"
+      },
+      "probabilityStatus": "verified_published_rounded",
+      "outcomes": [
+        {
+          "name": "Woodsman Hat",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Bomber Jacket",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Patched Denim Jeans",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Green Sports Goggles",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Pelvis Hoodie",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Red Hooded Coat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Bunny-Padded Snowboard Pants",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Pillow",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Grey Visor Beanie",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Black Fur Wrap Coat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Blue Kitty Hood",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Mix-n-Match Sneakers",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Starry Sky Blue Beanie",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Big Rabbit Feet",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "White Rabbit's Foot",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Olive Beanie",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Bandage Strip",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Pink Knitted Gumball",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Pink Snowboard Top",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Pink Snowboard Pants",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Pink Galoshes",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Bunny Hat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Bunny Slippers",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Pink Rabbit Puppet",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Bunny Costume",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Old School Uniform Hat",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Old School Blazer",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Old School Uniform Top",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Old School Uniform Pants",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Old School Uniform Skirt",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "White High Top",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Medical Eye Patch",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "My Buddy Rex",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Blue Snow Flower Wear",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Superstar Headphones",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Kitty Hoodie",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Pink Down Parka",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Amorian Pink Skirt",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Ice Cold Red",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Teddy Bear Headgear",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Teddy Bear Costume",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Teddy Bear Shoes",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Teddy Bear",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Teddy Bear Gloves",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Cuddle Bear",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Teddy Bear Chat Ring",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Blue Pajama Hat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Blue Polka-Dot Pajama Top",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Blue Polka-Dot Pajama Pants",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Blue Marble Slippers",
+          "publishedPercent": 3.0
+        }
+      ],
+      "notes": [
+        "The probability page retains an Oct 20 publication clock but its captured body contains the Nov 4 Teddy rotation. This receipt applies only to the Nov 4 edition; it does not establish earlier contents or their probabilities."
+      ],
+      "publishedProbabilitySum": 100.0
+    },
+    {
+      "id": "halloween-2026-10-28",
+      "name": "Halloween Mystery Fashion Crate",
+      "title": "Halloween Mystery Fashion Crate · Oct 28 rotation",
+      "game": "MapleStory Classic World",
+      "region": "Global",
+      "saleStart": "2026-10-28T08:00:00Z",
+      "saleEnd": "2026-11-04T07:59:00Z",
+      "saleWindow": "Oct 28, 08:00 → Nov 4, 07:59 UTC",
+      "crateDurationDays": 7,
+      "cost": {
+        "currency": "NX",
+        "single": 4900,
+        "bundle": 49000,
+        "bundleCount": 11
+      },
+      "announcement": {
+        "pageUrl": "https://www.nexon.com/maplestory/news/46602",
+        "contentUrl": "https://g.nexonstatic.com/maplestory/cms/v1/news/46602",
+        "publishedAt": "2026-10-27T16:00:00Z",
+        "capturedAt": "2026-11-05T13:19:54.628854+00:00",
+        "sha256": "652f23ed72f93da323f6d734c47903e5c7770cf9aaa4fc1558fa8a9c9a29c866"
+      },
+      "probabilitySource": {
+        "pageUrl": "https://www.nexon.com/maplestory/general-post/46524",
+        "contentUrl": "https://g.nexonstatic.com/maplestory/cms/v1/general-posts/46524",
+        "publishedAt": "2026-10-27T16:00:00Z",
+        "capturedAt": "2026-11-05T13:19:55.925107+00:00",
+        "sha256": "16d4689fa00b005ccee9f89e3e591fd9251dd3abe3f865fcc72685e22bf12c30"
+      },
+      "probabilityStatus": "verified_published_rounded",
+      "outcomes": [
+        {
+          "name": "Tiger Mask",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Prisoner Top",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Prisoner Pants",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Brown Bandage",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Scream Mask",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Skull T-Shirt",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Bone Buckled Slacks",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Skull Beanie",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Dark Suit",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Dark Enamel Suit",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Black Leather Boots",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Black Bandage",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Skull Patch",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Grey Skull Overall",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Red Skull Overall",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Skull Gloves",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Black Coat of Death",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Ghost Suit",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Black Shoes of Death",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Hat of Death",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Ragged Gomushin",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Witch Hat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Ghost Costume",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Witch Clothes",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Witch's Broomstick",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Gargoyle Wings",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Battle Scar",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Mummy Hat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Mummy Suit",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Mummy Mask",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "White Bandage",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Devil Wings",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Blue Chinese Undead Hat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Blue Chinese Undead Costume",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Maple-Stein Head",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Maple-Stein Face",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Demon Goblin",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Pumpkin Hat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Pumpkin Headgear",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Pumpkin Suit",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Glowing Pumpkin Basket",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Evil Skull",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Cat Soul",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Devilish Horns",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Devil Horns",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Dark Devil Hat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Coffin of Gloom",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Count Dracula Cape",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Iljimae Mask",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Stealth Suit",
+          "publishedPercent": 2.0
+        }
+      ],
+      "notes": [],
+      "publishedProbabilitySum": 100.0
+    },
+    {
+      "id": "founders-2026-10-06",
+      "name": "Founder's Mystery Fashion Crate",
+      "title": "Founder's Mystery Fashion Crate · Founder’s Access",
+      "game": "MapleStory Classic World",
+      "region": "Global",
+      "saleStart": null,
+      "saleEnd": "2026-10-28T07:59:00Z",
+      "saleWindow": "Oct 6, end of maintenance → Oct 28, 07:59 UTC",
+      "crateDurationDays": 7,
+      "cost": {
+        "currency": "NX",
+        "single": 3500,
+        "bundle": 35000,
+        "bundleCount": 11
+      },
+      "announcement": {
+        "pageUrl": "https://www.nexon.com/maplestory/news/45819",
+        "contentUrl": "https://g.nexonstatic.com/maplestory/cms/v1/news/45819",
+        "publishedAt": "2026-10-05T19:55:07Z",
+        "capturedAt": "2026-11-05T13:19:55.317031+00:00",
+        "sha256": "3df1c1ba9b1794b03bd8962bdc3f52cbc5ff70ebf777ca535b909d969df7f629"
+      },
+      "probabilitySource": {
+        "pageUrl": "https://www.nexon.com/maplestory/general-post/45538",
+        "contentUrl": "https://g.nexonstatic.com/maplestory/cms/v1/general-posts/45538",
+        "publishedAt": "2026-10-05T19:00:49Z",
+        "capturedAt": "2026-11-05T13:20:19.247557+00:00",
+        "sha256": "6c88e7ce3c274146bb3a5dce350142c445d5e224fd1fe3d11df24097035d5e36"
+      },
+      "probabilityStatus": "verified_published_rounded",
+      "outcomes": [
+        {
+          "name": "Angel Halo",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Toga",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Baby Angel Wings",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Angel Wand",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Cherub's Bow",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Blue Cap",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Orange Baseball Jacket",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Rainbow Knit",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Ripped Jeans",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Orange Toy Hammer",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Blue Bucket Hat",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Tourist T",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "White Jeans",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Black Sunglasses",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Cat Hat",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Cat Suit",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Gold Kitty Slippers",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Kitty Chat Ring",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Meshcap",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Pink Allstar",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Jean Shorts",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Beret",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Red Sailor Shirt",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Red Sailor Skirt",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Black Enamel Shoes",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Patissier Hat",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Patissier Uniform",
+          "publishedPercent": 3.0
+        },
+        {
+          "name": "Yellow Spatula",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Bunny Ears",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Bunny Earmuffs",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Orange Mushroom Balloon",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Blue Watch",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Red Trainer Jacket",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Red Trainer Pants",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Yellow Rainbow Sneaks",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Dollish Pink",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Purple Dorothy Dress",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Sailor Hat",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Sailor Outfit",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "White Ribboned Sailor Dress",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Slime T-Shirt",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Slime Slippers",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Slime Earrings",
+          "publishedPercent": 1.0
+        },
+        {
+          "name": "Reggae Hat",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Orange Hooded Shirt",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "White Hooded Vest",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Butterfly Skirt",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Beetle Long Sleeve",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Lined Hip-Hop Pants",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "White Label Ring",
+          "publishedPercent": 1.0
+        }
+      ],
+      "notes": [],
+      "publishedProbabilitySum": 100.0
+    },
+    {
+      "id": "aurora-season-1-2026",
+      "name": "Aurora Mystery Fashion Crate",
+      "title": "Aurora Mystery Fashion Crate · Season 1",
+      "game": "MapleStory Classic World",
+      "region": "Global",
+      "saleStart": null,
+      "saleEnd": "2027-01-13T07:59:00Z",
+      "saleWindow": "Oct 6, end of maintenance → Jan 13, 2027, 07:59 UTC",
+      "crateDurationDays": 7,
+      "cost": {
+        "currency": "Aurora Stamps",
+        "single": 20,
+        "bundle": 200,
+        "bundleCount": 10
+      },
+      "announcement": {
+        "pageUrl": "https://www.nexon.com/maplestory/news/45819",
+        "contentUrl": "https://g.nexonstatic.com/maplestory/cms/v1/news/45819",
+        "publishedAt": "2026-10-05T19:55:07Z",
+        "capturedAt": "2026-11-05T13:19:55.317031+00:00",
+        "sha256": "3df1c1ba9b1794b03bd8962bdc3f52cbc5ff70ebf777ca535b909d969df7f629"
+      },
+      "probabilitySource": {
+        "pageUrl": "https://www.nexon.com/maplestory/general-post/45659",
+        "contentUrl": "https://g.nexonstatic.com/maplestory/cms/v1/general-posts/45659",
+        "publishedAt": "2026-10-05T19:00:23Z",
+        "capturedAt": "2026-11-05T13:20:19.595096+00:00",
+        "sha256": "2da85bc74092abda3f075bb94aa001596ecc2e4a7c21d8658aef481f084861ee"
+      },
+      "probabilityStatus": "verified_published_rounded",
+      "outcomes": [
+        {
+          "name": "White Choco Bunny",
+          "publishedPercent": 1.5
+        },
+        {
+          "name": "Splash Choco Boy",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Splash Choco Girl",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Cacao Bear Shoes",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Chocolate Ribbon",
+          "publishedPercent": 2.5
+        },
+        {
+          "name": "Soft Chocolate Fondue Scepter",
+          "publishedPercent": 1.5
+        },
+        {
+          "name": "Choco Candy Cookie",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Black Cat Beanie",
+          "publishedPercent": 5.0
+        },
+        {
+          "name": "Sky Blue Cat Beanie",
+          "publishedPercent": 5.0
+        },
+        {
+          "name": "Orange Cat Beanie",
+          "publishedPercent": 5.0
+        },
+        {
+          "name": "Heart Sunglasses",
+          "publishedPercent": 5.0
+        },
+        {
+          "name": "Red Check Rider",
+          "publishedPercent": 5.0
+        },
+        {
+          "name": "Violet Dot Jeans",
+          "publishedPercent": 5.0
+        },
+        {
+          "name": "Pink Bunny Sweater",
+          "publishedPercent": 5.0
+        },
+        {
+          "name": "Hearts Tights",
+          "publishedPercent": 5.0
+        },
+        {
+          "name": "Pink Elephant Slippers",
+          "publishedPercent": 5.0
+        },
+        {
+          "name": "Loose Fit Sweater",
+          "publishedPercent": 4.5
+        },
+        {
+          "name": "Stocking Shorts",
+          "publishedPercent": 4.5
+        },
+        {
+          "name": "Detective Glass",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Blank Eye Patch",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Heartbreaker Lips",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Starlight Heart Scepter",
+          "publishedPercent": 2.0
+        },
+        {
+          "name": "Ink-and-Wash Thought Bubble Ring",
+          "publishedPercent": 5.75
+        },
+        {
+          "name": "Ink-and-Wash Painting Name Tag Ring",
+          "publishedPercent": 5.75
+        },
+        {
+          "name": "Chocolate Label Ring",
+          "publishedPercent": 5.75
+        },
+        {
+          "name": "Chocolate Chat Ring",
+          "publishedPercent": 5.75
+        }
+      ],
+      "notes": [
+        "Stamp cost has no fixed NX equivalent here; exchanging an unwanted reward has an opportunity cost, not a guaranteed original NX purchase cost."
+      ],
+      "publishedProbabilitySum": 100.0
+    },
+    {
+      "id": "mystery-fashion-grand-launch-2026",
+      "name": "Mystery Fashion Crate",
+      "title": "Mystery Fashion Crate · Grand Launch rotation",
+      "game": "MapleStory Classic World",
+      "region": "Global",
+      "saleStart": null,
+      "saleEnd": "2026-11-04T07:59:00Z",
+      "saleWindow": "Grand Launch Oct 21 → Nov 4, 07:59 UTC",
+      "crateDurationDays": 7,
+      "cost": {
+        "currency": "NX",
+        "single": 3500,
+        "bundle": 35000,
+        "bundleCount": 11
+      },
+      "announcement": {
+        "pageUrl": "https://www.nexon.com/maplestory/news/46362",
+        "contentUrl": "https://g.nexonstatic.com/maplestory/cms/v1/news/46362",
+        "publishedAt": "2026-10-20T16:00:02Z",
+        "capturedAt": "2026-11-05T13:19:54.983299+00:00",
+        "sha256": "4984ca3d0227803b82c0ab09ac69817265b66fd36a7cae0d4cbcc3765979b2e6"
+      },
+      "probabilitySource": null,
+      "probabilityStatus": "unavailable_historical_edition_overwritten",
+      "outcomes": [],
+      "notes": [
+        "The historical announcement links to the same mutable probability URL now serving the Nov 4 rotation. No contemporaneous Grand Launch probability snapshot is verified here; do not reuse the newer table."
+      ],
+      "publishedProbabilitySum": null
+    }
+  ]
+}

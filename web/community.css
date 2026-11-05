@@ -9,14 +9,31 @@
 .community-footer-button:hover{color:var(--gold)}
 .community-back{display:inline-block;margin-top:13px;font-size:12px}
 footer.community-footer{grid-template-columns:minmax(0,1fr);text-align:left;justify-items:start;gap:14px}
-body.scenery-on:is([data-scenery-mode="zakum-dark"],[data-scenery-mode="zakum-bright"],[data-scenery-mode="zakum-raid"],[data-scenery-mode="lantern-market"]) footer.community-footer{background:rgba(14,26,19,.94);border:1px solid rgba(144,164,130,.35);border-radius:12px;padding:24px;color:var(--text,#eae7dc);box-shadow:0 8px 26px rgba(3,12,7,.2)}
-footer.community-footer .footer-story{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:17px;font-weight:400;line-height:1.7;text-align:left;max-width:760px}
+body.scenery-on:is([data-scenery-mode="zakum-dark"],[data-scenery-mode="zakum-bright"],[data-scenery-mode="zakum-set"],[data-scenery-mode="zakum-raid"],[data-scenery-mode="lantern-market"]) footer.community-footer{background:rgba(14,26,19,.94);border:1px solid rgba(144,164,130,.35);border-radius:12px;padding:24px;color:var(--text,#eae7dc);box-shadow:0 8px 26px rgba(3,12,7,.2)}
+footer.community-footer .footer-content{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-items:start;gap:24px;width:100%;min-width:0}
+footer.community-footer .footer-story{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;font-weight:400;line-height:1.75;text-align:left;max-width:none;width:100%;min-width:0}
+footer.community-footer .footer-author{min-width:0;width:100%;display:flex;flex-direction:column;align-items:flex-start;text-align:left}
 footer.community-footer .footer-story>p{margin-bottom:10px}
-footer.community-footer .footer-story>p:nth-child(2){font-size:15px;line-height:1.7}
-footer.community-footer .footer-story>p:last-child{font-size:13px;line-height:1.6;margin:12px 0 0}
+footer.community-footer .footer-story>.footer-reuse{font-size:13px;line-height:1.75}
+footer.community-footer .footer-author .footer-signature{font-size:15px;margin:4px 0;text-align:left}
+footer.community-footer .footer-author .footer-signature{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-weight:850;font-style:normal}
+footer.community-footer[data-footer-brand-typeface="display"] .footer-author .footer-signature{font-family:Georgia,"Times New Roman",serif;font-weight:750;font-style:normal}
+footer.community-footer[data-footer-brand-typeface="arcade"] .footer-author .footer-signature{font-family:ui-monospace,"Cascadia Mono","Segoe UI Mono",Consolas,monospace;font-weight:900;font-style:normal}
+footer.community-footer[data-footer-brand-typeface="pixel"] .footer-author .footer-signature{font-family:"Pixelify Sans",ui-monospace,monospace;font-weight:700;font-style:normal}
+footer.community-footer .footer-author .footer-signature .footer-thanks{display:block;margin:3px 0 12px;max-width:44ch;font:400 13px/1.75 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--text)}
+footer.community-footer .footer-author .footer-signature .footer-thanks[hidden]{display:none}
+.footer-mapler-options{display:inline-flex;align-items:center;flex-wrap:wrap;gap:8px}
+.footer-mapler-options>span{color:var(--muted);font-size:12px}
+footer.community-footer .footer-credits{grid-column:1/-1;width:100%;font-size:13px;line-height:1.6;margin:12px 0 0}
 footer.community-footer .footer-brand,footer.community-footer .footer-signature,footer.community-footer .footer-links,footer.community-footer .footer-links button{text-align:left}
 footer.community-footer .footer-links{align-items:flex-start;justify-content:flex-start;flex-direction:row;flex-wrap:wrap;gap:10px 20px}
 footer.community-footer a{text-decoration:underline;text-decoration-line:underline;text-underline-offset:3px}
+footer.community-footer .footer-brand{display:block;width:calc(50% - 12px);max-width:100%;justify-self:start;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:clamp(24px,2.1vw,30px);font-weight:850;font-style:normal;letter-spacing:.4px;line-height:1.4;color:var(--text);text-shadow:0 1px 0 rgba(5,16,10,.3);white-space:normal}
+footer.community-footer .footer-brand-suffix{font:inherit;font-style:normal;letter-spacing:.01em;color:var(--gold)}
+footer.community-footer[data-footer-brand-typeface="display"] .footer-brand{font-family:Georgia,"Times New Roman",serif;font-size:clamp(25px,2.2vw,30px);font-weight:750;font-style:normal;letter-spacing:.35px}
+footer.community-footer[data-footer-brand-typeface="arcade"] .footer-brand{font-family:ui-monospace,"Cascadia Mono","Segoe UI Mono",Consolas,monospace;font-size:clamp(24px,1.9vw,28px);font-weight:900;font-style:normal;letter-spacing:.25px;text-shadow:1px 2px 0 rgba(5,16,10,.45)}
+footer.community-footer[data-footer-brand-typeface="pixel"] .footer-brand{font-family:"Pixelify Sans",ui-monospace,monospace;font-size:clamp(26px,2.2vw,32px);font-weight:700;font-style:normal;letter-spacing:.25px}
+footer.community-footer[data-footer-brand-placement="center"] .footer-brand{text-align:center}
 a[href^="https://maplestory-classic.com/"],a[href^="https://mesos.watch/"],a[href^="https://maplestory.market/"],a[href^="https://meowdb.com/"],a[href^="https://maplestory.io/"]{text-decoration:underline;text-decoration-line:underline;text-underline-offset:3px}
 footer.community-footer[data-footer-style="personal"] .footer-story{font-family:Georgia,"Times New Roman",serif;line-height:1.8}
 footer.community-footer[data-footer-style="personal"] .footer-story>p:first-child{font-style:italic}
@@ -27,8 +44,9 @@ footer.community-footer .community-footer-styles{grid-column:1/-1;display:flex;f
 .community-footer-styles button[aria-pressed="true"]{border-color:var(--gold);background:var(--surface2);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
 .community-footer-styles button:hover{border-color:var(--gold)}
 .community-footer-styles button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
-@media(max-width:700px){footer.community-footer .footer-story{font-size:15px}footer.community-footer .footer-story>p:nth-child(2){font-size:14px}footer.community-footer .footer-story>p:last-child{font-size:12px;line-height:1.65}footer.community-footer .community-footer-styles{order:4;gap:5px}.community-footer-styles button{padding:7px 10px}}
-@media(max-width:700px){body.scenery-on:is([data-scenery-mode="zakum-dark"],[data-scenery-mode="zakum-bright"],[data-scenery-mode="zakum-raid"],[data-scenery-mode="lantern-market"]) footer.community-footer{padding:20px 16px}}
+@media(max-width:800px){footer.community-footer .footer-content{grid-template-columns:minmax(0,1fr);gap:18px}footer.community-footer .footer-author{justify-self:center;max-width:380px}footer.community-footer .footer-brand{width:100%}}
+@media(max-width:700px){footer.community-footer .footer-story{font-size:14px}footer.community-footer .footer-story>.footer-reuse{font-size:13px}footer.community-footer .footer-credits{font-size:12px;line-height:1.65}footer.community-footer .community-footer-styles{order:4;gap:5px}.community-footer-styles button{padding:7px 10px}}
+@media(max-width:700px){body.scenery-on:is([data-scenery-mode="zakum-dark"],[data-scenery-mode="zakum-bright"],[data-scenery-mode="zakum-set"],[data-scenery-mode="zakum-raid"],[data-scenery-mode="lantern-market"]) footer.community-footer{padding:20px 16px}}
 dialog.community-contact{width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;padding:30px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:12px}
 .community-contact::backdrop{background:#08110dcc;backdrop-filter:blur(3px)}
 .community-contact h2{max-width:430px;font-size:25px;line-height:1.35;padding-right:18px}
@@ -43,3 +61,9 @@ dialog.community-contact{width:min(560px,calc(100vw - 32px));max-height:calc(100
 .community-discord{display:inline-block;text-decoration:none;line-height:1.6}
 .community-contact .community-feedback{min-height:2.8em;margin:15px 0 0;color:var(--mint);font-size:12px}
 @media(max-width:600px){dialog.community-contact{padding:25px 20px}.community-contact h2{font-size:22px}.community-contact p{font-size:12px}.community-username{align-items:flex-start;flex-wrap:wrap}.community-prose h2{font-size:17px}}
+
+.footer-reliability{margin:16px 0;padding:12px 15px;border-left:2px solid var(--gold);background:var(--surface);border-radius:0 7px 7px 0}.footer-reliability p{margin:0 0 12px!important;font-size:13px!important;line-height:1.7}.footer-reliability p:last-child{margin-bottom:0!important}.footer-mistakes{margin:15px 0 4px;font-weight:750}.footer-copy-options{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:15px 0;font-size:12px}.footer-copy-options button{font:inherit;min-height:40px;padding:8px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:5px}.footer-copy-options button[aria-pressed="true"]{color:var(--gold);border-color:var(--gold)}
+
+footer.community-footer .footer-brand{display:flex;align-items:center;gap:13px}footer.community-footer .footer-brand-logo{display:inline-flex;flex:none;width:52px;height:56px;align-items:center;justify-content:center}footer.community-footer .footer-brand-logo[hidden]{display:none}footer.community-footer .footer-brand-logo img,footer.community-footer .footer-brand-logo svg{width:52px;height:52px;object-fit:contain;image-rendering:pixelated;fill:var(--gold);color:var(--gold)}footer.community-footer .footer-brand-words{min-width:0}footer.community-footer .footer-brand-suffix{letter-spacing:0;word-spacing:0;margin-inline-start:-.12em}footer.community-footer .footer-arbitrage[hidden]{display:none}footer.community-footer[data-footer-brand-placement="center"] .footer-brand{justify-content:center}
+
+.footer-intro{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}footer[data-intro-underline="off"] .footer-intro{text-decoration:none}

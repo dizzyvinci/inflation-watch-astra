@@ -1,0 +1,11 @@
+{
+  "tool": "built-in image_gen",
+  "mode": "edit / compositing",
+  "editTarget": "zakum-dark-v2.png",
+  "reference": "https://nxcache.nexon.net/cms/2019/q4/1138/zakum.png",
+  "artCopyrightContext": "MapleStory game character design belongs to Nexon. Decorative fan illustration, not a screenshot or market evidence.",
+  "file": "zakum-banner-v1.webp",
+  "bytes": 403640,
+  "sha256": "f75bd2c7ec20f05d145ee61729b54559094fdebf2e80a95ca086f58e6f075029",
+  "prompt": "Recompose existing volcanic fan art as a wide 2:1 hero banner. Preserve official Zakum face stack, golden semicircular crown/crest, carved hands and tablet. Boss on right half with crown/top face and raised hands fully visible; quieter dark volcanic cavern on left for rate text. Lava, chains, platforms and a few decorative coins/scrolls. Full bleed to every edge; no UI, text, borders, black bars, logos or damage numbers. Match classic MapleStory 2D painted/pixel art, charcoal and muted orange. Supporting official Nexon design reference."
+}

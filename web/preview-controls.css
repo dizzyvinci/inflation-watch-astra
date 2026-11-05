@@ -1,0 +1,28 @@
+/* Preview-only visual markers. Remove this stylesheet before the final launch.
+   Outlines do not change box dimensions, event handling or economic inputs. */
+:where(
+  #display-options,
+  #display-options > [role="group"],
+  #display-options > fieldset,
+  [data-preview-controls],
+  .panel-size-options,
+  #display-options > .hero-layout-options,
+  #display-options > .banner-layout-options,
+  #display-options > #scenery-options,
+  #scenery-toggle,
+  #category-value-options,
+  #basket-layout,
+  .community-footer-styles,
+  .author-portrait-options,
+  .privacy-choice-options,
+  .chart-comparison-controls,
+  .smega-comparison-controls,
+  .chart-inspector-ui
+) {
+  outline: 2px solid #d65b68;
+  outline-offset: 3px;
+  border-radius: 7px;
+}
+
+/* Scenery's fieldset is one group; its nested button row needs no second box.
+   The footer, portrait and chart containers themselves remain unmarked. */

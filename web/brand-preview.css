@@ -1,0 +1,39 @@
+/* Scoped masthead typography, local controls and primary navigation readability. */
+@font-face{font-family:"Pixelify Sans";src:url("assets/PixelifySans-9ba86cd010a4de30.ttf") format("truetype");font-style:normal;font-weight:400 700;font-display:swap}
+.masthead.brand-preview-masthead{height:auto;min-height:132px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:30px;row-gap:15px;padding-top:24px;padding-bottom:24px}
+.brand-preview-masthead .brand{justify-self:start;min-width:0;max-width:100%;gap:18px;flex-wrap:wrap;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:clamp(44px,4.2vw,68px);font-weight:850;font-style:normal;letter-spacing:1px;line-height:1.04;text-shadow:0 3px 0 rgba(5,16,10,.3)}
+.brand-preview-masthead .brand-wordmark-copy{min-width:0;white-space:nowrap}
+.brand-preview-masthead .brand-watch{font:inherit;font-style:normal;letter-spacing:0;word-spacing:0;margin-inline-start:.1em;color:var(--gold)}
+.brand-preview-masthead .brand small{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:11px;font-style:normal;font-weight:600;letter-spacing:1.6px;line-height:1.6;margin-top:11px;text-shadow:none;text-transform:none;white-space:normal}
+.brand-preview-masthead .brand .brand-leaf{width:76px;height:80px;flex:none;border:0;background:none;box-shadow:none;color:var(--gold)}
+.brand-preview-masthead .brand-leaf img{width:72px;height:72px;object-fit:contain;image-rendering:pixelated}
+.brand-preview-masthead[data-brand-typeface="display"] .brand{font-family:Georgia,"Times New Roman",serif;font-size:clamp(46px,4.5vw,74px);font-weight:750;font-style:normal;letter-spacing:.7px}
+.brand-preview-masthead[data-brand-typeface="arcade"] .brand{font-family:ui-monospace,"Cascadia Mono","Segoe UI Mono",Consolas,monospace;font-size:clamp(40px,3.8vw,60px);font-weight:900;letter-spacing:.5px;text-shadow:2px 3px 0 rgba(5,16,10,.45)}
+.brand-preview-masthead[data-brand-typeface="pixel"] .brand{font-family:"Pixelify Sans",ui-monospace,monospace;font-size:clamp(44px,4.3vw,72px);font-weight:700;font-style:normal;letter-spacing:.5px}
+.brand-preview-masthead .header-status{min-width:0;max-width:none;justify-self:end;flex-wrap:wrap}
+.brand-preview-masthead #header-freshness{min-width:0;overflow-wrap:anywhere}
+.brand-preview-masthead .header-status .dot,.brand-preview-masthead .header-status .icon-button{flex:none}
+.brand-preview-masthead[data-brand-placement="center"]{grid-template-columns:minmax(0,1fr)}
+.brand-preview-masthead[data-brand-placement="center"] .brand,.brand-preview-masthead[data-brand-placement="center"] .header-status{justify-self:center}
+.brand-preview-masthead[data-brand-placement="center"] .brand small{text-align:center}
+.brand-preview-controls{border:1px solid var(--line);border-radius:7px;padding:12px;margin:12px 0 0;text-align:center;color:var(--text)}
+.brand-preview-controls legend{padding:0 7px;font-size:13px;font-weight:650}
+.brand-preview-group{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:7px;margin:8px 0}
+.brand-preview-group>span{font-size:12px;color:var(--muted);margin-right:5px;text-transform:capitalize}
+.brand-preview-group button{font:13px/1.5 system-ui,sans-serif;padding:8px 12px;border:1px solid var(--line);border-radius:5px;background:var(--surface);color:var(--text)}
+.brand-preview-group button[aria-pressed="true"]{border-color:var(--gold);background:var(--surface2);color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
+.brand-preview-group button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.brand-preview-controls>small{display:block;font-size:11px;line-height:1.6;color:var(--muted)}
+.brand-preview-controls>small a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+/* Optional typeface is limited to cosmetic/comparison controls, never data tables or chart labels. */
+body[data-brand-typeface="pixel"] :is(#display-options button,#display-options legend,#display-options summary,.brand-preview-group>span,.community-footer-styles button,.author-portrait-options button,.privacy-choice-options button,.chart-comparison-controls button,.smega-comparison-controls button,#category-value-options button,#basket-layout button,.site-music-controls button){font-family:"Pixelify Sans",ui-monospace,monospace;font-size:15px;font-weight:600;font-style:normal}
+@media(max-width:600px){.brand-preview-masthead[data-brand-typeface="pixel"] .brand{font-size:clamp(30px,8.5vw,42px);letter-spacing:0}body[data-brand-typeface="pixel"] :is(#display-options button,.community-footer-styles button,.author-portrait-options button,.privacy-choice-options button,.chart-comparison-controls button,.smega-comparison-controls button,#category-value-options button,#basket-layout button,.site-music-controls button){font-size:14px}}
+@media(max-width:1000px){.masthead.brand-preview-masthead{grid-template-columns:minmax(0,1fr);min-height:0;row-gap:16px;padding-top:22px;padding-bottom:22px}.brand-preview-masthead .header-status{justify-self:start}.brand-preview-masthead[data-brand-placement="center"] .header-status{justify-self:center}}
+@media(max-width:600px){.masthead.brand-preview-masthead{padding-top:20px;padding-bottom:20px;row-gap:15px}.brand-preview-masthead .brand{font-size:clamp(30px,8.5vw,42px);gap:10px;letter-spacing:.35px}.brand-preview-masthead[data-brand-typeface="display"] .brand{font-size:clamp(32px,9vw,44px);letter-spacing:.2px}.brand-preview-masthead[data-brand-typeface="arcade"] .brand{font-size:clamp(28px,7.8vw,38px);letter-spacing:0}.brand-preview-masthead .brand .brand-leaf{width:48px;height:50px}.brand-preview-masthead .brand-leaf img{width:44px;height:44px}.brand-preview-masthead .brand small{font-size:9px;letter-spacing:1px;margin-top:8px}.brand-preview-controls{padding:10px 7px}.brand-preview-group{gap:6px}.brand-preview-group>span{flex-basis:100%;margin:0}.brand-preview-group button{font-size:12px;padding:8px 10px}}
+
+/* A max-content strip centers when it fits, and scrolls from its real first edge when it does not. */
+.nav-wrap{overflow-x:auto;overflow-y:hidden;max-width:100%;scroll-padding-inline:20px;overscroll-behavior-x:contain}.nav-wrap>nav.shell{box-sizing:border-box;width:max-content!important;min-width:100%;max-width:none!important;margin:0!important;padding:0 22px;justify-content:center;gap:26px;height:auto;min-height:68px}.nav-wrap .nav-link{flex:none;align-self:stretch;height:auto;min-height:66px;padding:18px 4px;font-size:18px;font-weight:650;line-height:1.4;letter-spacing:.015em;color:var(--text);white-space:nowrap}.nav-wrap .nav-link.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--surface2)}.nav-wrap .nav-link:hover{color:var(--mint)}.nav-wrap .nav-link:focus-visible{outline:2px solid var(--mint);outline-offset:-3px;border-radius:4px}.nav-wrap .nav-link span{font-size:12px;color:inherit}.nav-wrap>nav.shell>.fallback-link{margin-left:0;flex:none;font-size:14px}.nav-wrap>nav.shell>#scenery-toggle{flex:none}@media(max-width:700px){.nav-wrap>nav.shell{padding-inline:16px;gap:22px;min-height:62px}.nav-wrap .nav-link{font-size:16px;min-height:60px;padding:16px 3px}}
+
+.brand-preview-masthead .brand .brand-leaf[hidden],.brand-preview-masthead .brand .brand-leaf img[hidden],.brand-preview-masthead .brand .brand-logo-maple[hidden]{display:none}.brand-preview-masthead .brand-logo-maple{display:block;width:72px;height:72px}.brand-preview-masthead[data-brand-placement="center"] .brand{justify-content:center}.brand-preview-masthead .brand-wordmark-copy{max-width:100%}@media(max-width:600px){.brand-preview-masthead .brand-logo-maple{width:44px;height:44px}}
+
+.brand-preview-masthead .brand small .brand-tagline-accent{font-weight:850;color:var(--gold);font-size:1.13em;letter-spacing:1px}

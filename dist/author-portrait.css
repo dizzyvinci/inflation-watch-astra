@@ -1,6 +1,5 @@
-footer .author-signature-row{display:grid;grid-template-columns:max-content minmax(0,1fr);align-items:center;gap:18px;width:100%;margin:16px 0}
-footer .author-signature-row .footer-signature{margin:0;text-align:left}
 footer .author-portrait{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;max-width:100%;margin:0;text-align:left}
+footer .author-portrait>.footer-signature{font:15px/1.7 var(--font,system-ui);margin:4px 0;text-align:left}
 .author-portrait-figure{margin:0;max-width:100%}
 .author-portrait-frame{width:220px;aspect-ratio:1;max-width:100%;display:grid;place-items:center;box-sizing:border-box;border:1px solid var(--line,#46533c);border-radius:9px;background:var(--surface2,#253127);padding:7px;overflow:hidden}
 .author-portrait-frame[hidden]{display:none}
@@ -14,4 +13,6 @@ footer .author-portrait{display:flex;flex-direction:column;align-items:flex-star
 .author-portrait-options button[aria-pressed="true"]{border-color:#bfcdbf;background:var(--surface2,#253127);box-shadow:inset 0 -2px #bfcdbf}
 .author-portrait-options button:focus-visible{outline:2px solid var(--text,#eae7dc);outline-offset:3px}
 footer .author-portrait .author-portrait-feedback{font:11px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--muted,#a4b2a9);max-width:44ch;margin:0}
-@media(max-width:600px){footer .author-signature-row{gap:10px;grid-template-columns:max-content minmax(0,1fr)}.author-portrait-frame{width:180px}.author-portrait-options{gap:6px}.author-portrait-options button{font-size:12px;padding:8px}.author-portrait-figure figcaption{font-size:11px}}
+@media(max-width:600px){.author-portrait-frame{width:180px}.author-portrait-options{gap:6px}.author-portrait-options button{font-size:12px;padding:8px}.author-portrait-figure figcaption{font-size:11px}}
+
+.author-portrait-figure figcaption{display:none}footer .author-portrait .author-portrait-feedback{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}

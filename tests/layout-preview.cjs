@@ -70,6 +70,14 @@ function verifyResponsiveStyleContract() {
       assert.equal(swappedArt.gridRow, '1', 'scenery remains behind rate when stacked');
     }
     assert.equal(w.getComputedStyle(doc.querySelector('.hero-merchant')).transform, 'none');
+    doc.body.dataset.bannerLayout='offers';
+    for(const order of ['chart-first','rate-first']){
+      doc.body.dataset.bannerOrder=order;
+      const offerPanel=w.getComputedStyle(doc.querySelector('.banner-preview-chart-slot')),offerCopy=w.getComputedStyle(doc.querySelector('.hero-copy')),offerArt=w.getComputedStyle(doc.querySelector('.hero-art'));
+      if(viewport>=1200){assert.equal(offerPanel.gridColumn,order==='rate-first'?'3':'1');assert.equal(offerCopy.gridColumn,order==='rate-first'?'1 / 3':'2 / 4');assert.equal(offerArt.gridColumn,'2 / 4');}
+      else{assert.equal(offerPanel.gridRow,order==='rate-first'?'2':'1');assert.equal(offerCopy.gridRow,order==='rate-first'?'1':'2');assert.equal(offerArt.gridRow,offerCopy.gridRow);}
+    }
+    doc.body.dataset.bannerArt='zakum';assert.equal(w.getComputedStyle(doc.querySelector('.hero-copy')).maxWidth,viewport>=1200?'58%':'100%','offers respects the narrower Zakum copy at wide widths');
     widths.push([viewport, Math.round(shellWidth * 100) / 100]);
     dom.window.close();
   }
@@ -77,7 +85,7 @@ function verifyResponsiveStyleContract() {
   return widths;
 }
 
-function fixture({ preferences = new Map(), blocked = false, legacy = false, missing = false } = {}) {
+function fixture({ preferences = new Map(), blocked = false, legacy = false, missing = false, missingOffers = false } = {}) {
   const dom = new JSDOM(page, { url: 'https://inflation.gg/', runScripts: 'outside-only', pretendToBeVisual: true });
   const w = dom.window, doc = w.document;
   const calls = { network: 0, reads: [], writes: [], events: [] };
@@ -93,6 +101,10 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   main.innerHTML = '<svg viewBox="0 0 100 100"><circle cx="10" cy="20" data-chart-value="17.086067136821057" data-chart-series="Source series" data-chart-date="2026-11-04" data-chart-date-precision="day" data-chart-unit="mesos per NX"><title>source label</title></circle></svg>';
   const other = doc.getElementById('cpi-detail-chart');
   other.innerHTML = '<svg viewBox="0 0 100 100"><circle cx="20" cy="30" data-chart-value="156.078952" data-chart-date="2026-11-04" data-chart-unit="index points"/></svg>';
+  const offersStats=doc.getElementById('smega-stats');
+  offersStats.innerHTML=[['sell','1:18.5'],['buy','1:17.2'],['gap','1.3'],['gap','7.3%']].map(([side,value])=>`<div class="stat-cell" data-offer-side="${side}"><span>Original source summary</span><strong>${value}</strong><small>Actual window metadata stays here</small></div>`).join('');
+  const offersChart=doc.getElementById('smega-offer-chart');offersChart.innerHTML='<svg data-original-offer-chart="true"></svg>';
+  const style=doc.createElement('style');style.textContent=fs.readFileSync(path.join(web,'layout-preview.css'),'utf8');doc.head.append(style);
   if (legacy) {
     const history = doc.getElementById('main-history-section');
     if (history) history.replaceWith(...history.childNodes);
@@ -102,7 +114,9 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
     hero: doc.querySelector('.rate-hero'), copy: doc.querySelector('.hero-copy'), art: doc.querySelector('.hero-art'),
     main, other, range: doc.getElementById('range-buttons'), metric: doc.getElementById('chart-metric'),
     csv: doc.getElementById('export-history'), card: main.closest('.chart-card'), story: doc.querySelector('.footer-story').outerHTML,
+    offersHeading:doc.querySelector('#smega-section>.section-heading'),offersStats,offersChart,offersRange:doc.querySelector('#smega-section [data-smega-range="8"]'),
   };
+  if(missingOffers)offersStats.remove();
   w.eval(script);
   return { dom, w, doc, calls, preferences, before };
 }
@@ -122,7 +136,7 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   assert.equal(controls.closest('#scenery-options'), null, 'control is available when scenery is off');
   assert.equal(controls.getAttribute('role'), 'group');
   assert.equal(controls.getAttribute('aria-label'), 'Banner layout');
-  assert.deepEqual([...controls.querySelectorAll('button')].map(button => button.textContent), ['Art banner', 'Chart beside rate', 'Rate first']);
+  assert.deepEqual([...controls.querySelectorAll('button')].map(button => button.textContent), ['Art banner', 'Chart beside rate', 'Offers beside rate', 'Rate first']);
   const swap = doc.getElementById('banner-order-toggle');
   assert.equal(swap.disabled, true);
   assert([...controls.querySelectorAll('button')].every(button => button.type === 'button' && button.getAttribute('aria-controls') === 'rate-section'));
@@ -186,7 +200,43 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   assert.equal(preferences.get('astra-hero-layout'), 'dials-first');
   assert.equal(preferences.get('inflation-footer-style'), 'personal');
   assert.deepEqual(calls.reads, [key, orderKey]);
-  assert(calls.writes.every(([name, value]) => (name === key && ['chart', 'original'].includes(value)) || (name === orderKey && ['chart-first', 'rate-first'].includes(value))));
+  assert(calls.writes.every(([name, value]) => (name === key && ['chart', 'original', 'offers'].includes(value)) || (name === orderKey && ['chart-first', 'rate-first'].includes(value))));
+  let offerWindowClicks=0,offerChartClicks=0;
+  before.offersHeading.addEventListener('click',()=>offerWindowClicks++);
+  before.offersChart.addEventListener('click',()=>offerChartClicks++);
+  const originalOfferSvg=before.offersChart.firstElementChild,offersSection=doc.getElementById('smega-section');
+  const originalOffersParent=offersSection.parentNode,originalOffersNext=offersSection.nextSibling,originalOffersLabel=offersSection.getAttribute('aria-labelledby');
+  assert(offersSection.classList.contains('banner-preview-offer-card'),'one visual card groups all offer evidence from initial layout');
+  assert.equal(before.offersHeading.parentElement,offersSection);assert.equal(before.offersStats.parentElement,offersSection);assert(offersSection.contains(before.offersChart));
+  choose('offers');
+  assert.equal(doc.body.dataset.bannerLayout,'offers');assert.equal(preferences.get(key),'offers');
+  assert(before.hero.contains(before.offersHeading));assert(before.hero.contains(before.offersStats));
+  assert.equal(before.hero.contains(before.main),false,'NX history restores its wide original position');
+  assert.equal(history.parentNode,originalParent);assert.equal(history.nextSibling,originalNext);
+  assert.equal(before.offersChart.parentElement.parentElement,offersSection,'chart remains in the same original offer card');
+  assert(before.hero.contains(before.offersChart),'entire offer card moves together into banner');
+  assert.equal(before.offersHeading.closest('.banner-preview-offer-card'),before.offersChart.closest('.banner-preview-offer-card'));
+  assert.equal(before.offersStats.closest('.banner-preview-offer-card'),before.offersChart.closest('.banner-preview-offer-card'));
+  assert.equal(before.offersChart.firstElementChild,originalOfferSvg);
+  assert.equal(doc.getElementById('banner-offers-history-title'),null,'no duplicate title is generated');
+  assert.equal(offersSection.getAttribute('aria-labelledby'),originalOffersLabel);
+  assert.equal(w.getComputedStyle(before.offersStats).gridTemplateColumns,'minmax(0,1fr)','four source stats stack vertically');
+  assert.equal(before.offersStats.children.length,4);
+  assert(doc.querySelector('.banner-offers-note').textContent.includes('Offers cannot change the calculated goods-based NX benchmark'));
+  before.offersRange.click();before.offersChart.click();assert.equal(offerWindowClicks,1);assert.equal(offerChartClicks,1);
+  const eventCount=calls.events.length;choose('offers');assert.equal(calls.events.length,eventCount,'reselecting active offers needs no redraw');
+  swap.click();assert.equal(doc.body.dataset.bannerOrder,'rate-first');assert.equal(before.hero.firstElementChild,before.copy);
+  assert(before.copy.nextElementSibling.contains(before.offersHeading),'rate/evidence order applies to offers too');
+  swap.click();assert.equal(doc.body.dataset.bannerOrder,'chart-first');
+  before.offersStats.querySelector('strong').textContent='1:19.7';
+  const savedOffers=fixture({preferences});assert.equal(savedOffers.doc.body.dataset.bannerLayout,'offers');assert(savedOffers.before.hero.contains(savedOffers.before.offersStats));savedOffers.dom.window.close();
+  choose('chart');
+  assert.equal(before.offersHeading.parentElement,offersSection);assert.equal(before.offersStats.parentElement,offersSection);
+  assert.equal(before.offersStats.querySelector('strong').textContent,'1:19.7','new source values survive restoration');
+  assert.equal(offersSection.getAttribute('aria-labelledby'),originalOffersLabel);assert.equal(doc.getElementById('banner-offers-history-title'),null);
+  assert.equal(offersSection.parentNode,originalOffersParent);assert.equal(offersSection.nextSibling,originalOffersNext,'whole card restores original position');
+  assert(before.hero.contains(before.main));assert.equal(before.offersChart.firstElementChild,originalOfferSvg);
+  choose('original');assert.equal(doc.querySelector('.banner-offers-note'),null);
   choose('chart');
   assert.equal(swap.disabled, false);
   swap.click();
@@ -228,11 +278,36 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   assert.equal(blocked.doc.body.dataset.bannerOrder, 'rate-first');
   blocked.doc.querySelector('[data-banner-layout-choice="original"]').click();
   assert.equal(blocked.before.hero.contains(blocked.before.main), false);
+  blocked.doc.querySelector('[data-banner-layout-choice="offers"]').click();
+  assert(blocked.before.hero.contains(blocked.before.offersHeading));assert.equal(blocked.before.hero.contains(blocked.before.main),false);
+  blocked.doc.querySelector('[data-banner-layout-choice="original"]').click();assert.equal(blocked.before.offersHeading.parentElement.id,'smega-section');
   assert.equal(blocked.calls.network, 0);
   blocked.dom.window.close();
   const missing = fixture({ missing: true });
   assert.equal(missing.doc.getElementById('banner-layout-options'), null);
   assert.equal(missing.before.hero.contains(missing.before.main), false);
   missing.dom.window.close();
-  console.log('PASS: browser-only banner choice, 1/3 chart + 2/3 art/rate overlay, responsive CSS width bounds, original DOM/control identity, inspector compatibility and no duplicates/network', JSON.stringify(widthBounds));
+  const noOffers=fixture({missingOffers:true,preferences:new Map([[key,'offers']])});assert.equal(noOffers.doc.body.dataset.bannerLayout,'original');assert(noOffers.doc.querySelector('[data-banner-layout-choice="offers"]').disabled);assert.equal(noOffers.before.hero.contains(noOffers.before.main),false);noOffers.dom.window.close();
+  // Real app integration: its existing layout event redraws the original chart
+  // at the new width, without a new source request or a copied clock/summary.
+  const liveDom=new JSDOM(page,{url:'https://inflation.gg/',runScripts:'outside-only',pretendToBeVisual:true}),lw=liveDom.window,ld=lw.document;
+  try{
+    const saved=JSON.parse(fs.readFileSync(path.join(web,'../dist/data.json'),'utf8')),requests=[];
+    lw.scrollTo=()=>{};lw.HTMLElement.prototype.scrollIntoView=function(){};lw.HTMLDialogElement.prototype.showModal=function(){this.open=true;};lw.HTMLDialogElement.prototype.close=function(){this.open=false;};lw.AbortSignal.timeout=()=>undefined;
+    lw.fetch=async url=>{requests.push(url);assert(['version.json','data-0123456789abcdef.json'].includes(url));return{ok:true,json:async()=>url==='version.json'?{version:'fixture',data:'data-0123456789abcdef.json'}:saved};};
+    const sourceChart=ld.getElementById('smega-offer-chart'),sourceStats=ld.getElementById('smega-stats'),sourceHeading=ld.querySelector('#smega-section>.section-heading');
+    Object.defineProperty(sourceChart,'clientWidth',{get(){return sourceChart.closest('.rate-hero')?360:1100;},configurable:true});
+    lw.eval(fs.readFileSync(path.join(web,'community.js'),'utf8'));lw.eval(fs.readFileSync(path.join(web,'app.js'),'utf8'));
+    const end=Date.now()+2000;while(!sourceChart.querySelector('svg')&&Date.now()<end)await new Promise(resolve=>setTimeout(resolve,5));assert(sourceChart.querySelector('svg'));
+    lw.eval(script);const card=ld.getElementById('smega-section'),initialStats=sourceStats.textContent,initialClock=ld.getElementById('smega-point-note').textContent,initialWideWidth=Number(sourceChart.querySelector('svg').getAttribute('viewBox').split(' ')[2]);
+    ld.querySelector('[data-banner-layout-choice="offers"]').click();
+    assert(card.closest('.rate-hero'));assert.equal(ld.getElementById('smega-offer-chart'),sourceChart);assert.equal(ld.getElementById('smega-stats'),sourceStats);assert.equal(card.querySelector(':scope>.section-heading'),sourceHeading);
+    assert.equal(Number(sourceChart.querySelector('svg').getAttribute('viewBox').split(' ')[2]),332,'offer graph redraws at its real banner width');
+    const bannerValues=[...sourceChart.querySelectorAll('circle[data-chart-value]')].map(point=>[point.dataset.chartDate,point.dataset.chartValue]);
+    assert.equal(sourceStats.textContent,initialStats);assert.equal(ld.getElementById('smega-point-note').textContent,initialClock);assert.equal(ld.querySelectorAll('#smega-title').length,1);assert.equal(ld.querySelectorAll('#smega-point-note').length,1);
+    ld.getElementById('banner-order-toggle').click();assert(card.closest('.rate-hero'));assert.equal(sourceStats.textContent,initialStats);
+    ld.querySelector('[data-banner-layout-choice="original"]').click();assert.equal(card.parentElement.id,'view-index');assert.equal(Number(sourceChart.querySelector('svg').getAttribute('viewBox').split(' ')[2]),initialWideWidth,'whole-card restore redraws the original wide graph');assert(initialWideWidth>332);
+    assert.deepEqual([...sourceChart.querySelectorAll('circle[data-chart-value]')].map(point=>[point.dataset.chartDate,point.dataset.chartValue]),bannerValues);assert.equal(sourceStats.textContent,initialStats);assert.equal(ld.getElementById('smega-point-note').textContent,initialClock);assert.equal(requests.length,2,'layout does not fetch upstream or another snapshot');
+  }finally{lw.close();}
+  console.log('PASS: one original offer card keeps heading/4stats/chart/clocks together across three modes, whole-card restoration and rate/evidence swap, responsive bounds, preserved events/data/inspectors, saved/blocked preferences and no duplicates/network', JSON.stringify(widthBounds));
 })().catch(error => { console.error(error); process.exitCode = 1; });

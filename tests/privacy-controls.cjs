@@ -49,12 +49,13 @@ function fixture({ preferences = new Map(), blocked = false, readonly = false,
   if (injected) {
     const script = doc.createElement('script'); script.src = validConfig.scriptUrl + '/hosting-version'; doc.head.append(script);
   }
-  const storyBefore = doc.querySelector('.footer-story').outerHTML;
+  const personalBefore = doc.querySelector('.footer-story>p').outerHTML;
   const footerLinksBefore = doc.querySelector('.footer-links').innerHTML;
   if (!latePrivacy) w.eval(community);
+  const storyBefore = doc.querySelector('.footer-story').outerHTML;
   const style = doc.createElement('style'); style.textContent = fs.readFileSync(path.join(root, 'web/privacy-controls.css'), 'utf8'); doc.head.append(style);
   w.eval(source);
-  return { dom, w, doc, calls, preferences, navigation, errors, storage, storyBefore, footerLinksBefore,
+  return { dom, w, doc, calls, preferences, navigation, errors, storage, storyBefore, personalBefore, footerLinksBefore,
     resolve: () => complete?.(), close: () => dom.window.close() };
 }
 
@@ -183,7 +184,7 @@ const assertOff = f => {
 
   const late = fixture({ latePrivacy: true }); assert.equal(late.doc.querySelectorAll('.privacy-controls-panel').length, 1);
   late.w.eval(community); await flush(); assert.equal(late.doc.querySelectorAll('.privacy-controls-panel').length, 2);
-  assert.equal(late.doc.querySelector('.footer-story').outerHTML, late.storyBefore); assert.equal(late.calls.fetch.length, 0); late.close();
+  assert.equal(late.doc.querySelector('.footer-story>p').outerHTML, late.personalBefore.replace('by a Mapler','by one Mapler')); assert.equal(late.calls.fetch.length, 0); late.close();
 
   console.log('PASS: disclosed preview default-ON/one script, saved-OFF/no load, explicit and saved choices, server-confirmed default scope, strict manual config, withdrawal reload/race safety, blocked storage and unchanged personal story');
 })().catch(error => { console.error(error); process.exitCode = 1; });

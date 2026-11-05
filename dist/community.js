@@ -5,8 +5,46 @@
   if (!content || !footer || document.getElementById('view-privacy')) return;
 
   const footerStyles = ['clear', 'personal', 'emphasis'];
+  const defaultFooterStyle = 'emphasis';
   const footerStyleKey = 'inflation-footer-style';
   footer.classList.add('community-footer');
+  const footerStory = footer.querySelector('.footer-story');
+  const footerSignature = footer.querySelector('.footer-signature');
+  if (footerStory && footerSignature && !footer.querySelector('.footer-content')) {
+    const responsibility = [...footerStory.children].find(node => node.tagName === 'P' && ['A shared responsibility to look out for one another can make this community stronger.', 'A shared responsibility to look out for one another.'].includes(node.textContent.trim()));
+    if (responsibility) responsibility.textContent = 'A shared responsibility to look out for one another.';
+    const reuse = [...footerStory.children].find(node => node.tagName === 'P' && node.querySelector('a[href="#privacy"]'));
+    if (reuse) { reuse.classList.add('footer-reuse'); if (responsibility) responsibility.after(reuse); }
+    const credits = [...footerStory.children].find(node => node.tagName === 'P' && (node.classList.contains('footer-credits') || node.textContent.startsWith('Estimates can be delayed or incomplete.')));
+    const columns = document.createElement('div'); columns.className = 'footer-content';
+    const author = document.createElement('aside'); author.className = 'footer-author';
+    author.setAttribute('aria-label', 'About the author');
+    footerStory.before(columns); columns.append(footerStory, author); author.append(footerSignature);
+    if (credits) { credits.classList.add('footer-credits'); columns.after(credits); }
+  }
+  const footerBrand = footer.querySelector('.footer-brand');
+  if (footerBrand) {
+    const suffix = document.createElement('span'); suffix.className = 'footer-brand-suffix';
+    const brandLogo=document.createElement('span');brandLogo.className='footer-brand-logo';brandLogo.setAttribute('aria-hidden','true');
+    const brandWords=document.createElement('span');brandWords.className='footer-brand-words';brandWords.append(document.createTextNode('About inflation '),suffix);footerBrand.replaceChildren(brandLogo,brandWords);
+    const syncFooterBrand = (detail = {}) => {
+      const header = document.querySelector('header.masthead');
+      const selected = (name, attribute, allowed, fallback) => [detail?.[name], document.body.dataset[attribute], header?.dataset[attribute]].find(value => allowed.includes(value)) ?? fallback;
+      const typeface = selected('typeface', 'brandTypeface', ['sans', 'display', 'arcade', 'pixel'], 'sans');
+      const placement = selected('placement', 'brandPlacement', ['left', 'center'], 'left');
+      const casing = selected('case', 'brandCase', ['lower', 'upper'], 'lower');
+      for (const [key, value] of [['footerBrandTypeface', typeface], ['footerBrandPlacement', placement], ['footerBrandCase', casing]]) {
+        if (footer.dataset[key] !== value) footer.dataset[key] = value;
+      }
+      const logo=selected('logo','brandLogo',['pouch','leaf','scroll','none'],'pouch');
+      if(brandLogo.dataset.logo!==logo){brandLogo.dataset.logo=logo;brandLogo.replaceChildren();brandLogo.hidden=logo==='none';if(logo==='leaf'){const leaf=header?.querySelector('.brand-logo-maple');if(leaf){const copy=leaf.cloneNode(true);copy.removeAttribute('hidden');brandLogo.append(copy);}}else if(logo!=='none'){const image=document.createElement('img');image.alt='';image.src=logo==='scroll'?'assets/ap-reset-scroll.png':'assets/meso-pouch.png';image.width=52;image.height=52;brandLogo.append(image);}}
+      const text = casing === 'upper' ? '. GG' : '. gg'; if (suffix.textContent !== text) suffix.textContent = text;
+    };
+    const brandChanged = event => syncFooterBrand(event.detail);
+    document.addEventListener('astrabrandchange', brandChanged);
+    window.addEventListener('astrabrandchange', brandChanged);
+    syncFooterBrand();
+  }
   const styleControls = document.createElement('div');
   styleControls.className = 'community-footer-styles';
   styleControls.setAttribute('role', 'group');
@@ -16,7 +54,7 @@
   styleControls.append(styleLabel);
   const descriptions = { clear: 'Clear: larger system text', personal: 'Personal: larger serif text with an italic introduction', emphasis: 'Emphasis: larger semibold text' };
   const applyFooterStyle = value => {
-    footer.dataset.footerStyle = footerStyles.includes(value) ? value : 'clear';
+    footer.dataset.footerStyle = footerStyles.includes(value) ? value : defaultFooterStyle;
     for (const button of styleControls.querySelectorAll('button')) {
       button.setAttribute('aria-pressed', String(button.dataset.footerStyleChoice === footer.dataset.footerStyle));
     }
@@ -36,8 +74,88 @@
   }
   footer.append(styleControls);
   let savedFooterStyle;
-  try { savedFooterStyle = localStorage.getItem(footerStyleKey); } catch { /* Use Clear without persistent storage. */ }
+  try { savedFooterStyle = localStorage.getItem(footerStyleKey); } catch { /* Use Emphasis without persistent storage. */ }
   applyFooterStyle(savedFooterStyle);
+
+  const invitation = [...(footerStory?.children || [])].find(node => node.tagName === 'P' && node.textContent.startsWith('Suggestions are welcome.'));
+  const manipulation = footer.querySelector('.footer-manipulation');
+  if (invitation || manipulation) {
+    const copyOptions = document.createElement('div'); copyOptions.className = 'footer-copy-options';
+    copyOptions.dataset.previewControls = 'true'; copyOptions.setAttribute('role','group'); copyOptions.setAttribute('aria-label','Footer wording');
+    const copyKey = 'inflation-footer-invitation', warningKey = 'inflation-footer-manipulation';
+    const invitationText = {
+      full: 'Suggestions are welcome. You’re welcome to build on what’s useful to you from this site, share what you learn, and help fellow Maplers make informed decisions.',
+      short: 'Suggestions are welcome. Share what you learn, build on what’s useful, and help fellow Maplers make informed decisions.',
+    };
+    let wording='full', warning=true;
+    try { wording=localStorage.getItem(copyKey)==='short'?'short':'full'; warning=localStorage.getItem(warningKey)!=='off'; } catch {}
+    const full = document.createElement('button'), short = document.createElement('button'), risk = document.createElement('button');
+    for (const button of [full,short,risk]) button.type='button';
+    full.textContent='Full invitation'; short.textContent='Short invitation';
+    const update = () => {
+      if(invitation) invitation.textContent=invitationText[wording];
+      full.setAttribute('aria-pressed',String(wording==='full'));short.setAttribute('aria-pressed',String(wording==='short'));
+      if(manipulation) manipulation.hidden=!warning;
+      risk.textContent='Manipulation note: '+(warning?'On':'Off');risk.setAttribute('aria-pressed',String(warning));
+    };
+    for (const [button,choice] of [[full,'full'],[short,'short']]) button.addEventListener('click',()=>{wording=choice;try{localStorage.setItem(copyKey,choice)}catch{}update()});
+    risk.addEventListener('click',()=>{warning=!warning;try{localStorage.setItem(warningKey,warning?'on':'off')}catch{}update()});
+    if(invitation) copyOptions.append(full,short);if(manipulation) copyOptions.append(risk);
+    footer.append(copyOptions);update();
+  }
+
+  const intro=footer.querySelector('.footer-intro');
+  if(intro){const key='astra-footer-intro-underline-v1';let enabled=true;try{enabled=localStorage.getItem(key)!=='off'}catch{}const button=document.createElement('button');button.type='button';button.dataset.footerIntroUnderline='true';const apply=()=>{footer.dataset.introUnderline=enabled?'on':'off';button.textContent='Introduction underline: '+(enabled?'On':'Off');button.setAttribute('aria-pressed',String(enabled))};button.addEventListener('click',()=>{enabled=!enabled;try{localStorage.setItem(key,enabled?'on':'off')}catch{}apply()});footer.querySelector('.footer-copy-options')?.append(button);apply()}
+  const arbitrage=footer.querySelector('.footer-arbitrage');
+  if(arbitrage){const key='astra-footer-arbitrage-v1';let visible=false;try{visible=localStorage.getItem(key)==='on'}catch{}const group=footer.querySelector('.footer-copy-options');const button=document.createElement('button');button.type='button';button.dataset.footerArbitrage='true';const apply=()=>{arbitrage.hidden=!visible;button.textContent='Arbitrage note: '+(visible?'On':'Off');button.setAttribute('aria-pressed',String(visible))};button.addEventListener('click',()=>{visible=!visible;try{localStorage.setItem(key,visible?'on':'off')}catch{}apply()});group?.append(button);apply()}
+
+  // These copy choices change only the explicitly approved phrase/thanks line.
+  // Keep the original personal paragraph and signature nodes intact.
+  const introduction = footerStory?.querySelector(':scope > p');
+  let maplerNode = null;
+  if (introduction) {
+    const walker = document.createTreeWalker(introduction, NodeFilter.SHOW_TEXT);
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (/\b(?:a|one) Mapler\b/.test(node.nodeValue)) { maplerNode = node; break; }
+    }
+  }
+  if (maplerNode || footerSignature) {
+    let copyOptions = footer.querySelector('.footer-copy-options');
+    if (!copyOptions) {
+      copyOptions = document.createElement('div'); copyOptions.className = 'footer-copy-options';
+      copyOptions.dataset.previewControls = 'true'; copyOptions.setAttribute('role', 'group'); copyOptions.setAttribute('aria-label', 'Footer wording'); footer.append(copyOptions);
+    }
+    if (maplerNode) {
+      const wordKey = 'astra-footer-mapler-word-v1'; let word = 'one';
+      try { if (localStorage.getItem(wordKey) === 'a') word = 'a'; } catch { /* Requested default remains one Mapler. */ }
+      const group = document.createElement('span'); group.className = 'footer-mapler-options'; group.setAttribute('role', 'group'); group.setAttribute('aria-label', 'Personal introduction wording');
+      const label = document.createElement('span'); label.textContent = 'Introduction'; group.append(label);
+      const buttons = [];
+      const update = () => {
+        maplerNode.nodeValue = maplerNode.nodeValue.replace(/\b(?:a|one) Mapler\b/, word + ' Mapler');
+        for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.footerMapler === word));
+      };
+      for (const value of ['one', 'a']) {
+        const button = document.createElement('button'); button.type = 'button'; button.dataset.footerMapler = value; button.textContent = value + ' Mapler';
+        button.addEventListener('click', () => { word = value; update(); try { localStorage.setItem(wordKey, word); } catch { /* Tab choice remains usable. */ } });
+        buttons.push(button); group.append(button);
+      }
+      copyOptions.append(group); update();
+    }
+    if (footerSignature) {
+      const walker = document.createTreeWalker(footerSignature, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) node.nodeValue = node.nodeValue.replace(/([—–-])\s*(DishWasher)/, '$1 $2');
+      const thanks = document.createElement('span'); thanks.className = 'footer-thanks'; thanks.id = 'footer-special-thanks';
+      thanks.textContent = 'A special thanks to my fellow Henehos that helped finalize this site, and to the broader Maple community as a whole for making the game so enjoyable in 2026';
+      footerSignature.prepend(thanks, document.createTextNode('\n'));
+      const thanksKey = 'astra-footer-thanks-v1'; let showThanks = true;
+      try { showThanks = localStorage.getItem(thanksKey) !== 'off'; } catch { /* Requested preview default remains On. */ }
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.footerThanks = 'true'; button.setAttribute('aria-controls', thanks.id);
+      const update = () => { thanks.hidden = !showThanks; button.textContent = 'Special thanks: ' + (showThanks ? 'On' : 'Off'); button.setAttribute('aria-pressed', String(showThanks)); };
+      button.addEventListener('click', () => { showThanks = !showThanks; update(); try { localStorage.setItem(thanksKey, showThanks ? 'on' : 'off'); } catch { /* Tab choice remains usable. */ } });
+      copyOptions.append(button); update();
+    }
+  }
 
   const privacy = document.createElement('section');
   privacy.id = 'view-privacy';

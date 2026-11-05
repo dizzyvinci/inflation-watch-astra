@@ -1,0 +1,16 @@
+#overview-basket{margin:30px 0;padding:26px 22px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-width:0}
+#overview-basket .section-heading{margin:0 0 20px;text-align:center;justify-content:center}
+#overview-basket h2{font-size:clamp(27px,2.2vw,36px);line-height:1.4}
+.overview-basket-status,.overview-basket-links{font-size:14px;line-height:1.8;text-align:center;max-width:110ch;margin:18px auto}
+.overview-basket-status{color:var(--muted);font-size:13px}
+.overview-basket-links a{color:var(--gold);text-decoration:underline;text-underline-offset:3px}
+.overview-basket-tiles .overview-basket-price-date{display:block;margin:6px 0;font-size:12px;line-height:1.7;color:var(--muted)}
+.overview-basket-content[hidden]{display:none}
+.overview-basket-controls{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:9px;padding:12px;margin:24px 0 0;font-size:13px}
+.overview-basket-controls button{font:13px/1.5 var(--font);color:var(--text);background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:9px 13px}
+.overview-basket-controls button[aria-pressed="true"]{color:var(--gold);border-color:var(--gold)}
+.overview-basket-controls button:disabled{opacity:.5;cursor:default}
+.overview-basket-controls small{font-size:11px;color:var(--muted)}
+.overview-basket-controls button:focus-visible,.overview-basket-links a:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+body[data-viewer-preview="on"] #overview-basket[data-enabled="false"]{display:none!important}
+@media(max-width:600px){#overview-basket{padding:22px 14px}.overview-basket-controls small{flex-basis:100%;text-align:center}}

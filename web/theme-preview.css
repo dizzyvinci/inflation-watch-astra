@@ -1,0 +1,55 @@
+.theme-preview-options{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;padding:12px;margin:8px auto;max-width:900px;color:var(--muted);font-size:12px}
+.theme-preview-buttons{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+.theme-preview-buttons button{font:13px/1.5 var(--font);min-height:40px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer}
+.theme-preview-buttons button[aria-pressed="true"]{border-color:var(--gold);background:var(--surface2);color:var(--gold);box-shadow:inset 0 -2px var(--gold)}
+.theme-preview-buttons button:focus-visible{outline:2px solid var(--mint);outline-offset:4px}
+.theme-preview-note{flex-basis:100%;font-size:11px;line-height:1.6}
+body[data-color-scheme="maple-amber"]{--bg:#211914;--surface:#2d241d;--surface2:#3a2e24;--line:#796149;--text:#fff0d7;--muted:#c5b59b;--gold:#f2c879;--blue:#91c9e8;--mint:#91d7bc;--rose:#eda9ae;--violet:#dbb7ed;--theme-glow:#89633e33;--theme-footer:rgba(33,25,20,.96)}
+body[data-color-scheme="moonlit-ludibrium"]{--bg:#171a2a;--surface:#22283c;--surface2:#2d334d;--line:#667297;--text:#f1eeff;--muted:#b5bbd5;--gold:#f2cc81;--blue:#a7c8ff;--mint:#8edbc3;--rose:#f0a7bb;--violet:#dab5f6;--theme-glow:#5a458c33;--theme-footer:rgba(23,26,42,.96)}
+body[data-color-scheme]{background:radial-gradient(ellipse at 80% 0,var(--theme-glow),transparent 50%),var(--bg);color:var(--text)}
+body[data-color-scheme] :is(.topline,.nav-wrap,.stat-strip,th,.input-row input,.formula,.table-search-controls input){background:var(--bg);border-color:var(--line)}
+body[data-color-scheme] :is(.brand-leaf,.evidence-flow span,.category-gauge-legend){background:var(--surface2);border-color:var(--line)}
+body[data-color-scheme] .rate-hero{background:linear-gradient(110deg,var(--surface2),var(--surface) 60%,var(--bg));border-color:var(--line)}
+body[data-color-scheme] .hero-art::after{background:linear-gradient(90deg,var(--surface2),transparent 68%)}
+body[data-color-scheme] .category-card{background:linear-gradient(150deg,var(--surface2),var(--surface));border-color:var(--line)}
+body[data-color-scheme] .note-panel{background:var(--surface2);border-color:var(--line)}
+body[data-color-scheme] :is(.nav-link,.fallback-link,.stat-cell small,.panel p,.hero-bottom){color:var(--muted)}
+body[data-color-scheme] :is(.nav-link.active,.exact-rate,.big-rate .rate-unit small,.art-caption){color:var(--text)}
+body[data-color-scheme] .weight-track{background:var(--line)}
+body[data-color-scheme] .change-pill{background:var(--surface2);color:var(--mint)}
+body[data-color-scheme] .notice{background:var(--surface2);border-color:var(--gold);color:var(--gold)}
+body[data-color-scheme] .notice.error{background:var(--surface);border-color:var(--rose);color:var(--rose)}
+body[data-color-scheme] :is(.hero-layout-options,.scenery-mode-buttons,.banner-layout-options,.community-footer-styles,.privacy-choice-options) button[aria-pressed="true"],body[data-color-scheme] .scenery-toggle[aria-pressed="true"]{background:var(--surface2);border-color:var(--gold);color:var(--gold)}
+body[data-color-scheme] .segmented button.selected:not([data-cash-side]):not(#quick-buy):not(#quick-sell){background:var(--surface2)}
+body[data-color-scheme] :is(.chart-comparison-controls,.smega-comparison-controls,.cash-controls) button[aria-pressed="true"]:not([data-cash-side]):not(#quick-buy):not(#quick-sell){background:var(--surface2);color:var(--text)}
+/* BUY stays mint and SELL stays gold; status colors keep their existing meaning. */
+body[data-color-scheme] .offer-buy{color:var(--mint)}
+body[data-color-scheme] .offer-sell{color:var(--gold)}
+body[data-color-scheme] .status-green{background:#89c6b0}
+body[data-color-scheme] .status-amber{background:#edc471}
+body[data-color-scheme] .status-red{background:#d9a1a0}
+body[data-color-scheme].scenery-on:is([data-scenery-mode="zakum-dark"],[data-scenery-mode="zakum-bright"],[data-scenery-mode="zakum-raid"],[data-scenery-mode="lantern-market"]) footer.community-footer{background:var(--theme-footer);border-color:var(--line)}
+/* CSS recolors existing chart attributes; values, series identities and geometry
+   are untouched. Dashed/dotted reference styling remains distinct. */
+body[data-color-scheme] svg :is([stroke="#87bdcf"],[stroke="#a8c4ef"]){stroke:var(--blue)}
+body[data-color-scheme] svg :is([fill="#87bdcf"],[fill="#a8c4ef"]){fill:var(--blue)}
+body[data-color-scheme] svg [stop-color="#87bdcf"]{stop-color:var(--blue)}
+body[data-color-scheme] svg [stroke="#edc471"]{stroke:var(--gold)}
+body[data-color-scheme] svg [fill="#edc471"]{fill:var(--gold)}
+body[data-color-scheme] svg [stop-color="#edc471"]{stop-color:var(--gold)}
+body[data-color-scheme] svg [stroke="#89c6b0"]{stroke:var(--mint)}
+body[data-color-scheme] svg [fill="#89c6b0"]{fill:var(--mint)}
+body[data-color-scheme] svg [stop-color="#89c6b0"]{stop-color:var(--mint)}
+body[data-color-scheme] svg [stroke="#d9a1a0"]{stroke:var(--rose)}
+body[data-color-scheme] svg [fill="#d9a1a0"]{fill:var(--rose)}
+body[data-color-scheme] svg :is([stroke="#baa3cf"],[stroke="#d7c2e8"]){stroke:var(--violet)}
+body[data-color-scheme] svg :is([fill="#baa3cf"],[fill="#d7c2e8"]){fill:var(--violet)}
+body[data-color-scheme] svg :is([stroke="#2c3c46"],[stroke="#3c4c40"]){stroke:var(--line)}
+body[data-color-scheme] svg [stroke="#e3e4d6"]{stroke:var(--text)}
+body[data-color-scheme] svg [fill="#e3e4d6"]{fill:var(--text)}
+body[data-color-scheme] svg [fill="#172530"]{fill:var(--surface)}
+body[data-color-scheme] svg text{fill:var(--muted)}
+body[data-color-scheme] svg .chart-y-tick{fill:var(--text)!important}
+body[data-color-scheme] .legend-line.violet,body[data-color-scheme] .smega-midpoint-key{border-color:var(--violet)}
+body[data-color-scheme] .smega-benchmark-key{border-color:var(--blue)}
+@media(max-width:600px){.theme-preview-options{padding:10px 0;gap:8px}.theme-preview-buttons{width:100%}.theme-preview-buttons button{flex:1;min-width:135px}.theme-preview-note{font-size:10px}body[data-color-scheme] .hero-art::after{background:linear-gradient(180deg,var(--surface2),transparent 70%)}}

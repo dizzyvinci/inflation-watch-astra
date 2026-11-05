@@ -1,0 +1,15 @@
+{
+  "kind": "generated_fan_illustration",
+  "createdAt": "2026-11-05T13:21:56.426701+00:00",
+  "tool": "built-in image_gen",
+  "reference": "ellinia-scenery.png",
+  "intent": "Wide zoomed-out Ellinia-inspired forest village, tiny treehouses/vine bridges/wooden platforms, green layered depth, gentle lantern accents, 3:1 panorama, no text or central mask band. Original portrait retained.",
+  "dimensions": [
+    2172,
+    724
+  ],
+  "assets": {
+    "ellinia-panorama-v1.png": "0513ae3a867837eacf883885e4feaf2f2aa00fc40d0565ab68121806045a6fd3",
+    "ellinia-panorama-v1.webp": "7102e77138b1f1dba639e1026156bb9cedb242248bf58bcc768f611820e01e01"
+  }
+}

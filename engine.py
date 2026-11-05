@@ -74,6 +74,185 @@ def source_summary(item, source_updated_at):
     return result
 
 
+def cash_catalog_identities(plan):
+    """Curated canonical joins from the already accepted, hash-checked capture plan.
+
+    IDs never come from a fuzzy name search. This small public identity map lets
+    the Worker preserve exactly the same joins without reading private intake.
+    """
+    if not isinstance(plan, dict):
+        return []
+    payload = {key: value for key, value in plan.items() if key not in ('planHash', 'preparedAt')}
+    try:
+        digest = hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False,
+                                          separators=(',', ':'), allow_nan=False).encode()).hexdigest()
+    except (TypeError, ValueError):
+        return []
+    if (plan.get('kind') != 'offline_scanner_capture_request_plan' or plan.get('isCapture') is not False
+            or plan.get('planHash') != digest):
+        return []
+    identities, seen_ids, seen_slugs = [], set(), set()
+    if not isinstance(plan.get('requests'), list):
+        return []
+    for entry in plan['requests']:
+        if not isinstance(entry, dict):
+            return []
+        if entry.get('cohort') != 'cash':
+            continue
+        item_id, slug, name = entry.get('expectedItemId'), entry.get('slug'), entry.get('expectedItemName')
+        if (not isinstance(item_id, int) or isinstance(item_id, bool) or not 0 < item_id <= 9007199254740991
+                or not isinstance(slug, str) or not slug or not isinstance(name, str) or not name
+                or item_id in seen_ids or slug in seen_slugs):
+            return []
+        seen_ids.add(item_id); seen_slugs.add(slug)
+        identities.append({'slug': slug, 'name': name, 'id': item_id, 'planHash': digest})
+    return identities
+
+
+def cash_catalog_metadata(entries, rows):
+    """Allowlisted, verified Classic game metadata, never an inferred market quote."""
+    if isinstance(entries, dict):
+        entries = entries.get('items', []) if entries.get('schemaVersion') == 1 else []
+    if not isinstance(entries, list):
+        return []
+    result, seen = [], set()
+    by_id = {row['canonicalId']: row for row in rows if row['canonicalId'] is not None}
+    for entry in entries[:64]:
+        if not isinstance(entry, dict):
+            continue
+        item_id, name = entry.get('id'), entry.get('name')
+        if (not isinstance(item_id, int) or isinstance(item_id, bool) or not 0 < item_id <= 9007199254740991
+                or item_id in seen or not isinstance(name, str) or not name.strip() or len(name) > 200
+                or entry.get('cash') is not True or entry.get('region') != 'MCW' or entry.get('version') != '1'
+                or entry.get('sourceUrl') != f'https://maplestory.io/api/MCW/1/item/{item_id}'):
+            continue
+        stamp = source_summary({'last': entry.get('metadataCapturedAt')}, None)['reportedLastSaleAt']
+        if stamp is None:
+            continue
+        seen.add(item_id)
+        linked = by_id.get(item_id)
+        result.append({'id': item_id, 'name': name, 'category': 'Cash Shop', 'cash': True,
+                       'region': 'MCW', 'version': '1', 'sourceUrl': entry['sourceUrl'],
+                       'metadataCapturedAt': stamp,
+                       'metadataCaptureTimeKind': entry.get('metadataCaptureTimeKind') if entry.get('metadataCaptureTimeKind') in ('local_receipt_file_timestamp', 'http_response_received_at') else 'captured_at',
+                       'marketDataAvailable': linked is not None, 'providerSlug': linked['slug'] if linked else None,
+                       'knownNxCost': linked['knownNxCost'] if linked else None,
+                       'inCashBasket': bool(linked and linked['inCashBasket']), 'notIndexed': not bool(linked and linked['inCashBasket']),
+                       'notIndexedReasons': linked['notIndexedReasons'] if linked else ['metadata_only_no_market_observations', 'no_verified_fixed_nx_cost', 'outside_frozen_cash_cohort'],
+                       'price': None, 'priceDay': None, 'quantity': None, 'publisherMedian': None,
+                       'publisherP25': None, 'publisherP75': None, 'history': [], 'firstObservedDay': None,
+                       'sourceLastSeenAt': None,
+                       'sourceObservations': [{'kind': 'game_item_metadata', 'sourceUrl': entry['sourceUrl'], 'metadataCapturedAt': stamp}]})
+    return result
+
+
+def cash_catalog_seed_identities(report):
+    """Public rebuilds can retain the prior compiled map without private intake."""
+    entries = (report or {}).get('cashCatalog', {}).get('identityMap', [])
+    if not isinstance(entries, list) or len(entries) > 64:
+        return []
+    result, ids, slugs = [], set(), set()
+    for entry in entries:
+        if not isinstance(entry, dict):
+            return []
+        item_id, slug, name, digest = (entry.get(key) for key in ('id', 'slug', 'name', 'planHash'))
+        if (not isinstance(item_id, int) or isinstance(item_id, bool) or not 0 < item_id <= 9007199254740991
+                or item_id in ids or not isinstance(slug, str) or not slug or slug in slugs
+                or not isinstance(name, str) or not name or not isinstance(digest, str)
+                or re.fullmatch(r'[0-9a-f]{64}', digest) is None):
+            return []
+        ids.add(item_id); slugs.add(slug)
+        result.append({'slug': slug, 'name': name, 'id': item_id, 'planHash': digest})
+    return result
+
+
+def cash_catalog(feed, cfg, cash_basket=None, rolling_reference=None, identities=None, metadata_items=None):
+    """An additive source catalog; never selects/rebases either fixed basket.
+
+    Daily medians, an unspecified publisher summary and independently dated
+    scanner medians remain separate observations, with no fabricated release or
+    confirmed-trade timestamp. Only aggregate, allowlisted source fields escape.
+    """
+    cash_basket, rolling_reference = cash_basket or {}, rolling_reference or {}
+    identities = identities or []
+    identity_by_slug = {entry['slug']: entry for entry in identities}
+    members = {row['slug'] for row in cash_basket.get('rows', [])}
+    rolling = rolling_reference.get('items', [])
+    rows = []
+    for item in feed['items']:
+        if item['k'] != 'Cash Shop':
+            continue
+        history = [list(point) for point in item['h']]
+        qualified = [point for point in history if point[2] >= 5]
+        latest = qualified[-1] if qualified else None
+        summary = source_summary(item, feed['updatedAt'])
+        nx = cfg.get('nx_prices', {}).get(item['n'])
+        nx = nx if positive(nx) else None
+        member = item['s'] in members
+        reasons = []
+        if not member:
+            if nx is None:
+                reasons.append('no_verified_fixed_nx_cost')
+            if not any(cfg['base_start'] <= point[0] <= cfg['base_end'] for point in qualified):
+                reasons.append('no_qualifying_reference_period_history_in_retained_source')
+            reasons.append('outside_frozen_cash_cohort')
+        observations = [{**summary, 'kind': 'daily_provider_summary', 'sourceUrl': cfg['feed_url']}]
+        identity = identity_by_slug.get(item['s'])
+        canonical_id = identity['id'] if identity and identity['name'] == item['n'] else None
+        for observation in rolling:
+            if not (identity and observation.get('id') == canonical_id and rolling_reference.get('sourceUrl') == 'https://mesos.watch/'
+                and rolling_reference.get('planHash') == identity['planHash']
+                and observation.get('expectedItemId') == canonical_id
+                and observation.get('expectedItemName') == item['n'] and observation.get('name') == item['n']
+                and observation.get('priceBasis') == 'median of sales' and positive(observation.get('price'))
+                and positive(observation.get('windowDays'))):
+                continue
+            fields = ('id', 'price', 'priceBasis', 'salesCounted', 'windowDays', 'capturedAt',
+                      'captureTimeKind', 'sourceObservedAt', 'observationTimestampKnown',
+                      'sourceWindowStartAt', 'sourceWindowEndAt', 'statRoll', 'statRollKnown',
+                      'statRollStatus', 'variantKey', 'seriesKey')
+            observations.append({'kind': 'rolling_scanner_median',
+                                 'sourceUrl': 'https://mesos.watch/item/' + str(canonical_id),
+                                 **{field: observation.get(field) for field in fields}})
+        rows.append({'name': item['n'], 'slug': item['s'], 'category': 'Cash Shop',
+                     'canonicalId': canonical_id, 'sourceUrl': 'https://maplestory-classic.com/market/' + item['s'],
+                     'sourceUpdatedAt': feed['updatedAt'], 'publisherMedian': summary['medianSale'],
+                     'publisherP25': summary['p25'], 'publisherP75': summary['p75'], 'sourceSummary': summary,
+                     'sourceLastSeenAt': summary['reportedLastSaleAt'],
+                     'sourceLastSeenKind': 'provider_reported_last_sale_unconfirmed',
+                     'firstObservedDay': history[0][0] if history else None,
+                     'lastHistoryDay': history[-1][0] if history else None,
+                     'historyDays': len(history), 'qualifyingDays': len(qualified),
+                     'recordedCount': sum(point[2] for point in history), 'history': history,
+                     'price': latest[1] if latest else None, 'priceDay': latest[0] if latest else None,
+                     'quantity': latest[2] if latest else None, 'partial': bool(latest and latest[0] == feed['updatedAt'][:10]),
+                     'knownNxCost': nx, 'inCashBasket': member, 'notIndexed': not member,
+                     'notIndexedReasons': reasons, 'limitedHistory': len(qualified) < 7,
+                     'sourceObservations': observations})
+    metadata = cash_catalog_metadata(metadata_items, rows)
+    return {'schemaVersion': 1, 'kind': 'cash_shop_source_catalog',
+            'sourceScope': 'daily_provider_collection_with_verified_supplemental_observations',
+            'sourceUrl': cfg['feed_url'], 'sourceUpdatedAt': feed['updatedAt'],
+            'baseStart': cfg['base_start'], 'baseEnd': cfg['base_end'],
+            'cashIndexStatus': cash_basket.get('status', 'unavailable'), 'cashIndexBasketHash': cash_basket.get('basketHash'),
+            'qualification': {'minimumDailyCount': 5, 'limitedHistoryBelowDays': 7},
+            'itemCount': len(rows), 'providerItemCount': len(rows),
+            'catalogItemCount': len(rows) + sum(not item['marketDataAvailable'] for item in metadata),
+            'identityMap': identities, 'metadataItems': metadata,
+            'coverage': {'sourceCashItems': len(rows), 'withPublisherMedian': sum(row['publisherMedian'] is not None for row in rows),
+                         'withQualifyingHistory': sum(row['qualifyingDays'] > 0 for row in rows),
+                         'fixedNxItems': sum(row['knownNxCost'] is not None for row in rows),
+                         'cashIndexItems': sum(row['inCashBasket'] for row in rows),
+                         'withRollingObservation': sum(len(row['sourceObservations']) > 1 for row in rows)},
+            'notes': {'firstObservedDay': 'First observed in retained collected daily history; not a release date.',
+                      'counts': 'Recorded source volume is inferred, not independently confirmed transactions.',
+                      'limitedHistory': 'Fewer than 7 daily points with recorded count at least 5; a display flag, not an accuracy test.',
+                      'windows': 'Daily history, unspecified publisher summary and item-specific rolling captures are separate observations.',
+                      'scope': 'This provider collection plus verified supplemental observations and game metadata is not a complete cash-item universe.',
+                      'metadata': 'Game metadata establishes item identity, not a market price, fixed NX cost, release date or verified trade.'},
+            'rows': rows}
+
+
 def capped_weights(values, cap=.08):
     if not values or len(values) * cap < 1 - 1e-10 or not all(positive(x) for x in values):
         raise ValueError('Invalid or infeasible basket weights')
@@ -510,6 +689,12 @@ def compute(feed, status):
     report['reportedNxHistory'] = read(ROOT / 'history' / 'niadb-reported-nx-history.json', {})
     from cash_basket import compute_cash_basket
     report['cashBasket'] = compute_cash_basket(feed, cfg, ROOT)
+    catalog_identities = cash_catalog_identities(read(ROOT/'incoming'/'scanner-capture-plan.json'))
+    if not catalog_identities:
+        catalog_identities = cash_catalog_seed_identities(read(ROOT/'dist'/'data.json', {}))
+    report['cashCatalog'] = cash_catalog(feed, cfg, report['cashBasket'], report.get('rollingReference'),
+                                         catalog_identities,
+                                         read(ROOT/'cache'/'cash-catalog-metadata.json', {}))
     return report
 
 
@@ -524,7 +709,7 @@ def write_site(report):
     if legacy_history.exists():
         (dist / 'history').mkdir(exist_ok=True)
         shutil.copyfile(legacy_history, dist / 'history' / 'cpi-v1.json')
-    for name in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', 'privacy-controls.js', 'privacy-controls.css', 'analytics-config.json', 'preview-runtime.js', 'preview-runtime.css', 'author-portrait.js', 'author-portrait.css', '_headers', 'sw.js'):
+    for name in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', 'privacy-controls.js', 'privacy-controls.css', 'analytics-config.json', 'preview-runtime.js', 'preview-runtime.css', 'author-portrait.js', 'author-portrait.css', 'market-highlights.js', 'market-highlights.css', 'brand-preview.js', 'brand-preview.css', 'banner-art.js', 'banner-art.css', 'theme-preview.js', 'theme-preview.css', 'preview-controls.css', 'cash-catalog.js', 'cash-catalog.css', 'nx-benchmark.js', 'nx-benchmark.css', 'cash-client-catalog.js', 'cash-client-catalog.css', 'rate-arrival.js', 'rate-arrival.css', 'panel-size-preview.js', 'panel-size-preview.css', 'price-check.js', 'price-check.css', 'cash-highlights.js', 'cash-highlights.css', 'basket-history-layout.js', 'basket-history-layout.css', 'rate-clock.js', 'rate-clock.css', 'overview-basket.js', 'overview-basket.css', 'nav-preview.js', 'nav-preview.css', 'site-music.js', 'site-music.css', 'viewer-preview.js', 'viewer-preview.css', 'rate-title-preview.js', 'category-link-preview.js', 'date-presentation.js', 'mystery-boxes.js', 'mystery-boxes.css', 'speculation.js', 'speculation.css', 'popular-fashion.js', 'popular-fashion.css', 'volatility-preview.js', 'volatility-preview.css', '_headers', 'sw.js'):
         shutil.copyfile(ROOT / 'web' / name, dist / name)
     data_text = json.dumps(report, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
     digest = hashlib.sha256(data_text.encode()).hexdigest()[:16]

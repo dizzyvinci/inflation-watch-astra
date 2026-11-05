@@ -1,0 +1,15 @@
+{
+  "tool": "built-in image_gen",
+  "mode": "edit/compositing",
+  "editTarget": "zakum-banner-v1.png",
+  "referenceAsset": "zakum-helmet-effect-set99.png",
+  "referenceUrl": "https://maplestory.io/api/wz/img/GMS/83/Effect/SetEff.img/99/effect/4",
+  "identityUrl": "https://maplestory.io/api/wz/GMS/83/Effect/SetEff.img/99/info/1/0",
+  "nameUrl": "https://maplestory.io/api/wz/GMS/83/Effect/SetEff.img/99/name",
+  "verifiedIdentity": "Zakum set equipment visual, item1002357 Zakum Helmet; not a skill buff or stat bonus claim.",
+  "notes": "Decorative fan composition places the helmet-effect motif with the boss. It does not claim the boss itself wears that equipment. Original crown-only banner and rejected generic fire-ring attempt are preserved separately. MapleStory character/effect design belongs to Nexon; original effect via maplestory.io.",
+  "file": "zakum-helmet-banner-v1.webp",
+  "bytes": 382678,
+  "sha256": "32de83885fc88dd5852a18bde33f7f42b579381d3e9f2b981ac9cab8bd82d755",
+  "prompt": "Preserve wide dark volcanic banner, boss on right and quiet left. Use positively identified original SetEff99 reference: cyan circular arcs, three purple sigil discs one top/two sides, pale radiance and orange central emblem above/behind crown. Entire top disc visible. Not generic gold fire ring. Preserve faces/eightarms/crown/lava/platforms; no UI/text/borders. Decorative fan composition only."
+}

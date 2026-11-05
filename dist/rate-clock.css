@@ -1,0 +1,6 @@
+.hero-copy .rate-current-clock{font-size:13px;line-height:1.6;color:var(--muted,#acb8ad);margin:4px 0 9px;font-variant-numeric:tabular-nums;text-align:inherit}
+.rate-current-clock time{white-space:nowrap}
+.rate-current-clock[hidden]{display:none}
+.rate-clock-options{max-width:850px;margin:8px auto}
+.rate-clock-options small{font-size:12px;line-height:1.6}
+@media(max-width:600px){.hero-copy .rate-current-clock{font-size:12px;line-height:1.65}.rate-current-clock span{white-space:normal}}

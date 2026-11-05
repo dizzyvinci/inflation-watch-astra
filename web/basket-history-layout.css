@@ -1,0 +1,2 @@
+.basket-history-layout-options{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;margin:24px auto 10px;padding:10px;font-size:12px;color:var(--muted)}
+.basket-history-layout-options button{font:inherit;padding:8px 12px;min-height:40px;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:5px}.basket-history-layout-options button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}

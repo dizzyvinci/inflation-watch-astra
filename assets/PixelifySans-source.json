@@ -1,0 +1,26 @@
+{
+  "family": "Pixelify Sans",
+  "copyright": "Copyright 2021 The Pixelify Sans Project Authors",
+  "upstream": "https://github.com/eifetx/Pixelify-Sans",
+  "distributionSource": "https://github.com/google/fonts/tree/main/ofl/pixelifysans",
+  "license": "SIL Open Font License 1.1",
+  "modified": false,
+  "files": [
+    {
+      "file": "PixelifySans-9ba86cd010a4de30.ttf",
+      "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/pixelifysans/PixelifySans%5Bwght%5D.ttf",
+      "capturedAt": "2026-11-05T12:39:51.378958+00:00",
+      "bytes": 79160,
+      "sha256": "9ba86cd010a4de309d263ceff8e8044092c9db7efda869620cb9ff1c4389e8a5",
+      "sourceGitBlobSha1": "2d7eb388ee499fbcf3e992723ec409c095640104"
+    },
+    {
+      "file": "PixelifySans-OFL.txt",
+      "sourceUrl": "https://raw.githubusercontent.com/google/fonts/main/ofl/pixelifysans/OFL.txt",
+      "capturedAt": "2026-11-05T12:39:51.514035+00:00",
+      "bytes": 4488,
+      "sha256": "b66ba46f511a851ab09998b5a5a9fdbb102545a3864cb993095e1745996873a7",
+      "sourceGitBlobSha1": "6aa5bfbae9e8654b83e5fff942b9540830403022"
+    }
+  ]
+}

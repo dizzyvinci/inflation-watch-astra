@@ -23,7 +23,7 @@ function fixture({ saved, blocked = false, noSignature = false } = {}) {
   w.eval(fs.readFileSync(path.join(root, 'web/community.js'), 'utf8'));
   // Existing privacy placement is independent and must remain after portrait insertion.
   const privacy = doc.createElement('section'); privacy.id = 'privacy-controls'; doc.querySelector('footer').append(privacy);
-  const paragraphs = [...doc.querySelectorAll('.footer-story>p')].map(node => ({ node, text: node.textContent, html: node.outerHTML }));
+  const paragraphs = [...doc.querySelectorAll('.footer-story>p'),doc.querySelector('.footer-signature')].filter(Boolean).map(node => ({ node, text: node.textContent, html: node.outerHTML }));
   if (noSignature) doc.querySelector('.footer-signature').remove();
   const style = doc.createElement('style'); style.textContent = fs.readFileSync(path.join(root, 'web/author-portrait.css'), 'utf8'); doc.head.append(style);
   w.eval(script);
@@ -42,16 +42,26 @@ const assertUnchangedWords = f => {
 const f = fixture();
 assert.equal(f.doc.querySelectorAll('#author-portrait').length, 1);
 assert.equal(f.doc.querySelectorAll('#author-portrait img').length, 1);
-assert.equal(image(f).getAttribute('src'), '/assets/dishwasher-original-v2.png');
-assert(image(f).alt.includes('nameplate')); assert.equal(image(f).getAttribute('srcset'), null);
+assert.equal(image(f).getAttribute('src'), '/assets/dishwasher-transparent-v2.png');
+assert(image(f).alt.includes('Large transparent')); assert.equal(image(f).getAttribute('srcset'), null);
+assert.equal(f.doc.getElementById('author-portrait').dataset.portraitMode,'transparent-large');
+assert.equal(f.calls.writes.length,0,'implicit default does not overwrite an explicit saved preference');
 assert.equal(f.doc.querySelector('.author-portrait-frame').hidden, true);
 assert(f.doc.querySelector('.footer-signature').textContent.includes(chef), 'failed/unloaded image must not remove the existing emoji');
 assert.equal(f.w.getComputedStyle(image(f)).objectFit, 'contain');
-assert.equal(f.w.getComputedStyle(f.doc.querySelector('.author-portrait-frame')).width, '220px');
+assert.equal(f.w.getComputedStyle(f.doc.querySelector('.author-portrait-frame')).width, '380px');
 assert.equal(f.doc.querySelector('.author-portrait-options').getAttribute('role'), 'group');
 assert.deepEqual([...f.doc.querySelectorAll('[data-author-portrait]')].map(node => node.textContent), ['Original', 'Transparent', 'Large transparent', 'Pixelart']);
-assert.equal(f.doc.querySelector('.footer-signature').parentElement.className,'author-signature-row');
-assert.equal(f.doc.querySelector('.footer-signature').nextElementSibling.id,'author-portrait','portrait and every option sit in the signature row to its right');
+assert.equal(f.doc.querySelector('.footer-signature').parentElement.id,'author-portrait');
+assert.equal(f.doc.querySelector('.footer-signature').previousElementSibling.className,'author-portrait-figure','signature follows the original portrait figure');
+assert(f.doc.querySelector('.footer-author>#author-portrait'),'portrait stays in the separate right column');
+assert(f.doc.querySelector('.footer-author .footer-signature'),'signature stays under the image in the right column');
+assert.equal(f.doc.querySelector('.footer-story .footer-signature'),null);
+assert.equal(f.doc.querySelector('.footer-story .footer-reuse').previousElementSibling.textContent,'A shared responsibility to look out for one another.');
+assert.equal(f.doc.querySelectorAll('.footer-signature').length,1,'the original signature is moved rather than copied');
+assert.equal(f.doc.querySelector('.footer-signature'),f.paragraphs.find(row=>row.node.classList.contains('footer-signature')).node);
+assert.equal(f.doc.querySelector('.footer-story .author-portrait'),null);
+assert.equal(f.w.getComputedStyle(f.doc.querySelector('.author-portrait')).alignItems,'flex-start');
 assert.equal(f.doc.querySelector('#author-portrait').lastElementChild.className,'author-portrait-options','portrait toggles come last after image and signature content');
 load(f); assert.equal(f.doc.querySelector('.author-portrait-frame').hidden, false); assertUnchangedWords(f);
 const originalImage = image(f);
@@ -71,7 +81,7 @@ choose(f, 'pixelart'); assert.equal(image(f).getAttribute('src'), '/assets/dishw
 assert.equal(f.w.getComputedStyle(image(f)).imageRendering, 'pixelated'); load(f); assertUnchangedWords(f);
 assert.equal(f.doc.querySelectorAll('[data-author-portrait][aria-pressed="true"]').length, 1);
 assert.equal(f.preferences.get(key), 'pixelart');
-assert.equal(f.doc.querySelector('footer').dataset.footerStyle, 'clear');
+assert.equal(f.doc.querySelector('footer').dataset.footerStyle, 'emphasis');
 assert(f.doc.querySelector('.footer-story').compareDocumentPosition(f.doc.getElementById('privacy-controls')) & f.w.Node.DOCUMENT_POSITION_FOLLOWING);
 f.doc.querySelector('[data-footer-style-choice="personal"]').click();
 assert.equal(f.doc.querySelector('footer').dataset.footerStyle, 'personal');
@@ -85,7 +95,7 @@ for (const mode of ['original', 'transparent', 'transparent-large', 'pixelart'])
   assert.equal(restored.doc.querySelectorAll('#author-portrait img').length, 1); load(restored); assertUnchangedWords(restored); restored.close();
 }
 for (const options of [{ saved: 'unknown' }, { saved: 'pixelart', blocked: true }]) {
-  const safe = fixture(options); assert.equal(safe.doc.getElementById('author-portrait').dataset.portraitMode, 'original');
+  const safe = fixture(options); assert.equal(safe.doc.getElementById('author-portrait').dataset.portraitMode, 'transparent-large');
   choose(safe, 'transparent'); load(safe); assertUnchangedWords(safe); safe.close();
 }
 const failed = fixture(); image(failed).dispatchEvent(new failed.w.Event('error'));

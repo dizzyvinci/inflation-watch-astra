@@ -1,0 +1,88 @@
+const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {JSDOM,VirtualConsole}=require('jsdom');
+const root=path.resolve(__dirname,'..'),saved=JSON.parse(fs.readFileSync(path.join(root,'dist/data.json'),'utf8'));
+const script=fs.readFileSync(path.join(root,'web/cash-highlights.js'),'utf8'),css=fs.readFileSync(path.join(root,'web/cash-highlights.css'),'utf8');
+const viewer=fs.readFileSync(path.join(root,'web/viewer-preview.css'),'utf8'),markers=fs.readFileSync(path.join(root,'web/preview-controls.css'),'utf8');
+const key='astra-cash-highlights-v1';
+const modeKey='astra-cash-highlights-mode-v1';
+const app=fs.readFileSync(path.join(root,'web/app.js'),'utf8'),pricingCode=app.slice(app.indexOf('const CASH_SCHEDULE='),app.indexOf('function renderCash(){'));
+function fixture({report=saved,preference,blocked=false,viewMode='reference',pricing=true}={}){
+ const errors=[],calls={network:0,ready:0,reads:[],writes:[]},preferences=new Map(preference===undefined?[]:[[key,preference]]),vc=new VirtualConsole();vc.on('jsdomError',error=>errors.push(error.message));
+ if(viewMode!==null)preferences.set(modeKey,viewMode);
+ const dom=new JSDOM('<select id="cash-lookback"><option>1</option><option selected>3</option><option>7</option></select><select id="cash-evidence"><option value="daily">Daily</option><option value="rolling">Rolling</option></select><main><section id="view-index"><article id="rate-section"><strong id="main-rate">19.31</strong></article><section id="category-section"><strong id="goods-index">156.1</strong></section><section id="main-history-section">Original model history</section></section></main><footer>Original personal paragraph.</footer>',{url:'https://inflation.gg/',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc});
+ const w=dom.window,doc=w.document;w.fetch=()=>{calls.network++;throw Error('No HTTP');};w.XMLHttpRequest=function(){calls.network++;throw Error('No XHR');};w.navigator.sendBeacon=()=>{calls.network++;throw Error('No analytics');};
+ Object.defineProperty(w,'localStorage',{value:{getItem(name){calls.reads.push(name);if(blocked)throw Error('Storage blocked');return preferences.get(name)??null;},setItem(name,value){calls.writes.push([name,value]);if(blocked)throw Error('Storage blocked');preferences.set(name,value);}}});
+ const style=doc.createElement('style');style.textContent=markers+'\n'+viewer+'\n'+css;doc.head.append(style);
+ const publish=value=>doc.dispatchEvent(new w.CustomEvent('astramarketsnapshot',{detail:value}));doc.addEventListener('astramarkethighlightsready',()=>{calls.ready++;if(report)publish(report);});
+ if(pricing)w.eval(pricingCode);
+ w.eval(script);return{w,doc,calls,errors,preferences,publish,api:w.AstraCashHighlights,close:()=>w.close()};
+}
+const cards=f=>[...f.doc.querySelectorAll('.cash-highlight-card')],toggle=f=>f.doc.querySelector('.cash-highlights-controls button');
+const close=(a,b)=>assert(Math.abs(a-b)<=1e-11*Math.max(1,Math.abs(b)),`${a} != ${b}`);
+let f=fixture();
+try{
+ const before=JSON.stringify(saved),model=f.api.model(saved),expected=[...saved.cashBasket.rows].sort((a,b)=>b.weight-a.weight||b.baseExpenditure-a.baseExpenditure||a.slug.localeCompare(b.slug)).slice(0,5);
+ assert.equal(f.calls.ready,1);assert.equal(f.doc.querySelector('#category-section').nextElementSibling.id,'cash-item-highlights');
+ assert.equal(f.doc.querySelector('#cash-item-highlights').dataset.enabled,'true');assert.equal(toggle(f).getAttribute('aria-pressed'),'true');
+ assert.match(f.w.getComputedStyle(f.doc.getElementById('cash-item-highlights')).outline,/3px solid #d65b68/);
+ assert.deepEqual(cards(f).map(card=>card.dataset.cashHighlightSlug),expected.map(row=>row.slug));assert.equal(cards(f).length,5);
+ assert(Object.isFrozen(model));assert(Object.isFrozen(model.cards));
+ for(let i=0;i<5;i++){
+  const card=cards(f)[i],row=expected[i],svg=card.querySelector('svg');close(Number(svg.dataset.index),100*row.price/row.basePrice);
+  assert(card.querySelector('h3').textContent.includes(row.name));assert(card.querySelector('.cash-highlight-date').textContent.includes(row.priceDay));
+  assert.equal(card.querySelector('a').hash,'#item/'+row.slug);assert(card.querySelector('img').getAttribute('src').startsWith('assets/'));assert(svg.getAttribute('aria-label').includes('not the goods MPI or an NX rate'));
+  assert.equal(Number(svg.dataset.scaleMax),200);assert(card.querySelector('.cash-highlight-change').textContent.includes('vs. reference week'));
+ }
+ assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/2026-10-21–2026-10-27/);assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/2026-11-04 is partial/);
+ assert.match(f.doc.querySelector('.cash-highlights-explanation').textContent,/excluded from the goods MPI/);assert.match(f.doc.querySelector('.cash-highlights-method').textContent,/not a resliced rolling scanner/);
+ const changed=JSON.parse(JSON.stringify(saved)),first=changed.cashBasket.rows.find(row=>row.slug===expected[0].slug),second=changed.cashBasket.rows.find(row=>row.slug===expected[1].slug);
+ first.price=first.basePrice*3;second.price=second.basePrice*.5;first.priceDay='2026-11-03';first.quantity=5;changed.sourceStatus={...changed.sourceStatus,status:'degraded'};
+ f.publish(changed);let rendered=cards(f),upper=Number(rendered[0].querySelector('svg').dataset.scaleMax);assert.equal(upper,350);assert(rendered.every(card=>Number(card.querySelector('svg').dataset.scaleMax)===upper));
+ assert.match(rendered[0].querySelector('.cash-highlight-date').textContent,/Carried qualifying price.*2026-11-03/);assert.match(rendered[0].textContent,/not a fresh sale/);assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/degraded/);
+ for(const [i,index] of [[0,300],[1,50]]){const svg=rendered[i].querySelector('svg'),needle=svg.querySelector('.cash-highlight-needle'),angle=-Math.PI+index/upper*Math.PI;close(Number(needle.getAttribute('x2')),70+43*Math.cos(angle));close(Number(needle.getAttribute('y2')),66+43*Math.sin(angle));const reference=svg.querySelector('.cash-highlight-reference');close(Number(reference.getAttribute('x1')),70+46*Math.cos(-Math.PI+100/upper*Math.PI));}
+ assert.match(rendered[0].querySelector('.cash-highlight-change').textContent,/\+200%/);assert.match(rendered[1].querySelector('.cash-highlight-change').textContent,/-50%/);
+ const selection=f.api.model(changed).cards.map(row=>row.slug);changed.cashBasket.rows.at(-1).price=1e9;changed.cashBasket.rows.at(-1).quantity=100000;assert.deepEqual(f.api.model(changed).cards.map(row=>row.slug),selection,'current price or turnover cannot rerank the fixed selection');
+ changed.cashBasket.rows.push({...first,slug:'unknown-nx-crate',name:'Synthetic crate',weight:.5,baseExpenditure:1e12,nx:3500});
+ changed.cashBasket.rows.push({...first,slug:'missing-baseline',name:'Missing baseline',weight:.5,baseExpenditure:1e12,basePrice:null});changed.cash.push({slug:'missing-baseline',nx:first.nx});
+ assert.deepEqual(f.api.model(changed).cards.map(row=>row.slug),selection,'unknown cost and missing baseline never create dials');
+ first.quantity=4;f.publish(changed);assert.equal(cards(f)[0].querySelector('svg'),null);assert.match(cards(f)[0].textContent,/unavailable/);
+ first.quantity=5;first.priceDay='2026-11-05';f.publish(changed);assert.equal(cards(f)[0].querySelector('svg'),null,'future source price cannot appear current');
+ first.priceDay='2026-11-04';first.price=Number.MAX_VALUE/100;first.basePrice=1;f.publish(changed);
+ const huge=cards(f)[0].querySelector('svg');assert(huge);assert(Number.isFinite(Number(huge.dataset.scaleMax)));assert(Number(huge.dataset.scaleMax)>=Number(huge.dataset.index));assert(!/NaN|Infinity/.test(huge.outerHTML));assert(cards(f)[0].querySelector('.cash-highlight-index').textContent.length<30);
+ first.price=Infinity;f.publish(changed);assert.equal(cards(f)[0].querySelector('svg'),null);
+ assert.equal(f.api.scale([undefined,NaN,Infinity,-1,0,50]),200);assert(Number.isFinite(f.api.scale([Number.MAX_VALUE])));
+ const safe=JSON.parse(JSON.stringify(saved));safe.spriteMap[expected[0].slug]='https://external.example/tracker.png';safe.cashBasket.rows.find(row=>row.slug===expected[0].slug).name='<img src=x onerror=alert(1)>';f.publish(safe);assert.equal(cards(f)[0].querySelector('img').getAttribute('src'),'assets/'+expected[0].slug+'.svg');assert.equal(f.doc.querySelectorAll('.cash-highlight-card img').length,5);assert(cards(f)[0].textContent.includes('<img'));
+ assert.equal(f.doc.getElementById('main-rate').textContent,'19.31');assert.equal(f.doc.getElementById('goods-index').textContent,'156.1');assert.equal(f.doc.querySelector('footer').textContent,'Original personal paragraph.');assert.equal(JSON.stringify(saved),before);
+ const section=f.doc.getElementById('cash-item-highlights'),content=f.doc.getElementById('cash-highlights-content'),controls=f.doc.querySelector('.cash-highlights-controls');
+ assert.equal(section.lastElementChild,controls);assert.equal(controls.dataset.previewControls,'true');toggle(f).click();assert.equal(section.dataset.enabled,'false');assert.equal(content.hidden,true);assert.equal(f.preferences.get(key),'off');assert.notEqual(f.w.getComputedStyle(controls).display,'none');
+ f.doc.body.dataset.viewerPreview='on';assert.equal(f.w.getComputedStyle(section).display,'none','selected Off removes the preview section in viewer mode');delete f.doc.body.dataset.viewerPreview;
+ toggle(f).click();assert.equal(f.preferences.get(key),'on');const identity=cards(f)[0];f.doc.body.dataset.viewerPreview='on';assert.equal(f.w.getComputedStyle(section).outline,'none');assert.notEqual(f.w.getComputedStyle(section).display,'none');assert.equal(f.w.getComputedStyle(controls).display,'none');assert.equal(cards(f)[0],identity,'viewer mode keeps selected content and original nodes');delete f.doc.body.dataset.viewerPreview;
+ f.publish({cashBasket:{status:'unavailable'},cash:[]});assert.equal(cards(f).length,0);assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/unavailable/);f.publish(saved);
+ f.w.eval(script);assert.equal(f.doc.querySelectorAll('#cash-item-highlights').length,1);assert.equal(f.calls.ready,1);const ids=[...f.doc.querySelectorAll('[id]')].map(node=>node.id);assert.equal(new Set(ids).size,ids.length);
+ assert.deepEqual(f.calls.reads,[key,modeKey]);assert.equal(f.calls.network,0);assert.deepEqual(f.errors,[]);
+}finally{f.close();}
+for(const preference of ['on','off','invalid','__proto__']){f=fixture({preference});try{assert.equal(f.doc.getElementById('cash-highlights-content').hidden,preference==='off');assert.equal(f.calls.network,0);}finally{f.close();}}
+f=fixture({blocked:true});try{assert.equal(toggle(f).getAttribute('aria-pressed'),'true');toggle(f).click();assert.equal(toggle(f).getAttribute('aria-pressed'),'false');assert.equal(f.calls.network,0);assert.deepEqual(f.errors,[]);}finally{f.close();}
+assert.doesNotMatch(css,/@import|https?:\/\/|url\(/);assert(css.includes('grid-auto-flow:column'));assert(css.includes(':focus-visible'));
+// Use the exact current table calculation from app.js, rather than a second
+// test-only pricing implementation. No app event handlers or network run here.
+f=fixture({viewMode:null});try{
+ const before=JSON.stringify(saved),pool=f.w.buildCashPricing(saved,{days:3,evidence:'daily',side:'buy'}).rows.filter(r=>r.rate>0&&r.nx>0&&r.price>0&&r.referenceWeight>0&&!r.missing&&!r.referenceExclusion);
+ const expectedBuy=[...pool].sort((a,b)=>a.rate-b.rate||a.name.localeCompare(b.name)).slice(0,5),expectedSell=[...pool].sort((a,b)=>b.rate-a.rate||a.name.localeCompare(b.name)).slice(0,5);
+ assert.equal(f.doc.getElementById('cash-item-highlights').dataset.cashHighlightsMode,'best');assert.equal(cards(f).length,10);assert.deepEqual([...f.doc.querySelectorAll('[data-cash-ranking="buy"] .cash-highlight-card')].map(n=>n.dataset.cashHighlightSlug),expectedBuy.map(r=>r.slug));assert.deepEqual([...f.doc.querySelectorAll('[data-cash-ranking="sell"] .cash-highlight-card')].map(n=>n.dataset.cashHighlightSlug),expectedSell.map(r=>r.slug));
+ const all=[...expectedBuy,...expectedSell],svgs=cards(f).map(c=>c.querySelector('svg'));for(let i=0;i<all.length;i++){close(Number(cards(f)[i].dataset.cashRate),all[i].rate);assert.equal(svgs[i].dataset.unit,'mesos_per_nx');assert(svgs[i].getAttribute('aria-label').includes('not the goods-based model benchmark'));assert(svgs[i].getAttribute('aria-label').includes('mesos per NX'));close(Number(svgs[i].dataset.reference),f.api.bestModel(saved,{days:3,evidence:'daily'}).reference);assert(!/NaN|Infinity/.test(svgs[i].outerHTML));}
+ assert.equal(new Set(svgs.map(s=>s.dataset.scaleMax)).size,1);assert.match(f.doc.querySelector('[data-cash-ranking="buy"]').textContent,/Lower mesos per NX/);assert.match(f.doc.querySelector('[data-cash-ranking="sell"]').textContent,/Higher mesos per NX/);assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/3-source-day lookback/);
+ const modeButton=value=>f.doc.querySelector(`[data-cash-highlights-mode="${value}"]`);modeButton('reference').click();assert.equal(cards(f).length,5);assert.equal(f.preferences.get(modeKey),'reference');assert.match(f.doc.querySelector('.cash-highlights-method').textContent,/never rerank/);modeButton('best').click();assert.equal(f.preferences.get(modeKey),'best');assert.equal(cards(f).length,10);assert.equal(f.doc.getElementById('cash-item-highlights').lastElementChild,f.doc.querySelector('.cash-highlights-controls'));
+ const sparse=JSON.parse(JSON.stringify(saved));for(const row of sparse.cash)row.history=[];
+ const sourceDay=sparse.sourceUpdatedAt.slice(0,10),older=new Date(Date.parse(sourceDay+'T00:00:00Z')-2*86400000).toISOString().slice(0,10),a=sparse.cash.find(r=>r.slug==='ap-reset-scroll'),b=sparse.cash.find(r=>r.slug==='sp-reset-scroll');
+ a.history=[[older,7000,5],[sourceDay,350000,5]];b.history=[[older,700000,5],[sourceDay,70000,5]];sparse.cash.push({slug:'unknown-fashion',name:'Unknown fashion',nx:null,history:[[sourceDay,1,100000]]});
+ f.publish(sparse);assert.equal(cards(f).length,4);assert.deepEqual([...f.doc.querySelectorAll('[data-cash-ranking="buy"] .cash-highlight-card')].map(n=>n.dataset.cashHighlightSlug),['ap-reset-scroll','sp-reset-scroll']);assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/Fewer than five eligible/);assert.match(cards(f)[0].textContent,/incomplete daily coverage/);close(Number(cards(f)[0].dataset.cashRate),25.5);
+ const lookback=f.doc.getElementById('cash-lookback');lookback.value='1';lookback.dispatchEvent(new f.w.Event('change'));assert.deepEqual([...f.doc.querySelectorAll('[data-cash-ranking="buy"] .cash-highlight-card')].map(n=>n.dataset.cashHighlightSlug),['sp-reset-scroll','ap-reset-scroll']);assert.deepEqual([...f.doc.querySelectorAll('[data-cash-ranking="sell"] .cash-highlight-card')].map(n=>n.dataset.cashHighlightSlug),['ap-reset-scroll','sp-reset-scroll']);assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/1-source-day lookback/);close(Number(cards(f)[0].dataset.cashRate),10);
+ sparse.rollingReference={capturedAt:'2026-11-05T12:00:00Z',items:[{name:'AP Reset Scroll',price:35000,salesCounted:10,windowDays:2},{name:'SP Reset Scroll',price:70000,salesCounted:20,windowDays:3,statRoll:'unisolated roll'},{name:'Water of Life',price:40000,salesCounted:20,windowDays:4},{name:'Unknown fashion',price:1,salesCounted:500,windowDays:1}],comparison:{cashReferenceWeights:[{name:'AP Reset Scroll',eligible:true},{name:'SP Reset Scroll',eligible:false,exclusionReason:'cash_roll_may_include_upgrade_premium'},{name:'Water of Life',eligible:true}]}};
+ f.publish(sparse);const evidence=f.doc.getElementById('cash-evidence');evidence.value='rolling';evidence.dispatchEvent(new f.w.Event('change'));assert.deepEqual([...f.doc.querySelectorAll('[data-cash-ranking="buy"] .cash-highlight-card')].map(n=>n.dataset.cashHighlightSlug),['ap-reset-scroll','water-of-life']);assert.equal(cards(f).length,4);assert.match(cards(f)[0].textContent,/2-day source window/);assert.match(cards(f)[0].textContent,/Pulled 2026-11-05T12:00:00Z/);assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/Rolling scanner capture/);assert(!cards(f).some(c=>c.dataset.cashHighlightSlug==='sp-reset-scroll'));assert(!cards(f).some(c=>c.dataset.cashHighlightSlug==='unknown-fashion'));
+ sparse.rollingReference.items=[];f.publish(sparse);assert.equal(cards(f).length,0);assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/0 \/ 29/);assert.equal(JSON.stringify(saved),before);assert.equal(f.calls.network,0);assert.deepEqual(f.errors,[]);
+}finally{f.close();}
+for(const viewMode of ['best','reference','invalid',null]){f=fixture({viewMode});try{assert.equal(f.doc.getElementById('cash-item-highlights').dataset.cashHighlightsMode,viewMode==='reference'?'reference':'best');}finally{f.close();}}
+f=fixture({viewMode:null,blocked:true});try{f.doc.querySelector('[data-cash-highlights-mode="reference"]').click();assert.equal(f.doc.getElementById('cash-item-highlights').dataset.cashHighlightsMode,'reference');assert.equal(f.calls.network,0);assert.deepEqual(f.errors,[]);}finally{f.close();}
+f=fixture({viewMode:null,pricing:false});try{assert.equal(cards(f).length,0);assert.match(f.doc.querySelector('.cash-highlights-status').textContent,/calculation is ready/);assert.equal(f.calls.network,0);}finally{f.close();}
+console.log('PASS: default best buy/sell dials match actual cash pricing helper and selected daily/rolling windows, sparse/excluded/unknown-cost guards, frozen reference fallback, shared unit-correct gauges and zero data HTTP.');

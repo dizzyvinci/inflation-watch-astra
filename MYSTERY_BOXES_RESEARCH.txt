@@ -1,0 +1,55 @@
+MYSTERY BOXES — VERIFIED EDITIONS AND PREVIEW CONTRACT
+Research and implementation: November 5, 2026. Local-only readiness; no build, export or deployment was performed.
+
+PRIMARY SOURCE ACCESS
+The official www.nexon.com article pages returned a JavaScript shell. Ordinary unauthenticated reads of the exact public modules loaded by that shell identified the site's public static content route:
+https://web.nxfs.nexon.com/maplestory/assets/index-BYRvUVkN.js
+https://web.nxfs.nexon.com/maplestory/assets/NewsDetail-Bd64GvBM.js
+The former defines F1 baseURL //g.nexonstatic.com/maplestory/cms/v1; the latter imports F1 as N and reads /news/:newsId or /general-posts/:newsId. Reads used those observed routes only, no cookies, accounts, credentials, access-control workarounds or undocumented guessing.
+Raw primary article/table JSON and individual URL/receipt-time/SHA-256 records are retained under work/mystery-box-research. User-facing factual data and provenance are in MYSTERY_BOXES_EVIDENCE.json; the preview embeds the same evidence and makes no source requests.
+
+EDITION FINDINGS
+1. Nov 4 Mystery Fashion Crate rotation: official announcement47031; 3500NX each,35000NX for11,7-day crate duration; sale begins Nov4 08:00UTC and ends Nov18 at start of maintenance (no invented clock). Fifty published rewards, displayed probabilities sum100%. Includes Teddy Bear Headgear (the exact official name, not a verified Teddy Mask alias). No individual reward inherits3500NX.
+Announcement: https://www.nexon.com/maplestory/news/sale/47031/classic-world-cash-shop-update-nov-4
+Primary body: https://g.nexonstatic.com/maplestory/cms/v1/news/47031
+Probability page: https://www.nexon.com/maplestory/general-post/46331
+Primary table: https://g.nexonstatic.com/maplestory/cms/v1/general-posts/46331
+IMPORTANT: that rate page's original liveDate is Oct20, but the captured body now contains the Nov4 Teddy rotation. Publication date alone cannot identify contents. Bind edition to announcement, actual sale window, complete table receipt and hash. Never apply its50 newer probabilities to the earlier GrandLaunch rotation.
+
+2. Halloween Mystery Fashion Crate: official announcement46602;4900NX each,49000NX for11,7-day crate duration; Oct28 08:00UTC through Nov4 07:59UTC. Fifty published rewards, displayed sum100%.
+https://www.nexon.com/maplestory/news/sale/46602/update-oct-28-classic-world-cash-shop-update-oct-28
+https://g.nexonstatic.com/maplestory/cms/v1/news/46602
+https://www.nexon.com/maplestory/general-post/46524
+https://g.nexonstatic.com/maplestory/cms/v1/general-posts/46524
+
+3. Founder's Mystery Fashion Crate: official announcement45819;3500NX each,35000NX for11,7-day crate duration; Oct6 end of maintenance (unknown exact clock) through Oct28 07:59UTC. Fifty published rewards, displayed sum100%.
+https://www.nexon.com/maplestory/news/sale/45819/founders-access-cash-shop
+https://g.nexonstatic.com/maplestory/cms/v1/news/45819
+https://www.nexon.com/maplestory/general-post/45538
+https://g.nexonstatic.com/maplestory/cms/v1/general-posts/45538
+
+4. Aurora Mystery Fashion Crate Season1: same announcement45819;20AuroraStamps each,200stamps for10;7-day crate duration; Oct6 end of maintenance through Jan13,2027 07:59UTC. Twenty-six published rewards, displayed sum100%. Stamp opportunity cost is not a fixed NX conversion; no NX cost or ROI is invented. Unwanted rewards can be exchanged before equipping; region restrictions and tradeability mean resale cannot be universal.
+https://www.nexon.com/maplestory/general-post/45659
+https://g.nexonstatic.com/maplestory/cms/v1/general-posts/45659
+
+5. Earlier GrandLaunch Mystery Fashion Crate: announcement46362 verifies3500NX/35000NX for11,7-day duration, GrandLaunchOct21 throughNov4 07:59UTC. Its linked46331 rate URL now serves the newer edition. A contemporaneous probability receipt has NOT been recovered. Keep this separate edition with rates/EV unavailable rather than borrowing the current table or assuming equal chances.
+https://www.nexon.com/maplestory/news/sale/46362/grand-launch-cash-shop-update
+https://g.nexonstatic.com/maplestory/cms/v1/news/46362
+
+MARKET JOIN AND EXPECTED-VALUE METHOD
+Join exact casefolded official reward names to exactly one cashCatalog provider row. Ambiguous multiple rows, absent names, metadata-only records and guessed aliases do not yield prices. The daily observation must match the selected calendar day exactly and have positive median and integer recorded count>=5; do not carry older prices into missing same-day outcomes.
+Expected gross resale proxy = SUM(publishedPercent_i/100 * same-day dailyMedian_i), only when every outcome has a qualifying price. Published odds are rounded and are retained without renormalization. Missing outcomes leave EV unavailable, with count/probability coverage. No assumption of equal rates or individual transaction access. Earlier-than-edition dates cannot value that edition's rewards. Dated values after an announcement window do not establish current ability to buy/open a box or historical continuity of its rate page.
+The single and bundle NX/stamp purchase prices remain separate facts. Expected gross value for11(or10) openings is that many times the single-opening proxy under the captured odds, not an observed bundle transaction or guaranteed payout. Crate-name daily unit median and N*unit-median proxy are separate source valuations; same-name units cannot be identified by edition. No daily medians are called asks, bids, realized profits or live availability. Fees, selling delays, liquidity, quality mix and unobserved trades are outside this proxy.
+
+LOCAL SOURCE COVERAGE CHECK (not a new capture)
+Canonical market.json source publication2026-11-04T08:30:56+00:00,1424items including229cash. At Nov3 complete source day: Halloween50/50 outcomes with100%published probability coverage gives43897.195mesos gross proxy; Founders50/50 gives40353.5775. Aurora25/26,98.5%probability coverage => EV unavailable. NewNov4 rewards0/50 => unavailable. Nov4 is a partial source day: Halloween50/50 gives52818.405; Founders50/50 gives49570.57; Aurora18/26,76.5% => unavailable; Nov4Teddy0/50 => unavailable. These checks use exact names and do not manufacture Teddy market prices. Historical EV evaluates the captured edition's odds against dated prices; a November5receipt is not independent proof of every earlier rate-page version. Existing fixed50goods/Cash28/NX29 are unaffected.
+
+FRONTEND CONTRACT / PARENT WIRING
+New source files: web/mystery-boxes.js,web/mystery-boxes.css,tests/mystery-boxes.cjs. The module injects #view-mystery-boxes and links from already-existing cashCatalog/NX/cashBasket pages; load it after cash-catalog.js. Parent may add #mystery-boxes to app allowed routes, include script/style assets in HTML/export/engine copy lists and add standalone test to package scripts. No app/index/engine/package changes were made by this task. The page contents are available by default when opened, with edition+day selectors and optional collapsed history/provenance details; no preference disables the section. It reuses astramarketsnapshot plus astramarkethighlightsready and makes no additional HTTP requests, storage or tracking. No source-generation timestamps replace market clocks. Source prices/raw report stay unchanged.
+Tables offer stable numeric/name sorting, unavailable last both ways; history has date/value/coverage sort. Latest complete source-calendar day defaults when available; partial source days remain selectable and explicit. Cost/method identities are kept separate; no new pooled index or exchange-rate headline is calculated.
+
+TESTS
+node --check web/mystery-boxes.js
+NODE_PATH=../../work/qa/node_modules node tests/mystery-boxes.cjs
+PASS: five edition identities/176primary outcomes; sums/unique names/source hashes; complete same-day EV; missing,thin,duplicate-variant and metadata price exclusion; no carryforward; pre-edition exclusion; rounded published rates; historical unknown rates; stamp costs; bundle proxy labels; partial dates; numeric missing-last sorting; event handshake/idempotence; zero network/storage and no raw snapshot mutation.
+Browser visual QA and integration remain with the parent; this module has not been built/exported/deployed.

@@ -80,6 +80,117 @@ export function sourceSummary(item, sourceUpdatedAt) {
   return summary;
 }
 
+// Catalog coverage is additive. It never admits new members into a frozen
+// index or mixes a rolling scanner median into daily provider history.
+export function computeCashCatalog(feed, config, cashBasket = {}, rollingReference = {}, identities = [], metadataItems = []) {
+  cashBasket ??= {};
+  rollingReference ??= {};
+  const identityBySlug = new Map(identities.map(entry => [entry.slug, entry]));
+  const members = new Set((cashBasket.rows ?? []).map(row => row.slug));
+  const rolling = rollingReference.items ?? [];
+  const rows = feed.items.filter(item => item.k === 'Cash Shop').map(item => {
+    const history = item.h.map(point => [...point]);
+    const qualified = history.filter(point => point[2] >= 5);
+    const latest = qualified.at(-1);
+    const summary = sourceSummary(item, feed.updatedAt);
+    const configuredNx = config.nx_prices?.[item.n];
+    const nx = positive(configuredNx) ? configuredNx : null;
+    const member = members.has(item.s);
+    const reasons = [];
+    if (!member) {
+      if (nx === null) reasons.push('no_verified_fixed_nx_cost');
+      if (!qualified.some(point => config.base_start <= point[0] && point[0] <= config.base_end)) {
+        reasons.push('no_qualifying_reference_period_history_in_retained_source');
+      }
+      reasons.push('outside_frozen_cash_cohort');
+    }
+    const observations = [{ ...summary, kind: 'daily_provider_summary', sourceUrl: config.feed_url }];
+    const identity = identityBySlug.get(item.s);
+    const canonicalId = identity?.name === item.n ? identity.id : null;
+    for (const observation of rolling) {
+      if (!(identity && observation.id === canonicalId && rollingReference.sourceUrl === 'https://mesos.watch/'
+        && rollingReference.planHash === identity.planHash && observation.expectedItemId === canonicalId
+        && observation.expectedItemName === item.n && observation.name === item.n
+        && observation.priceBasis === 'median of sales' && positive(observation.price)
+        && positive(observation.windowDays))) continue;
+      const fields = ['id', 'price', 'priceBasis', 'salesCounted', 'windowDays', 'capturedAt',
+        'captureTimeKind', 'sourceObservedAt', 'observationTimestampKnown',
+        'sourceWindowStartAt', 'sourceWindowEndAt', 'statRoll', 'statRollKnown',
+        'statRollStatus', 'variantKey', 'seriesKey'];
+      observations.push({ kind: 'rolling_scanner_median', sourceUrl: `https://mesos.watch/item/${canonicalId}`,
+        ...Object.fromEntries(fields.map(field => [field, observation[field] ?? null])) });
+    }
+    return {
+      name: item.n, slug: item.s, category: 'Cash Shop', canonicalId,
+      sourceUrl: `https://maplestory-classic.com/market/${item.s}`, sourceUpdatedAt: feed.updatedAt,
+      publisherMedian: summary.medianSale, publisherP25: summary.p25, publisherP75: summary.p75,
+      sourceSummary: summary, sourceLastSeenAt: summary.reportedLastSaleAt,
+      sourceLastSeenKind: 'provider_reported_last_sale_unconfirmed',
+      firstObservedDay: history[0]?.[0] ?? null, lastHistoryDay: history.at(-1)?.[0] ?? null,
+      historyDays: history.length, qualifyingDays: qualified.length,
+      recordedCount: safeSum(history.map(point => point[2]), 'catalog recorded count', true), history,
+      price: latest?.[1] ?? null, priceDay: latest?.[0] ?? null, quantity: latest?.[2] ?? null,
+      partial: !!latest && latest[0] === feed.updatedAt.slice(0, 10),
+      knownNxCost: nx, inCashBasket: member, notIndexed: !member, notIndexedReasons: reasons,
+      limitedHistory: qualified.length < 7, sourceObservations: observations,
+    };
+  });
+  const metadata = cashCatalogMetadata(metadataItems, rows);
+  return {
+    schemaVersion: 1, kind: 'cash_shop_source_catalog',
+    sourceScope: 'daily_provider_collection_with_verified_supplemental_observations',
+    sourceUrl: config.feed_url, sourceUpdatedAt: feed.updatedAt,
+    baseStart: config.base_start, baseEnd: config.base_end,
+    cashIndexStatus: cashBasket.status ?? 'unavailable', cashIndexBasketHash: cashBasket.basketHash ?? null,
+    qualification: { minimumDailyCount: 5, limitedHistoryBelowDays: 7 }, itemCount: rows.length,
+    providerItemCount: rows.length, catalogItemCount: rows.length + metadata.filter(item => !item.marketDataAvailable).length,
+    identityMap: copyJson(identities), metadataItems: metadata,
+    coverage: {
+      sourceCashItems: rows.length, withPublisherMedian: rows.filter(row => row.publisherMedian !== null).length,
+      withQualifyingHistory: rows.filter(row => row.qualifyingDays > 0).length,
+      fixedNxItems: rows.filter(row => row.knownNxCost !== null).length,
+      cashIndexItems: rows.filter(row => row.inCashBasket).length,
+      withRollingObservation: rows.filter(row => row.sourceObservations.length > 1).length,
+    },
+    notes: {
+      firstObservedDay: 'First observed in retained collected daily history; not a release date.',
+      counts: 'Recorded source volume is inferred, not independently confirmed transactions.',
+      limitedHistory: 'Fewer than 7 daily points with recorded count at least 5; a display flag, not an accuracy test.',
+      windows: 'Daily history, unspecified publisher summary and item-specific rolling captures are separate observations.',
+      scope: 'This provider collection plus verified supplemental observations and game metadata is not a complete cash-item universe.',
+      metadata: 'Game metadata establishes item identity, not a market price, fixed NX cost, release date or verified trade.',
+    }, rows,
+  };
+}
+
+export function cashCatalogMetadata(entries, rows) {
+  if (object(entries)) entries = entries.schemaVersion === 1 ? entries.items ?? [] : [];
+  if (!Array.isArray(entries)) return [];
+  const result = [], seen = new Set();
+  const byId = new Map(rows.filter(row => row.canonicalId !== null).map(row => [row.canonicalId, row]));
+  for (const entry of entries.slice(0, 64)) {
+    if (!object(entry) || !Number.isSafeInteger(entry.id) || entry.id <= 0 || seen.has(entry.id)
+        || typeof entry.name !== 'string' || !entry.name.trim() || entry.name.length > 200
+        || entry.cash !== true || entry.region !== 'MCW' || entry.version !== '1'
+        || entry.sourceUrl !== `https://maplestory.io/api/MCW/1/item/${entry.id}`) continue;
+    try { timestamp(entry.metadataCapturedAt, 'metadata capture'); } catch { continue; }
+    seen.add(entry.id);
+    const linked = byId.get(entry.id);
+    result.push({
+      id: entry.id, name: entry.name, category: 'Cash Shop', cash: true,
+      region: 'MCW', version: '1', sourceUrl: entry.sourceUrl, metadataCapturedAt: entry.metadataCapturedAt,
+      metadataCaptureTimeKind: ['local_receipt_file_timestamp', 'http_response_received_at'].includes(entry.metadataCaptureTimeKind) ? entry.metadataCaptureTimeKind : 'captured_at',
+      marketDataAvailable: !!linked, providerSlug: linked?.slug ?? null, knownNxCost: linked?.knownNxCost ?? null,
+      inCashBasket: !!linked?.inCashBasket, notIndexed: !linked?.inCashBasket,
+      notIndexedReasons: linked?.notIndexedReasons ?? ['metadata_only_no_market_observations', 'no_verified_fixed_nx_cost', 'outside_frozen_cash_cohort'],
+      price: null, priceDay: null, quantity: null, publisherMedian: null, publisherP25: null, publisherP75: null,
+      history: [], firstObservedDay: null, sourceLastSeenAt: null,
+      sourceObservations: [{ kind: 'game_item_metadata', sourceUrl: entry.sourceUrl, metadataCapturedAt: entry.metadataCapturedAt }],
+    });
+  }
+  return result;
+}
+
 // Clone JSON values without letting JSON.stringify silently turn NaN into null.
 function copyJson(value, path = 'value') {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') return value;
@@ -501,6 +612,10 @@ export function computeReport(feed, seedReport, {
     volumeHistory: volumeHistory(feed.items, new Set(rows.map(row => row.slug)), sourceDay),
     cashBasket: computeCashBasket(feed, seedReport.cashBasket, config),
   });
+  report.cashCatalog = computeCashCatalog(feed, {
+    feed_url: feedUrl, base_start: seedReport.baseStart, base_end: seedReport.baseEnd,
+    nx_prices: Object.fromEntries(seedReport.cash.map(row => [row.name, row.nx])),
+  }, report.cashBasket, seedReport.rollingReference, seedReport.cashCatalog?.identityMap ?? [], seedReport.cashCatalog?.metadataItems ?? []);
   // Catch arithmetic overflow in any computed field. Independent references,
   // qualified live data and their original dates pass through unchanged.
   return copyJson(report, 'report');

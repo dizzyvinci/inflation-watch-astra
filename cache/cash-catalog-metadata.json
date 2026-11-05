@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "verified_game_item_metadata_only",
+  "items": [
+    {
+      "id": 1007133,
+      "name": "Teddy Bear Headgear",
+      "cash": true,
+      "region": "MCW",
+      "version": "1",
+      "sourceUrl": "https://maplestory.io/api/MCW/1/item/1007133",
+      "metadataCapturedAt": "2026-11-05T11:38:01.624Z",
+      "metadataCaptureTimeKind": "local_receipt_file_timestamp"
+    }
+  ]
+}

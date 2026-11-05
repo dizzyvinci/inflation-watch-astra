@@ -1,0 +1,6 @@
+.volatility-preview-badge{box-sizing:border-box;max-width:100%;margin:12px 0 0;padding:9px 5px;border-top:1px solid var(--line);font:500 12px/1.7 system-ui,sans-serif;color:var(--text);text-align:center;overflow-wrap:anywhere}
+.volatility-preview-options{max-width:900px;margin:12px auto}.volatility-preview-options small{font-size:12px;line-height:1.7}
+.volatility-preview-highlight[data-highlight-type="volatility-cash"]{--highlight-accent:var(--gold,#edc471)}
+.volatility-preview-highlight[data-highlight-type="volatility-goods"]{--highlight-accent:var(--blue,#87bdcf)}
+.volatility-preview-highlight .market-highlight-dates{white-space:normal}
+@media(max-width:600px){.volatility-preview-badge{font-size:12px;padding:9px 3px}.volatility-preview-highlight .market-highlight-headline{font-size:15px}}

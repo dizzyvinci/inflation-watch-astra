@@ -1,12 +1,12 @@
 (() => {
   'use strict';
   const footer = document.querySelector('footer');
-  const story = footer?.querySelector('.footer-story');
-  const signature = story?.querySelector('.footer-signature');
+  const signature = footer?.querySelector('.footer-signature');
   if (!signature || document.getElementById('author-portrait')) return;
 
   const version = 'v2';
   const preferenceKey = 'inflation-author-portrait-' + version;
+  const defaultMode = 'transparent-large';
   const portraits = Object.freeze({
     original: Object.freeze({ label: 'Original', src: '/assets/dishwasher-original-v2.png',
       alt: 'Original game screenshot of DishWasher’s MapleStory character, including the nameplate.' }),
@@ -46,7 +46,7 @@
   let generation = 0;
 
   function select(value, persist = false) {
-    const mode = Object.hasOwn(portraits, value) ? value : 'original', portrait = portraits[mode], current = ++generation;
+    const mode = Object.hasOwn(portraits, value) ? value : defaultMode, portrait = portraits[mode], current = ++generation;
     panel.dataset.portraitMode = mode;
     for (const button of buttons) button.setAttribute('aria-pressed', String(button.dataset.authorPortrait === mode));
     let saved = true;
@@ -83,10 +83,11 @@
     button.addEventListener('click', () => select(value, true));
     buttons.push(button); options.append(button);
   }
-  panel.append(figure, feedback, options);
-  const signatureRow = document.createElement('div'); signatureRow.className = 'author-signature-row';
-  signature.before(signatureRow); signatureRow.append(signature, panel);
+  const author = footer.querySelector('.footer-author');
+  if (author) author.append(panel);
+  else signature.before(panel);
+  panel.append(figure, signature, feedback, options);
   let saved;
-  try { saved = localStorage.getItem(preferenceKey); } catch { /* Original is the cosmetic default. */ }
+  try { saved = localStorage.getItem(preferenceKey); } catch { /* The display remains usable without storage. */ }
   select(saved);
 })();

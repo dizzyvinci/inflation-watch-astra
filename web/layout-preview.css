@@ -5,29 +5,50 @@
 .banner-layout-options button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
 .banner-layout-options button:disabled{opacity:.45;cursor:default}
 .banner-layout-options small{font-size:10px}
-body[data-banner-layout="chart"] .rate-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;min-height:480px;isolation:isolate}
-body[data-banner-layout="chart"] .banner-preview-chart-slot{grid-column:1;grid-row:1;min-width:0;padding:26px 16px 26px 22px;z-index:2}
-body[data-banner-layout="chart"] .banner-preview-chart-slot .section-heading{margin:0 0 14px;gap:9px}
-body[data-banner-layout="chart"] .banner-preview-chart-slot .section-heading h2{font-size:22px}
-body[data-banner-layout="chart"] .banner-preview-chart-slot .chart-meta{padding:12px 10px;gap:10px}
-body[data-banner-layout="chart"] .banner-preview-chart-slot .chart-meta .legend{gap:8px 12px;font-size:10px}
-body[data-banner-layout="chart"] .banner-preview-chart-slot .chart{height:260px}
-body[data-banner-layout="chart"] .banner-preview-chart-slot .chart-foot{flex-wrap:wrap;gap:8px;padding:12px 10px}
-body[data-banner-layout="chart"] .hero-copy{grid-column:2 / 4;grid-row:1;align-self:center;justify-self:start;max-width:66%;width:100%;padding:38px 20px;z-index:2;text-align:center;background:transparent;text-shadow:0 2px 10px #101b25cc}
-body[data-banner-layout="chart"] .big-rate{flex-wrap:wrap;gap:8px;justify-content:center}
-body[data-banner-layout="chart"] .big-rate>span:first-child{font-size:clamp(88px,6.5vw,128px);letter-spacing:-3px}
-body[data-banner-layout="chart"] .big-rate .rate-unit{padding:0}
-body[data-banner-layout="chart"] .big-rate .rate-unit small{position:static;width:auto;font-size:18px;font-weight:600}
-body[data-banner-layout="chart"] .exact-rate{font-size:16px;max-width:45ch;margin:20px auto;color:#f0e8d4}
-body[data-banner-layout="chart"] .hero-copy .hero-asof{color:#f0e8d4;font-size:14px}
-body[data-banner-layout="chart"] .hero-bottom{flex-wrap:wrap;gap:9px;justify-content:center}
-body[data-banner-layout="chart"] .hero-art{position:relative;inset:auto;grid-column:2 / 4;grid-row:1;width:100%;height:auto;min-height:480px;opacity:1;z-index:1}
-body[data-banner-layout="chart"] .hero-art .market-scene{background-size:cover;background-position:center bottom;opacity:.72}
-body[data-banner-layout="chart"] .hero-art::after{background:linear-gradient(90deg,#26322599,transparent 45%),linear-gradient(0deg,#14241955,#14241922)}
-body[data-banner-layout="chart"] .hero-merchant{width:180px;max-width:24%;height:auto;object-fit:contain;right:24px;bottom:26px;transform:none}
-body[data-banner-layout="chart"] .hero-meso{right:220px;width:48px;height:48px;bottom:54px}
-body[data-banner-layout="chart"][data-banner-order="rate-first"] .banner-preview-chart-slot{grid-column:3}
-body[data-banner-layout="chart"][data-banner-order="rate-first"] .hero-copy{grid-column:1 / 3;justify-self:center}
-@media(max-width:1199px){body[data-banner-layout="chart"] .rate-hero{grid-template-columns:minmax(0,1fr);min-height:0}body[data-banner-layout="chart"] .hero-copy{grid-column:1;grid-row:2;max-width:100%;padding:32px 24px 170px}body[data-banner-layout="chart"] .banner-preview-chart-slot{grid-column:1;grid-row:1;padding:20px 22px 24px}body[data-banner-layout="chart"] .banner-preview-chart-slot .chart{height:285px}body[data-banner-layout="chart"] .hero-art{grid-column:1;grid-row:2;min-height:450px}body[data-banner-layout="chart"] .hero-art::after{background:linear-gradient(180deg,#263225aa,transparent 80%)}body[data-banner-layout="chart"] .hero-merchant{width:140px;max-width:35%;right:28px;bottom:22px}body[data-banner-layout="chart"] .hero-meso{right:190px;bottom:48px}body[data-banner-layout="chart"] .big-rate>span:first-child{font-size:86px}}
-@media(max-width:1199px){body[data-banner-layout="chart"][data-banner-order="rate-first"] .banner-preview-chart-slot{grid-column:1;grid-row:2}body[data-banner-layout="chart"][data-banner-order="rate-first"] .hero-copy{grid-column:1;grid-row:1;justify-self:start}body[data-banner-layout="chart"][data-banner-order="rate-first"] .hero-art{grid-row:1}}
-@media(max-width:600px){.banner-layout-options{gap:6px;padding:10px 0}.banner-layout-options small{flex-basis:100%;text-align:center}body[data-banner-layout="chart"] .banner-preview-chart-slot{padding:18px 10px}body[data-banner-layout="chart"] .banner-preview-chart-slot .chart{height:260px}body[data-banner-layout="chart"] .big-rate>span:first-child{font-size:76px}body[data-banner-layout="chart"] .exact-rate{font-size:14px}}
+#smega-section{margin:30px 0;padding:24px 20px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-width:0}
+#smega-section>.section-heading{margin:0 0 18px}
+body[data-banner-layout="offers"] .banner-preview-chart-slot>#smega-section.banner-preview-offer-card{margin:0;padding:16px 12px}
+body[data-banner-layout="offers"] .banner-preview-chart-slot #smega-section>.chart-card{min-width:0}
+body[data-banner-layout="offers"] .banner-preview-chart-slot #smega-section .footnote{font-size:11px;line-height:1.8;overflow-wrap:anywhere}
+body[data-banner-layout="offers"] .banner-preview-chart-slot{background:var(--surface);border-right:1px solid var(--line)}
+body[data-banner-layout="offers"] .banner-preview-chart-slot #smega-title{font-size:22px;line-height:1.4}
+body[data-banner-layout="offers"] .banner-preview-chart-slot .section-heading{flex-direction:column;align-items:center;text-align:center}
+body[data-banner-layout="offers"] .banner-preview-chart-slot .section-heading .eyebrow{font-size:10px;line-height:1.6}
+body[data-banner-layout="offers"] .banner-preview-chart-slot .smega-comparison-subtitle,body[data-banner-layout="offers"] .banner-preview-chart-slot #smega-point-note{font-size:12px;line-height:1.7}
+body[data-banner-layout="offers"] .banner-preview-chart-slot .segmented{flex-wrap:wrap;justify-content:center;height:auto;max-width:100%}
+body[data-banner-layout="offers"] .banner-preview-chart-slot .segmented button{padding:5px 8px;font-size:11px;min-height:34px}
+body[data-banner-layout="offers"] #smega-stats{display:grid;grid-template-columns:minmax(0,1fr);margin:16px 0 0;min-width:0}
+body[data-banner-layout="offers"] #smega-stats .stat-cell{padding:14px 12px;border:0;border-bottom:1px solid var(--line);min-width:0}
+body[data-banner-layout="offers"] #smega-stats .stat-cell:last-child{border-bottom:0}
+body[data-banner-layout="offers"] #smega-stats .stat-cell>span{font-size:10px;line-height:1.6}
+body[data-banner-layout="offers"] #smega-stats .stat-cell>strong{font-size:25px;line-height:1.4}
+body[data-banner-layout="offers"] #smega-stats .stat-cell>small{font-size:11px;line-height:1.7}
+body[data-banner-layout="offers"] .banner-offers-note{font-size:12px;line-height:1.7;color:var(--muted);text-align:center;margin:14px 0 0}
+body[data-banner-layout="offers"]:is([data-banner-art="zakum"],[data-banner-art="zakum-set"]) .hero-copy{max-width:58%}
+@media(max-width:1199px){body[data-banner-layout="offers"]:is([data-banner-art="zakum"],[data-banner-art="zakum-set"]) .hero-copy{max-width:100%}}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .rate-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;min-height:480px;isolation:isolate}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot{grid-column:1;grid-row:1;min-width:0;padding:26px 16px 26px 22px;z-index:2}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot .section-heading{margin:0 0 14px;gap:9px}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot .section-heading h2{font-size:22px}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot .chart-meta{padding:12px 10px;gap:10px}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot .chart-meta .legend{gap:8px 12px;font-size:10px}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot .chart{height:260px}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot .chart-foot{flex-wrap:wrap;gap:8px;padding:12px 10px}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-copy{grid-column:2 / 4;grid-row:1;align-self:center;justify-self:start;max-width:66%;width:100%;padding:38px 20px;z-index:2;text-align:center;background:transparent;text-shadow:0 2px 10px #101b25cc}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .big-rate{flex-wrap:wrap;gap:8px;justify-content:center}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .big-rate>span:first-child{font-size:clamp(88px,6.5vw,128px);letter-spacing:-3px}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .big-rate .rate-unit{padding:0}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .big-rate .rate-unit small{position:static;width:auto;font-size:18px;font-weight:600}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .exact-rate{font-size:16px;max-width:45ch;margin:20px auto;color:#f0e8d4}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-copy .hero-asof{color:#f0e8d4;font-size:14px}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-bottom{flex-wrap:wrap;gap:9px;justify-content:center}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-art{position:relative;inset:auto;grid-column:2 / 4;grid-row:1;width:100%;height:auto;min-height:480px;opacity:1;z-index:1}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-art .market-scene{background-size:cover;background-position:center bottom;opacity:.72}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-art::after{background:linear-gradient(90deg,#26322599,transparent 45%),linear-gradient(0deg,#14241955,#14241922)}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-merchant{width:180px;max-width:24%;height:auto;object-fit:contain;right:24px;bottom:26px;transform:none}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-meso{right:220px;width:48px;height:48px;bottom:54px}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"])[data-banner-order="rate-first"] .banner-preview-chart-slot{grid-column:3}
+body:is([data-banner-layout="chart"],[data-banner-layout="offers"])[data-banner-order="rate-first"] .hero-copy{grid-column:1 / 3;justify-self:center}
+@media(max-width:1199px){body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .rate-hero{grid-template-columns:minmax(0,1fr);min-height:0}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-copy{grid-column:1;grid-row:2;max-width:100%;padding:32px 24px 170px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot{grid-column:1;grid-row:1;padding:20px 22px 24px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot .chart{height:285px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-art{grid-column:1;grid-row:2;min-height:450px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-art::after{background:linear-gradient(180deg,#263225aa,transparent 80%)}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-merchant{width:140px;max-width:35%;right:28px;bottom:22px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .hero-meso{right:190px;bottom:48px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .big-rate>span:first-child{font-size:86px}}
+@media(max-width:1199px){body:is([data-banner-layout="chart"],[data-banner-layout="offers"])[data-banner-order="rate-first"] .banner-preview-chart-slot{grid-column:1;grid-row:2}body:is([data-banner-layout="chart"],[data-banner-layout="offers"])[data-banner-order="rate-first"] .hero-copy{grid-column:1;grid-row:1;justify-self:start}body:is([data-banner-layout="chart"],[data-banner-layout="offers"])[data-banner-order="rate-first"] .hero-art{grid-row:1}}
+@media(max-width:600px){.banner-layout-options{gap:6px;padding:10px 0}.banner-layout-options small{flex-basis:100%;text-align:center}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot{padding:18px 10px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .banner-preview-chart-slot .chart{height:260px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .big-rate>span:first-child{font-size:76px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]) .exact-rate{font-size:14px}}

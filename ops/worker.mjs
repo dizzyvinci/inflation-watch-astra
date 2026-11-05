@@ -7,7 +7,7 @@ import { withPreviewGate } from './preview-gate.mjs';
 const POINTER = 'version.json';
 const STATE = '_private/collector-state.json';
 const LOCK = '_private/collector-lock.json';
-export const CALCULATION_MODEL_VERSION = 'daily-fixed-baskets-v3-cash1-source-summary1';
+export const CALCULATION_MODEL_VERSION = 'daily-fixed-baskets-v3-cash1-source-summary1-cashcatalog1';
 const MAX_BYTES = 5_000_000;
 const LEASE_MS = 120_000;
 const SNAPSHOT = /^data-[a-f0-9]{16}\.json$/;
@@ -77,10 +77,15 @@ export async function referenceFingerprint(baseline = seed) {
     : value && typeof value === 'object'
       ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])]))
       : value;
-  return digest(JSON.stringify(stable(Object.fromEntries([
+  const references = Object.fromEntries([
     'comparisons', 'reportedNxHistory', 'rollingReference',
     'rollingReferenceHistory', 'smega', 'smegaSource',
-  ].map(key => [key, baseline[key] ?? null])))));
+  ].map(key => [key, baseline[key] ?? null]));
+  references.cashCatalogMetadata = baseline.cashCatalog?.metadataItems ?? null;
+  references.cashCatalogIdentityMap = baseline.cashCatalog?.identityMap ?? null;
+  // Presentation metadata can advance independently of market observations.
+  references.spriteMap = baseline.spriteMap ?? null;
+  return digest(JSON.stringify(stable(references)));
 }
 
 async function archiveSource(bucket, feed, feedHash, state, archiveAt) {

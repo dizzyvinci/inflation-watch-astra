@@ -1,0 +1,25 @@
+.banner-art-options{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;padding:12px;margin:8px auto;max-width:850px;color:var(--muted);font-size:13px}
+.banner-art-options button{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:9px 12px;min-height:40px}
+.banner-art-options button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);background:var(--surface2)}
+.banner-art-options small{flex-basis:100%;text-align:center;font-size:12px;line-height:1.6}
+body[data-banner-art="free-market"] .hero-art .market-scene{background-image:url('assets/free-market-entrance.png')!important}
+body[data-banner-art="henesys"] .hero-art .market-scene{background-image:url('assets/henesys-scenery.png')!important}
+body[data-banner-art="zakum"] .hero-art .market-scene{background-image:url('assets/zakum-banner-v1.webp')!important;background-size:cover!important;background-position:center center!important}
+body[data-banner-art="lantern"] .hero-art .market-scene{background-image:url('assets/lantern-market-v1.webp')!important;background-size:cover!important;background-position:center center!important}
+body:is([data-banner-art="zakum"],[data-banner-art="lantern"]) .hero-art .hero-merchant,body:is([data-banner-art="zakum"],[data-banner-art="lantern"]) .hero-art .hero-meso{display:none}
+@media(max-width:1199px){body[data-banner-art="zakum"] .hero-art .market-scene{background-position:82% center!important}}
+
+body[data-banner-art="zakum-set"] .hero-art .market-scene{background-image:url('assets/zakum-helmet-banner-v1.webp')!important;background-size:cover!important;background-position:center top!important}
+body[data-banner-art="zakum-set"] .hero-art .hero-merchant,body[data-banner-art="zakum-set"] .hero-art .hero-meso{display:none}
+@media(max-width:1199px){body[data-banner-art="zakum-set"] .hero-art .market-scene{background-position:80% top!important}}
+
+body[data-banner-layout="chart"]:is([data-banner-art="zakum"],[data-banner-art="zakum-set"]) .hero-copy{max-width:58%}
+@media(max-width:1199px){body[data-banner-layout="chart"]:is([data-banner-art="zakum"],[data-banner-art="zakum-set"]) .hero-copy{max-width:100%}}
+
+body:is([data-banner-art="zakum"],[data-banner-art="zakum-set"],[data-banner-art="lantern"]) .hero-art .market-scene{mask-image:linear-gradient(90deg,transparent 0%,#000 22%,#000 100%)}
+@media(max-width:1199px){body:is([data-banner-art="zakum"],[data-banner-art="zakum-set"],[data-banner-art="lantern"]) .hero-art .market-scene{mask-image:linear-gradient(180deg,#000b 0%,#000 28%,#000 100%)}}
+
+body[data-banner-art="zakum-set"] .hero-art .art-caption{display:none}
+
+/* Leave the illustrated Zakum hand clear without moving the artwork. */
+@media(min-width:1200px){body:is([data-banner-art="zakum"],[data-banner-art="zakum-set"]) .rate-hero .hero-copy{transform:translateX(-30px);padding-inline:12px}body:is([data-banner-layout="chart"],[data-banner-layout="offers"]):is([data-banner-art="zakum"],[data-banner-art="zakum-set"]) .hero-copy{max-width:55%}body:is([data-banner-art="zakum"],[data-banner-art="zakum-set"]) .hero-model-note{font-size:13px;line-height:1.55}body:is([data-banner-art="zakum"],[data-banner-art="zakum-set"]) .hero-copy h1.eyebrow{font-size:19px}}

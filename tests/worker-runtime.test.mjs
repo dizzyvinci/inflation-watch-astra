@@ -610,6 +610,16 @@ test('reference fingerprint selects dated evidence, preserves observation clocks
     assert.notEqual(await referenceFingerprint(changed), fingerprint, key);
     assert.equal(await calculationFingerprint(changed), await calculationFingerprint(seed), `${key} is not a calculation definition`);
   }
+  for (const key of ['metadataItems', 'identityMap']) {
+    const changed = clone(seed);
+    changed.cashCatalog = { ...changed.cashCatalog, [key]: [{ id: 1007133, sourceUrl: 'https://maplestory.io/api/MCW/1/item/1007133', evidence: 'accepted catalog metadata' }] };
+    assert.notEqual(await referenceFingerprint(changed), fingerprint, key + ' is additive reference evidence');
+    assert.equal(await calculationFingerprint(changed), await calculationFingerprint(seed), 'catalog evidence never rebases the baskets');
+  }
+  const decorated = clone(seed);
+  decorated.spriteMap = { ...decorated.spriteMap, '1007133': 'assets/teddy-bear-headgear.png' };
+  assert.notEqual(await referenceFingerprint(decorated), fingerprint, 'accepted decorative sprite metadata can publish independently');
+  assert.equal(await calculationFingerprint(decorated), await calculationFingerprint(seed), 'art does not change the calculation definition');
 });
 
 function captureBaseline(capturedAt) {

@@ -1,0 +1,11 @@
+.hero-copy .rate-arrival-status{font-size:12px;line-height:1.65;text-align:center;max-width:65ch;margin:15px auto 0;color:var(--text)}
+.rate-arrival-status[data-phase="history"]{color:var(--gold)}
+.rate-arrival-options{max-width:850px;margin:8px auto}.rate-arrival-options small{font-size:12px}
+.rate-arrival-style-choices{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;flex-basis:100%;margin:3px 0}
+.rate-arrival-style-choices button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold);background:var(--surface2)}
+#main-rate.rate-source-arrived{display:inline-block;animation:rate-source-arrival .7s ease-out}
+#main-rate.rate-source-fade{display:inline-block;animation:rate-source-fade .45s ease-out}
+@keyframes rate-source-arrival{0%,100%{transform:scale(1);filter:brightness(1)}40%{transform:scale(1.035);filter:brightness(1.3)}}
+@keyframes rate-source-fade{from{opacity:.25;transform:translateY(2px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){#main-rate.rate-source-arrived,#main-rate.rate-source-fade{animation:none}}
+@media(max-width:600px){.hero-copy .rate-arrival-status{font-size:11px;line-height:1.6}}

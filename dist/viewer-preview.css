@@ -1,0 +1,30 @@
+.viewer-preview-entry{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:14px auto;text-align:center}
+.viewer-preview-entry small{font-size:12px;line-height:1.6;color:var(--muted)}
+.viewer-preview-entry button,.viewer-preview-exit{font:600 13px/1.5 var(--font,system-ui);padding:9px 14px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--text);cursor:pointer}
+.viewer-preview-entry button:focus-visible,.viewer-preview-exit:focus-visible{outline:2px solid var(--mint);outline-offset:4px}
+.viewer-preview-exit{position:fixed;right:16px;bottom:16px;z-index:10000;box-shadow:0 3px 14px #0006;font-size:12px;max-width:calc(100vw - 32px)}
+.viewer-preview-entry[hidden],.viewer-preview-exit[hidden]{display:none}
+
+/* Display-only: selected layouts and data remain in their original DOM. */
+body[data-viewer-preview="on"] :is(
+  #display-options,#scenery-toggle,#category-value-options,.category-value-options,
+  .basket-view-controls,#basket-layout,.hero-layout-options,.banner-layout-options,
+  .banner-art-options,.brand-preview-controls,.theme-preview-options,.panel-size-options,
+  .community-footer-styles,.author-portrait-options,.chart-comparison-controls,
+  .smega-comparison-controls,.chart-inspector-toggle,[data-preview-controls]
+){display:none!important}
+body[data-viewer-preview="on"] footer #privacy-controls{display:none!important}
+
+/* Keep chart tooltips and the real Privacy page's consent controls usable.
+   Only the preview marker disappears; keyboard focus outlines remain. */
+body[data-viewer-preview="on"] :is(
+  #display-options,#display-options>[role="group"],#display-options>fieldset,
+  [data-preview-controls],.panel-size-options,#scenery-toggle,#category-value-options,
+  #basket-layout,.community-footer-styles,.author-portrait-options,
+  .privacy-choice-options,.chart-comparison-controls,.smega-comparison-controls,
+  .chart-inspector-ui
+){outline:none!important;outline-offset:0!important}
+body[data-viewer-preview="on"] #view-privacy [data-preview-controls]{display:revert!important}
+body[data-viewer-preview="on"] #view-privacy .privacy-controls-panel{display:block!important}
+body[data-viewer-preview="on"] #view-privacy .privacy-choice-options{display:flex!important}
+@media(max-width:600px){.viewer-preview-entry{gap:7px}.viewer-preview-entry small{flex-basis:100%}.viewer-preview-exit{right:12px;bottom:12px;font-size:12px}}

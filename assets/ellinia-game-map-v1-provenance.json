@@ -1,0 +1,14 @@
+{
+  "url": "https://maplestory.io/api/MCW/1/map/10002000/render/0",
+  "capturedAt": "2026-11-05T13:24:51.017335+00:00",
+  "bytes": 4521653,
+  "sha256": "9712e19360a1c6aab926c1986eb54c137495d4e747816f5e419b1738079f4dc4",
+  "provider": "maplestory.io",
+  "copyright": "Nexon",
+  "region": "MCW",
+  "version": "1",
+  "mapId": 10002000,
+  "name": "Ellinia",
+  "transformation": "Original full frame copied; WebP encoding only, no art repaint or crop.",
+  "webpSha256": "51dc9c49443a6db14c6174dfb2ef2e2384251bde5c0a23010944a7432fa89f63"
+}
