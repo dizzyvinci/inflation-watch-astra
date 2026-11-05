@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T08:08:28+00:00",
+  "exportedAt": "2026-11-05T08:11:02+00:00",
   "basketVersion": 2,
   "files": [
     {
@@ -741,13 +741,13 @@
     },
     {
       "path": "cache/published-smega-series.json",
-      "bytes": 84489,
-      "sha256": "730871666ddf72240a270bce30eef1588658885f51279287565caff215445edc"
+      "bytes": 85254,
+      "sha256": "0a724b20c903a519585f12dc8d76f9b56653b39db02a30eca787dd4b45374fe7"
     },
     {
       "path": "cache/published-smega-summary.json",
       "bytes": 313,
-      "sha256": "e9a824019824486eebe6f37d0131f56cdbb68ee0dd68f06ae4c301349cffafb0"
+      "sha256": "d761f1bbc0403380b1035c1c5e42ead314de1cc5c0289ec7cfdef5ca2e8cee20"
     },
     {
       "path": "cache/rolling-reference-history-v2.json",
@@ -777,7 +777,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "95031380bd292994d99e71cd99ebb1606f6bc0d26a340d1ec057e8dc2cc0ab7d"
+      "sha256": "d04f087f4e02f1c1650273eff9800400f96787b88d30fd9d04e08c19b3da0b34"
     },
     {
       "path": "dist/_headers",
@@ -2090,6 +2090,11 @@
       "sha256": "afeef5831a222c8b3de280f69ed901207fb926bce808666159bd336705a9a229"
     },
     {
+      "path": "dist/data-b49a9a8bde52cabe.json",
+      "bytes": 268484,
+      "sha256": "b49a9a8bde52cabe218806a937f040c6a6811f4b6d711204c2547a94e094ddf7"
+    },
+    {
       "path": "dist/data-bb4ae56f0f3caf74.json",
       "bytes": 267803,
       "sha256": "bb4ae56f0f3caf74c2c6fbc0934a4d11f1b73ef076e004a2c81d0b35f654d416"
@@ -2101,13 +2106,13 @@
     },
     {
       "path": "dist/data.json",
-      "bytes": 267719,
-      "sha256": "3f2adcafb484fc7d4fe92ddfacd16875a3e8da219e94c02398900a33e98da03b"
+      "bytes": 268484,
+      "sha256": "b49a9a8bde52cabe218806a937f040c6a6811f4b6d711204c2547a94e094ddf7"
     },
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "95031380bd292994d99e71cd99ebb1606f6bc0d26a340d1ec057e8dc2cc0ab7d"
+      "sha256": "d04f087f4e02f1c1650273eff9800400f96787b88d30fd9d04e08c19b3da0b34"
     },
     {
       "path": "dist/history/cpi-v1.json",
@@ -2162,7 +2167,7 @@
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "c03659a781397952fb78bc446f2ae7eeae39c30c0afba7b8357a968b50498f0b"
+      "sha256": "f3e9c879189324527694788ab785b2562c995b9f90ae0247d6d04b6faaf24efb"
     },
     {
       "path": "engine.py",
