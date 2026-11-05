@@ -1,7 +1,10 @@
 // Disabled-by-default hosted schema probes. No publication path or API schema inference.
 export const OPERATIONS = Object.freeze({status: '/api/status', prices: '/api/prices',
   catalogue: '/api/items', overview: '/api/market/overview',
-  'apple-detail': '/api/items/2010001', 'apple-history': '/api/items/2010001/history'});
+  'apple-detail': '/api/items/2010001', 'apple-history': '/api/items/2010001/history',
+  'nx-rate': '/api/nx-rate', 'nx-history': '/api/nx-rate/history?range=7d&step=hour'});
+const INITIAL_OPERATIONS=Object.freeze(['status','prices','catalogue','overview','apple-detail','apple-history']);
+const NX_PROBES=Object.freeze(['nx-rate','nx-history']);
 export const OWNER_NAME = 'maplestory-market-account-primary-v1';
 export const PRIVATE_PREFIX = '_private/provider-api/v1/';
 const ORIGIN = 'https://maplestory.market';
@@ -19,7 +22,7 @@ export function grantConfig(env) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('Invalid configuration');
   const fields = ['enabled', 'approvalRecorded', 'exclusiveAccountOwnerConfirmed', 'grantReference',
     'grantedPerMinute', 'grantedPerDay', 'minimumRequestIntervalSeconds',
-    'higherFrequencyExplicitlyGranted', 'allowedOperations', 'probeRound', 'publicationEnabled', 'operatorDailyRequestCap'];
+    'higherFrequencyExplicitlyGranted', 'allowedOperations', 'probeRound', 'publicationEnabled', 'operatorDailyRequestCap', 'nxSchemaProbesEnabled'];
   if (Object.keys(value).some(key => !fields.includes(key))) throw new TypeError('Unknown configuration');
   if (typeof value.enabled !== 'boolean') throw new TypeError('Explicit activation required');
   if (value.publicationEnabled !== false) throw new TypeError('Raw quarantine cannot publish');
@@ -35,6 +38,8 @@ export function grantConfig(env) {
   if (!Array.isArray(value.allowedOperations) || !value.allowedOperations.length ||
       new Set(value.allowedOperations).size !== value.allowedOperations.length ||
       value.allowedOperations.some(key => !own(OPERATIONS, key))) throw new TypeError('Explicit permitted schema probes required');
+  if(value.nxSchemaProbesEnabled!==undefined&&typeof value.nxSchemaProbesEnabled!=='boolean')throw new TypeError('Explicit NX probe flag required');
+  if(value.nxSchemaProbesEnabled===true&&NX_PROBES.some(op=>!value.allowedOperations.includes(op)))throw new TypeError('Both explicit NX probe operations required');
   return value;
 }
 
@@ -164,18 +169,54 @@ export class ApiCollectorCore {
   enqueueScheduledOperation({jobKey,operation,availableAt}) {
     if(this.authorizationStatus()!=='ready')throw new TypeError('Not authorized');
     const config=this.config();this.validateScheduleReferences(jobKey);
-    if(!REF.test(jobKey)||!config.allowedOperations.includes(operation)||!finiteTime(availableAt))throw new TypeError('Invalid scheduled job');
+    if(!REF.test(jobKey)||!INITIAL_OPERATIONS.includes(operation)||!config.allowedOperations.includes(operation)||!finiteTime(availableAt))throw new TypeError('Invalid scheduled job');
     this.sql.exec('INSERT OR IGNORE INTO api_jobs(job_key,operation,round_ref,available_at) VALUES(?,?,?,?)',
       jobKey,operation,config.probeRound,availableAt);
+  }
+  nxSchemaProbeState(config=this.config()) {
+    if(config.nxSchemaProbesEnabled!==true)return {status:'disabled',completed:0};
+    const rows=NX_PROBES.map((op,index)=>this.row('SELECT state,operation FROM api_jobs WHERE job_key=? AND round_ref=?',
+      `${config.probeRound}:${INITIAL_OPERATIONS.length+index}:${op}`,config.probeRound));
+    const completed=rows.filter((row,index)=>row?.state==='complete'&&row.operation===NX_PROBES[index]).length;
+    if(this.row('SELECT auth_stopped AS stopped FROM api_control WHERE id=1').stopped)return {status:'authentication_stopped',completed};
+    const base=INITIAL_OPERATIONS.map((op,index)=>this.row('SELECT state,operation FROM api_jobs WHERE job_key=? AND round_ref=?',
+      `${config.probeRound}:${index}:${op}`,config.probeRound));
+    if(!base.every((row,index)=>row?.state==='complete'&&row.operation===INITIAL_OPERATIONS[index]))return {status:'waiting_for_initial_six',completed};
+    if(rows.some((row,index)=>row&&row.operation!==NX_PROBES[index]))return {status:'identity_conflict_needs_review',completed};
+    if(rows.some(row=>row?.state==='failed'))return {status:'permanent_failure_needs_review',completed};
+    return {status:completed===2?'complete':rows.some(Boolean)?'pending':'ready_to_enqueue',completed};
+  }
+  effectiveOperations(config) {
+    const allowed=config.allowedOperations.filter(op=>INITIAL_OPERATIONS.includes(op));
+    if(['ready_to_enqueue','pending','complete'].includes(this.nxSchemaProbeState(config).status))
+      allowed.push(...NX_PROBES.filter(op=>config.allowedOperations.includes(op)));
+    return allowed;
+  }
+  enqueueNxSchemaProbes(roundRef) {
+    const config=this.config();if(!config.enabled)return {status:'disabled',completed:0};
+    if(config.nxSchemaProbesEnabled!==true)return {status:'disabled',completed:0};
+    const key=secret(this.env);if(!key)return {status:'requires_approved_key',completed:0};
+    safeReferences(config,key,[roundRef]);
+    if(roundRef!==config.probeRound||!REF.test(roundRef))throw new TypeError('Explicit current round required');
+    const state=this.nxSchemaProbeState(config);
+    if(!['ready_to_enqueue','pending','complete'].includes(state.status))return state;
+    const now=this.clock();
+    return this.ctx.storage.transactionSync(()=>{
+      for(const [index,operation]of NX_PROBES.entries())this.sql.exec(
+        'INSERT OR IGNORE INTO api_jobs(job_key,operation,round_ref,available_at) VALUES(?,?,?,?)',
+        `${roundRef}:${INITIAL_OPERATIONS.length+index}:${operation}`,operation,roundRef,now);
+      return this.nxSchemaProbeState(config);
+    });
   }
   nextAttemptAt(config) {
     const now=this.clock(),control=this.row('SELECT * FROM api_control WHERE id=1');
     if(control.auth_stopped)return null;
-    const slots=config.allowedOperations.map(()=>'?').join(',');
+    const operations=this.effectiveOperations(config);if(!operations.length)return null;
+    const slots=operations.map(()=>'?').join(',');
     const running=this.row("SELECT MIN(lease_until) AS at FROM api_jobs WHERE state='running'").at;
     if(running!==null)return Math.max(now+1,running);
     const pending=this.row(`SELECT MIN(available_at) AS at FROM api_jobs WHERE state='pending' AND round_ref=? AND operation IN (${slots})`,
-      config.probeRound,...config.allowedOperations).at;
+      config.probeRound,...operations).at;
     if(pending===null)return null;
     let next=Math.max(now+1,pending,control.blocked_until,control.next_allowed);
     for(const [window,cap] of [[60_000,config.grantedPerMinute],[86_400_000,this.dailyCap(config)]]){
@@ -192,14 +233,16 @@ export class ApiCollectorCore {
     safeReferences(config, key, [roundRef]);
     if (roundRef !== config.probeRound || !REF.test(roundRef)) throw new TypeError('Explicit approved round required');
     const now = this.clock();
-    return this.ctx.storage.transactionSync(() => {
-      for (const [order, operation] of Object.keys(OPERATIONS).entries()) {
+    const result=this.ctx.storage.transactionSync(() => {
+      for (const [order, operation] of INITIAL_OPERATIONS.entries()) {
         if (!config.allowedOperations.includes(operation)) continue;
         this.sql.exec('INSERT OR IGNORE INTO api_jobs(job_key,operation,round_ref,available_at) VALUES(?,?,?,?)',
           `${roundRef}:${order}:${operation}`, operation, roundRef, now);
       }
       return {status: 'queued_idempotently', jobCount: this.row('SELECT COUNT(*) AS n FROM api_jobs WHERE round_ref=?', roundRef).n};
     });
+    if(config.nxSchemaProbesEnabled===true)return {...result,nxSchemaProbes:this.enqueueNxSchemaProbes(roundRef)};
+    return result;
   }
 
   claim(config) {
@@ -224,10 +267,11 @@ export class ApiCollectorCore {
         }
       }
       if (waits.length) return {status: 'budget_wait', retryAt: stamp(Math.max(...waits))};
-      const slots = config.allowedOperations.map(() => '?').join(',');
+      const operations=this.effectiveOperations(config);if(!operations.length)return {status:'idle'};
+      const slots = operations.map(() => '?').join(',');
       const job = this.row(`SELECT * FROM api_jobs WHERE state='pending' AND available_at<=?
         AND round_ref=? AND operation IN (${slots}) ORDER BY job_key LIMIT 1`,
-        now, config.probeRound, ...config.allowedOperations);
+        now, config.probeRound, ...operations);
       if (!job) return {status: 'idle'};
       const attempt = this.row('INSERT INTO api_attempts(job_key,at,grant_ref) VALUES(?,?,?) RETURNING id', job.job_key, now, config.grantReference).id;
       this.sql.exec("UPDATE api_jobs SET state='running',attempts=attempts+1,lease_until=?,attempt_id=? WHERE job_key=?", now+LEASE_MS, attempt, job.job_key);

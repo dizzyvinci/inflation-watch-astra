@@ -32,6 +32,26 @@ export class ApiPrivateHealth{
       return match&&match[1]===row.operation&&row.round_ref===round;
     }).map(row=>({operation:row.operation,receiptKey:row.receipt_key,roundReference:row.round_ref}));
   }
+  nxSchemaProbeProgress(config){
+    const state=this.core.nxSchemaProbeState?.(config);
+    const allowed=['disabled','waiting_for_initial_six','authentication_stopped','identity_conflict_needs_review',
+      'permanent_failure_needs_review','complete','pending','ready_to_enqueue'];
+    return {status:allowed.includes(state?.status)?state.status:'unknown',
+      completed:Number.isSafeInteger(state?.completed)&&state.completed>=0&&state.completed<=2?state.completed:null};
+  }
+  completedNxProbeReceipts(config){
+    if(config.nxSchemaProbesEnabled!==true)return[];
+    const round=config.probeRound;
+    if(typeof round!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/.test(round))return[];
+    const operations=['nx-rate','nx-history'];
+    const keys=operations.map((op,index)=>`${round}:${6+index}:${op}`);
+    return this.core.sql.exec(`SELECT job_key,operation,round_ref,receipt_key FROM api_jobs
+      WHERE state='complete' AND round_ref=? AND job_key IN (?,?) ORDER BY job_key LIMIT 2`,round,...keys).toArray()
+      .filter(row=>{
+        const match=typeof row.receipt_key==='string'&&/^_private\/provider-api\/v1\/receipts\/\d{12,16}-(nx-rate|nx-history)-[a-f0-9]{64}\.json$/.exec(row.receipt_key);
+        return match&&match[1]===row.operation&&row.round_ref===round&&keys[operations.indexOf(row.operation)]===row.job_key;
+      }).map(row=>({operation:row.operation,receiptKey:row.receipt_key,roundReference:row.round_ref}));
+  }
   async afterRun(result){
     if(!this.enabled()||result?.status==='disabled')return{status:'skipped_off'};
     const checkedAt=new Date(this.core.clock()).toISOString();const source=this.core.health();
@@ -50,6 +70,7 @@ export class ApiPrivateHealth{
       configuredMinuteCeiling:integer(config.grantedPerMinute)?config.grantedPerMinute:null,
       configuredDailyCeiling:caps.length?Math.min(...caps):null,
       completedReceipts:this.completedReceipts(config),
+      ...(config.nxSchemaProbesEnabled===true?{nxSchemaProbes:this.nxSchemaProbeProgress(config),completedNxProbeReceipts:this.completedNxProbeReceipts(config)}:{}),
       dailyCeilingMeaning:'configured_restriction_not_an_inferred_provider_daily_grant'};
     this.ctx.storage.transactionSync(()=>{
       const row=this.core.row('SELECT revision FROM api_private_health WHERE id=1');

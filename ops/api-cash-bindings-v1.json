@@ -1,0 +1,215 @@
+{
+  "candidatePlanHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a",
+  "fixedNxScheduleSha256": "70219b72825f2b8e23591986abb74be245d1d547cf69caddd6687622819c137c",
+  "targets": [
+    {
+      "itemId": 1802000,
+      "name": "Red Ribbon",
+      "slug": "red-ribbon",
+      "fixedNxCost": 3200,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 1802001,
+      "name": "Yellow Hat",
+      "slug": "yellow-hat",
+      "fixedNxCost": 3200,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 1802002,
+      "name": "Red Hat",
+      "slug": "red-hat",
+      "fixedNxCost": 3200,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 1802003,
+      "name": "Black Hat",
+      "slug": "black-hat",
+      "fixedNxCost": 3200,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 1802007,
+      "name": "Red Top Hat",
+      "slug": "red-top-hat",
+      "fixedNxCost": 3200,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5000000,
+      "name": "Brown Kitty",
+      "slug": "brown-kitty",
+      "fixedNxCost": 3500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5000001,
+      "name": "Brown Puppy",
+      "slug": "brown-puppy",
+      "fixedNxCost": 3500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5000002,
+      "name": "Pink Bunny",
+      "slug": "pink-bunny",
+      "fixedNxCost": 3500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5000004,
+      "name": "Black Kitty",
+      "slug": "black-kitty",
+      "fixedNxCost": 3500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5000005,
+      "name": "White Bunny",
+      "slug": "white-bunny",
+      "fixedNxCost": 3500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5000007,
+      "name": "Black Pig",
+      "slug": "black-pig",
+      "fixedNxCost": 3500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5050100,
+      "name": "AP Reset Scroll",
+      "slug": "ap-reset-scroll",
+      "fixedNxCost": 7000,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5051001,
+      "name": "SP Reset Scroll",
+      "slug": "sp-reset-scroll",
+      "fixedNxCost": 7000,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5150000,
+      "name": "Mystery Hair Coupon",
+      "slug": "mystery-hair-coupon",
+      "fixedNxCost": 5500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5150100,
+      "name": "Signature Hair Coupon",
+      "slug": "signature-hair-coupon",
+      "fixedNxCost": 7500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5151000,
+      "name": "Mystery Hair Color Coupon",
+      "slug": "mystery-hair-color-coupon",
+      "fixedNxCost": 1700,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5151100,
+      "name": "Signature Hair Color Coupon",
+      "slug": "signature-hair-color-coupon",
+      "fixedNxCost": 4500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5152000,
+      "name": "Mystery Face Coupon",
+      "slug": "mystery-face-coupon",
+      "fixedNxCost": 3500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5152100,
+      "name": "Signature Eye Color Coupon",
+      "slug": "signature-eye-color-coupon",
+      "fixedNxCost": 2500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5152200,
+      "name": "Signature Face Coupon",
+      "slug": "signature-face-coupon",
+      "fixedNxCost": 5500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5153000,
+      "name": "Signature Skin Color Coupon",
+      "slug": "signature-skin-color-coupon",
+      "fixedNxCost": 2000,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5170000,
+      "name": "Pet Name Tag",
+      "slug": "pet-name-tag",
+      "fixedNxCost": 1800,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5180000,
+      "name": "Water of Life",
+      "slug": "water-of-life",
+      "fixedNxCost": 2000,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5190000,
+      "name": "Auto HP Potion Skill",
+      "slug": "auto-hp-potion-skill",
+      "fixedNxCost": 2500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5190001,
+      "name": "Auto MP Potion Skill",
+      "slug": "auto-mp-potion-skill",
+      "fixedNxCost": 2500,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5190002,
+      "name": "Auto Move Skill",
+      "slug": "auto-move-skill",
+      "fixedNxCost": 3000,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5190003,
+      "name": "Expanded Auto Move Skill",
+      "slug": "expanded-auto-move-skill",
+      "fixedNxCost": 3000,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5680000,
+      "name": "Storage Room 5-slot Coupon",
+      "slug": "storage-room-5-slot-coupon",
+      "fixedNxCost": 5000,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    },
+    {
+      "itemId": 5680001,
+      "name": "Selective 5-slot Coupon",
+      "slug": "selective-5-slot-coupon",
+      "fixedNxCost": 5000,
+      "identityProofHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a"
+    }
+  ],
+  "routeEvidence": {
+    "verified": true,
+    "sourceUrl": "https://maplestory.market/assets/VDivider-1_mhy5kl.js",
+    "sha256": "1d08886333ef15b7615efc9330c5cf673946256265caf19e672621e32a856cf7",
+    "routeTemplate": "/items/{item_id}"
+  }
+}

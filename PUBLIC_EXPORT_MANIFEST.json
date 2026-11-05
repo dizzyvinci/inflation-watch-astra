@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T22:20:17+00:00",
+  "exportedAt": "2026-11-05T22:42:30+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -22,8 +22,8 @@
     },
     {
       "path": "DEPLOYMENT.md",
-      "bytes": 11843,
-      "sha256": "9d5a6fba2af16f8577648f31e009359d99a4992951d588bade0c26bdcc3d40b1"
+      "bytes": 13448,
+      "sha256": "6ca0fd4deacadfa7fff129e0bd7e96e5d768c3076140d7a1bf714839e4632e5f"
     },
     {
       "path": "MYSTERY_BOXES_EVIDENCE.json",
@@ -7543,7 +7543,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "6955f802f5152cabb8e27c5939f9370168a59fda741e2036148709297493d3cb"
+      "sha256": "8aae47cc256d28407d7a65ee6e8eaf7fa01c68c8c5aaa3a91bcfef289cf91457"
     },
     {
       "path": "cache/market.json",
@@ -7628,7 +7628,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "56f9ca5903d81f3c57c9723e1c6b18fd4f7888d55617013517f67710f98ecce7"
+      "sha256": "ab05ecce498aad80752925a1f17dffde2e2a7e1b7b96fd1f40fe78a0d5fa1199"
     },
     {
       "path": "dist/_headers",
@@ -16001,6 +16001,11 @@
       "sha256": "8da04b6a5d7d6150788b9866f2fa48165d8cc14320bd8f7bc760186c384b45a7"
     },
     {
+      "path": "dist/data-8e6ee1732a2391d7.json",
+      "bytes": 992898,
+      "sha256": "8e6ee1732a2391d7eda5edf90453e9044e75d5732212a9bdd0d12e81d921e0ab"
+    },
+    {
       "path": "dist/data-a1e4e89de7de8f97.json",
       "bytes": 317323,
       "sha256": "a1e4e89de7de8f9743bbbdb5646c268336cc8461be2901f5c72e5e0a5879e205"
@@ -16088,7 +16093,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "80474ab1026b29546b1d11c4475342090f0c8e4d21f9e8f514653e6d90dc5491"
+      "sha256": "8e6ee1732a2391d7eda5edf90453e9044e75d5732212a9bdd0d12e81d921e0ab"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16108,7 +16113,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "56f9ca5903d81f3c57c9723e1c6b18fd4f7888d55617013517f67710f98ecce7"
+      "sha256": "ab05ecce498aad80752925a1f17dffde2e2a7e1b7b96fd1f40fe78a0d5fa1199"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16368,7 +16373,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "27ae51dfe1b79f72704ab1837b77ed0bb7ab2d47cf8f633eec77d2616768ba8e"
+      "sha256": "c39b9d4594f815d068bdcf3fcabc01525d21e7dbc6caf0cf8a22746a6c371abd"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16447,13 +16452,23 @@
     },
     {
       "path": "ops/api-alarm-scheduler.mjs",
-      "bytes": 13084,
-      "sha256": "faad329293f8fa78e365aea232a4c7e0afc4f410ed6a8d220580f9f5bffbdd46"
+      "bytes": 13147,
+      "sha256": "b3dae3ca2aed901d244aa01e47c902b9f89d91f955f6eb36b41a109b4fe375da"
+    },
+    {
+      "path": "ops/api-cash-bindings-v1.json",
+      "bytes": 7063,
+      "sha256": "eb8b9b82a9c80315f99d30a0f6ffaf86a6272c1a705c8696cc7187f37c885620"
+    },
+    {
+      "path": "ops/api-cash-projection.mjs",
+      "bytes": 8268,
+      "sha256": "9dc60f5e94236ec4f8f3ba37d50b698a9ef0bfb3edb9892f343d3ece8375f525"
     },
     {
       "path": "ops/api-collector-core.mjs",
-      "bytes": 22481,
-      "sha256": "05bea5eb15378425b7e0819d6bd116fb0d7716560ef7c17cdc8238ff72260f5b"
+      "bytes": 25994,
+      "sha256": "b90cd60132d916a1e08862c65d1b27869e2e27da1a0ac857f18e876ff1a24822"
     },
     {
       "path": "ops/api-cron-hook.mjs",
@@ -16462,13 +16477,28 @@
     },
     {
       "path": "ops/api-grant-collector.mjs",
-      "bytes": 2305,
-      "sha256": "3e5d796c79041ed80122fdb2b6237df2deb6bc1a1f34109fc3c9dd386bae226c"
+      "bytes": 3355,
+      "sha256": "fb079bca353e48afd7aa01bb53529b6401b3629f9f6bdaa0de148ad40f327a51"
+    },
+    {
+      "path": "ops/api-private-cash-alarm.mjs",
+      "bytes": 8096,
+      "sha256": "0169544c1d0b7280752214579a8df9edc5049283da910153e5f00892866c92c5"
+    },
+    {
+      "path": "ops/api-private-cash-materializer.mjs",
+      "bytes": 11699,
+      "sha256": "5cf5395fecc0e0dfdf662db3e95152115e461649224b777b2779e738db40e5cb"
     },
     {
       "path": "ops/api-private-health.mjs",
-      "bytes": 5627,
-      "sha256": "6b327318ae45a3f04f7766b474eb298ad498768aabe34bc25e57b129c26a3e7d"
+      "bytes": 7245,
+      "sha256": "153b4ed5001c6c399d224eb9d997223361a6942e09014b0c02d3a48d6f61733a"
+    },
+    {
+      "path": "ops/api-raw-prices-decoder.mjs",
+      "bytes": 12248,
+      "sha256": "21022a68d9b054407f27aca118a4093666c123c7d072dd3cfac4bc13396d5bd1"
     },
     {
       "path": "ops/archive-client-cash-metadata.py",
@@ -16532,8 +16562,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 4945,
-      "sha256": "30dcc83485a79be73145fa4369b33b78261059c97cbbe40216292a271c2377d7"
+      "bytes": 5291,
+      "sha256": "9e44177595fb5569dc1bf395e0c1d01904f43534297a4c6a8d5ed1700cefecd3"
     },
     {
       "path": "portable_hash.py",
@@ -16586,14 +16616,34 @@
       "sha256": "854154b8cc8f9d84f5b1370c4e12eb30261dafbb065ee4980702093312ea639b"
     },
     {
+      "path": "tests/api-cash-projection.test.mjs",
+      "bytes": 5176,
+      "sha256": "ec8b7f2d1a468183520a754718ff0a2f6da6104ad95a1ac1f7dd297322f77292"
+    },
+    {
       "path": "tests/api-collector-core.test.mjs",
       "bytes": 9257,
       "sha256": "30c0b46db869df47657f8089292caf3f1ed16d1e8dca990e1fdc4a4c418b70aa"
     },
     {
+      "path": "tests/api-nx-schema-probes.test.mjs",
+      "bytes": 11887,
+      "sha256": "41ed6bffaf05a6ad6050730c27c6439998a1fc4aeee75691915bf5d89f303f14"
+    },
+    {
+      "path": "tests/api-private-cash-integration.test.mjs",
+      "bytes": 15905,
+      "sha256": "805d9d1d6f94522c2f762df533b7359e914938e45bcf619dd6f9243cd18054d6"
+    },
+    {
       "path": "tests/api-private-health.test.mjs",
       "bytes": 5860,
       "sha256": "3c838150a182c5c9bc26bb384729bc54c9c12b99b34e7275106b5aea5a2ec47f"
+    },
+    {
+      "path": "tests/api-private-nx-combined.test.mjs",
+      "bytes": 9798,
+      "sha256": "7fa7bcf7fba3ebe88f2dbf7ba1c1cbf02dc60b16192508753ee47c83e5ffed7a"
     },
     {
       "path": "tests/asset-bundles.cjs",

@@ -2,6 +2,7 @@ import {DurableObject} from 'cloudflare:workers';
 import {ApiCollectorCore} from './api-collector-core.mjs';
 import {ApiPrivateHealth} from './api-private-health.mjs';
 import {ApiAlarmScheduler} from './api-alarm-scheduler.mjs';
+import {ApiPrivateCashAlarm} from './api-private-cash-alarm.mjs';
 
 export class ApiGrantCollector extends DurableObject {
   constructor(ctx, env) {
@@ -9,32 +10,49 @@ export class ApiGrantCollector extends DurableObject {
     this.ready = ctx.blockConcurrencyWhile(async () => {
       this.core = new ApiCollectorCore(ctx, env);
       this.privateHealth = new ApiPrivateHealth(ctx, env, this.core);
-      this.scheduler = new ApiAlarmScheduler(ctx, env, this.core);
+      this.privateCash = new ApiPrivateCashAlarm(ctx, env, this.core);
+      await this.privateCash.initialize();
+      this.scheduler = new ApiAlarmScheduler(ctx, env, this.core,this.privateCash.hasMux?{alarmControl:this.privateCash.providerControl}:{});
     });
   }
   async enqueueProbeRound(round) {await this.ready; return this.core.enqueueProbeRound(round);}
   async runOne() {
     await this.ready;
+    await this.privateCash.beforeProviderEvent();
     let result;
     try {result=await this.core.runOne();}
     catch(error) {
+      await this.privateCash.afterProviderEvent();
       try {await this.privateHealth.afterRun({status:'internal_error'});} catch {}
       throw error;
     }
+    await this.privateCash.afterProviderEvent();
     try {
       const mirrored=await this.privateHealth.afterRun(result);
       return mirrored.status==='private_health_pending'?{...result,privateHealthPending:true}:result;
     } catch {return {...result,privateHealthPending:true};}
   }
-  async health() {await this.ready; return {...this.core.health(),schedule:this.scheduler.health()};}
+  async health() {await this.ready; return {...this.core.health(),schedule:this.scheduler.health(),privateProjection:this.privateCash.health()};}
   async kickScheduledCollection() {
-    await this.ready;const result=await this.scheduler.kick();
+    await this.ready;await this.privateCash.scheduleStoredWork();const result=await this.scheduler.kick();
     // Optional private-health outbox repair costs no provider attempt.
     try {await this.privateHealth?.flush();} catch {return {...result,privateHealthPending:true};}
     return result;
   }
   async alarm() {
-    await this.ready;const result=await this.scheduler.alarm();
+    await this.ready;
+    if(this.ownerAlarmFlight)return{status:'owner_alarm_busy'};
+    this.ownerAlarmFlight=this.ownerAlarmEvent();
+    try{return await this.ownerAlarmFlight;}finally{this.ownerAlarmFlight=null;}
+  }
+  async ownerAlarmEvent(){
+    const kind=this.privateCash.chooseAlarm();
+    if(kind==='private')return this.privateCash.runPrivateAlarm();
+    if(kind==='early'){await this.privateCash.arm();return{status:'early_owner_alarm'};}
+    await this.privateCash.beforeProviderEvent();
+    let result;
+    try{result=await this.scheduler.alarm();}
+    finally{await this.privateCash.afterProviderEvent();}
     if(result.ownerRunStatus&&this.privateHealth){
       try {await this.privateHealth.afterRun({status:result.ownerRunStatus});}
       catch {return {...result,privateHealthPending:true};}

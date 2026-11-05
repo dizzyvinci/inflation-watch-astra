@@ -24,8 +24,8 @@ export function scheduleConfig(env){
 }
 
 export class ApiAlarmScheduler{
-  constructor(ctx,env,core){
-    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;
+  constructor(ctx,env,core,{alarmControl=ctx.storage}={}){
+    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.alarmControl=alarmControl;
     ctx.storage.transactionSync(()=>{
       core.sql.exec(`CREATE TABLE IF NOT EXISTS api_alarm_plans(schedule_ref TEXT PRIMARY KEY,config_json TEXT NOT NULL,
         round_ref TEXT NOT NULL,started_at INTEGER NOT NULL,target_at INTEGER NOT NULL,initial_complete_at INTEGER,phase TEXT NOT NULL)`);
@@ -102,7 +102,7 @@ export class ApiAlarmScheduler{
       return{status:'ready',schedule,grant,plan};
     });
   }
-  async stop(status){await this.ctx.storage.deleteAlarm();return{status,alarmScheduled:false};}
+  async stop(status){await this.alarmControl.deleteAlarm();return{status,alarmScheduled:false};}
   storageGate(){
     const pending=this.core.row('SELECT pointer_pending FROM api_control WHERE id=1').pointer_pending;
     let state=this.core.row('SELECT * FROM api_alarm_storage WHERE id=1');
@@ -138,7 +138,7 @@ export class ApiAlarmScheduler{
     const latest=this.core.row('SELECT MAX(at) AS at FROM api_attempts').at;
     const pacing=latest===null?now+schedule.requestIntervalMilliseconds:latest+schedule.requestIntervalMilliseconds;
     const next=Math.max(now+1,pacing,storage.blocked_until,Math.min(...candidates));
-    await this.ctx.storage.setAlarm(next);
+    await this.alarmControl.setAlarm(next);
     return{...result,alarmScheduled:true,nextAlarmAt:new Date(next).toISOString()};
   }
   async kick(){return this.arm(this.plan());}

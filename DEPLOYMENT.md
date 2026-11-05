@@ -126,10 +126,33 @@ from provider observations, and the public `/health.json` still describes the
 daily collector. Storage-only pointer repairs use durable exponential backoff
 without repeating a successful provider request.
 
+The optional private calculation stage uses `API_PRIVATE_CASH_JSON` with exactly
+`{"schemaVersion":1,"enabled":true,"methodVersion":1,"publicationEnabled":false}`.
+It validates retained original bytes and creates a private, attributed 29-item
+projection. It uses sale medians and reported sale-count weights; physical units,
+asking prices and source averages do not replace those fields. Missing records
+remain missing. This does not update the public headline or publish API prices.
+One existing owner multiplexes provider and calculation deadlines, with one heavy
+operation per alarm event. Separate durable jobs and outboxes retain retries,
+quarantine and last-good results without another upstream request.
+
+An explicit `nxSchemaProbesEnabled:true` grant flag plus both `nx-rate` and
+`nx-history` in `allowedOperations` permits two additional capability probes
+after the original six complete. Their fixed keys retain the same owner, round
+and request ledger. They do not enable recurring offer collection. Server
+acceptance is not assumed from the public client helper: authentication failures
+stop collection, and no browser-session or challenge fallback is implemented.
+
+When passing JSON runtime overrides through PowerShell, use PowerShell 7 or
+newer (`pwsh`). Windows PowerShell 5 can strip JSON quotes in native arguments.
+Verify the deployed variables against the reviewed configuration, the existing
+Durable Object namespace and server-secret binding before declaring success.
+Never print the secret value to perform this verification.
+
 ## Traffic and build planning
 
 Data checks do not rebuild the site: ten-minute scheduling is approximately 4,320 invocations per 30-day month, independently of visitor traffic. Deployments happen on code changes. The [Workers Static Assets billing documentation](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) describes static requests as free and unlimited; JSON Worker invocations, CPU and R2 operations are separately metered under the account's actual plan. See [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) and [R2 pricing](https://developers.cloudflare.com/r2/pricing/) for current terms.
 
 For scale estimates, 500,000 visits with five pointer checks each produce about 2.5 million dynamic pointer requests before other JSON requests. Concurrent tabs and long sessions can produce much more. Account-wide usage, bots, actual payload size, cache hit rates and CPU must be measured; this design is not a capacity or cost guarantee. Pages deployment quotas and Workers build-minute allowances are different products and are not interchangeable.
 
-The authenticated-source application remains **DRAFT ONLY**. No provider-key submission, new authenticated feed, domain purchase or DNS mutation is part of this deployment workflow.
+API credentials and collection opt-ins remain server-side. This deployment workflow does not submit applications, register domains or change DNS. Configure only the source permissions and limits actually granted to the deployed account.
