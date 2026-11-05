@@ -9,6 +9,58 @@ const page = fs.readFileSync(path.join(web, 'index.html'), 'utf8');
 const key = 'astra-banner-layout';
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
+function verifyResponsiveStyleContract() {
+  const css = ['style.css', 'layout-preview.css'].map(name => fs.readFileSync(path.join(web, name), 'utf8')).join('\n');
+  const parsed = new JSDOM('<style></style>');
+  parsed.window.document.querySelector('style').textContent = css;
+  const rules = parsed.window.document.styleSheets[0].cssRules;
+  const matching = (list, width) => [...list].map(rule => {
+    if (rule.type !== 4) return rule.cssText;
+    const condition = rule.conditionText;
+    const min = /min-width:\s*(\d+)px/.exec(condition), max = /max-width:\s*(\d+)px/.exec(condition);
+    return (!min || width >= Number(min[1])) && (!max || width <= Number(max[1])) ? matching(rule.cssRules, width) : '';
+  }).join('\n');
+  const length = (value, width) => {
+    const simple = token => token.trim().endsWith('vw') || token.trim().endsWith('%') ? parseFloat(token) / 100 * width : parseFloat(token);
+    if (value.startsWith('min(')) return Math.min(...value.slice(4, -1).split(',').map(simple));
+    if (value.startsWith('calc(')) { const [left, right] = value.slice(5, -1).split(' - '); return simple(left) - simple(right); }
+    return simple(value);
+  };
+  const widths = [];
+  for (const viewport of [375, 768, 1024, 1200, 1440, 1920, 2560, 3840]) {
+    const dom = new JSDOM('<style></style><div class="shell"><article class="rate-hero"><div class="banner-preview-chart-slot"></div><div class="hero-copy"></div><div class="hero-art"><img class="hero-merchant"></div></article></div>');
+    const w = dom.window, doc = w.document;
+    doc.querySelector('style').textContent = matching(rules, viewport);
+    doc.body.dataset.bannerLayout = 'chart';
+    // JSDOM resolves vw against its fixed viewport; evaluate the matched CSS
+    // declaration for these bounds. Actual rendered geometry is browser QA.
+    const shellRule = [...doc.styleSheets[0].cssRules].filter(rule => rule.selectorText === '.shell' && rule.style.width).at(-1);
+    const shellWidth = length(shellRule.style.width, viewport);
+    assert(shellWidth <= viewport && shellWidth <= 2000, `${viewport}: bounded content width`);
+    if (viewport <= 700) assert.equal(shellWidth, viewport - 32, 'mobile16px side gutters remain');
+    else if (viewport <= 1000) assert.equal(shellWidth, viewport - 40, 'tablet20px side gutters remain');
+    else assert(Math.abs(shellWidth - Math.min(viewport * .92, 2000)) < .01, `${viewport}: ${shellWidth} from ${shellRule.style.width}`);
+    const art = w.getComputedStyle(doc.querySelector('.hero-art')), copy = w.getComputedStyle(doc.querySelector('.hero-copy'));
+    const chart = w.getComputedStyle(doc.querySelector('.banner-preview-chart-slot'));
+    assert.equal(art.gridColumn, copy.gridColumn, 'rate overlays artwork rather than a separate green column');
+    assert.equal(art.gridRow, copy.gridRow);
+    assert(Number(copy.zIndex) > Number(art.zIndex), 'readable rate is above art');
+    if (viewport >= 1200) {
+      assert.equal(art.gridColumn, '2 / 4'); assert.equal(chart.gridColumn, '1');
+      assert.equal(chart.gridRow, art.gridRow);
+      const chartWidth = shellWidth / 3, artworkWidth = shellWidth * 2 / 3;
+      assert(chartWidth >= 360 && artworkWidth >= chartWidth * 1.99);
+    } else {
+      assert.equal(art.gridColumn, '1'); assert.equal(art.gridRow, '1'); assert.equal(chart.gridRow, '2');
+    }
+    assert.equal(w.getComputedStyle(doc.querySelector('.hero-merchant')).transform, 'none');
+    widths.push([viewport, Math.round(shellWidth * 100) / 100]);
+    dom.window.close();
+  }
+  parsed.window.close();
+  return widths;
+}
+
 function fixture({ preferences = new Map(), blocked = false, legacy = false, missing = false } = {}) {
   const dom = new JSDOM(page, { url: 'https://inflation.gg/', runScripts: 'outside-only', pretendToBeVisual: true });
   const w = dom.window, doc = w.document;
@@ -40,6 +92,7 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
 }
 
 (async () => {
+  const widthBounds = verifyResponsiveStyleContract();
   const preferences = new Map([['astra-scenery', 'off'], ['astra-hero-layout', 'dials-first'], ['inflation-footer-style', 'personal']]);
   const f = fixture({ preferences });
   const { w, doc, before, calls } = f;
@@ -147,5 +200,5 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   assert.equal(missing.doc.getElementById('banner-layout-options'), null);
   assert.equal(missing.before.hero.contains(missing.before.main), false);
   missing.dom.window.close();
-  console.log('PASS: browser-only banner choice, original DOM/control identity, restoration, inspector compatibility, independent preferences, invalid/blocked storage, no duplicates or network');
+  console.log('PASS: browser-only banner choice, 1/3 chart + 2/3 art/rate overlay, responsive CSS width bounds, original DOM/control identity, inspector compatibility and no duplicates/network', JSON.stringify(widthBounds));
 })().catch(error => { console.error(error); process.exitCode = 1; });

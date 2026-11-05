@@ -740,7 +740,7 @@ test('runtime/config contain no credentials or public collection endpoint', () =
   assert.equal(wrangler.name, 'inflation-watch-astra');
   assert.equal(wrangler.r2_buckets[0].binding, 'SNAPSHOTS');
   assert.equal(wrangler.limits.cpu_ms, 1000);
-  assert.deepEqual(wrangler.assets.run_worker_first, ['/version.json', '/data.json', '/data-*', '/health.json']);
+  assert.equal(wrangler.assets.run_worker_first, true);
   assert.deepEqual(wrangler.triggers.crons, ['3,13,23,33,43,53 * * * *']);
 });
 

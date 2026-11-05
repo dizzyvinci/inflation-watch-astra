@@ -2,6 +2,7 @@ import seed from '../dist/data.json' with { type: 'json' };
 import seedVersion from '../dist/version.json' with { type: 'json' };
 import config from '../config.json' with { type: 'json' };
 import { computeReport } from './worker-core.mjs';
+import { withPreviewGate } from './preview-gate.mjs';
 
 const POINTER = 'version.json';
 const STATE = '_private/collector-state.json';
@@ -668,7 +669,7 @@ async function handleFetch(request, env, ctx) {
 }
 
 export default {
-  fetch: handleFetch,
+  fetch: withPreviewGate(handleFetch),
   async scheduled(_controller, env, ctx) {
     const task = collect(env).then(result => { console.log(JSON.stringify({ collector: result.status, checkedAt: result.checkedAt })); });
     if (ctx?.waitUntil) ctx.waitUntil(task);

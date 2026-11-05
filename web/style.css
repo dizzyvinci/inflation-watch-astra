@@ -100,3 +100,12 @@ footer.shell{display:grid;grid-template-columns:minmax(160px,1fr) minmax(0,640px
 .category-card .category-weight-meta{font-size:11px;line-height:1.65;white-space:normal}.category-card .category-item-count{font-size:12px}.category-average-weight,.category-total-weight{white-space:nowrap}
 
 .nx-comparison-panel>h2,.nx-comparison-panel>.eyebrow,.nx-comparison-panel>p:last-child{text-align:center}.nx-comparison-panel #comparison-card{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;margin:20px 0}.nx-comparison-panel .signal-group{min-width:0;border-right:1px solid var(--line);padding:5px 20px}.nx-comparison-panel .signal-group:first-child{padding-left:0}.nx-comparison-panel .signal-group:last-child{border-right:0;padding-right:0}.nx-comparison-panel .comparison-row{gap:10px}.nx-comparison-panel .comparison-method{line-height:1.8}@media(max-width:950px){.nx-comparison-panel #comparison-card{grid-template-columns:minmax(0,1fr)}.nx-comparison-panel .signal-group,.nx-comparison-panel .signal-group:first-child,.nx-comparison-panel .signal-group:last-child{border-right:0;border-bottom:1px solid var(--line);padding:18px 0}.nx-comparison-panel .signal-group:last-child{border-bottom:0}}
+
+/* More desktop room and readable section hierarchy; mobile gutters stay fixed. */
+@media(min-width:1001px){.shell{width:min(92vw,2000px)}}
+.page-heading h1{font-size:clamp(32px,2.5vw,46px);line-height:1.25}
+.section-heading h2,.panel>h2,.prose>h2{font-size:clamp(24px,1.8vw,32px);line-height:1.35}
+#category-title,#smega-title{font-size:clamp(26px,2vw,36px);line-height:1.35}
+.section-heading{margin-top:34px;margin-bottom:20px}
+.rate-hero h1.eyebrow{font-size:clamp(16px,1.1vw,20px);line-height:1.5}
+@media(max-width:700px){.page-heading h1{font-size:30px}.section-heading h2,.panel>h2,.prose>h2{font-size:23px}#category-title,#smega-title{font-size:24px}.section-heading{margin-top:27px;margin-bottom:17px}.rate-hero h1.eyebrow{font-size:15px}}

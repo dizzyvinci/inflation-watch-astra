@@ -1,0 +1,31 @@
+{
+  "currentVersion": 2,
+  "originalsPreserved": true,
+  "gameArt": "Nexon",
+  "variants": [
+    {
+      "file": "dishwasher-original-v1.png",
+      "sha256": "e0b36217ef56dd2bb4eae4fec7c2b3b85fdc25793c99ad9673674388a218f1c1",
+      "bytes": 270225,
+      "kind": "user-supplied screenshot"
+    },
+    {
+      "file": "dishwasher-original-v2.png",
+      "sha256": "b7ac1f8ddef281e7c88235323a548a4034d0126806871c499d1d95079234d60a",
+      "bytes": 227242,
+      "kind": "user-supplied screenshot"
+    },
+    {
+      "file": "dishwasher-transparent-v2.png",
+      "sha256": "caf2b80ac0e9aadd522164f547e3a4a6f79f4f63635d564423d1505d21e17944",
+      "bytes": 1123539,
+      "kind": "built-in image-generation edit of user screenshot"
+    },
+    {
+      "file": "dishwasher-pixel-v2.png",
+      "sha256": "207553da3b8daea4d8cf0e75a52d575c50327cbf769283218065f69395122e7e",
+      "bytes": 1038310,
+      "kind": "built-in image-generation edit of user screenshot"
+    }
+  ]
+}

@@ -4,24 +4,26 @@
 .banner-layout-options button[aria-pressed="true"]{border-color:var(--gold);background:var(--surface2);color:var(--gold)}
 .banner-layout-options button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
 .banner-layout-options small{font-size:10px}
-body[data-banner-layout="chart"] .rate-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;min-height:450px}
-body[data-banner-layout="chart"] .banner-preview-chart-slot{grid-column:1;min-width:0;padding:22px 12px 22px 18px;z-index:2}
+body[data-banner-layout="chart"] .rate-hero{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;min-height:480px;isolation:isolate}
+body[data-banner-layout="chart"] .banner-preview-chart-slot{grid-column:1;grid-row:1;min-width:0;padding:26px 16px 26px 22px;z-index:2}
 body[data-banner-layout="chart"] .banner-preview-chart-slot .section-heading{margin:0 0 14px;gap:9px}
-body[data-banner-layout="chart"] .banner-preview-chart-slot .section-heading h2{font-size:19px}
+body[data-banner-layout="chart"] .banner-preview-chart-slot .section-heading h2{font-size:22px}
 body[data-banner-layout="chart"] .banner-preview-chart-slot .chart-meta{padding:12px 10px;gap:10px}
 body[data-banner-layout="chart"] .banner-preview-chart-slot .chart-meta .legend{gap:8px 12px;font-size:10px}
 body[data-banner-layout="chart"] .banner-preview-chart-slot .chart{height:260px}
 body[data-banner-layout="chart"] .banner-preview-chart-slot .chart-foot{flex-wrap:wrap;gap:8px;padding:12px 10px}
-body[data-banner-layout="chart"] .hero-copy{grid-column:2;align-self:center;max-width:none;width:100%;padding:28px 12px;z-index:2;text-align:center}
+body[data-banner-layout="chart"] .hero-copy{grid-column:2 / 4;grid-row:1;align-self:center;justify-self:center;max-width:74%;width:100%;padding:38px 20px;z-index:2;text-align:center;background:transparent;text-shadow:0 2px 10px #101b25cc}
 body[data-banner-layout="chart"] .big-rate{flex-wrap:wrap;gap:8px;justify-content:center}
-body[data-banner-layout="chart"] .big-rate>span:first-child{font-size:clamp(60px,6vw,90px);letter-spacing:-3px}
+body[data-banner-layout="chart"] .big-rate>span:first-child{font-size:clamp(88px,6.5vw,128px);letter-spacing:-3px}
 body[data-banner-layout="chart"] .big-rate .rate-unit{padding:0}
 body[data-banner-layout="chart"] .big-rate .rate-unit small{position:static;width:auto;font-size:13px}
-body[data-banner-layout="chart"] .exact-rate{font-size:14px;max-width:36ch;margin:18px auto}
+body[data-banner-layout="chart"] .exact-rate{font-size:16px;max-width:45ch;margin:20px auto;color:#f0e8d4}
+body[data-banner-layout="chart"] .hero-copy .hero-asof{color:#f0e8d4;font-size:14px}
 body[data-banner-layout="chart"] .hero-bottom{flex-wrap:wrap;gap:9px;justify-content:center}
-body[data-banner-layout="chart"] .hero-art{position:relative;inset:auto;grid-column:3;width:100%;height:auto;min-height:340px;opacity:1}
-body[data-banner-layout="chart"] .hero-art .market-scene{background-size:auto 100%;background-position:right bottom}
-body[data-banner-layout="chart"] .hero-merchant{width:160px;max-width:65%;right:18px;bottom:30px}
-body[data-banner-layout="chart"] .hero-meso{right:190px;width:44px;height:44px;bottom:58px}
-@media(max-width:1199px){body[data-banner-layout="chart"] .rate-hero{grid-template-columns:minmax(0,1fr);min-height:0}body[data-banner-layout="chart"] .hero-copy{grid-column:1;grid-row:1;padding:28px 22px}body[data-banner-layout="chart"] .banner-preview-chart-slot{grid-column:1;grid-row:2;padding:12px 22px 22px}body[data-banner-layout="chart"] .banner-preview-chart-slot .chart{height:285px}body[data-banner-layout="chart"] .hero-art{grid-column:1;grid-row:3;min-height:220px}body[data-banner-layout="chart"] .hero-art::after{background:linear-gradient(180deg,#263225 0,transparent 70%)}body[data-banner-layout="chart"] .hero-art .market-scene{background-size:auto 260px}body[data-banner-layout="chart"] .hero-merchant{width:140px;right:28px;bottom:22px}body[data-banner-layout="chart"] .hero-meso{right:190px;bottom:48px}body[data-banner-layout="chart"] .big-rate>span:first-child{font-size:86px}}
-@media(max-width:600px){.banner-layout-options{gap:6px;padding:10px 0}.banner-layout-options small{flex-basis:100%;text-align:center}body[data-banner-layout="chart"] .banner-preview-chart-slot{padding:10px 10px 18px}body[data-banner-layout="chart"] .banner-preview-chart-slot .chart{height:260px}body[data-banner-layout="chart"] .big-rate>span:first-child{font-size:76px}}
+body[data-banner-layout="chart"] .hero-art{position:relative;inset:auto;grid-column:2 / 4;grid-row:1;width:100%;height:auto;min-height:480px;opacity:1;z-index:1}
+body[data-banner-layout="chart"] .hero-art .market-scene{background-size:cover;background-position:center bottom;opacity:.72}
+body[data-banner-layout="chart"] .hero-art::after{background:linear-gradient(90deg,#26322599,transparent 45%),linear-gradient(0deg,#14241955,#14241922)}
+body[data-banner-layout="chart"] .hero-merchant{width:180px;max-width:24%;height:auto;object-fit:contain;right:24px;bottom:26px;transform:none}
+body[data-banner-layout="chart"] .hero-meso{right:220px;width:48px;height:48px;bottom:54px}
+@media(max-width:1199px){body[data-banner-layout="chart"] .rate-hero{grid-template-columns:minmax(0,1fr);min-height:0}body[data-banner-layout="chart"] .hero-copy{grid-column:1;grid-row:1;max-width:100%;padding:32px 24px 170px}body[data-banner-layout="chart"] .banner-preview-chart-slot{grid-column:1;grid-row:2;padding:20px 22px 24px}body[data-banner-layout="chart"] .banner-preview-chart-slot .chart{height:285px}body[data-banner-layout="chart"] .hero-art{grid-column:1;grid-row:1;min-height:450px}body[data-banner-layout="chart"] .hero-art::after{background:linear-gradient(180deg,#263225aa,transparent 80%)}body[data-banner-layout="chart"] .hero-merchant{width:140px;max-width:35%;right:28px;bottom:22px}body[data-banner-layout="chart"] .hero-meso{right:190px;bottom:48px}body[data-banner-layout="chart"] .big-rate>span:first-child{font-size:86px}}
+@media(max-width:600px){.banner-layout-options{gap:6px;padding:10px 0}.banner-layout-options small{flex-basis:100%;text-align:center}body[data-banner-layout="chart"] .banner-preview-chart-slot{padding:18px 10px}body[data-banner-layout="chart"] .banner-preview-chart-slot .chart{height:260px}body[data-banner-layout="chart"] .big-rate>span:first-child{font-size:76px}body[data-banner-layout="chart"] .exact-rate{font-size:14px}}

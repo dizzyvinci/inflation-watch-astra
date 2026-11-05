@@ -1,0 +1,229 @@
+(() => {
+  'use strict';
+  const footer = document.querySelector('footer');
+  if (!footer || document.documentElement.dataset.privacyControlsLoaded) return;
+  document.documentElement.dataset.privacyControlsLoaded = 'true';
+
+  // A new purpose/version must use a new key rather than inherit old consent.
+  const preferenceKey = 'inflation-optional-analytics-consent-v1';
+  const scriptId = 'optional-cloudflare-analytics';
+  const approvedSource = 'https://static.cloudflareinsights.com/beacon.min.js';
+  const forcedOffParameter = 'optional-analytics';
+  const panels = [];
+  let choice = 'off';
+  let generation = 0;
+  let controller;
+  let loading;
+  let scriptAdded = false;
+  let message = '';
+
+  const make = (tag, className, text) => {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  };
+  const save = value => {
+    try { localStorage.setItem(preferenceKey, value); return true; }
+    catch { return false; }
+  };
+  const hasForcedOff = () => {
+    try { return new URL(window.location.href).searchParams.get(forcedOffParameter) === 'off'; }
+    catch { return false; }
+  };
+  const unexpectedBeacon = () => [...document.querySelectorAll('script[src]')].some(script => {
+    if (script.id === scriptId) return false;
+    try {
+      const url = new URL(script.src, window.location.href);
+      return url.origin === 'https://static.cloudflareinsights.com' && /^\/beacon\.min\.js(?:\/|$)/.test(url.pathname);
+    } catch { return false; }
+  });
+
+  function update() {
+    for (const panel of panels) {
+      panel.state.textContent = choice === 'on'
+        ? 'Optional Cloudflare performance metrics on' : 'Optional browser analytics off';
+      panel.feedback.textContent = message;
+      for (const button of panel.buttons) button.setAttribute('aria-pressed', String(button.dataset.analyticsChoice === choice));
+    }
+  }
+
+  function clearOwnedScript() {
+    document.getElementById(scriptId)?.remove();
+  }
+
+  function useOff() {
+    const reloadNeeded = choice === 'on' || scriptAdded;
+    choice = 'off';
+    generation++;
+    controller?.abort();
+    controller = undefined;
+    loading = undefined;
+    clearOwnedScript();
+    const saved = save('off');
+    message = reloadNeeded
+      ? 'Reloading this page with optional analytics off. Removing a script alone cannot stop code already loaded.'
+      : 'No optional analytics script is loaded by this control.';
+    if (unexpectedBeacon()) message += ' A separate hosting-injected script is present; its server configuration must also be corrected.';
+    if (!saved) message += ' Browser storage is unavailable; the choice cannot be saved normally.';
+    update();
+    if (reloadNeeded) {
+      // If withdrawal cannot be saved, keep an explicit OFF override through reload.
+      // Preserve the existing route/hash and unrelated display preferences.
+      if (!saved) {
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set(forcedOffParameter, 'off');
+          window.history.replaceState(window.history.state, '', url);
+        } catch { /* A blocked store is also treated as OFF at startup. */ }
+      }
+      window.location.reload();
+    }
+  }
+
+  function validateConfig(config) {
+    if (!config || config.mode !== 'manual' || config.provider !== 'cloudflare-web-analytics' || config.automaticInjection !== false
+      || config.scriptUrl !== approvedSource || typeof config.beaconToken !== 'string'
+      || !/^[a-f0-9]{32}$/i.test(config.beaconToken)) throw new Error('Optional analytics is not configured for manual loading.');
+    if (config.integrity !== undefined && (typeof config.integrity !== 'string'
+      || !/^sha(?:256|384|512)-[A-Za-z0-9+/]+={0,2}(?:\s+sha(?:256|384|512)-[A-Za-z0-9+/]+={0,2})*$/.test(config.integrity))) {
+      throw new Error('Optional analytics integrity configuration is invalid.');
+    }
+    return config;
+  }
+
+  async function enable(savedConsent = false) {
+    if (choice === 'on' && (loading || document.getElementById(scriptId))) return;
+    if (unexpectedBeacon()) {
+      choice = 'off'; save('off');
+      message = 'An analytics script added outside this control is present. Hosting configuration must be corrected; this switch cannot undo previously loaded code.';
+      update(); return;
+    }
+    if (!save('on')) {
+      choice = 'off';
+      message = 'Browser storage is unavailable. Optional analytics stays off.';
+      update(); return;
+    }
+    if (!savedConsent && hasForcedOff()) {
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.delete(forcedOffParameter);
+        window.history.replaceState(window.history.state, '', url);
+      } catch { /* This explicit click still authorizes this document only. */ }
+    }
+    choice = 'on';
+    const current = ++generation;
+    controller = new AbortController();
+    message = savedConsent ? 'Restoring your saved On choice. Loading optional Cloudflare metrics.' : 'Your choice is on. Loading optional Cloudflare metrics.';
+    update();
+    loading = (async () => {
+      try {
+        // No request is made at all before consent (or for an OFF/invalid choice).
+        const response = await window.fetch('/analytics-config.json', {
+          cache: 'no-store', credentials: 'omit', redirect: 'error', signal: controller.signal,
+        });
+        if (response.status === 401 || response.status === 403) throw new Error('Unlock this site again before enabling optional metrics.');
+        if (!response.ok) throw new Error('Optional analytics configuration is unavailable.');
+        const contentType = response.headers?.get?.('content-type');
+        if (contentType && !/\bapplication\/(?:[a-z0-9.+-]*\+)?json\b/i.test(contentType)) {
+          throw new Error('Configuration is not JSON; unlock this site again if your session expired.');
+        }
+        const config = validateConfig(await response.json());
+        if (choice !== 'on' || current !== generation) return;
+        if (document.getElementById(scriptId)) return;
+        const script = document.createElement('script');
+        script.id = scriptId;
+        script.type = 'module';
+        script.src = approvedSource;
+        // Cloudflare documents spa:false for its manual embedding approach:
+        // https://developers.cloudflare.com/web-analytics/get-started/web-analytics-spa/
+        script.dataset.cfBeacon = JSON.stringify({ token: config.beaconToken, spa: false });
+        if (config.integrity) { script.integrity = config.integrity; script.crossOrigin = 'anonymous'; }
+        script.addEventListener('load', () => {
+          if (choice !== 'on' || current !== generation) return;
+          message = 'The optional Cloudflare script is enabled. Metrics may now be processed; delivery is not guaranteed.';
+          update();
+        });
+        script.addEventListener('error', () => {
+          if (choice !== 'on' || current !== generation) return;
+          message = 'Your choice is on, but the optional script could not load. Prices and features still work. Turn it off to reload without the script.';
+          update();
+        });
+        scriptAdded = true;
+        document.head.append(script);
+      } catch (error) {
+        if (choice !== 'on' || current !== generation) return;
+        choice = 'off'; save('off');
+        message = 'Optional analytics stays off: ' + (error instanceof Error ? error.message : 'configuration could not be loaded.');
+        update();
+      } finally {
+        if (current === generation) loading = undefined;
+      }
+    })();
+    await loading;
+  }
+
+  function addPanel(parent, id, headingText) {
+    const panel = make('section', 'privacy-controls-panel'); panel.id = id;
+    panel.setAttribute('aria-labelledby', id + '-title');
+    const heading = make('h2', '', headingText); heading.id = id + '-title';
+    const state = make('p', 'privacy-choice-state');
+    const explanation = make('p', 'privacy-choice-description', 'With On, Cloudflare may process page views, visited/referring URLs, device and browser information, and performance measurements. This is voluntary and does not affect prices, market feeds or features.');
+    explanation.id = id + '-description';
+    const options = make('div', 'privacy-choice-options');
+    options.setAttribute('role', 'group'); options.setAttribute('aria-label', 'Optional Cloudflare browser metrics');
+    const buttons = ['off', 'on'].map(value => {
+      const button = make('button', 'privacy-choice-button', value === 'off' ? 'Off (default)' : 'On (optional)');
+      button.type = 'button'; button.dataset.analyticsChoice = value;
+      button.setAttribute('aria-describedby', explanation.id);
+      button.addEventListener('click', () => { if (value === 'on') enable(); else useOff(); });
+      options.append(button); return button;
+    });
+    const limitation = make('p', 'privacy-choice-limits', 'Turning this off reloads the current page to stop the optional script. Hosting security logs and aggregate request counts can still exist in both modes; this browser switch cannot remove them.');
+    const feedback = make('p', 'privacy-choice-feedback');
+    feedback.setAttribute('role', 'status'); feedback.setAttribute('aria-live', 'polite');
+    panel.append(heading, state, explanation, options, limitation, feedback);
+    parent.append(panel); panels.push({ panel, state, buttons, feedback });
+    return panel;
+  }
+
+  addPanel(footer, 'privacy-controls', 'Your privacy choice');
+  function addPrivacyDisclosure() {
+    const privacy = document.getElementById('view-privacy');
+    const prose = privacy?.querySelector('.community-prose');
+    if (!prose || document.getElementById('privacy-analytics-controls')) return !!prose;
+    const intro = prose.querySelector('p');
+    if (intro) intro.textContent = 'This note describes inflation.gg, maintained by DishWasher. There are no visitor accounts or ads. Optional Cloudflare browser metrics are off by default and are controlled by the choice below, including a saved On choice.';
+    const panel = addPanel(prose, 'privacy-analytics-controls', 'Optional performance metrics');
+    if (intro) intro.after(panel);
+    const sources = make('p', 'privacy-choice-sources');
+    for (const [label, href] of [
+      ['Cloudflare data collection', 'https://developers.cloudflare.com/web-analytics/data-metrics/data-origin-and-collection/'],
+      ['Metric dimensions', 'https://developers.cloudflare.com/web-analytics/data-metrics/dimensions/'],
+    ]) {
+      if (sources.childNodes.length) sources.append(document.createTextNode(' · '));
+      const link = make('a', '', label); link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer'; sources.append(link);
+    }
+    panel.append(sources);
+    update(); return true;
+  }
+  if (!addPrivacyDisclosure()) {
+    const observer = new MutationObserver(() => { if (addPrivacyDisclosure()) observer.disconnect(); });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+  if (unexpectedBeacon()) message = 'An analytics script added outside this control is present. Hosting configuration must be corrected; the Off setting cannot undo code already loaded.';
+  else message = 'No optional analytics script is loaded by this control.';
+  update();
+  let saved;
+  try { saved = localStorage.getItem(preferenceKey); } catch { /* OFF is the safe default. */ }
+  if (hasForcedOff()) save('off');
+  else if (saved === 'on') enable(true);
+
+  // A withdrawal in another tab or restored page must not revive a loaded beacon.
+  window.addEventListener('storage', event => { if (event.key === preferenceKey && event.newValue !== 'on' && choice === 'on') useOff(); });
+  window.addEventListener('pageshow', event => {
+    if (!event.persisted || choice !== 'on') return;
+    try { if (localStorage.getItem(preferenceKey) !== 'on') useOff(); }
+    catch { useOff(); }
+  });
+})();

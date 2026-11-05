@@ -1,0 +1,7 @@
+{
+  "mode": "manual",
+  "provider": "cloudflare-web-analytics",
+  "automaticInjection": false,
+  "scriptUrl": "https://static.cloudflareinsights.com/beacon.min.js",
+  "beaconToken": "f63ad1fd48e34bf2ab679b1af36e1ad3"
+}

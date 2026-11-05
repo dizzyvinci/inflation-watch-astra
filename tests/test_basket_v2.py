@@ -153,7 +153,7 @@ class BasketV2Tests(unittest.TestCase):
         engine.atomic(self.root / 'history' / 'private-source.json', {'secret': 'private'})
         web = self.root / 'web'
         web.mkdir()
-        for filename in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', '_headers', 'sw.js'):
+        for filename in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', 'privacy-controls.js', 'privacy-controls.css', 'analytics-config.json', 'preview-runtime.js', 'preview-runtime.css', 'author-portrait.js', 'author-portrait.css', '_headers', 'sw.js'):
             (web / filename).write_text('fixture', encoding='utf-8')
         with patch('icons.write_icons'):
             engine.write_site(report)

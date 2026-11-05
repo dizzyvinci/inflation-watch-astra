@@ -1,7 +1,19 @@
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com/beacon.min.js; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://cloudflareinsights.com/cdn-cgi/rum; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'self'
+# Defense against automatic analytics injection on known HTML entry paths.
+# Dashboard auto-injection must also stay disabled; this permits manual opt-in only.
+/
+  Cache-Control: public, max-age=0, must-revalidate, no-transform
+/index
+  Cache-Control: public, max-age=0, must-revalidate, no-transform
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate, no-transform
+/404
+  Cache-Control: public, max-age=0, must-revalidate, no-transform
+/404.html
+  Cache-Control: public, max-age=0, must-revalidate, no-transform
 /version.json
   Cache-Control: public, max-age=0, must-revalidate
 /data-*.json
@@ -9,4 +21,6 @@
 /assets/*
   Cache-Control: public, max-age=86400
 /fallback.html
-  Cache-Control: public, max-age=60, stale-if-error=86400
+  Cache-Control: public, max-age=60, stale-if-error=86400, no-transform
+/fallback
+  Cache-Control: public, max-age=60, stale-if-error=86400, no-transform
