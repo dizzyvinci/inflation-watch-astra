@@ -1,1 +1,1 @@
-{"status":"unchanged","checkedAt":"2026-11-05T05:54:02+00:00","etag":"W/\"db639-1a1a6e3d318\"","lastModified":"Wed, 04 Nov 2026 14:08:31 GMT","detail":"Public developer feed; source publishes daily aggregates."}
+{"status":"degraded","checkedAt":"2026-11-05T08:51:39+00:00","etag":"W/\"db639-1a1a6e3d318\"","lastModified":"Wed, 04 Nov 2026 14:08:31 GMT","detail":"Source unavailable; using last good data. HTTP 521; provider retry delay honored","nextAllowedAt":"2026-11-05T08:53:39+00:00"}
