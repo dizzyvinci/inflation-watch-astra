@@ -33,6 +33,19 @@ try{
  f.w.eval(script);assert.equal(f.doc.querySelectorAll('#view-price-check').length,1);assert.equal(f.doc.querySelectorAll('.price-check-nav').length,1);assert.equal(f.doc.querySelector('.brand'),originalBrand);assert.equal(f.doc.querySelector('.brand').getAttribute('href'),'#index');assert.equal(f.doc.querySelector('.header-status').innerHTML,originalClock);assert.equal(f.doc.querySelector('footer').textContent,'Personal words unchanged.');assert.deepEqual({...f.calls,ready:0},{fetch:0,xhr:0,beacon:0,ready:0});assert.deepEqual(f.errors,[]);
 }finally{f.close();}
 const large=JSON.parse(JSON.stringify(data));large.contextItems=[];large.rows=Array.from({length:61},(_,i)=>qualified('good-'+i,'Good '+i,i+1));f=fixture(large);try{search(f,'Good');assert.equal(results(f).length,25);click(f,'[data-price-page="next"]');assert.equal(results(f).length,25);click(f,'[data-price-page="next"]');assert.equal(results(f).length,11);assert(f.doc.querySelector('[data-price-page="next"]').disabled);}finally{f.close();}
+// Reproduce a right-edge search field with a classic vertical scrollbar, then resize to mobile.
+f=fixture();try{
+ Object.defineProperty(f.w,'innerWidth',{configurable:true,value:1280});Object.defineProperty(f.w,'innerHeight',{configurable:true,value:720});
+ Object.defineProperty(f.doc.documentElement,'clientWidth',{configurable:true,value:1265});Object.defineProperty(f.doc.documentElement,'clientHeight',{configurable:true,value:705});
+ const field=f.doc.getElementById('price-check-header-query'),popup=f.doc.querySelector('.price-check-autocomplete');
+ field.getBoundingClientRect=()=>({left:1034.875,top:340.5,bottom:380,width:210});type(f,'Iron');
+ assert.equal(popup.style.left,'917px');assert.equal(popup.style.top,'385px');assert.equal(popup.style.maxHeight,'312px');
+ assert.equal(parseFloat(popup.style.left)+parseFloat(popup.style.width),1257,'Right edge leaves8px before the actual scrollbar');
+ Object.defineProperty(f.doc.documentElement,'clientWidth',{configurable:true,value:375});Object.defineProperty(f.doc.documentElement,'clientHeight',{configurable:true,value:600});
+ field.getBoundingClientRect=()=>({left:220,top:520,bottom:560,width:180});f.w.dispatchEvent(new f.w.Event('resize'));
+ assert.equal(popup.style.left,'27px');assert.equal(popup.style.top,'8px');assert.equal(popup.style.maxHeight,'507px');assert.equal(popup.style.width,'340px');
+ assert.deepEqual(f.errors,[]);assert.equal(f.calls.fetch,0);
+}finally{f.close();}
 f=fixture();try{
  type(f,'');assert.equal(options(f).length,6);key(f,'ArrowDown');assert.equal(options(f)[0].getAttribute('aria-selected'),'true');key(f,'ArrowUp');assert.equal(options(f).at(-1).getAttribute('aria-selected'),'true','Arrow navigation wraps');
  type(f,'Iron',f.doc.getElementById('price-check-query'));assert.equal(f.doc.getElementById('price-check-header-query').value,'Iron');assert.equal(f.doc.getElementById('price-check-query').getAttribute('aria-expanded'),'true');assert.equal(f.doc.getElementById('price-check-header-query').getAttribute('aria-expanded'),'false');f.doc.querySelector('.price-check-view-all').click();assert.equal(f.w.location.hash,'#price-check');assert(f.doc.querySelector('.price-check-autocomplete').hidden);

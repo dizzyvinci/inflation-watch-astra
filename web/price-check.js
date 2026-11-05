@@ -81,7 +81,16 @@
   categorySelect.addEventListener('change',()=>{categoryChoice=categorySelect.value;pageIndex=0;draw();});
   const matches=row=>[row.name,row.type,row.slug,row.id].join(' ').toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
   function closeSuggestions(){popup.hidden=true;activeIndex=-1;suggestions=[];for(const field of [headerInput,input]){field.setAttribute('aria-expanded','false');field.removeAttribute('aria-activedescendant');}}
-  function positionSuggestions(){if(popup.hidden||!activeInput)return;const rect=activeInput.getBoundingClientRect(),width=Math.min(Math.max(rect.width,340),Math.max(0,window.innerWidth-16)),below=Math.max(0,window.innerHeight-rect.bottom-13),above=Math.max(0,rect.top-13),up=below<220&&above>below,height=Math.min(520,up?above:below);popup.style.width=width+'px';popup.style.left=Math.max(8,Math.min(rect.left,window.innerWidth-width-8))+'px';popup.style.top=Math.max(8,up?rect.top-height-5:rect.bottom+5)+'px';popup.style.maxHeight=height+'px';}
+  function positionSuggestions(){
+    if(popup.hidden||!activeInput)return;
+    // innerWidth includes a classic scrollbar; fixed overlays must fit the usable viewport.
+    const viewportWidth=document.documentElement.clientWidth||window.innerWidth;
+    const viewportHeight=document.documentElement.clientHeight||window.innerHeight;
+    const rect=activeInput.getBoundingClientRect(),width=Math.min(Math.max(rect.width,340),Math.max(0,viewportWidth-16));
+    const below=Math.max(0,viewportHeight-rect.bottom-13),above=Math.max(0,rect.top-13),up=below<220&&above>below,height=Math.min(520,up?above:below);
+    popup.style.width=width+'px';popup.style.left=Math.max(8,Math.min(rect.left,viewportWidth-width-8))+'px';
+    popup.style.top=Math.max(8,up?rect.top-height-5:rect.bottom+5)+'px';popup.style.maxHeight=height+'px';
+  }
   function setActive(index){activeIndex=index;[...list.children].forEach((option,i)=>option.setAttribute('aria-selected',String(i===index)));if(index>=0&&suggestions[index])activeInput?.setAttribute('aria-activedescendant','price-check-option-'+index);else activeInput?.removeAttribute('aria-activedescendant');list.children[index]?.scrollIntoView?.({block:'nearest'});}
   function drawSuggestions(){
     if(popup.hidden||!activeInput)return;const text=query.trim().toLocaleLowerCase(),all=records.filter(matches).sort((a,b)=>{const rank=row=>row.name.toLocaleLowerCase()===text?0:row.name.toLocaleLowerCase().startsWith(text)?1:2;return rank(a)-rank(b)||a.name.localeCompare(b.name)||a.key.localeCompare(b.key);});

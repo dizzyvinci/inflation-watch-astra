@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T21:54:22+00:00",
+  "exportedAt": "2026-11-05T22:20:17+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7543,7 +7543,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "c5bd438a65674e71986402fefc7553044d7b60d53f000d452e6fd473f3e7b883"
+      "sha256": "6955f802f5152cabb8e27c5939f9370168a59fda741e2036148709297493d3cb"
     },
     {
       "path": "cache/market.json",
@@ -7628,7 +7628,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "30c01f0fb0788a109f744313092cb6b4460022628a204e17bae31ea110c1a120"
+      "sha256": "56f9ca5903d81f3c57c9723e1c6b18fd4f7888d55617013517f67710f98ecce7"
     },
     {
       "path": "dist/_headers",
@@ -15781,6 +15781,11 @@
       "sha256": "edd27d52c42a0bf6ea40633dea02e14b63eabd8523c96c68d191edf45bc99521"
     },
     {
+      "path": "dist/astra-ui-f0b3ca4ce19dc653.js",
+      "bytes": 367778,
+      "sha256": "f0b3ca4ce19dc653795f6bba1add23c6c86861535a5fe31164651cea77d7bb55"
+    },
+    {
       "path": "dist/author-portrait.css",
       "bytes": 2558,
       "sha256": "0e81174243f97f7732287943c6bbf1c18ab7c11f6b9864fc01b56d96955ea25e"
@@ -15986,6 +15991,11 @@
       "sha256": "6eda6c9c64ca1f05e345d5611f9edee717a1b75a2a6a7b762ab115fcc8c8d7d9"
     },
     {
+      "path": "dist/data-80474ab1026b2954.json",
+      "bytes": 992898,
+      "sha256": "80474ab1026b29546b1d11c4475342090f0c8e4d21f9e8f514653e6d90dc5491"
+    },
+    {
       "path": "dist/data-8da04b6a5d7d6150.json",
       "bytes": 218967,
       "sha256": "8da04b6a5d7d6150788b9866f2fa48165d8cc14320bd8f7bc760186c384b45a7"
@@ -16078,7 +16088,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "391a3ea10fa90413870b1b2893bdc1030bc7bec9c97027d60cc1d27ae1820c8d"
+      "sha256": "80474ab1026b29546b1d11c4475342090f0c8e4d21f9e8f514653e6d90dc5491"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16098,7 +16108,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "30c01f0fb0788a109f744313092cb6b4460022628a204e17bae31ea110c1a120"
+      "sha256": "56f9ca5903d81f3c57c9723e1c6b18fd4f7888d55617013517f67710f98ecce7"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16133,7 +16143,7 @@
     {
       "path": "dist/index.html",
       "bytes": 50498,
-      "sha256": "ac92730e8e48dac7fa640534a7107befbb652ea0f78191badba45fa1957e39fc"
+      "sha256": "539e4081dacad6cbc3ad523763baed1bd0d3a4910eb99e0bb0205530efdf0f0a"
     },
     {
       "path": "dist/layout-preview.css",
@@ -16242,8 +16252,8 @@
     },
     {
       "path": "dist/price-check.js",
-      "bytes": 29910,
-      "sha256": "d062af1d9159ba69eea8afb52e9bac521467bd82ed0e1374f97f0b950c0756f0"
+      "bytes": 30190,
+      "sha256": "8c0d0b50985cf2bb92b5251b262bca1064fced8315e0fd755ec53c458c8502e2"
     },
     {
       "path": "dist/privacy-controls.css",
@@ -16353,12 +16363,12 @@
     {
       "path": "dist/ui-bundles.json",
       "bytes": 9766,
-      "sha256": "80dee4d27a282157dd44cefe6a811c23d1fe7735fb92f149ca00314776e85bd8"
+      "sha256": "5a67c142e5f8b949d767e69dea3e3524a823d7175f143fac6a174634ba0291bc"
     },
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "b5f3772c96279b7a96b3e7778f26222cce3d4bc1234c723a3f7947dce0d35387"
+      "sha256": "27ae51dfe1b79f72704ab1837b77ed0bb7ab2d47cf8f633eec77d2616768ba8e"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16802,8 +16812,8 @@
     },
     {
       "path": "tests/price-check.cjs",
-      "bytes": 16822,
-      "sha256": "30ffd6c6cb87bbaf6f4801b56a6bf08a2335b6b4b1ea7ab8c8ce6238709b3784"
+      "bytes": 18275,
+      "sha256": "b5986c3d3134b4902c9dad697b448ac5c174ff63c3cee4327e7c9cd9bb9b6b02"
     },
     {
       "path": "tests/privacy-controls.cjs",
@@ -17297,8 +17307,8 @@
     },
     {
       "path": "web/price-check.js",
-      "bytes": 29910,
-      "sha256": "d062af1d9159ba69eea8afb52e9bac521467bd82ed0e1374f97f0b950c0756f0"
+      "bytes": 30190,
+      "sha256": "8c0d0b50985cf2bb92b5251b262bca1064fced8315e0fd755ec53c458c8502e2"
     },
     {
       "path": "web/privacy-controls.css",
