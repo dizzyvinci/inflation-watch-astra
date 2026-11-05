@@ -63,7 +63,20 @@ async function readPointer(env) {
   if (!env.SNAPSHOTS) return fallbackPointer('storage_unavailable');
   try {
     const { value } = await getJson(env.SNAPSHOTS, POINTER);
-    return validPointer(value) ? value : fallbackPointer(value ? 'invalid_pointer' : 'awaiting_collector');
+    if (!validPointer(value)) return fallbackPointer(value ? 'invalid_pointer' : 'awaiting_collector');
+    if (value.mode === 'seed_fallback' && value.version !== seedVersion.version) {
+      // A prior deployment may have stored only its fallback pointer, with no
+      // R2 report object. Its compiled asset disappears on upgrade. Serve this
+      // deployment's seed while retaining the actual prior collection result.
+      return {
+        ...fallbackPointer(),
+        sourceStatus: { ...value.sourceStatus, fallback: 'current_compiled_seed' },
+        lastSuccessfulFetchAt: value.lastSuccessfulFetchAt ?? null,
+        nextAllowedAt: value.nextAllowedAt ?? null,
+        fallbackDetail: 'Serving the current compiled dated seed after a code update; prior collector status is retained, with no new source fetch implied.',
+      };
+    }
+    return value;
   } catch {
     return fallbackPointer('storage_unavailable');
   }
@@ -253,8 +266,13 @@ export async function collect(env, options = {}) {
     if (state.etag) headers.set('If-None-Match', state.etag);
     if (state.lastModified) headers.set('If-Modified-Since', state.lastModified);
     const response = await (options.fetcher ?? fetch)(config.feed_url, {
-      headers, signal: AbortSignal.timeout(20_000), redirect: 'error',
+      // workerd supports follow/manual, not the browser/Node 'error' mode.
+      // Handle redirects ourselves so collection never follows an unknown host.
+      headers, signal: AbortSignal.timeout(20_000), redirect: 'manual',
     });
+    if (response.status >= 300 && response.status < 400 && response.status !== 304) {
+      throw new Error(`Source redirect rejected (HTTP ${response.status}); configured source URL remains fixed`);
+    }
     if (response.status === 429) {
       const nextAllowedAt = retryTime(response.headers.get('Retry-After'), now());
       const error = new Error('Source HTTP 429; retry cooldown honored');

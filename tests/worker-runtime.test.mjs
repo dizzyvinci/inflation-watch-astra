@@ -108,6 +108,35 @@ test('startup and unavailable storage return the compiled dated seed without ups
   } finally { globalThis.fetch = savedFetch; }
 });
 
+test('a prior deployment seed-fallback pointer resolves to the current compiled seed without changing collection clocks or R2', async () => {
+  const bucket = new FakeR2();
+  const oldVersion = compiledVersion.version === 'aaaaaaaaaaaaaaaa' ? 'bbbbbbbbbbbbbbbb' : 'aaaaaaaaaaaaaaaa';
+  const old = {
+    ...clone(compiledVersion), version: oldVersion, data: `data-${oldVersion}.json`,
+    basketVersion: seed.basketVersion, mode: 'seed_fallback',
+    sourceStatus: { status: 'degraded', checkedAt: '2026-11-05T04:33:00Z', lastSuccessfulFetchAt: null, detail: 'Prior scheduled collection failed; retaining dated data.' },
+    lastSuccessfulFetchAt: null, nextAllowedAt: '2026-11-05T04:43:00Z',
+  };
+  bucket.raw(POINTER, old);
+  const env = envFor(bucket);
+  const current = await (await request(env, '/version.json')).json();
+  assert.equal(current.version, compiledVersion.version);
+  assert.equal(current.data, compiledVersion.data);
+  assert.equal(current.builtAt, compiledVersion.builtAt);
+  assert.equal(current.sourceUpdatedAt, compiledVersion.sourceUpdatedAt);
+  assert.equal(current.mode, 'seed_fallback');
+  for (const key of ['status', 'checkedAt', 'lastSuccessfulFetchAt', 'detail']) assert.equal(current.sourceStatus[key], old.sourceStatus[key]);
+  assert.equal(current.sourceStatus.fallback, 'current_compiled_seed');
+  assert.equal(current.lastSuccessfulFetchAt, null);
+  assert.equal(current.nextAllowedAt, old.nextAllowedAt);
+  const body = await request(env, `/${current.data}`);
+  assert.equal(body.status, 200);
+  assert.equal((await body.json()).basketVersion, seed.basketVersion);
+  assert.equal((await (await request(env, '/health.json')).json()).checkedAt, old.sourceStatus.checkedAt);
+  assert.equal(bucket.events.filter(event => event.op === 'put').length, 0);
+  assert.deepEqual(bucket.read(POINTER), old);
+});
+
 test('successful collection writes an immutable snapshot before the final public pointer', async () => {
   const bucket = new FakeR2();
   let call;
@@ -115,7 +144,7 @@ test('successful collection writes an immutable snapshot before the final public
   assert.equal(result.status, 'published', result.detail);
   assert.equal(call[0], cfg.feed_url);
   assert.match(call[1].headers.get('User-Agent'), /github.com\/dizzyvinci\/inflation-watch-astra/);
-  assert.equal(call[1].redirect, 'error');
+  assert.equal(call[1].redirect, 'manual');
   assert.ok(call[1].signal instanceof AbortSignal);
   const pointer = bucket.read(POINTER);
   assert.match(pointer.data, /^data-[a-f0-9]{16}\.json$/);
@@ -218,6 +247,29 @@ test('malformed, future and regressed sources keep last-good data and mark check
     assert.equal(next.sourceStatus.checkedAt, new Date(NOW + 600_000).toISOString());
     assert.equal(bucket.values.get(pointer.data).text, before);
   }
+});
+
+test('manual redirect handling rejects a 302 without following its destination or replacing last-good data', async () => {
+  const { bucket, env, pointer } = await initialize();
+  const beforeState = bucket.read(STATE);
+  const offset = bucket.events.length;
+  const calls = [];
+  const result = await collect(env, { now: NOW + 600_000, fetcher: async (url, init) => {
+    calls.push(url);
+    assert.equal(init.redirect, 'manual');
+    return new Response(null, { status: 302, headers: { Location: 'https://different-host.invalid/market.json' } });
+  } });
+  assert.equal(result.status, 'degraded');
+  assert.match(result.detail, /redirect rejected \(HTTP 302\)/);
+  assert.deepEqual(calls, [cfg.feed_url]);
+  const next = bucket.read(POINTER);
+  for (const key of ['version', 'data', 'builtAt', 'sourceUpdatedAt', 'lastSuccessfulFetchAt']) {
+    assert.equal(next[key], pointer[key], key);
+  }
+  assert.equal(next.sourceStatus.status, 'degraded');
+  assert.equal(next.sourceStatus.checkedAt, new Date(NOW + 600_000).toISOString());
+  assert.equal(bucket.read(STATE).feedHash, beforeState.feedHash);
+  assert.ok(!bucket.events.slice(offset).some(event => event.op === 'put' && event.key.startsWith('data-')));
 });
 
 test('429 Retry-After persists a cooldown and future schedule checks skip upstream', async () => {

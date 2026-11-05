@@ -6,8 +6,8 @@
   "files": [
     {
       "path": ".github/workflows/validate.yml",
-      "bytes": 468,
-      "sha256": "5910cc7f4fa4782a85de72770a9712cdc6c23010ce4549ea4fd68a04a7858577"
+      "bytes": 700,
+      "sha256": "e810bc48aa2f5c795ea37dfaf845150015934b6a66b003c6f7f03269bf0ca9b1"
     },
     {
       "path": ".gitignore",
@@ -16,13 +16,13 @@
     },
     {
       "path": "DEPLOYMENT.md",
-      "bytes": 7790,
-      "sha256": "139924c9dcae89424d7b51175e9f19cd40b90b665089f247ca00a62b93ab8cb4"
+      "bytes": 9414,
+      "sha256": "3e44b945d4afea339e2a1c7c7da3d214d57c5ec3f9c1c8e54e94905f8bdf709c"
     },
     {
       "path": "README.md",
-      "bytes": 4947,
-      "sha256": "9c298441e5af9efd9b7a31b63bba0b29c2cc18bfbcc66dfd2df0a870102310f1"
+      "bytes": 5923,
+      "sha256": "02b01af5aa8476f5597d5d2b33b8e9633b6fb061ba1d5f30b13c4c6df8a0478f"
     },
     {
       "path": "Start-Preview.ps1",
@@ -716,8 +716,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 47950,
-      "sha256": "7e68eee94fb6905397a5ece06e6e3f13624f9cfbd6cb35638b308a8ed4e2bf36"
+      "bytes": 49859,
+      "sha256": "71371914586bb660c254d48592b3aaa5f0b87a93b03a2c9712431368840553ed"
     },
     {
       "path": "dist/assets/animal-fur-bundle.png",
@@ -1911,13 +1911,13 @@
     },
     {
       "path": "dist/index.html",
-      "bytes": 26265,
-      "sha256": "daacbf5537a40a25b8a6ec6a41613cbd800eacfaf31c4a5b7c5de78e8c3162a0"
+      "bytes": 26549,
+      "sha256": "1ec19f524516560b0890649ae6c92a61909d7ff23a107816b24ff9f62836134f"
     },
     {
       "path": "dist/style.css",
-      "bytes": 31996,
-      "sha256": "fee84fbf880f49a5821691bef80cc8f9af638d55bd163332952dcc0182b1f869"
+      "bytes": 33249,
+      "sha256": "c9f0e19b18bfb35bfad6b113382874897a83c0aac6472ad786b3ba5bbe4c9eca"
     },
     {
       "path": "dist/sw.js",
@@ -1976,8 +1976,8 @@
     },
     {
       "path": "ops/worker.mjs",
-      "bytes": 21173,
-      "sha256": "8e5ea636de2a65c919e5ea53408fc858366b409ba179f0231c3e232e32d7f6e8"
+      "bytes": 22294,
+      "sha256": "d2217e1f96cb4ea03a8224d8788fa2eeaacbf86c0160cd8f0f9995fe21ccc88d"
     },
     {
       "path": "ops/wrangler.jsonc",
@@ -2016,8 +2016,8 @@
     },
     {
       "path": "tests/dom.cjs",
-      "bytes": 9475,
-      "sha256": "990211723eff5407282b9828e943ae1cc4385a19acaa2e0480ee79b06c519479"
+      "bytes": 12707,
+      "sha256": "822871173767710383421a7eac602d1569994de5ab88dba7d633c8a8f0003dee"
     },
     {
       "path": "tests/test_adapters.py",
@@ -2061,8 +2061,8 @@
     },
     {
       "path": "tests/worker-runtime.test.mjs",
-      "bytes": 22059,
-      "sha256": "4f899692645d3ddfc9163228af524a8149e45895efd654cc5a6c986ce71c0292"
+      "bytes": 25114,
+      "sha256": "38732e29ec70b4a2b4af0fee39fbb3adcdb45987201e5915b9045b498f6ab3a9"
     },
     {
       "path": "web/_headers",
@@ -2071,23 +2071,25 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 47950,
-      "sha256": "7e68eee94fb6905397a5ece06e6e3f13624f9cfbd6cb35638b308a8ed4e2bf36"
+      "bytes": 49859,
+      "sha256": "71371914586bb660c254d48592b3aaa5f0b87a93b03a2c9712431368840553ed"
     },
     {
       "path": "web/index.html",
-      "bytes": 26265,
-      "sha256": "daacbf5537a40a25b8a6ec6a41613cbd800eacfaf31c4a5b7c5de78e8c3162a0"
+      "bytes": 26549,
+      "sha256": "1ec19f524516560b0890649ae6c92a61909d7ff23a107816b24ff9f62836134f"
     },
     {
       "path": "web/style.css",
-      "bytes": 31996,
-      "sha256": "fee84fbf880f49a5821691bef80cc8f9af638d55bd163332952dcc0182b1f869"
+      "bytes": 33249,
+      "sha256": "c9f0e19b18bfb35bfad6b113382874897a83c0aac6472ad786b3ba5bbe4c9eca"
     },
     {
       "path": "web/sw.js",
       "bytes": 851,
       "sha256": "00b464af5e19764786eb04cf76874441594624994fad193aebad734ac035e52d"
     }
-  ]
+  ],
+  "codeUpdatedAt": "2026-11-05T04:49:35.574809+00:00",
+  "seedPolicy": "The initially verified dated seed is preserved between code checkpoints; live collection publishes separate R2 versions."
 }

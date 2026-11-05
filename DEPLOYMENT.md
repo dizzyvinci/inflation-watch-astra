@@ -1,6 +1,20 @@
 # Astra production architecture and operations
 
-This runbook describes `ops/worker.mjs` and `ops/wrangler.jsonc`. Deployment, bucket binding and scheduled execution must be verified against Cloudflare before describing the service as continuously updating.
+This runbook describes `ops/worker.mjs` and `ops/wrangler.jsonc`. The public test is [inflation-watch-astra.dizzyvinci.workers.dev](https://inflation-watch-astra.dizzyvinci.workers.dev/). The custom domain remains pending and is not represented as active.
+
+## Verified production record
+
+On **November 5, 2026 at 04:43 UTC**, scheduled collection successfully fetched the public daily source, computed the report and published it through the private R2 binding. Public `version.json` reported `status: ok`, `mode: collector` and version `59106aecbc3821ba`. Its referenced immutable JSON was retrieved successfully, with basket version 2, 50 indexed rows and 29 cash rows; its source date matched the pointer.
+
+| Clock | Verified value |
+| --- | --- |
+| Collector check began | `2026-11-05T04:43:46.813Z` |
+| Last successful full fetch completed | `2026-11-05T04:43:49.137Z` |
+| Provider publication | `2026-11-04T08:30:56+00:00` |
+
+The provider publication remained dated after collection. This is a record of a successful production invocation, not evidence of new individual trades, a continuously connected authenticated feed, a load test or an uptime guarantee. Later live status is available at [/health.json](https://inflation-watch-astra.dizzyvinci.workers.dev/health.json).
+
+The first production attempt exposed an edge-runtime incompatibility with fetch redirect mode `error`. The collector now uses supported `manual` mode and rejects redirect responses explicitly, while allowing conditional HTTP 304 responses. It never follows the supplied redirect location. The regression tests verify retention of the last-good report and clocks when a redirect is rejected. Code upgrades also remap obsolete compiled-seed fallback pointers to the current compiled seed without visitor storage writes or a fabricated collection time.
 
 ## Delivery and collection
 
