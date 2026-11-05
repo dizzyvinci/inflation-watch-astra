@@ -57,7 +57,7 @@
       </div>
       <details><summary>How this comparison was calculated</summary>
         <p data-nx-model-formula></p>
-        <p>Goods MPI uses a fixed non-cash basket. It excludes cash items and cosmetics, keeping the goods price level separate from the cash sales used to estimate NX. It measures the selected basket, not all items or meso supply.</p>
+        <p>Goods MPI uses a fixed source-category-filtered basket: items categorized Cash Shop by the provider are excluded. The Mystery Palette Exchange Coupon remains a disclosed stamp-linked exception; funding origin is not a separate exclusion rule or a fixed NX cost. MPI measures the selected basket, not all items or meso supply.</p>
         <p>The observed NX estimate uses verified fixed-NX items and daily recorded-volume weights. Changes in that trading mix, seasonal demand or supply can move it. Mystery crates and other items without verified fixed NX costs receive no invented NX cost here.</p>
         <p data-nx-model-limit>The reference-week benchmark leaves changes in real NX supply, demand and cash-item composition outside the model. These are different units, not pooled indices, a forecast or executable quotes. The actual daily best/worst-value items remain unchanged.</p>
       </details>`;

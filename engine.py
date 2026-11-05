@@ -730,6 +730,95 @@ def write_ui_version(dist, web_files):
     return marker
 
 
+def apply_footer_privacy_lock(dist, *, enabled=False):
+    """Replace only copied entry HTML's author footer during temporary review.
+
+    Original web sources/snapshots remain untouched for explicit restoration.
+    Missing/ambiguous attribution fails the build rather than publishing an
+    incomplete lock or silently dropping required third-party credits.
+    """
+    if enabled is not True:
+        return False
+    from html.parser import HTMLParser
+    index = Path(dist) / 'index.html'
+    text = index.read_bytes().decode('utf-8')
+
+    class Footer(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=False)
+            self.lines = [0] + [match.end() for match in re.finditer('\n', text)]
+            self.footers = []
+            self.active = None
+            self.credits = []
+            self.credit_start = None
+            self.bodies = []
+
+        def position(self):
+            line, column = self.getpos()
+            return self.lines[line - 1] + column
+
+        def handle_starttag(self, tag, values):
+            attrs = dict(values)
+            if tag == 'body':
+                self.bodies.append((self.position(), self.position() + len(self.get_starttag_text()), values))
+            if tag == 'footer':
+                if self.active is not None:
+                    raise ValueError('Nested footer cannot be privacy-locked safely')
+                self.active = (self.position(), attrs)
+            if tag == 'p' and self.active is not None and 'footer-credits' in attrs.get('class', '').split():
+                if self.credit_start is not None:
+                    raise ValueError('Ambiguous footer credits')
+                self.credit_start = self.position()
+
+        def handle_endtag(self, tag):
+            if tag == 'p' and self.credit_start is not None:
+                end = text.find('>', self.position())
+                if end < 0:
+                    raise ValueError('Incomplete footer credits')
+                self.credits.append(text[self.credit_start:end + 1])
+                self.credit_start = None
+            if tag == 'footer':
+                if self.active is None or self.credit_start is not None:
+                    raise ValueError('Incomplete footer cannot be privacy-locked safely')
+                start, attrs = self.active
+                end = text.find('>', self.position())
+                if end < 0:
+                    raise ValueError('Incomplete footer')
+                self.footers.append((start, end + 1, attrs))
+                self.active = None
+
+    parsed = Footer()
+    parsed.feed(text)
+    parsed.close()
+    if parsed.active is not None or len(parsed.footers) != 1 or len(parsed.credits) != 1 or len(parsed.bodies) != 1:
+        raise ValueError('Privacy lock requires one complete footer and its source credits')
+    start, end, attrs = parsed.footers[0]
+    body_start, body_end, body_attrs = parsed.bodies[0]
+    if body_end > start:
+        raise ValueError('Privacy lock requires the entry body before its footer')
+    body_attrs = [(name, value) for name, value in body_attrs if name != 'data-viewer-preview']
+    body_attrs.append(('data-viewer-preview', 'on'))
+    body_tag = '<body' + ''.join(' ' + name if value is None else f' {name}="{html.escape(value, quote=True)}"' for name, value in body_attrs) + '>'
+    default = attrs.get('data-preview-analytics-default')
+    if default is not None and default not in ('on', 'off'):
+        raise ValueError('Unknown preview privacy default')
+    analytics_attr = '' if default is None else f' data-preview-analytics-default="{default}"'
+    disclosure = ('Optional browser performance measurements follow the existing preview privacy setting.' if default is None
+                  else f'Optional browser performance measurements are {default.title()} by default in this protected preview; saved choices still apply.')
+    replacement = f'''<footer class="shell footer-privacy-locked" data-footer-privacy-lock="on"{analytics_attr}>
+  <article class="footer-review-note" aria-label="Footer pending review"><p>Author note and full credits will appear here after review.</p></article>
+  <p class="footer-privacy-note">{disclosure} <a href="#privacy">Privacy policy and controls</a>.</p>
+  {parsed.credits[0]}
+  <div class="footer-links"><a href="#method">Methodology</a><a href="#sources">Source status</a><a href="fallback.html">Lightweight snapshot</a><a href="#privacy">Privacy</a></div>
+</footer>'''
+    temporary = index.with_name('index.html.tmp')
+    output = text[:start] + replacement + text[end:]
+    output = output[:body_start] + body_tag + output[body_end:]
+    temporary.write_bytes(output.encode('utf-8'))
+    os.replace(temporary, index)
+    return True
+
+
 def write_site(report):
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
@@ -756,6 +845,12 @@ def write_site(report):
     (dist / 'fallback.html').write_text(fallback, encoding='utf-8')
     (dist / '404.html').write_text(fallback, encoding='utf-8')
     atomic(dist / 'version.json', {'version': digest, 'data': 'data-' + digest + '.json', 'builtAt': report['builtAt'], 'sourceUpdatedAt': report['sourceUpdatedAt']})
+    # Offline and opt-in. Originals remain present; only dist's entry HTML is
+    # switched to ordered content-addressed bundles after every input is copied.
+    from asset_bundles import bundle_site
+    ui_config = read(ROOT / 'config.json', {})
+    apply_footer_privacy_lock(dist, enabled=ui_config.get('footer_privacy_lock') is True)
+    bundle_site(dist, enabled=ui_config.get('bundle_assets') is True)
     # Local-only UI commit marker is always last, after code/assets and data.
     write_ui_version(dist, web_files)
     return digest

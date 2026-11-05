@@ -43,5 +43,7 @@
     "Black Hat": 3200,
     "Red Top Hat": 3200,
     "Storage Room 5-slot Coupon": 5000
-  }
+  },
+  "bundle_assets": true,
+  "footer_privacy_lock": true
 }

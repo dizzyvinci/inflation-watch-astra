@@ -628,7 +628,18 @@ async function handleFetch(request, env, ctx) {
     if (path.startsWith('/data-') || path.startsWith('/_private/') || path === '/collect' || path === '/admin') {
       return new Response('Not found', { status: 404 });
     }
-    return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Static assets unavailable', { status: 503 });
+    if (!env.ASSETS) return new Response('Static assets unavailable', { status: 503 });
+    const asset = await env.ASSETS.fetch(request);
+    // Only content-addressed UI files receive a long public browser lifetime.
+    // The outer preview gate still replaces this with private/no-store.
+    const immutableUi = /^\/astra-(?:ui-[a-f0-9]{16}\.(?:js|css)|app-[a-f0-9]{16}\.js)$/.test(path);
+    const expectedType = path.endsWith('.css') ? /text\/css/i : /(?:javascript|ecmascript)/i;
+    if (immutableUi && (asset.status === 304 || asset.status === 200 && expectedType.test(asset.headers.get('Content-Type') ?? ''))) {
+      const response = new Response(asset.body, asset);
+      response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+      return response;
+    }
+    return asset;
   }
   const cache = globalThis.caches?.default;
   const cacheKey = new Request(`${url.origin}${path}`, { method: 'GET' });

@@ -60,7 +60,7 @@
   const overview = make('p', 'highlights-overview-link'), overviewLink = make('a', '', 'View estimated meso turnover on Overview →');
   overviewLink.href = '#volume-title'; overview.append(overviewLink);
   page.append(pageHeading, pagePublication, cards, transactionNote, activity, overview);
-  const calculationControls=make('div','highlights-detail-controls'),calculationToggle=make('button','','Show calculation details');
+  const calculationControls=make('div','highlights-detail-controls'),calculationToggle=make('button','','Show calculation details');calculationControls.dataset.previewControls='true';
   calculationToggle.type='button';calculationToggle.setAttribute('aria-pressed','false');calculationToggle.setAttribute('aria-controls','highlights-fact-grid market-highlights-track');calculationControls.append(calculationToggle);page.append(calculationControls);
   const publicationToggle=make('button','','Show source publication');publicationToggle.type='button';publicationToggle.setAttribute('aria-pressed','false');publicationToggle.setAttribute('aria-controls','highlights-source-publication market-highlights-source-publication');calculationControls.append(publicationToggle);
   const contextToggle=make('button','','Show Wolbi context');contextToggle.type='button';contextToggle.setAttribute('aria-pressed','false');contextToggle.setAttribute('aria-controls','highlights-fact-grid market-highlights-track');calculationControls.append(contextToggle);

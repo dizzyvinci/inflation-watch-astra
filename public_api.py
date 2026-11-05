@@ -16,7 +16,7 @@ import urllib.request
 from pathlib import Path
 
 ALLOWED_PATHS={'/api/prices','/api/status'}
-USER_AGENT='InflationWatch/0.2 (+https://github.com/dizzyvinci/inflation-watch; local research preview)'
+USER_AGENT='InflationWatch/0.3 (+https://inflation.gg/; https://github.com/dizzyvinci/inflation-watch-astra)'
 COOLDOWN_SECONDS=600  # Documented default; proposed limits are not granted limits.
 REFRESH_LOCK=threading.Lock()
 

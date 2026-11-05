@@ -11,9 +11,10 @@
   const key='astra-category-reference-v1',modes=new Set(['frozen','previous7','previous-day']);let mode='frozen',report=null;
   try{const saved=localStorage.getItem(key);if(modes.has(saved))mode=saved;}catch{}
   const controls=make('div','category-reference-preview');controls.id='category-reference-preview';controls.dataset.previewControls='true';
-  const label=make('label','','Compare category prices with'),select=make('select');select.id='category-reference-select';select.setAttribute('aria-describedby','category-reference-status');
+  const label=make('label','','Compare category prices with'),select=make('select');select.id='category-reference-select';select.setAttribute('aria-describedby','category-reference-editor-note category-reference-status');
   for(const [value,text]of [['frozen','Official frozen reference week'],['previous7','Previous 7 complete source days · preview'],['previous-day','Prior complete source day · preview']]){const o=make('option','',text);o.value=value;select.append(o);}label.append(select);controls.append(label);cards.before(controls);
   const status=make('p','category-reference-status');status.id='category-reference-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');controls.after(status);
+  const editorNote=make('small','category-reference-editor-note','This selector changes the category display only; the headline, membership, base prices and weights stay fixed.');editorNote.id='category-reference-editor-note';controls.append(editorNote);
   const legend=section.querySelector('.category-gauge-legend'),legendHidden=legend?.hidden||false;
   function qualified(row,sourceDay){
     const byDay=new Map();for(const p of Array.isArray(row.history)?row.history:[]){if(!Array.isArray(p)||!validDay(p[0])||p[0]>sourceDay||!positive(p[1])||!Number.isInteger(p[2])||p[2]<5)continue;const old=byDay.get(p[0]);if(old){byDay.set(p[0],null);}else if(!byDay.has(p[0]))byDay.set(p[0],p.slice(0,3));}
@@ -37,11 +38,11 @@
     return{sourceDay,start,end,categories};
   }
   function apply(){
-    select.value=mode;section.dataset.categoryReference=mode;
+    select.value=mode;section.dataset.categoryReference=mode;status.hidden=false;
     if(report&&typeof renderCategoryCards==='function')renderCategoryCards();
     section.querySelectorAll('.category-reference-note').forEach(n=>n.remove());
     if(legend)legend.hidden=mode==='frozen'?legendHidden:true;
-    if(mode==='frozen'){status.textContent=report?`Official dials use the frozen ${report.baseStart||'unknown'}–${report.baseEnd||'unknown'} reference week. This selector changes the category display only; the headline, membership, base prices and weights stay fixed.`:'Waiting for the published snapshot. The official frozen reference is the default.';return;}
+    if(mode==='frozen'){status.textContent=report?'':'Waiting for the published snapshot. The official frozen reference is the default.';status.hidden=!!report;return;}
     const comparison=model(report);
     if(!comparison){status.textContent='Comparison unavailable: a valid dated fixed-basket snapshot is required. No estimate is filled.';cards.querySelectorAll('.category-main').forEach(button=>{button.querySelector('.category-gauge')?.remove();const n=button.querySelector('.category-number');if(n)n.textContent='Unavailable';button.querySelector('.category-change')?.remove();button.querySelector('.category-value-label')?.remove();});return;}
     const max=typeof categoryScale==='function'?categoryScale(comparison.categories.map(c=>c.index)):Math.max(200,...comparison.categories.map(c=>c.index||0));

@@ -4,6 +4,18 @@
 .viewer-preview-entry button:focus-visible,.viewer-preview-exit:focus-visible{outline:2px solid var(--mint);outline-offset:4px}
 .viewer-preview-exit{position:fixed;right:16px;bottom:16px;z-index:10000;box-shadow:0 3px 14px #0006;font-size:12px;max-width:calc(100vw - 32px)}
 .viewer-preview-entry[hidden],.viewer-preview-exit[hidden]{display:none}
+.preview-controls-access{display:flex;justify-content:flex-end;margin:8px 0 0;font-size:12px}
+.preview-controls-access>button{font:600 12px/1.5 var(--font,system-ui);padding:7px 10px;color:var(--muted);background:transparent;border:1px solid var(--line);border-radius:5px;cursor:pointer}
+.preview-controls-dialog{width:min(460px,calc(100vw - 32px));max-height:calc(100dvh - 40px);overflow:auto;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:12px;padding:25px}
+.preview-controls-dialog::backdrop{background:#08110ecc}
+.preview-controls-dialog h2{font-size:23px}.preview-controls-dialog p{font-size:14px;line-height:1.7}
+.preview-controls-dialog label{display:block;font-size:14px;margin-bottom:7px}
+.preview-controls-dialog input{width:100%;box-sizing:border-box;font:16px var(--font,system-ui);padding:11px;background:var(--surface2);color:var(--text);border:1px solid var(--line);border-radius:6px}
+.preview-controls-dialog-actions{display:flex;flex-wrap:wrap;gap:10px;margin:17px 0 8px}
+.preview-controls-dialog-actions button{font:600 14px/1.5 var(--font,system-ui);padding:9px 13px;color:var(--text);background:var(--surface2);border:1px solid var(--line);border-radius:6px}
+.preview-controls-access button:focus-visible,.preview-controls-dialog :focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+#preview-controls-feedback{min-height:1.7em;margin-bottom:0}
+body[data-viewer-preview="on"]:has(footer[data-footer-privacy-lock="on"]) :is(.fee-preview-modes,.fee-preview-presets,.fee-preview-form){display:none!important}
 
 /* Display-only: selected layouts and data remain in their original DOM. */
 body[data-viewer-preview="on"] :is(

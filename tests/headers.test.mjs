@@ -50,6 +50,9 @@ test('JSON and asset cache policies retain their TTLs and compression eligibilit
   assert.equal(rule('/version.json')['cache-control'], 'public, max-age=0, must-revalidate');
   assert.equal(rule('/data-*.json')['cache-control'], 'public, max-age=31536000, immutable');
   assert.equal(rule('/assets/*')['cache-control'], 'public, max-age=86400');
+  for (const path of ['/astra-ui-*.js', '/astra-ui-*.css', '/astra-app-*.js']) {
+    assert.equal(rule(path)['cache-control'], 'public, max-age=31536000, immutable');
+  }
   for (const path of ['/version.json', '/data-*.json', '/assets/*']) {
     assert.ok(!rule(path)['cache-control'].includes('no-transform'));
   }

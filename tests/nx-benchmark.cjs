@@ -60,7 +60,7 @@ try {
     assert.equal(section.querySelector('[data-nx-benchmark="adjusted"]').textContent, '12.5 reference-week mesos / NX');
     assert.equal(section.querySelector('[data-nx-benchmark="change"]').textContent, '+25%');
     assert.match(section.textContent, /MODELLED BENCHMARK/);
-    assert.match(section.textContent, /excludes cash items and cosmetics/);
+    assert.match(section.textContent, /categorized Cash Shop by the provider are excluded/);assert.match(section.textContent,/Mystery Palette Exchange Coupon remains a disclosed stamp-linked exception/);assert.match(section.textContent,/not a separate exclusion rule or a fixed NX cost/);
     assert.match(section.textContent, /seasonal demand or supply/);
     assert.match(section.textContent, /outside the model/);
     assert.match(section.textContent, /not pooled indices/);

@@ -16,5 +16,12 @@
     30
   ],
   "transformation": "None",
-  "marketImplication": "Decorative art only; no price, tax, availability or NX cost inferred."
+  "marketImplication": "Decorative art only; no price, tax, availability or NX cost inferred.",
+  "identityCorroboration": {
+    "sourceItemUrl": "https://mesos.watch/item/5070026-item-megaphone",
+    "sourceIconUrl": "https://mesos.watch/art/icons/5070026.png",
+    "gameMetadataUrl": "https://maplestory.io/api/MCW/1/item/5070026",
+    "decodedRgbaSha256": "40888488dda3e805f8ce7c8bf183859d02cdd1a99d18bf9622921e868c3c3134",
+    "result": "Original book-shaped art with yellow megaphone emblem is identical across the reviewed sources; no wrong-namespace evidence."
+  }
 }

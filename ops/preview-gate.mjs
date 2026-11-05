@@ -90,11 +90,35 @@ async function formBody(request) {
 function sessionCookie(value, age) {
   return `${COOKIE}=${value}; Path=/; Max-Age=${age}; Secure; HttpOnly; SameSite=Strict`;
 }
+function controlsResponse(status, unlocked = false) {
+  const headers = privateHeaders();
+  headers['Content-Type'] = 'application/json; charset=utf-8';
+  if (status === 405) headers.Allow = 'POST';
+  return new Response(JSON.stringify({ unlocked }), { status, headers });
+}
 export function withPreviewGate(next, { now = Date.now } = {}) {
   return async function previewFetch(request, env, ctx) {
-    if (env.PREVIEW_ACCESS === undefined) return next(request, env, ctx);
-    if (env.PREVIEW_ACCESS !== 'password' || !bindingsReady(env)) return gateResponse(request, 503, 'Preview access is temporarily unavailable.');
-    const url = new URL(request.url), time = now();
+    const url = new URL(request.url), controls = url.pathname === '/__preview_controls';
+    if (env.PREVIEW_ACCESS === undefined) return controls ? controlsResponse(503) : next(request, env, ctx);
+    if (env.PREVIEW_ACCESS !== 'password' || !bindingsReady(env)) return controls ? controlsResponse(503) : gateResponse(request, 503, 'Preview access is temporarily unavailable.');
+    const time = now();
+    if (controls) {
+      if (request.method !== 'POST') {
+        const response = controlsResponse(405);
+        return request.method === 'HEAD' ? new Response(null, response) : response;
+      }
+      if (url.protocol !== 'https:' || request.headers.get('Origin') !== url.origin) return controlsResponse(403);
+      if (!await validSession(request, env.PREVIEW_SESSION_SECRET, time)) return controlsResponse(401);
+      let form;
+      try { form = await formBody(request); }
+      catch { return controlsResponse(400); }
+      const password = form.get('password');
+      if (form.getAll('password').length !== 1 || typeof password !== 'string' || password.length > 256
+        || !equal(await digest(password), await digest(env.PREVIEW_PASSWORD))) return controlsResponse(401);
+      // Browser UI owns only an in-memory unlocked state. No cookie, session
+      // extension, new credential or server-side unlock flag is created here.
+      return controlsResponse(200, true);
+    }
     if (url.pathname === '/__preview_login' || url.pathname === '/__preview_logout') {
       if (request.method !== 'POST') {
         const response = gateResponse(request, 405, 'Use the preview form to continue.');

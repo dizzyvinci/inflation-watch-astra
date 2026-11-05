@@ -172,3 +172,67 @@ test('deployment routes every asset through the gate and contains no secret valu
   assert.equal(cfg.vars.PREVIEW_PASSWORD, undefined);
   assert.equal(cfg.vars.PREVIEW_SESSION_SECRET, undefined);
 });
+
+const controlsRequest = (password, token, options = {}) => request('/__preview_controls', {
+  method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/x-www-form-urlencoded', ...(token ? { Cookie: token } : {}), ...options.headers },
+  body: new URLSearchParams({ password }), ...options,
+});
+const controlsJson = async (response, status, unlocked = false) => {
+  assert.equal(response.status, status); privateResponse(response);
+  assert.match(response.headers.get('Content-Type'), /^application\/json/);
+  assert.equal(response.headers.get('X-Content-Type-Options'), 'nosniff');
+  assert.equal(response.headers.get('Set-Cookie'), null); assert.equal(response.headers.get('Location'), null);
+  assert.deepEqual(await response.json(), { unlocked });
+};
+
+test('controls require an existing session and correct existing password, with no new cookie or delegate', async () => {
+  let calls = 0;
+  const handler = withPreviewGate(() => { calls++; return new Response('normal'); }, { now: () => NOW });
+  const token = await cookie(handler);
+  await controlsJson(await handler(controlsRequest(env.PREVIEW_PASSWORD, token), env), 200, true);
+  for (const password of ['incorrect-private-input', env.PREVIEW_PASSWORD.slice(0, -1), env.PREVIEW_PASSWORD + 'x', 'x'.repeat(257)]) {
+    await controlsJson(await handler(controlsRequest(password, token), env), 401);
+  }
+  await controlsJson(await handler(controlsRequest(env.PREVIEW_PASSWORD), env), 401);
+  await controlsJson(await handler(controlsRequest(env.PREVIEW_PASSWORD, token + 'x'), env), 401);
+  assert.equal(calls, 0, 'Controls verification must never delegate to assets/storage or create server unlock state');
+  const ordinary = await handler(request('/data.json', { headers: { Cookie: token } }), env);
+  assert.equal(await ordinary.text(), 'normal'); assert.equal(calls, 1);
+});
+
+test('controls origin, HTTPS, methods and bindings fail closed as private JSON', async () => {
+  const handler = withPreviewGate(() => { throw Error('Must not delegate'); }, { now: () => NOW });
+  const token = await cookie(handler);
+  for (const value of [null, 'null', 'https://example.com', origin + '.evil.test']) {
+    const headers = { Cookie: token, 'Content-Type': 'application/x-www-form-urlencoded' };
+    if (value !== null) headers.Origin = value;
+    await controlsJson(await handler(request('/__preview_controls', { method: 'POST', headers, body: 'password=not-echoed' }), env), 403);
+  }
+  await controlsJson(await handler(new Request('http://inflation.gg/__preview_controls', { method: 'POST', headers: { Origin: 'http://inflation.gg', Cookie: token }, body: 'password=not-echoed' }), env), 403);
+  for (const method of ['GET', 'PUT', 'DELETE']) {
+    const response = await handler(request('/__preview_controls', { method, headers: { Cookie: token } }), env);
+    assert.equal(response.headers.get('Allow'), 'POST'); await controlsJson(response, 405);
+  }
+  const head = await handler(request('/__preview_controls', { method: 'HEAD', headers: { Cookie: token } }), env);
+  assert.equal(head.status, 405); assert.equal(head.headers.get('Allow'), 'POST'); assert.equal(await head.text(), '');
+  for (const settings of [{}, { PREVIEW_ACCESS: 'password' }, { ...env, PREVIEW_SESSION_SECRET: 'weak' }]) {
+    await controlsJson(await handler(controlsRequest(env.PREVIEW_PASSWORD, token), settings), 503);
+  }
+});
+
+test('controls bounded form, encoding, duplicate fields and expired session cannot unlock', async () => {
+  let time = NOW;
+  const handler = withPreviewGate(() => { throw Error('Must not delegate'); }, { now: () => time });
+  const token = await cookie(handler);
+  const headers = { Origin: origin, Cookie: token, 'Content-Type': 'application/x-www-form-urlencoded' };
+  for (const req of [
+    request('/__preview_controls', { method: 'POST', headers, body: 'password=' + 'x'.repeat(5000) }),
+    request('/__preview_controls', { method: 'POST', headers: { ...headers, 'Content-Length': '5000' }, body: 'password=private' }),
+    request('/__preview_controls', { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: '{"password":"private"}' }),
+    request('/__preview_controls', { method: 'POST', headers, body: new Uint8Array([255, 254]) }),
+  ]) await controlsJson(await handler(req, env), 400);
+  await controlsJson(await handler(request('/__preview_controls', { method: 'POST', headers, body: new URLSearchParams([['password', env.PREVIEW_PASSWORD], ['password', env.PREVIEW_PASSWORD]]) }), env), 401);
+  await controlsJson(await handler(request('/__preview_controls', { method: 'POST', headers, body: 'other=private' }), env), 401);
+  time += 8 * 60 * 60 * 1000;
+  await controlsJson(await handler(controlsRequest(env.PREVIEW_PASSWORD, token), env), 401);
+});

@@ -245,3 +245,23 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
   dom.window.close();
   console.log('PASS: privacy creation, contact open/close, explicit clipboard copies/fallback, footer styles/persistence and unchanged story, no network, clipboard reads or message persistence');
 })().catch(error => { console.error(error); process.exitCode = 1; });
+
+// Review lock is server/build markup, not a hideable client preference.
+{
+  const raw=fs.readFileSync(path.join(__dirname,'../web/index.html'),'utf8');
+  const markup=raw.replace(/<footer\b[^>]*>[\s\S]*?<\/footer>/, '<footer data-footer-privacy-lock="on" data-preview-analytics-default="on"><p>Author note and full credits will appear here after review.</p><div class="footer-links"><a href="#sources">Sources</a><a href="#privacy">Privacy policy</a></div></footer>');
+  const dom=new JSDOM(markup,{url:'https://inflation.gg/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,doc=w.document;let network=0;
+  w.localStorage.setItem('inflation-optional-analytics-consent-v1','off');
+  w.localStorage.setItem('inflation-footer-style','personal');
+  w.localStorage.setItem('inflation-author-portrait-v2','transparent-large');
+  w.fetch=()=>{network++;throw new Error('Review lock must not request author assets or analytics');};
+  w.eval(script);
+  w.eval(fs.readFileSync(path.join(__dirname,'../web/author-portrait.js'),'utf8'));
+  w.eval(fs.readFileSync(path.join(__dirname,'../web/privacy-controls.js'),'utf8'));
+  assert(!doc.querySelector('#author-portrait,.footer-story,.footer-signature,.community-footer-styles,.footer-copy-options,#open-contact,#contact-dialog,[data-open-contact]'));
+  assert(doc.querySelector('#view-market-comparison'));assert(doc.querySelector('#view-privacy'));assert(doc.querySelector('#privacy-controls'));
+  assert(!/surgery|cancer|grad job|DishWasher|dizzyvinci/i.test(doc.body.textContent));
+  assert(doc.querySelector('footer').textContent.includes('will appear here after review'));
+  assert.equal(network,0);dom.window.close();
+  console.log('PASS temporary footer review lock: personal story/signature/portrait/contact/options absent, saved preferences cannot reveal them, comparison/privacy/consent retained.');
+}

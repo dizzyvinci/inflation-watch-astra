@@ -212,7 +212,7 @@
     const prose = privacy?.querySelector('.community-prose');
     if (!prose || document.getElementById('privacy-analytics-controls')) return !!prose;
     const intro = prose.querySelector('p');
-    if (intro) intro.textContent = 'This note describes inflation.gg, maintained by DishWasher. There are no visitor accounts or ads. Optional Cloudflare browser metrics are On by default in this password-protected preview unless you saved Off. The controls below explain the data and let you turn them Off or On.';
+    if (intro) intro.textContent = (footer.dataset.footerPrivacyLock === 'on' ? 'This note describes inflation.gg.' : 'This note describes inflation.gg, maintained by DishWasher.') + ' There are no visitor accounts or ads. Optional Cloudflare browser metrics are On by default in this password-protected preview unless you saved Off. The controls below explain the data and let you turn them Off or On.';
     const panel = addPanel(prose, 'privacy-analytics-controls', 'Optional performance metrics');
     if (intro) intro.after(panel);
     const sources = make('p', 'privacy-choice-sources');

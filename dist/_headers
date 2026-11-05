@@ -20,6 +20,12 @@
   Cache-Control: public, max-age=31536000, immutable
 /assets/*
   Cache-Control: public, max-age=86400
+/astra-ui-*.js
+  Cache-Control: public, max-age=31536000, immutable
+/astra-ui-*.css
+  Cache-Control: public, max-age=31536000, immutable
+/astra-app-*.js
+  Cache-Control: public, max-age=31536000, immutable
 /fallback.html
   Cache-Control: public, max-age=60, stale-if-error=86400, no-transform
 /fallback

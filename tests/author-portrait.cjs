@@ -51,6 +51,7 @@ assert(f.doc.querySelector('.footer-signature').textContent.includes(chef), 'fai
 assert.equal(f.w.getComputedStyle(image(f)).objectFit, 'contain');
 assert.equal(f.w.getComputedStyle(f.doc.querySelector('.author-portrait-frame')).width, '380px');
 assert.equal(f.doc.querySelector('.author-portrait-options').getAttribute('role'), 'group');
+assert.equal(f.doc.querySelector('.author-portrait-feedback').closest('.author-portrait-options'),f.doc.querySelector('.author-portrait-options'),'portrait editing status belongs to the hidden-with-controls group');
 assert.deepEqual([...f.doc.querySelectorAll('[data-author-portrait]')].map(node => node.textContent), ['Original', 'Transparent', 'Large transparent', 'Pixelart']);
 assert.equal(f.doc.querySelector('.footer-signature').parentElement.id,'author-portrait');
 assert.equal(f.doc.querySelector('.footer-signature').previousElementSibling.className,'author-portrait-figure','signature follows the original portrait figure');

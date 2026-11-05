@@ -38,7 +38,7 @@
   }
   function openSuggestions(field){activeInput=field;popup.hidden=false;for(const item of [headerInput,input])item.setAttribute('aria-expanded',String(item===field));drawSuggestions();}
   function openResults(){closeSuggestions();window.location.hash='#price-check';window.dispatchEvent(new Event('hashchange'));suppressFocus=true;input.focus();suppressFocus=false;}
-  function openRecord(row){closeSuggestions();if(row.catalog){window.location.hash='#cash-catalog';window.dispatchEvent(new Event('hashchange'));document.dispatchEvent(new CustomEvent('astracashcataloglookup',{detail:{key:row.catalogKey,query:row.name}}));}else{window.location.hash='#item/'+encodeURIComponent(row.slug);window.dispatchEvent(new Event('hashchange'));}}
+  function openRecord(row){closeSuggestions();if(row.catalog&&validId(row.id)){window.location.hash='#item/id-'+row.id;window.dispatchEvent(new Event('hashchange'));}else if(row.catalog){window.location.hash='#cash-catalog';window.dispatchEvent(new Event('hashchange'));document.dispatchEvent(new CustomEvent('astracashcataloglookup',{detail:{key:row.catalogKey,query:row.name}}));}else{window.location.hash='#item/'+encodeURIComponent(row.slug);window.dispatchEvent(new Event('hashchange'));}}
   const columns=[['name','Item / evidence'],['price','Qualified daily price · mesos'],['publisherMedian','Source summary median'],['knownNxCost','Fixed NX cost'],['dailyRate','Daily mesos / NX'],['priceDay','Price day'],['action','History']];
   const activeColumns=()=>records.some(r=>r.rollingReference)?[...columns.slice(0,-1),['rollingPrice','Separate rolling median · mesos'],columns.at(-1)]:columns;
   function collect(data){

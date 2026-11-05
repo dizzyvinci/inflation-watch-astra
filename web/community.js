@@ -4,6 +4,7 @@
   const footer = document.querySelector('footer');
   if (!content || !footer || document.getElementById('view-privacy')) return;
 
+  const footerLocked = footer.dataset.footerPrivacyLock === 'on';
   const footerStyles = ['clear', 'personal', 'emphasis'];
   const defaultFooterStyle = 'emphasis';
   const footerStyleKey = 'inflation-footer-style';
@@ -45,6 +46,7 @@
     window.addEventListener('astrabrandchange', brandChanged);
     syncFooterBrand();
   }
+  if (!footerLocked) {
   const styleControls = document.createElement('div');
   styleControls.className = 'community-footer-styles';
   styleControls.setAttribute('role', 'group');
@@ -76,6 +78,7 @@
   let savedFooterStyle;
   try { savedFooterStyle = localStorage.getItem(footerStyleKey); } catch { /* Use Emphasis without persistent storage. */ }
   applyFooterStyle(savedFooterStyle);
+  }
 
   const invitation = [...(footerStory?.children || [])].find(node => node.tagName === 'P' && node.textContent.startsWith('Suggestions are welcome.'));
   const manipulation = footer.querySelector('.footer-manipulation');
@@ -208,6 +211,14 @@
       <p>For questions about this note, <button type="button" class="community-inline-link" data-open-contact>contact Dish</button>. This is a description of the current build and hosting, not a guarantee that no data is processed.</p>
       <a class="community-back" href="#index">← Back to the dashboard</a>
     </article>`;
+  if (footerLocked) {
+    const paragraphs = privacy.querySelectorAll('.community-prose > p');
+    if (paragraphs[0]) paragraphs[0].textContent = paragraphs[0].textContent.replace(', maintained by DishWasher', '');
+    const contactNote = privacy.querySelector('[data-open-contact]')?.closest('p');
+    if (contactNote) contactNote.textContent = 'Author contact details are temporarily hidden during API review. This note describes the current build and hosting; it is not a guarantee that no data is processed.';
+    const contactHeading = [...privacy.querySelectorAll('h2')].find(n => n.textContent === 'Contact and external links');
+    if (contactHeading) { contactHeading.textContent = 'External links'; if (contactHeading.nextElementSibling) contactHeading.nextElementSibling.textContent = 'External sources have their own privacy policies. No contact form operates in this review build.'; }
+  }
   content.append(privacy);
 
   const comparison = document.createElement('section');
@@ -235,6 +246,7 @@
     (view.querySelector('.page-heading') || view).append(link);
   }
 
+  if (!footerLocked) {
   const dialog = document.createElement('dialog');
   dialog.id = 'contact-dialog';
   dialog.className = 'community-contact';
@@ -294,4 +306,5 @@
   copyMessage.addEventListener('click', () => {
     if (message.value.trim()) void copy(message.value, 'Message copied. Paste it in Discord when you’re ready.');
   });
+  }
 })();

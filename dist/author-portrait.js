@@ -86,7 +86,8 @@
   const author = footer.querySelector('.footer-author');
   if (author) author.append(panel);
   else signature.before(panel);
-  panel.append(figure, signature, feedback, options);
+  options.append(feedback);
+  panel.append(figure, signature, options);
   let saved;
   try { saved = localStorage.getItem(preferenceKey); } catch { /* The display remains usable without storage. */ }
   select(saved);
