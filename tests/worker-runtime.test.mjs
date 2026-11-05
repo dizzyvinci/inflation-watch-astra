@@ -12,6 +12,14 @@ const STATE = '_private/collector-state.json';
 const LOCK = '_private/collector-lock.json';
 const clone = value => structuredClone(value);
 const NOW = Date.parse('2026-11-05T05:00:00Z');
+// Cross-runtime derived sums may differ in their last bits (Python 3.12 vs
+// JavaScript). Keep source/frozen fields exact; only derived CPI uses tolerance.
+const close = (actual, expected, label) => {
+  assert.ok(typeof actual === 'number' && Number.isFinite(actual), `${label}: finite actual`);
+  assert.ok(typeof expected === 'number' && Number.isFinite(expected), `${label}: finite expected`);
+  assert.ok(Math.abs(actual - expected) <= 1e-10 + 1e-12 * Math.max(Math.abs(actual), Math.abs(expected)),
+    `${label}: ${actual} != ${expected}`);
+};
 
 class FakeR2 {
   values = new Map();
@@ -357,7 +365,7 @@ test('same-method daily histories merge by date, new points win, and v1 is never
   const merged = bucket.read(mergedPointer.data);
   assert.equal(merged.history[0].day, '2026-01-01');
   assert.equal(merged.volumeHistory[0].day, '2026-01-01');
-  assert.equal(merged.history.at(-1).cpi, seed.latest.cpi);
+  close(merged.history.at(-1).cpi, seed.latest.cpi, 'merged latest CPI');
   merged.basketVersion = 1;
   bucket.raw(mergedPointer.data, merged);
   changed.items[0].sold += 1;
@@ -392,7 +400,7 @@ test('bounded source histories retain 365 days and daily series retain at most 7
   assert.equal(report.baseNxRate, seed.baseNxRate);
   assert.equal(report.sourceSnapshotHash, seed.sourceSnapshotHash);
   assert.deepEqual(report.smega.find(point => point.sourceUrl === offer.sourceUrl), offer);
-  assert.equal(report.latest.cpi, seed.latest.cpi);
+  close(report.latest.cpi, seed.latest.cpi, 'bounded-history latest CPI');
 });
 
 test('snapshot storage failure never advances the public pointer to a missing object', async () => {

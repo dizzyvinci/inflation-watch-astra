@@ -8,10 +8,22 @@ const feed = JSON.parse(readFileSync(new URL('../cache/market.json', import.meta
 const clone = value => structuredClone(value);
 const options = { checkedAt: seed.builtAt, builtAt: seed.builtAt, sourceStatus: { status: 'ok' } };
 const compute = (input = feed, baseline = seed, opts = options) => computeReport(input, baseline, opts);
-const close = (actual, expected, label) => assert.ok(
-  Math.abs(actual - expected) <= Math.max(1e-9, Math.abs(expected) * 1e-12),
-  `${label}: ${actual} != ${expected}`,
-);
+// Python 3.12 sum() and JavaScript can differ in their final floating-point
+// bits. Allow only 1e-10 absolute + 1e-12 relative error on derived values;
+// source values, frozen definitions, counts, dates, hashes and keys stay exact.
+const close = (actual, expected, label) => {
+  assert.ok(typeof actual === 'number' && Number.isFinite(actual), `${label}: finite actual`);
+  assert.ok(typeof expected === 'number' && Number.isFinite(expected), `${label}: finite expected`);
+  assert.ok(Math.abs(actual - expected) <= 1e-10 + 1e-12 * Math.max(Math.abs(actual), Math.abs(expected)),
+    `${label}: ${actual} != ${expected}`);
+};
+const equalWithDerivedFloats = (actual, expected, fields, label) => {
+  assert.deepEqual(Object.keys(actual).sort(), Object.keys(expected).sort(), `${label} keys`);
+  for (const [key, value] of Object.entries(expected)) {
+    if (fields.includes(key) && typeof value === 'number') close(actual[key], value, `${label} ${key}`);
+    else assert.deepEqual(actual[key], value, `${label} ${key}`);
+  }
+};
 const recent = (input, start, end, slugs) => input.items
   .filter(item => !slugs || slugs.has(item.s))
   .flatMap(item => item.h).filter(([day]) => start <= day && day < end);
@@ -39,8 +51,8 @@ test('daily source summaries refresh for basket, cash and context independently 
     assert.equal(Object.hasOwn(row.sourceSummary, 'bid'), false);
     assert.equal(Object.hasOwn(row.sourceSummary, 'trades'), false);
   }
-  assert.equal(report.latest.cpi, seed.latest.cpi);
-  assert.equal(report.latest.nxRate, seed.latest.nxRate);
+  close(report.latest.cpi, seed.latest.cpi, 'summary-only CPI');
+  close(report.latest.nxRate, seed.latest.nxRate, 'summary-only NX');
 });
 
 test('invalid optional source summaries cannot reject valid daily medians or inherit old values', () => {
@@ -56,7 +68,7 @@ test('invalid optional source summaries cannot reject valid daily medians or inh
     'medianSellerAsk', 'listings', 'sellers', 'sellThrough', 'reportedLastSaleAt']) {
     assert.equal(report.rows[0].sourceSummary[key], null, key);
   }
-  assert.equal(report.latest.cpi, baseline.latest.cpi);
+  close(report.latest.cpi, baseline.latest.cpi, 'invalid-summary CPI');
   const missing = clone(feed);
   missing.items = missing.items.filter(item => item.s !== baseline.contextItems[0].slug);
   baseline.contextItems[0].sourceSummary = { medianSale: 999999 };
@@ -77,8 +89,12 @@ test('current feed matches published CPI, NX, category and full volume histories
   close(report.latest.cpi, seed.latest.cpi, 'latest CPI');
   close(report.latest.nxRate, seed.latest.nxRate, 'latest NX');
   close(report.baseNxRate, seed.baseNxRate, 'base NX');
-  assert.deepEqual(report.volumeHistory, seed.volumeHistory);
-  assert.deepEqual(report.categories, seed.categories);
+  assert.equal(report.volumeHistory.length, seed.volumeHistory.length);
+  report.volumeHistory.forEach((point, index) => equalWithDerivedFloats(point, seed.volumeHistory[index],
+    ['allMesos', 'basketMesos'], `volume history ${index}`));
+  assert.equal(report.categories.length, seed.categories.length);
+  report.categories.forEach((category, index) => equalWithDerivedFloats(category, seed.categories[index],
+    ['weight', 'index'], `category ${index}`));
   assert.equal(report.salesSinceLaunch, seed.salesSinceLaunch);
   assert.equal(report.itemsAvailable, feed.items.length);
   for (const row of report.rows) {
@@ -100,12 +116,17 @@ test('current feed matches published CPI, NX, category and full volume histories
   assert.equal(report.contextItems.length, seed.contextItems?.length ?? 0);
   for (const context of report.contextItems) {
     const old = seed.contextItems.find(row => row.slug === context.slug);
-    for (const [key, value] of Object.entries(old)) assert.deepEqual(context[key], value, `context ${key}`);
+    equalWithDerivedFloats(Object.fromEntries(Object.keys(old).map(key => [key, context[key]])), old,
+      ['changeBase', 'changeDay', 'recentTurnoverProxy', 'indexContribution', 'changeContribution'], 'context');
     assert.equal(context.weight, 0);
     assert.equal(context.notIndexed, true);
   }
-  assert.deepEqual(report.cash.map(row => [row.slug, row.nx, row.price, row.quantity, row.rate]),
-    seed.cash.map(row => [row.slug, row.nx, row.price, row.quantity, row.rate]));
+  assert.equal(report.cash.length, seed.cash.length);
+  report.cash.forEach((row, index) => {
+    const old = seed.cash[index];
+    assert.deepEqual([row.slug, row.nx, row.price, row.quantity], [old.slug, old.nx, old.price, old.quantity]);
+    close(row.rate, old.rate, `${row.slug} cash rate`);
+  });
 });
 
 test('source calendar date stays partial and is independent of UTC offset/check date', () => {
@@ -240,7 +261,7 @@ test('missing context retains its explicitly dated evidence and cannot block CPI
   assert.equal(retained.priceDay, prior.priceDay);
   assert.equal(retained.price, prior.price);
   assert.deepEqual(retained.history, prior.history);
-  assert.equal(report.latest.cpi, seed.latest.cpi);
+  close(report.latest.cpi, seed.latest.cpi, 'missing-context CPI');
   assert.equal(report.sourceSnapshotHash, seed.sourceSnapshotHash);
   assert.equal(report.basketHash, seed.basketHash);
   const thin = clone(feed);
@@ -248,7 +269,7 @@ test('missing context retains its explicitly dated evidence and cannot block CPI
   const thinReport = compute(thin);
   assert.equal(thinReport.contextItems[0].retained, true);
   assert.match(thinReport.contextItems[0].retainedReason, /No qualified/);
-  assert.equal(thinReport.latest.cpi, seed.latest.cpi);
+  close(thinReport.latest.cpi, seed.latest.cpi, 'thin-context CPI');
 });
 
 test('daily cash NX uses seed denomination schedule and exact-date qualifying sale counts', () => {
@@ -337,7 +358,7 @@ test('frozen NX baseline survives rolling source history dropping the base perio
   assert.equal(report.baseNxRate, seed.baseNxRate);
   assert.deepEqual(report.rows.map(row => [row.slug, row.basePrice, row.weight]),
     seed.rows.map(row => [row.slug, row.basePrice, row.weight]));
-  assert.equal(report.latest.nxRate, seed.latest.nxRate);
+  close(report.latest.nxRate, seed.latest.nxRate, 'retained-base NX');
   const badSeed = clone(seed);
   badSeed.baseNxRate = null;
   assert.throws(() => compute(feed, badSeed), /frozen base NX rate/);

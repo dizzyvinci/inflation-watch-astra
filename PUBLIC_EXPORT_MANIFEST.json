@@ -2056,13 +2056,13 @@
     },
     {
       "path": "tests/worker-core.test.mjs",
-      "bytes": 21010,
-      "sha256": "b19477e0cda9d6314236758cfe237b03aeb72b8fba2b729019a0f6cc2e74d5eb"
+      "bytes": 22518,
+      "sha256": "7172ecbf023c31e22345d9acc62c94d92625ddc1f991ba0ce08db72fe34e757f"
     },
     {
       "path": "tests/worker-runtime.test.mjs",
-      "bytes": 25114,
-      "sha256": "38732e29ec70b4a2b4af0fee39fbb3adcdb45987201e5915b9045b498f6ab3a9"
+      "bytes": 25703,
+      "sha256": "ffe97b1ff1a5f3ce1bbd0c99be34baf02fe59f1b9601686027a34f07bfba8dca"
     },
     {
       "path": "web/_headers",
@@ -2090,6 +2090,6 @@
       "sha256": "00b464af5e19764786eb04cf76874441594624994fad193aebad734ac035e52d"
     }
   ],
-  "codeUpdatedAt": "2026-11-05T04:49:35.574809+00:00",
+  "codeUpdatedAt": "2026-11-05T04:53:01.125046+00:00",
   "seedPolicy": "The initially verified dated seed is preserved between code checkpoints; live collection publishes separate R2 versions."
 }
