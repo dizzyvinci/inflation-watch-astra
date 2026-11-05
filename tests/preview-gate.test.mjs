@@ -251,7 +251,29 @@ const immutableCases = [
   ['/astra-app-0123456789abcdef.js', 'text/javascript'],
   ['/astra-ui-0123456789abcdef.css', 'text/css; charset=utf-8'],
   ['/data-0123456789abcdef.json', 'application/json; charset=utf-8'],
+  ['/assets/catalog-mcw1-1472010-0123456789abcdef.png', 'image/png'],
 ];
+
+test('review sprite reuse requires exact owned fingerprint path and image/png with no query', async () => {
+  const valid = '/assets/catalog-mcw1-1472010-0123456789abcdef.png';
+  for (const path of ['/assets/catalog-mcw1-1472010.png', '/assets/catalog-mcw1-0-0123456789abcdef.png',
+    '/assets/catalog-mcw1-01472010-0123456789abcdef.png', '/assets/catalog-mcw1--1-0123456789abcdef.png',
+    '/assets/catalog-mcw1-1472010-0123456789abcde.png', '/assets/catalog-mcw1-1472010-0123456789abcdef0.png',
+    '/assets/catalog-mcw1-1472010-0123456789ABCDEf.png', '/catalog-mcw1-1472010-0123456789abcdef.png',
+    '/assets/catalog-mcw1-1472010-0123456789abcdef.svg', '/assets/adamantium-guards.png',
+    valid + '?v=unverified', valid + '?', valid + '/extra']) {
+    const handler = withPreviewGate(() => new Response('original bytes', { headers: { 'Content-Type': 'image/png' } }));
+    privateResponse(await handler(request(path), reviewEnv), 'review');
+  }
+  for (const type of ['text/html', 'image/svg+xml', 'image/jpeg', 'application/json', 'application/octet-stream', 'image/png; charset=utf-8', '']) {
+    const handler = withPreviewGate(() => new Response('fallback bytes', { headers: type ? { 'Content-Type': type } : {} }));
+    for (const method of ['GET', 'HEAD']) privateResponse(await handler(request(valid, { method }), reviewEnv), 'review');
+  }
+  for (const method of ['POST', 'PUT', 'DELETE']) {
+    const handler = withPreviewGate(() => new Response('unchanged', { headers: { 'Content-Type': 'image/png' } }));
+    privateResponse(await handler(request(valid, { method }), reviewEnv), 'review');
+  }
+});
 
 test('review browser caching is limited to successful typed content-addressed resources and preserves independent bodies', async () => {
   for (const [path, type] of immutableCases) {

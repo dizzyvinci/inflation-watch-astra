@@ -59,7 +59,7 @@ async function open(html,{immediate=false,activeManifest=manifest,appFailure=fal
  }finally{w.close();}
 }
 (async()=>{try{
- fullIndex=await(await import('../ops/market-catalog.mjs')).buildIndex(JSON.parse(fs.readFileSync(path.join(root,'cache/market.json'),'utf8')),JSON.parse(fs.readFileSync(path.join(root,'catalog-identities-v1.json'),'utf8')));
+ fullIndex=await(await import('../ops/market-catalog.mjs')).buildIndex(JSON.parse(fs.readFileSync(path.join(root,'cache/market.json'),'utf8')),JSON.parse(fs.readFileSync(path.join(root,'catalog-identities-v2.json'),'utf8')));
  const original=await open(source),combined=await open(bundled),immediate=await open(bundled,{immediate:true});
  assert.equal(original.scripts,scripts.length);assert.equal(original.styles,styles.length);assert.equal(combined.scripts,3);assert.equal(combined.styles,1);assert.equal(combined.rate,original.rate);assert.equal(immediate.rate,original.rate);
  function generate(){fs.writeFileSync(path.join(temporary,'index.html'),source);const result=spawnSync(process.env.PYTHON||'python',[path.join(root,'asset_bundles.py'),'--dist',temporary,'--enable'],{encoding:'utf8'});assert.equal(result.status,0,result.stderr);return{html:fs.readFileSync(path.join(temporary,'index.html'),'utf8'),activeManifest:JSON.parse(fs.readFileSync(path.join(temporary,'ui-bundles.json'),'utf8'))};}

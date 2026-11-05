@@ -2,7 +2,7 @@
 const COOKIE = '__Host-astra-preview';
 const SESSION_SECONDS = 8 * 60 * 60;
 const MAX_BODY = 4096;
-const REVIEW_IMMUTABLE_PATH = /^\/(?:astra-ui-[a-f0-9]{16}\.(?:js|css)|astra-app-[a-f0-9]{16}\.js|data-[a-f0-9]{16}\.json)$/;
+const REVIEW_IMMUTABLE_PATH = /^\/(?:astra-ui-[a-f0-9]{16}\.(?:js|css)|astra-app-[a-f0-9]{16}\.js|data-[a-f0-9]{16}\.json|assets\/catalog-mcw1-[1-9][0-9]*-[a-f0-9]{16}\.png)$/;
 const PREVIEW_CSS = `:root{color-scheme:dark;font-family:Segoe UI,system-ui,sans-serif;color:#edf4e7;background:#10251b}*{box-sizing:border-box}body{margin:0;min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px;line-height:1.6}main{width:min(100%,440px);padding:32px;background:#193526;border:1px solid #48634a;border-radius:18px;box-shadow:0 18px 60px #06130c66;text-align:center}h1{margin:0 0 12px;font-size:32px;line-height:1.2;letter-spacing:-.5px}p{margin:0 0 24px;color:#c4d6bf}form{display:grid;gap:18px}label{display:grid;gap:8px;text-align:left;font-size:16px;font-weight:600}input,button{font:inherit;font-size:18px;border-radius:9px;min-height:52px;width:100%}input{padding:12px 14px;background:#10291c;color:#fff;border:1px solid #71906b}button{padding:12px 18px;background:#b9d897;color:#152815;border:1px solid #d3e9b6;font-weight:700;cursor:pointer}button:hover{background:#cbe4ad}input:focus-visible,button:focus-visible{outline:3px solid #edc471;outline-offset:4px}small{display:block;margin-top:20px;color:#b3c8ad;font-size:13px}@media(max-width:420px){main{padding:26px 22px}h1{font-size:28px}}`;
 const PREVIEW_STYLE_HASH = 'sha256-BpOjXFXviQTga1JEPFA1dr76Q48eKE71szRPsqqs//8=';
 const encoder = new TextEncoder();
@@ -95,6 +95,7 @@ function immutableReviewResponse(request, url, response) {
   if (!['GET', 'HEAD'].includes(request.method) || url.search || !REVIEW_IMMUTABLE_PATH.test(url.pathname)
       || response.status !== 200 || response.headers.has('Set-Cookie')) return false;
   const type = response.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase();
+  if (url.pathname.endsWith('.png')) return !url.href.includes('?') && response.headers.get('Content-Type')?.trim().toLowerCase() === 'image/png';
   if (url.pathname.endsWith('.js')) return type === 'application/javascript' || type === 'text/javascript';
   if (url.pathname.endsWith('.css')) return type === 'text/css';
   return type === 'application/json';

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed_MCW1_sprite_cache_coverage",
+  "identityPlanHash": "0f340c97e2bddfec81326123b60c47d793870c544a77818292cb17fc372d0ccb",
+  "planItemCount": 1090,
+  "verifiedOriginalImageCount": 1087,
+  "knownUnavailable404ItemIds": [
+    1702096,
+    1702325,
+    1702326
+  ],
+  "unattemptedCount": 0,
+  "allPlanEntriesAccounted": true,
+  "allPlanImagesAvailable": false,
+  "partialManifest": false,
+  "note": "Original client image availability only; not item release, market availability, price or economic classification. A 404 supplies no replacement image."
+}

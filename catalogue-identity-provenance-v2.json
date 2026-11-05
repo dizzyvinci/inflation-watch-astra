@@ -1,0 +1,384 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed_catalogue_identity_provenance",
+  "identityMapVersion": 2,
+  "identityFile": "catalog-identities-v2.json",
+  "identityFileSha256": "2fae5a04406e365e4897b60bc704ad78a86af8a7f9cb9b568f93cc652954e708",
+  "priorIdentityFile": "catalog-identities-v1.json",
+  "priorIdentityFileSha256": "c7b56e5744ec4e94514a17caf68f1a136e7c2148186a6b5d1048b46da2a5b2bd",
+  "region": "MCW",
+  "clientVersion": "1",
+  "matchingRule": "exact_case_sensitive_whole_name_unique_across_both_cash_filters",
+  "reviewPlanHash": "0f340c97e2bddfec81326123b60c47d793870c544a77818292cb17fc372d0ccb",
+  "hashMethod": "mcat-typed-utf8-f64-v1",
+  "sourceUpdatedAtAtAdoption": "2026-11-04T08:30:56+00:00",
+  "sourceProjectionHashAtAdoption": "a8fecdf1febb6a48dba18286fbf6c739f53b63045f18547b3c3dc75ec3b472ec",
+  "catalogHashAtAdoption": "061bd38cfed551beecd1ec54296a96bd16ef9caac51de9c8ec7878668d799795",
+  "identityVersion": "5eff8ada04b4ffce1af4ba4cf1245c65fe59ce574ce515f42ebfb777aba8827a",
+  "archives": [
+    {
+      "sourceUrl": "https://maplestory.io/api/MCW/1/item/list?cashFilter=true&count=10000",
+      "sha256": "60bf86bcd6dec8b7644c6366c4c8b1032c43325854fda3151a074d469e1973c9",
+      "bytes": 2500435,
+      "recordCount": 4706,
+      "capturedAt": "2026-11-05T11:48:27.840134+00:00",
+      "timestampKind": "http_response_completed_at",
+      "sourceObservedAt": null,
+      "cashFilter": true
+    },
+    {
+      "sourceUrl": "https://maplestory.io/api/MCW/1/item/list?cashFilter=false&count=10000",
+      "sha256": "60166ef0713a547a73b81473fbfa43d5d63f5182c978f5194b16411cd5e88a92",
+      "bytes": 1360609,
+      "recordCount": 2655,
+      "capturedAt": "2026-11-05T18:48:31.401282+00:00",
+      "timestampKind": "http_response_completed_at",
+      "sourceObservedAt": null,
+      "cashFilter": false
+    }
+  ],
+  "counts": {
+    "sourceItemsAtAdoption": 1424,
+    "combinedMetadataRecords": 7361,
+    "bulkUniqueMatches": 1380,
+    "preservedPriorEntries": 79,
+    "newBindings": 1302,
+    "acceptedBindings": 1381,
+    "ambiguousNames": 31,
+    "unknownNames": 13,
+    "independentlyRetainedAmbiguousNames": 1,
+    "remainingUnmappedAtAdoption": 43
+  },
+  "ambiguousNames": [
+    {
+      "slug": "black-cat-gloves",
+      "name": "Black Cat Gloves",
+      "candidateIds": [
+        1082008,
+        1087027
+      ]
+    },
+    {
+      "slug": "black-cloth-pants",
+      "name": "Black Cloth Pants",
+      "candidateIds": [
+        1060010,
+        1061011
+      ]
+    },
+    {
+      "slug": "black-cloth-vest",
+      "name": "Black Cloth Vest",
+      "candidateIds": [
+        1040012,
+        1041013
+      ]
+    },
+    {
+      "slug": "blue-bennis-chainmail",
+      "name": "Blue Bennis Chainmail",
+      "candidateIds": [
+        1040034,
+        1041041
+      ]
+    },
+    {
+      "slug": "blue-cloth-pants",
+      "name": "Blue Cloth Pants",
+      "candidateIds": [
+        1060009,
+        1061010
+      ]
+    },
+    {
+      "slug": "blue-cloth-vest",
+      "name": "Blue Cloth Vest",
+      "candidateIds": [
+        1040011,
+        1041012
+      ]
+    },
+    {
+      "slug": "blue-headband",
+      "name": "Blue Headband",
+      "candidateIds": [
+        1002007,
+        1007239
+      ]
+    },
+    {
+      "slug": "blue-moon",
+      "name": "Blue Moon",
+      "candidateIds": [
+        1032011,
+        1041078
+      ]
+    },
+    {
+      "slug": "blue-potion",
+      "name": "Blue Potion",
+      "candidateIds": [
+        2000003,
+        2000008
+      ]
+    },
+    {
+      "slug": "cake",
+      "name": "Cake",
+      "candidateIds": [
+        2020002,
+        2020023
+      ]
+    },
+    {
+      "slug": "cat-hat",
+      "name": "Cat Hat",
+      "candidateIds": [
+        1007003,
+        1007430
+      ]
+    },
+    {
+      "slug": "dark-shadow",
+      "name": "Dark Shadow",
+      "candidateIds": [
+        1040067,
+        1041073
+      ]
+    },
+    {
+      "slug": "dark-shadow-pants",
+      "name": "Dark Shadow Pants",
+      "candidateIds": [
+        1060059,
+        1061068
+      ]
+    },
+    {
+      "slug": "green-bennis-chainmail",
+      "name": "Green Bennis Chainmail",
+      "candidateIds": [
+        1040033,
+        1041040
+      ]
+    },
+    {
+      "slug": "heros-gladius",
+      "name": "Hero's Gladius",
+      "candidateIds": [
+        1302014,
+        4031027
+      ]
+    },
+    {
+      "slug": "item-megaphone",
+      "name": "Item Megaphone",
+      "candidateIds": [
+        5070006,
+        5070026
+      ]
+    },
+    {
+      "slug": "leaf",
+      "name": "Leaf",
+      "candidateIds": [
+        1017057,
+        4000011
+      ]
+    },
+    {
+      "slug": "lemon",
+      "name": "Lemon",
+      "candidateIds": [
+        2010005,
+        2010008
+      ]
+    },
+    {
+      "slug": "lollipop",
+      "name": "Lollipop",
+      "candidateIds": [
+        1322012,
+        1702020
+      ]
+    },
+    {
+      "slug": "megaphone",
+      "name": "Megaphone",
+      "candidateIds": [
+        5070000,
+        5070010,
+        5070020,
+        5070030
+      ]
+    },
+    {
+      "slug": "orange-mushroom-hat",
+      "name": "Orange Mushroom Hat",
+      "candidateIds": [
+        1007082,
+        1007231,
+        1007397
+      ]
+    },
+    {
+      "slug": "pet-food",
+      "name": "Pet Food",
+      "candidateIds": [
+        2120000,
+        2120001
+      ]
+    },
+    {
+      "slug": "red-cloth-pants",
+      "name": "Red Cloth Pants",
+      "candidateIds": [
+        1060008,
+        1061009
+      ]
+    },
+    {
+      "slug": "red-cloth-vest",
+      "name": "Red Cloth Vest",
+      "candidateIds": [
+        1040010,
+        1041011
+      ]
+    },
+    {
+      "slug": "red-headband",
+      "name": "Red Headband",
+      "candidateIds": [
+        1002003,
+        1007248
+      ]
+    },
+    {
+      "slug": "red-potion",
+      "name": "Red Potion",
+      "candidateIds": [
+        2000000,
+        2000007
+      ]
+    },
+    {
+      "slug": "return-scroll-nearest-town",
+      "name": "Return Scroll - Nearest Town",
+      "candidateIds": [
+        2030000,
+        2030011
+      ]
+    },
+    {
+      "slug": "sailor-outfit",
+      "name": "Sailor Outfit",
+      "candidateIds": [
+        1057091,
+        1057206
+      ]
+    },
+    {
+      "slug": "super-megaphone",
+      "name": "Super Megaphone",
+      "candidateIds": [
+        5070001,
+        5070011
+      ]
+    },
+    {
+      "slug": "white-jeans",
+      "name": "White Jeans",
+      "candidateIds": [
+        1067027,
+        1067187
+      ]
+    },
+    {
+      "slug": "white-label-ring",
+      "name": "White Label Ring",
+      "candidateIds": [
+        1112100,
+        1112222
+      ]
+    }
+  ],
+  "unknownNames": [
+    {
+      "slug": "black-cloth-pants-f",
+      "name": "Black Cloth Pants (F)"
+    },
+    {
+      "slug": "black-cloth-vest-f",
+      "name": "Black Cloth Vest (F)"
+    },
+    {
+      "slug": "black-hit-me-shirt",
+      "name": "Black “Hit Me” Shirt"
+    },
+    {
+      "slug": "buddy-overall-jeans-blue-or-red",
+      "name": "Buddy Overall Jeans (Blue or Red)"
+    },
+    {
+      "slug": "cape-accuracy-scroll-greater",
+      "name": "Cape Accuracy Scroll: Greater"
+    },
+    {
+      "slug": "cape-accuracy-scroll-lesser",
+      "name": "Cape Accuracy Scroll: Lesser"
+    },
+    {
+      "slug": "gold-burgernet-helm",
+      "name": "Gold Burgernet Helm"
+    },
+    {
+      "slug": "green-bennis-chainmail-f",
+      "name": "Green Bennis Chainmail (F)"
+    },
+    {
+      "slug": "iron-burgernet-helm",
+      "name": "Iron Burgernet Helm"
+    },
+    {
+      "slug": "orihalcon-burgernet-helm",
+      "name": "Orihalcon Burgernet Helm"
+    },
+    {
+      "slug": "pet-equip-speed-scroll-greater",
+      "name": "Pet Equip Speed Scroll: Greater"
+    },
+    {
+      "slug": "processed-cloth",
+      "name": "Processed Cloth"
+    },
+    {
+      "slug": "red-cloth-pants-f",
+      "name": "Red Cloth Pants (F)"
+    }
+  ],
+  "independentlyRetainedExceptions": [
+    {
+      "slug": "dark-shadow-pants",
+      "name": "Dark Shadow Pants",
+      "id": 1060059,
+      "reason": "Existing immutable exact-ID/name evidence retained despite bulk-name ambiguity",
+      "priorPlanHash": "1c5d0936d1b0c7350b5f86fcdc3af1f17a9613f5623c92fd4a5a083e8fa0a16a",
+      "sourceUrl": "https://mesos.watch/#item=1060059",
+      "capturedAt": "2026-11-05T09:11:45.636Z",
+      "captureTimeKind": "per_item_return",
+      "rawCaptureSha256": "692ce256a54f398501047c64ac42c4c2e379d7eb7729cfe7d2a262fea83db74a",
+      "sourceObservedAt": null,
+      "qualityConstant": false,
+      "limitation": "Source name may combine gender/stat variants; this identifier is not a constant-quality price series"
+    }
+  ],
+  "limitations": [
+    "Metadata receipts are not release dates, item availability, market observations or fixed NX costs",
+    "Both archives were searched together; cash-only or category-based uniqueness is insufficient",
+    "No fuzzy/casefold/trim/alias selection; ambiguous and unmatched names stay unresolved except preserved independent prior evidence",
+    "All prior79 entries and their proof hashes remain unchanged; v1 is immutable",
+    "No provider price/count/date/summary or MPI/NX basket math changed by this identity adoption",
+    "Client isCash flag differs from economic acquisition origin and does not change source categories or frozen eligibility",
+    "Metadata record completeness beyond the two captured responses is not guaranteed; names are not a global game-market census"
+  ]
+}

@@ -1,6 +1,7 @@
 // Own-site catalogue from accepted cached daily data. No provider transport.
 // The Worker applies its single outer access gate before invoking this handler.
 import { HASH_METHOD, portableHash } from './portable-hash.mjs';
+import {createCatalogIndexArtifactReader,validateCatalogIndexDescriptor} from './catalog-index-artifact.mjs';
 
 const SOURCE = 'https://maplestory-classic.com/market.json';
 const SCOPE = 'public_daily_developer_feed_collection';
@@ -86,8 +87,9 @@ export function createCatalogRoutes({projectionFactory,compiledFeed,identityMap=
   // preparation key, even if a caller forgets to advance an optional label.
   const approvedIdentityMap=clone(identityMap);
   const identityKey=portableHash({hashMethod:HASH_METHOD,identityMap:approvedIdentityMap});
+  const readIndexArtifact=createCatalogIndexArtifactReader();
   const scopes=new WeakMap();
-  function scopeFor(env){const binding=env.SNAPSHOTS??env;let scope=scopes.get(binding);if(!scope){scope={flight:null,expires:0,current:null,lastGood:null,projects:new Map()};scopes.set(binding,scope);}return scope;}
+  function scopeFor(env){const binding=env.SNAPSHOTS??env;let scope=scopes.get(binding);if(!scope){scope={flight:null,expires:0,current:null,lastGood:null,projects:new Map(),indexFlight:null,indexExpires:0,indexCurrent:null,indexLastGood:null};scopes.set(binding,scope);}return scope;}
   async function project(scope,source) {
     const key=source.feedHash+':'+await identityKey+':'+(identityVersion??'');
     if(!scope.projects.has(key)){
@@ -99,15 +101,15 @@ export function createCatalogRoutes({projectionFactory,compiledFeed,identityMap=
     }
     return {...await scope.projects.get(key),mode:source.mode,pointerVersion:source.pointerVersion??null};
   }
-  async function load(env) {
+  async function load(env,providedPointer=null) {
     const scope=scopeFor(env);
-    if(scope.current&&now()<scope.expires)return scope.current;
+    if(scope.current&&now()<scope.expires&&(!providedPointer||scope.current.pointerVersion===providedPointer.version))return scope.current;
     if(scope.flight)return scope.flight;
     scope.flight=(async()=>{
       let projection;
       try{
         if(!env.SNAPSHOTS)throw Error('No snapshot binding');
-        const pointer=await readJson(env.SNAPSHOTS,'version.json');
+        const pointer=providedPointer??await readJson(env.SNAPSHOTS,'version.json');
         if(!validPointer(pointer))throw Error('Invalid accepted pointer');
         if(scope.lastGood?.pointerVersion===pointer.version&&scope.lastGood.index.sourceUpdatedAt===pointer.sourceUpdatedAt)projection={...scope.lastGood,mode:'accepted_r2'};
         else projection=await project(scope,await acceptedFeed(env.SNAPSHOTS,pointer));
@@ -119,6 +121,32 @@ export function createCatalogRoutes({projectionFactory,compiledFeed,identityMap=
       scope.current=projection;scope.expires=now()+Math.max(0,Math.min(30000,ttlMs));return projection;
     })().finally(()=>{scope.flight=null;});
     return scope.flight;
+  }
+  async function loadIndex(env){
+    const scope=scopeFor(env);
+    if(scope.indexCurrent&&now()<scope.indexExpires)return scope.indexCurrent;
+    if(scope.indexFlight)return scope.indexFlight;
+    scope.indexFlight=(async()=>{
+      let pointer=null,projection;
+      try{
+        if(!env.SNAPSHOTS)throw Error('No snapshot binding');
+        pointer=await readJson(env.SNAPSHOTS,'version.json');
+        const descriptor=validateCatalogIndexDescriptor(pointer,await identityKey);
+        if(scope.indexLastGood?.artifactSha===descriptor.sha256&&JSON.stringify(scope.indexLastGood.artifactDescriptor)===JSON.stringify(descriptor)){
+          projection={...scope.indexLastGood,pointerVersion:pointer.version,mode:'accepted_r2'};
+        }else{
+          projection={...await readIndexArtifact(env.SNAPSHOTS,pointer,await identityKey),pointerVersion:pointer.version,mode:'accepted_r2',artifactSha:descriptor.sha256,artifactDescriptor:clone(descriptor)};
+        }
+      }catch{
+        // Legacy, missing or invalid artifacts still use the original committed
+        // feed/archive checks. Detail requests NEVER inherit the index shortcut.
+        projection=await load(env,validPointer(pointer)?pointer:null);
+        if(projection.mode==='compiled_daily_fallback'&&scope.indexLastGood)projection={...scope.indexLastGood,mode:'retained_accepted_r2'};
+      }
+      if(projection.mode==='accepted_r2')scope.indexLastGood=projection;
+      scope.indexCurrent=projection;scope.indexExpires=now()+Math.max(0,Math.min(30000,ttlMs));return projection;
+    })().finally(()=>{scope.indexFlight=null;});
+    return scope.indexFlight;
   }
   function respond(request,value,status=200,etag=null,mode=null,serialized=null) {
     const headers=new Headers({'Content-Type':'application/json; charset=utf-8','X-Content-Type-Options':'nosniff','Cache-Control':'private, no-store, no-transform','X-Robots-Tag':'noindex, nofollow, noarchive'});
@@ -135,7 +163,7 @@ export function createCatalogRoutes({projectionFactory,compiledFeed,identityMap=
     const expected=url.searchParams.get('catalog');
     if(match&&(!expected||!HASH.test(expected)))return respond(request,{error:'catalog_hash_required'},400);
     try {
-      const generation=await load(env),index=generation.index;
+      const generation=await (match?load(env):loadIndex(env)),index=generation.index;
       if(expected&&expected!==index.catalogHash)return respond(request,{error:'catalog_version_changed',catalogHash:index.catalogHash},409,null,generation.mode);
       if(!match)return respond(request,index,200,`"catalog-${index.catalogHash}"`,generation.mode,generation.text);
       const slug=match[1],row=generation.bySlug.get(slug);if(!row)return respond(request,{error:'item_not_in_accepted_collection'},404,null,generation.mode);

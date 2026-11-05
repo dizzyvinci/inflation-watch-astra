@@ -131,7 +131,7 @@ class LocalCatalog:
                 raise ValueError('Invalid published pointer')
             report_path = self.root / 'dist' / pointer['data']
             feed_path = self.root / 'cache/market.json'
-            identity_path = self.root / 'catalog-identities-v1.json'
+            identity_path = self.root / 'catalog-identities-v2.json'
             signature = (hashlib.sha256(pointer_raw).hexdigest(), pointer_stat,
                          _stat(report_path), _stat(feed_path), _stat(identity_path))
             if signature == self._signature and self._last_good:

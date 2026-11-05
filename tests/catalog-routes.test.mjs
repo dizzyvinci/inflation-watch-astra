@@ -8,7 +8,7 @@ import {withPreviewGate} from '../ops/preview-gate.mjs';
 const root=new URL('../',import.meta.url);
 const read=path=>JSON.parse(readFileSync(new URL(path,root),'utf8'));
 const feed=read('cache/market.json');
-const identities=read('catalog-identities-v1.json');
+const identities=read('catalog-identities-v2.json');
 const prepared=await createMarketCatalog(feed,identities),index=prepared.buildIndex();
 const details=Object.fromEntries(['apple','adamantium-guards'].map(slug=>[slug,prepared.resolveItem(slug)]));
 const clone=value=>structuredClone(value);

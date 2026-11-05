@@ -2,11 +2,13 @@
   'use strict';
   const footer = document.querySelector('footer');
   if (!footer || document.getElementById('site-music')) return;
-  const keys = { enabled: 'astra-site-music-v1', volume: 'astra-site-music-volume-v1' };
+  // The old automatic village-music choice is preserved in storage as history.
+  // It does not opt visitors into this revised, explicitly optional preview.
+  const keys = { enabled: 'astra-site-music-v2', volume: 'astra-site-music-volume-v1' };
   const read = key => { try { return localStorage.getItem(key); } catch { return null; } };
   const save = (key, value) => { try { localStorage.setItem(key, value); } catch { /* Tab-only controls still work. */ } };
   const stored = read(keys.enabled), storedVolume = read(keys.volume);
-  let enabled = stored === 'off' ? false : true;
+  let enabled = stored === 'on';
   let volume = storedVolume !== null && storedVolume.trim() !== '' && Number.isFinite(Number(storedVolume)) && Number(storedVolume) >= 0 && Number(storedVolume) <= 1 ? Number(storedVolume) : .18;
   let state = enabled ? 'pending' : 'off', attempt = 0;
   const audio = document.createElement('audio');
@@ -14,7 +16,7 @@
   audio.hidden = true;
   const panel = document.createElement('section'); panel.id = 'site-music'; panel.className = 'site-music-panel shell';
   panel.setAttribute('aria-labelledby', 'site-music-title');
-  const heading = document.createElement('h2'); heading.id = 'site-music-title'; heading.textContent = 'Village music';
+  const heading = document.createElement('h2'); heading.id = 'site-music-title'; heading.textContent = 'Optional preview music';
   const status = document.createElement('p'); status.className = 'site-music-status'; status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
   const controls = document.createElement('div'); controls.className = 'site-music-controls';
   const toggle = document.createElement('button'); toggle.type = 'button'; toggle.id = 'site-music-toggle';
@@ -29,7 +31,7 @@
   const details = document.createElement('a'); details.href = 'assets/site-music-attribution.txt'; details.textContent = 'Music credits & changes';
   const privacy = document.createElement('a'); privacy.href = '#privacy'; privacy.textContent = 'Privacy';
   credit.append(source, ' · ', license, ' · ', details, ' · ', privacy);
-  const note = document.createElement('p'); note.className = 'site-music-note'; note.textContent = 'Licensed original village music, not official MapleStory music. Audio is served by this site; no third-party player. Your choice and volume are saved in this browser. Browsers may require you to tap Play.';
+  const note = document.createElement('p'); note.className = 'site-music-note'; note.textContent = 'Off by default. An official MapleStory recording with a verified copyright-free playback license has not been selected. This archived, manually enabled preview track is licensed original village music, not official MapleStory music. Audio is served by this site; no third-party player. Your choice and volume are saved in this browser.';
   panel.append(heading, status, controls, credit, note, audio); footer.before(panel);
   const quick = document.createElement('button'); quick.type='button'; quick.className='site-music-quick';
   quick.setAttribute('aria-controls','site-music-audio'); document.body.append(quick);

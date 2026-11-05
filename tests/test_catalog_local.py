@@ -55,7 +55,7 @@ class LocalCatalogTests(unittest.TestCase):
         pointer={'version':version,'data':'data-'+version+'.json','sourceUpdatedAt':feed['updatedAt'],
                  'builtAt':report['builtAt'],'marketCatalog':meta if pointer_metadata is None else pointer_metadata}
         (self.root/'cache/market.json').write_bytes(encoded(feed))
-        (self.root/'catalog-identities-v1.json').write_bytes(encoded(ids))
+        (self.root/'catalog-identities-v2.json').write_bytes(encoded(ids))
         (self.root/'dist'/pointer['data']).write_bytes(raw)
         (self.root/'dist/version.json').write_bytes(encoded(pointer))
         return pointer
@@ -135,7 +135,7 @@ class LocalCatalogTests(unittest.TestCase):
                     changed=copy.deepcopy(self.feed);changed['items'][0]['h'][0][1]+=1
                     (self.root/'cache/market.json').write_bytes(encoded(changed))
                 elif fault=='identities':
-                    (self.root/'catalog-identities-v1.json').write_bytes(encoded([]))
+                    (self.root/'catalog-identities-v2.json').write_bytes(encoded([]))
                 elif fault in ['pointer_metadata','boolean_schema']:
                     if fault=='boolean_schema':pointer['marketCatalog']['schemaVersion']=True
                     else:pointer['marketCatalog']['identityVersion']='0'*64

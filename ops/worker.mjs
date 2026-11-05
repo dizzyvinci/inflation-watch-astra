@@ -4,9 +4,10 @@ import config from '../config.json' with { type: 'json' };
 import { computeReport } from './worker-core.mjs';
 import { withPreviewGate } from './preview-gate.mjs';
 import catalogFeed from '../cache/market.json' with { type: 'json' };
-import catalogIdentities from '../catalog-identities-v1.json' with { type: 'json' };
+import catalogIdentities from '../catalog-identities-v2.json' with { type: 'json' };
 import { createCachedProjectionFactory, HASH_METHOD } from './market-catalog.mjs';
 import { createCatalogRoutes } from './catalog-routes.mjs';
+import {writeCatalogIndexArtifact,validateCatalogIndexDescriptor} from './catalog-index-artifact.mjs';
 
 const catalogProject = createCachedProjectionFactory(catalogIdentities);
 export const catalogIdentityVersion = catalogProject.identityVersion;
@@ -340,7 +341,7 @@ async function previousReport(bucket, pointer) {
   } catch { return null; }
 }
 
-async function writeReport(bucket, lease, now, report, status, definitionFingerprint, references, lastSuccessfulFetchAt, nextAllowedAt = null) {
+async function writeReport(bucket, lease, now, report, status, definitionFingerprint, references, lastSuccessfulFetchAt, nextAllowedAt = null, catalogIndexArtifact = null) {
   const text = JSON.stringify(report), version = (await digest(text)).slice(0, 16), data = `data-${version}.json`;
   await checkLease(bucket, lease, now());
   const written = await bucket.put(data, text, {
@@ -353,6 +354,7 @@ async function writeReport(bucket, lease, now, report, status, definitionFingerp
   }
   return { version, data, basketVersion: report.basketVersion, builtAt: report.builtAt,
     marketCatalog: clone(report.marketCatalog),
+    ...(catalogIndexArtifact ? {catalogIndexArtifact} : {}),
     sourceUpdatedAt: report.sourceUpdatedAt, sourceStatus: status, mode: 'collector',
     lastSuccessfulFetchAt, nextAllowedAt: nextAllowedAt === null ? null : iso(nextAllowedAt),
     calculationFingerprint: definitionFingerprint, referenceFingerprint: references };
@@ -374,7 +376,9 @@ async function commitReport(bucket, lease, now, stateRecord, pointerRecord, next
 async function upgradeFromAcceptedCache({ bucket, lease, now, baseline, pointer, pointerRecord, state, stateRecord, status, nextAllowedAt }) {
   if (!pointer) return null;
   const definition = await calculationFingerprint(baseline), references = await referenceFingerprint(baseline);
-  if (pointer.calculationFingerprint === definition && pointer.referenceFingerprint === references) return null;
+  let hasIndexArtifact=false;
+  try { validateCatalogIndexDescriptor(pointer,await catalogIdentityVersion);hasIndexArtifact=true; } catch { /* Older deployments have no index artifact. */ }
+  if (pointer.calculationFingerprint === definition && pointer.referenceFingerprint === references && hasIndexArtifact) return null;
   const feed = state.feed, text = JSON.stringify(feed);
   if (!feed || !/^[a-f0-9]{64}$/.test(state.feedHash ?? '') || !text
       || new TextEncoder().encode(text).byteLength > MAX_BYTES || await digest(text) !== state.feedHash
@@ -405,7 +409,9 @@ async function upgradeFromAcceptedCache({ bucket, lease, now, baseline, pointer,
   report.calculationFingerprint = definition;
   report.referenceFingerprint = references;
   report.marketCatalog = await catalogProject.metadata(feed);
-  const nextPointer = await writeReport(bucket, lease, now, report, failure, definition, references, lastSuccessfulFetchAt, nextAllowedAt);
+  const catalogIndexArtifact = await writeCatalogIndexArtifact(bucket,(await catalogProject(feed)).index,report.marketCatalog,
+    {previous:pointer.catalogIndexArtifact,beforeWrite:()=>checkLease(bucket,lease,now())});
+  const nextPointer = await writeReport(bucket, lease, now, report, failure, definition, references, lastSuccessfulFetchAt, nextAllowedAt, catalogIndexArtifact);
   const nextState = { ...state, checkedAt: failure.checkedAt, nextAllowedAt, lastError: status.detail,
     publishedVersion: nextPointer.version, calculationFingerprint: definition,
     cachedUpgradeSourceVersion: pointer.version, cachedUpgradeSourceHash: state.feedHash };
@@ -518,7 +524,11 @@ export async function collect(env, options = {}) {
     // This is storage time, never a renewed source/trade observation clock.
     await checkLease(bucket, lease, now());
     const archived = await archiveSource(bucket, feed, feedHash, state, iso(now()));
-    if (report) nextPointer = await writeReport(bucket, lease, now, report, status, definitionFingerprint, references, lastSuccessfulFetchAt);
+    const catalogMetadata=report?.marketCatalog??nextPointer.marketCatalog;
+    const catalogIndexArtifact=await writeCatalogIndexArtifact(bucket,(await catalogProject(feed)).index,catalogMetadata,
+      {previous:pointer?.catalogIndexArtifact,beforeWrite:()=>checkLease(bucket,lease,now())});
+    if (report) nextPointer = await writeReport(bucket, lease, now, report, status, definitionFingerprint, references, lastSuccessfulFetchAt, null, catalogIndexArtifact);
+    else nextPointer={...nextPointer,catalogIndexArtifact};
     const nextState = {
       feed, feedHash, etag, lastModified, checkedAt, lastSuccessfulFetchAt,
       nextAllowedAt: null, publishedVersion: nextPointer.version,
@@ -638,7 +648,7 @@ async function handleFetch(request, env, ctx) {
   const dynamic = ['/version.json', '/data.json', '/health.json'].includes(path);
   const namedSnapshot = /^\/data-[a-f0-9]{16}\.json$/.test(path);
   if (!dynamic && !namedSnapshot) {
-    if (path.startsWith('/data-') || path.startsWith('/_private/') || path === '/collect' || path === '/admin') {
+    if (path.startsWith('/data-') || path.startsWith('/_private/') || path.startsWith('/__catalog_index_cache/') || path === '/collect' || path === '/admin') {
       return new Response('Not found', { status: 404 });
     }
     if (!env.ASSETS) return new Response('Static assets unavailable', { status: 503 });

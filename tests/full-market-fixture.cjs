@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..'),read=file=>fs.readFileSync(path.join(roo
 module.exports=async()=>{
  const {createMarketCatalog}=await import(pathToFileURL(path.join(root,'ops/market-catalog.mjs')));
  const {portableHash,HASH_METHOD}=await import(pathToFileURL(path.join(root,'ops/portable-hash.mjs')));
- const feed=JSON.parse(read('cache/market.json')),snapshot=JSON.parse(read('dist/data.json')),identities=JSON.parse(read('catalog-identities-v1.json'));
+ const feed=JSON.parse(read('cache/market.json')),snapshot=JSON.parse(read('dist/data.json')),identities=JSON.parse(read('catalog-identities-v2.json'));
  const identityVersion=await portableHash({hashMethod:HASH_METHOD,identityMap:identities});
  const makeCatalog=async input=>createMarketCatalog(input,identities),prepared=await makeCatalog(feed),index=prepared.buildIndex();
  const known=new Set([...snapshot.rows,...snapshot.cash,...(snapshot.contextItems||[]),...(snapshot.cashCatalog?.rows||[])].map(r=>r.slug));
