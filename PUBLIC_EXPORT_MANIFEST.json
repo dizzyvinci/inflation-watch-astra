@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T08:52:06+00:00",
+  "exportedAt": "2026-11-05T08:56:34+00:00",
   "basketVersion": 2,
   "files": [
     {
@@ -782,7 +782,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "87f225afa8018a85a4ee968f117e77b279d574d2b391cc001411a15c21119aa8"
+      "sha256": "6ad607fefc1cd75284fc0886d7fbfa412f108ccd51c342432046e77ddac8e103"
     },
     {
       "path": "dist/_headers",
@@ -796,8 +796,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 96020,
-      "sha256": "9ede23a5ae411002aee1908d05c8603505e639ea6e13e72b1aaedc51ea13de4d"
+      "bytes": 96037,
+      "sha256": "0d91e1c049d8be3f1ed24d06353918eaa697a55bf26bd2e26fc32dc840390ad0"
     },
     {
       "path": "dist/assets/animal-fur-bundle.png",
@@ -2125,14 +2125,19 @@
       "sha256": "f6c5ed14923531e41ca7483545d5bb63b049135652ceafa7361c549bd5349e89"
     },
     {
+      "path": "dist/data-fbf6054dd616ceea.json",
+      "bytes": 308874,
+      "sha256": "fbf6054dd616ceea13a025b3ac7e2c78b552d92a19d69f02e2e659140aaf50b7"
+    },
+    {
       "path": "dist/data.json",
       "bytes": 308874,
-      "sha256": "248ae6a8845719ef00aba6f986acfc56d5fba751906f7067f39d00cb35984665"
+      "sha256": "fbf6054dd616ceea13a025b3ac7e2c78b552d92a19d69f02e2e659140aaf50b7"
     },
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "87f225afa8018a85a4ee968f117e77b279d574d2b391cc001411a15c21119aa8"
+      "sha256": "6ad607fefc1cd75284fc0886d7fbfa412f108ccd51c342432046e77ddac8e103"
     },
     {
       "path": "dist/history/cpi-v1.json",
@@ -2187,12 +2192,12 @@
     {
       "path": "dist/version.json",
       "bytes": 150,
-      "sha256": "65f8d795332cd8ee19d05c4139f82b759a75f8c76722b92c37774788c8ba3dd9"
+      "sha256": "b0bd40a7a298906c6dfabdd13d7a41f8392c637dcddf852fe7096b5c40149132"
     },
     {
       "path": "engine.py",
-      "bytes": 35840,
-      "sha256": "85d984319fc9b374b69b3f21d41026132a189690f5db229e4d252c82d1ba8316"
+      "bytes": 35834,
+      "sha256": "b2d558cf03bb2cdd707c33f6fe32d473eddd5dcabe6f56c3302944fa33949dba"
     },
     {
       "path": "historical_backfill.py",
@@ -2391,8 +2396,8 @@
     },
     {
       "path": "tests/test_source_retry.py",
-      "bytes": 5591,
-      "sha256": "302ae3894d52af79be394303a4e844421b5fd7908fb8950fbde6ad77840865ba"
+      "bytes": 6081,
+      "sha256": "40c0f170ee3b7c8b20410a9669ad2699ab82116e9826d68c255aa99d04527a68"
     },
     {
       "path": "tests/test_source_summary.py",
@@ -2426,8 +2431,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 96020,
-      "sha256": "9ede23a5ae411002aee1908d05c8603505e639ea6e13e72b1aaedc51ea13de4d"
+      "bytes": 96037,
+      "sha256": "0d91e1c049d8be3f1ed24d06353918eaa697a55bf26bd2e26fc32dc840390ad0"
     },
     {
       "path": "web/author-portrait.css",

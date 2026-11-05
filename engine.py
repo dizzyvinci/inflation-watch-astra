@@ -164,16 +164,16 @@ def fetch_feed(offline=False):
             if old and dt.datetime.fromisoformat(feed['updatedAt'].replace('Z', '+00:00')) < dt.datetime.fromisoformat(old['updatedAt'].replace('Z', '+00:00')):
                 raise ValueError('Source timestamp moved backwards')
             atomic(cache, feed)
-            meta = {'status': 'ok', 'checkedAt': checked, 'etag': response.headers.get('ETag'), 'lastModified': response.headers.get('Last-Modified'), 'detail': 'Public developer feed; source publishes daily aggregates.', 'lastSuccessfulFetchAt': checked, 'nextAllowedAt': None}
+            meta = {'status': 'ok', 'checkedAt': checked, 'etag': response.headers.get('ETag'), 'lastModified': response.headers.get('Last-Modified'), 'detail': 'Public developer feed; source publishes daily aggregates.', 'lastSuccessfulFetchAt': now(), 'nextAllowedAt': None}
             atomic(meta_path, meta)
             return feed, meta
     except urllib.error.HTTPError as error:
         if error.code == 304 and cache.exists():
-            meta = {**previous, 'status': 'unchanged', 'checkedAt': checked, 'lastSuccessfulFetchAt': checked, 'nextAllowedAt': None}
+            meta = {**previous, 'status': 'unchanged', 'checkedAt': checked, 'lastSuccessfulFetchAt': now(), 'nextAllowedAt': None}
             atomic(meta_path, meta)
             return validate_feed(read(cache)), meta
         message = f'HTTP {error.code}'
-        next_allowed = source_retry_deadline(error.headers.get('Retry-After') if error.headers else None, checked, default=error.code == 429)
+        next_allowed = source_retry_deadline(error.headers.get('Retry-After') if error.headers else None, now(), default=error.code == 429)
         if next_allowed:
             message += '; provider retry delay honored'
     except Exception as error:
