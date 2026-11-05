@@ -184,7 +184,7 @@ const assertOff = f => {
 
   const late = fixture({ latePrivacy: true }); assert.equal(late.doc.querySelectorAll('.privacy-controls-panel').length, 1);
   late.w.eval(community); await flush(); assert.equal(late.doc.querySelectorAll('.privacy-controls-panel').length, 2);
-  assert.equal(late.doc.querySelector('.footer-story>p').outerHTML, late.personalBefore.replace('by a Mapler','by one Mapler')); assert.equal(late.calls.fetch.length, 0); late.close();
+  assert.equal(late.doc.querySelector('.footer-story>p').outerHTML, late.personalBefore.replace('by a Mapler','by one Mapler').replace('</span> that', '</span><br class="footer-intro-break"> That')); assert.equal(late.calls.fetch.length, 0); late.close();
 
   console.log('PASS: disclosed preview default-ON/one script, saved-OFF/no load, explicit and saved choices, server-confirmed default scope, strict manual config, withdrawal reload/race safety, blocked storage and unchanged personal story');
 })().catch(error => { console.error(error); process.exitCode = 1; });

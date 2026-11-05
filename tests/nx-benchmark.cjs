@@ -96,6 +96,37 @@ try {
 } finally { f.close(); }
 f = fixture(null, true);
 try { assert.equal(f.doc.querySelectorAll('.nx-benchmark').length, 0); assert.equal(f.calls.ready, 0); assert.equal(f.calculate(report).modelBenchmarkRate, 20); assert.deepEqual(f.errors, []); } finally { f.close(); }
+// Selected rolling/fixed model propagates to both Method and NX comparisons;
+// raw observed cash evidence and the frozen goods weights remain separate.
+const current=JSON.parse(fs.readFileSync(path.join(project,'dist/data.json'),'utf8'));
+f=fixture(current);
+try{
+  const untouched=JSON.stringify(current),options=f.doc.createElement('details');options.id='display-options';f.doc.body.prepend(options);
+  f.w.eval(fs.readFileSync(path.join(project,'web/rolling-benchmark-preview.js'),'utf8'));
+  f.publish(current);
+  const rolling=f.w.AstraRollingBenchmark,model=rolling.calculate(current),values=f.calculate(current);
+  close(values.modelBenchmarkRate,model.rate);close(values.observedGoodsAdjustedRate,current.latest.nxRate/(current.latest.cpi/model.meanMpi));
+  close(values.goodsBuyingPowerChange,(current.latest.nxRate/model.rate-1)*100);
+  for(const section of f.doc.querySelectorAll('.nx-benchmark')){
+    assert(section.querySelector('[data-nx-benchmark="model"]').textContent.includes(model.rate.toLocaleString('en-US',{maximumFractionDigits:2})));
+    assert(section.querySelector('[data-nx-benchmark="adjusted"]').textContent.includes('anchor-period mesos'));
+    assert(section.querySelector('.nx-benchmark-inputs').textContent.includes(model.startDay+'–'+model.endDay));
+    assert(section.querySelector('.nx-benchmark-inputs').textContent.includes(current.baseStart+'–'+current.baseEnd));
+    assert(section.querySelector('[data-nx-model-formula]').textContent.includes('arithmetic mean MPI'));
+    assert(section.querySelector('[data-nx-model-limit]').textContent.includes('does not remove seasonal cash-market effects'));
+    assert.equal(section.querySelector('details').open,false);
+  }
+  rolling.setWindowDays(3);const three=rolling.calculate(current);close(f.calculate(current).modelBenchmarkRate,three.rate);assert.equal(f.calculate(current).windowDays,3);
+  assert(f.doc.querySelector('[data-nx-model-formula]').textContent.includes('prior-3-complete-day'));assert(f.doc.querySelector('[data-nx-model-formula]').textContent.includes('all 4 goods points'));assert(!f.doc.querySelector('[data-nx-model-formula]').textContent.includes('seven'));
+  assert(f.doc.querySelector('.nx-benchmark-inputs').textContent.includes(three.startDay+'–'+three.endDay));rolling.setWindowDays(7);
+  rolling.setMode('fixed');close(f.calculate(current).modelBenchmarkRate,current.baseNxRate*current.latest.cpi/100);
+  assert(f.doc.querySelector('[data-nx-benchmark="adjusted"]').textContent.includes('reference-week mesos'));
+  rolling.setMode('compare');assert(f.doc.querySelector('.nx-benchmark-intro').textContent.includes('headline remains fixed-reference'));
+  rolling.setMode('rolling');f.doc.querySelector('[aria-controls="rolling-benchmark-explanation"]').click();
+  assert([...f.doc.querySelectorAll('.nx-benchmark details')].every(detail=>detail.open));
+  f.doc.querySelector('[aria-controls="rolling-benchmark-explanation"]').click();assert([...f.doc.querySelectorAll('.nx-benchmark details')].every(detail=>!detail.open));
+  assert.equal(f.doc.getElementById('actual-nx-items').textContent,'Actual best/worst items');assert.equal(JSON.stringify(current),untouched);assert.equal(f.calls.network,0);assert.deepEqual(f.errors,[]);
+}finally{f.close();}
 assert.doesNotMatch(css, /@import|https?:\/\/|url\(/);
 assert(css.includes(':focus-visible'));
 console.log('PASS: modelled NX benchmark and goods buying power, strict finite-input math, in-memory updates/unknowns, explicit units/limitations, unchanged headlines/tables/clocks and zero HTTP/storage');

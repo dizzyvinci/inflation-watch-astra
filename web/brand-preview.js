@@ -9,13 +9,13 @@
   if (!masthead || !brand || !suffix || !copy || !options) return;
 
   const choices = {
-    typeface: [['sans', 'Bold sans'], ['display', 'Upright display'], ['arcade', 'Arcade mono'], ['pixel', 'Pixel font']],
+    typeface: [['sans', 'Bold sans'], ['display', 'Upright display'], ['arcade', 'Arcade mono'], ['arcade-bold', 'Arcade mono · Bold'], ['pixel', 'Pixel font']],
     placement: [['left', 'Left'], ['center', 'Center']],
     case: [['lower', '.gg'], ['upper', '.GG']],
-    logo: [['pouch', 'Pouch'], ['leaf', 'Maple leaf'], ['scroll', 'Scroll'], ['none', 'Wordmark only']],
+    logo: [['lemon-stack', 'Lemon · 999 quickslot'], ['lemon', 'Lemon'], ['pouch', 'Pouch'], ['leaf', 'Maple leaf'], ['scroll', 'Scroll'], ['none', 'Wordmark only']],
     tagline: [['harnessed', 'Harnessed'], ['checked', 'Kept in check'], ['measured', 'Measured'], ['count', 'Every meso'], ['number', 'Put a number on it']],
   };
-  const defaults = { typeface: 'sans', placement: 'center', case: 'lower', logo: 'pouch', tagline: 'harnessed' };
+  const defaults = { typeface: 'arcade', placement: 'center', case: 'lower', logo: 'lemon-stack', tagline: 'harnessed' };
   const labels = { typeface: 'Wordmark typography', placement: 'Wordmark placement', case: 'Wordmark suffix', logo: 'Wordmark logo', tagline: 'Wordmark tagline' };
   const state = { ...defaults };
   const controls = document.createElement('fieldset');
@@ -27,6 +27,7 @@
   masthead.classList.add('brand-preview-masthead');
   copy.classList.add('brand-wordmark-copy');
   const logo = brand.querySelector('.brand-leaf'), logoImage = logo?.querySelector('img');
+  const stackBadge=document.createElement('span');stackBadge.className='brand-stack-count';stackBadge.textContent='999';stackBadge.setAttribute('aria-hidden','true');logo?.append(stackBadge);
   // Reuse the site's original leaf drawing without its favicon background box.
   const mapleLeaf = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   mapleLeaf.setAttribute('viewBox', '0 0 32 32'); mapleLeaf.setAttribute('aria-hidden', 'true'); mapleLeaf.setAttribute('focusable', 'false'); mapleLeaf.classList.add('brand-logo-maple');
@@ -50,8 +51,9 @@
     if (logo && logoImage) {
       logo.hidden = state.logo === 'none';
       logoImage.hidden = state.logo === 'leaf'; mapleLeaf.toggleAttribute('hidden', state.logo !== 'leaf');
-      if (state.logo === 'pouch' || state.logo === 'scroll') {
-        const src = state.logo === 'scroll' ? 'assets/ap-reset-scroll.png' : 'assets/meso-pouch.png';
+      stackBadge.hidden=state.logo!=='lemon-stack';
+      if (['lemon-stack','lemon','pouch','scroll'].includes(state.logo)) {
+        const src = state.logo.startsWith('lemon') ? 'assets/lemon-original-v1.png' : state.logo === 'scroll' ? 'assets/ap-reset-scroll.png' : 'assets/meso-pouch.png';
         if (logoImage.getAttribute('src') !== src) logoImage.src = src;
       }
       // The adjacent wordmark supplies the accessible brand name; art is decorative.

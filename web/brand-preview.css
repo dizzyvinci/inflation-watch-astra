@@ -8,7 +8,7 @@
 .brand-preview-masthead .brand .brand-leaf{width:76px;height:80px;flex:none;border:0;background:none;box-shadow:none;color:var(--gold)}
 .brand-preview-masthead .brand-leaf img{width:72px;height:72px;object-fit:contain;image-rendering:pixelated}
 .brand-preview-masthead[data-brand-typeface="display"] .brand{font-family:Georgia,"Times New Roman",serif;font-size:clamp(46px,4.5vw,74px);font-weight:750;font-style:normal;letter-spacing:.7px}
-.brand-preview-masthead[data-brand-typeface="arcade"] .brand{font-family:ui-monospace,"Cascadia Mono","Segoe UI Mono",Consolas,monospace;font-size:clamp(40px,3.8vw,60px);font-weight:900;letter-spacing:.5px;text-shadow:2px 3px 0 rgba(5,16,10,.45)}
+.brand-preview-masthead[data-brand-typeface="arcade"] .brand{font-family:ui-monospace,"Cascadia Mono","Segoe UI Mono",Consolas,monospace;font-size:clamp(40px,3.8vw,60px);font-weight:700;letter-spacing:.5px;text-shadow:2px 3px 0 rgba(5,16,10,.45)}
 .brand-preview-masthead[data-brand-typeface="pixel"] .brand{font-family:"Pixelify Sans",ui-monospace,monospace;font-size:clamp(44px,4.3vw,72px);font-weight:700;font-style:normal;letter-spacing:.5px}
 .brand-preview-masthead .header-status{min-width:0;max-width:none;justify-self:end;flex-wrap:wrap}
 .brand-preview-masthead #header-freshness{min-width:0;overflow-wrap:anywhere}
@@ -37,3 +37,17 @@ body[data-brand-typeface="pixel"] :is(#display-options button,#display-options l
 .brand-preview-masthead .brand .brand-leaf[hidden],.brand-preview-masthead .brand .brand-leaf img[hidden],.brand-preview-masthead .brand .brand-logo-maple[hidden]{display:none}.brand-preview-masthead .brand-logo-maple{display:block;width:72px;height:72px}.brand-preview-masthead[data-brand-placement="center"] .brand{justify-content:center}.brand-preview-masthead .brand-wordmark-copy{max-width:100%}@media(max-width:600px){.brand-preview-masthead .brand-logo-maple{width:44px;height:44px}}
 
 .brand-preview-masthead .brand small .brand-tagline-accent{font-weight:850;color:var(--gold);font-size:1.13em;letter-spacing:1px}
+
+.brand-preview-masthead[data-brand-typeface="arcade-bold"] .brand{font-family:ui-monospace,"Cascadia Mono","Segoe UI Mono",Consolas,monospace;font-size:clamp(40px,3.8vw,60px);font-weight:900;font-style:normal;letter-spacing:.5px;text-shadow:2px 3px 0 #05100a73}@media(max-width:600px){.brand-preview-masthead[data-brand-typeface="arcade-bold"] .brand{font-size:clamp(28px,7.8vw,38px);letter-spacing:0}}
+
+/* Original game Lemon and a playful inventory-style stack badge. */
+.brand-preview-masthead .brand .brand-leaf{position:relative;overflow:visible}
+.brand-preview-masthead .brand-stack-count{position:absolute;right:0;bottom:0;font:800 20px/1 ui-monospace,Consolas,monospace;letter-spacing:-1px;color:#fff8db;text-shadow:-1px -1px 0 #161811,1px -1px 0 #161811,-1px 1px 0 #161811,1px 1px 0 #161811;pointer-events:none}
+.brand-preview-masthead .brand-stack-count[hidden]{display:none}
+@media(max-width:600px){.brand-preview-masthead .brand-stack-count{font-size:15px}}
+
+/* Inventory quickslot: blank keybind corner and maximum-count Lemon stack. */
+.brand-preview-masthead[data-brand-logo="lemon-stack"] .brand .brand-leaf{width:76px;height:76px;border:3px solid #70777e;border-radius:5px;background:linear-gradient(135deg,#f2f3f5,#c9cdd3);box-shadow:inset 2px 2px 0 #fff,inset -2px -2px 0 #949ba4,0 2px 3px #0004}
+.brand-preview-masthead[data-brand-logo="lemon-stack"] .brand-leaf img{width:52px;height:52px;margin-bottom:9px}
+.brand-preview-masthead[data-brand-logo="lemon-stack"] .brand-stack-count{right:3px;bottom:2px;font:900 21px/1 Arial,system-ui,sans-serif;letter-spacing:0;color:#fff;text-shadow:-1px -1px 0 #303438,1px -1px 0 #303438,-1px 1px 0 #303438,1px 1px 0 #303438}
+@media(max-width:600px){.brand-preview-masthead[data-brand-logo="lemon-stack"] .brand .brand-leaf{width:48px;height:48px;border-width:2px}.brand-preview-masthead[data-brand-logo="lemon-stack"] .brand-leaf img{width:30px;height:30px;margin-bottom:6px}.brand-preview-masthead[data-brand-logo="lemon-stack"] .brand-stack-count{font-size:14px;right:2px;bottom:1px}}

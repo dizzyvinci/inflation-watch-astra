@@ -668,6 +668,11 @@ def compute(feed, status):
     rolling, rolling_history = rolling_reference(rows, cash, ROOT)
     report['rollingReference'] = rolling
     report['rollingReferenceHistory'] = rolling_history
+    from cash_price_references import load_projection as load_cash_references
+    try:
+        report['cashPriceReferences'] = load_cash_references(ROOT)
+    except (ValueError, OSError):
+        report['cashPriceReferences'] = {'schemaVersion': 1, 'kind': 'supplemental_cash_rolling_references', 'status': 'unavailable', 'items': [], 'reason': 'Supplemental reference validation failed; daily data and primary reference remain separate.'}
     report['smega'] += read(ROOT/'cache'/'published-smega-series.json', [])
     report['smegaSource'] = read(ROOT/'cache'/'published-smega-summary.json')
     report['spriteMap'] = read(ROOT/'assets'/'sprites.json', {})
@@ -698,6 +703,33 @@ def compute(feed, status):
     return report
 
 
+def write_ui_version(dist, web_files):
+    """Publish a local-preview commit marker after a successful complete UI copy.
+
+    Only copied UI code participates: market snapshots, generated fallback price
+    pages, source/check clocks and build times cannot cause a browser reload.
+    """
+    dist = Path(dist)
+    digest = hashlib.sha256()
+    for name in sorted(set(web_files)):
+        if Path(name).name != name:
+            raise ValueError('UI version inputs must be flat served web files')
+        if Path(name).suffix not in ('.js', '.css', '.html'):
+            continue
+        content = (dist / name).read_bytes()
+        digest.update(name.encode('utf-8') + b'\0' + str(len(content)).encode('ascii') + b'\0' + content)
+    marker = {'schemaVersion': 1, 'kind': 'local_preview_ui', 'version': digest.hexdigest()}
+    # Public CI builds also generate this marker. Wrangler's supported assets
+    # ignore file excludes both it and an interrupted atomic-write temporary.
+    ignored = dist / '.assetsignore'
+    rules = '/ui-version.json\n/ui-version.json.tmp\n'
+    previous = ignored.read_text(encoding='utf-8') if ignored.exists() else ''
+    if not previous.endswith(rules):
+        ignored.write_text(previous.rstrip('\n') + ('\n' if previous else '') + '# Local preview only; never upload these build markers.\n' + rules, encoding='utf-8')
+    atomic(dist / 'ui-version.json', marker)
+    return marker
+
+
 def write_site(report):
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
@@ -709,8 +741,10 @@ def write_site(report):
     if legacy_history.exists():
         (dist / 'history').mkdir(exist_ok=True)
         shutil.copyfile(legacy_history, dist / 'history' / 'cpi-v1.json')
-    for name in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', 'privacy-controls.js', 'privacy-controls.css', 'analytics-config.json', 'preview-runtime.js', 'preview-runtime.css', 'author-portrait.js', 'author-portrait.css', 'market-highlights.js', 'market-highlights.css', 'brand-preview.js', 'brand-preview.css', 'banner-art.js', 'banner-art.css', 'theme-preview.js', 'theme-preview.css', 'preview-controls.css', 'cash-catalog.js', 'cash-catalog.css', 'nx-benchmark.js', 'nx-benchmark.css', 'cash-client-catalog.js', 'cash-client-catalog.css', 'rate-arrival.js', 'rate-arrival.css', 'panel-size-preview.js', 'panel-size-preview.css', 'price-check.js', 'price-check.css', 'cash-highlights.js', 'cash-highlights.css', 'basket-history-layout.js', 'basket-history-layout.css', 'rate-clock.js', 'rate-clock.css', 'overview-basket.js', 'overview-basket.css', 'nav-preview.js', 'nav-preview.css', 'site-music.js', 'site-music.css', 'viewer-preview.js', 'viewer-preview.css', 'rate-title-preview.js', 'category-link-preview.js', 'date-presentation.js', 'mystery-boxes.js', 'mystery-boxes.css', 'speculation.js', 'speculation.css', 'popular-fashion.js', 'popular-fashion.css', 'volatility-preview.js', 'volatility-preview.css', 'fm-backdrop-preview.js', 'fm-backdrop-preview.css', 'category-reference-preview.js', 'category-reference-preview.css', '_headers', 'sw.js'):
+    web_files = []
+    for name in ('index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', 'privacy-controls.js', 'privacy-controls.css', 'analytics-config.json', 'preview-runtime.js', 'preview-runtime.css', 'author-portrait.js', 'author-portrait.css', 'market-highlights.js', 'market-highlights.css', 'brand-preview.js', 'brand-preview.css', 'banner-art.js', 'banner-art.css', 'theme-preview.js', 'theme-preview.css', 'preview-controls.css', 'cash-catalog.js', 'cash-catalog.css', 'nx-benchmark.js', 'nx-benchmark.css', 'cash-client-catalog.js', 'cash-client-catalog.css', 'rate-arrival.js', 'rate-arrival.css', 'panel-size-preview.js', 'panel-size-preview.css', 'price-check.js', 'price-check.css', 'cash-highlights.js', 'cash-highlights.css', 'basket-history-layout.js', 'basket-history-layout.css', 'rate-clock.js', 'rate-clock.css', 'overview-basket.js', 'overview-basket.css', 'nav-preview.js', 'nav-preview.css', 'site-music.js', 'site-music.css', 'viewer-preview.js', 'viewer-preview.css', 'rate-title-preview.js', 'category-link-preview.js', 'category-link-preview.css', 'date-presentation.js', 'mystery-boxes.js', 'mystery-boxes.css', 'speculation.js', 'speculation.css', 'popular-fashion.js', 'popular-fashion.css', 'volatility-preview.js', 'volatility-preview.css', 'fm-backdrop-preview.js', 'fm-backdrop-preview.css', 'category-reference-preview.js', 'category-reference-preview.css', 'rolling-benchmark-preview.js', 'rolling-benchmark-preview.css', 'fee-preview.js', 'fee-preview.css', 'short-window-preview.js', 'short-window-preview.css', 'ellinia-backdrop-preview.js', 'ellinia-backdrop-preview.css', 'local-preview-refresh.js', '_headers', 'sw.js'):
         shutil.copyfile(ROOT / 'web' / name, dist / name)
+        web_files.append(name)
     data_text = json.dumps(report, ensure_ascii=False, separators=(',', ':'), allow_nan=False)
     digest = hashlib.sha256(data_text.encode()).hexdigest()[:16]
     # Immutable data payload first; version.json is the atomic final pointer.
@@ -722,6 +756,8 @@ def write_site(report):
     (dist / 'fallback.html').write_text(fallback, encoding='utf-8')
     (dist / '404.html').write_text(fallback, encoding='utf-8')
     atomic(dist / 'version.json', {'version': digest, 'data': 'data-' + digest + '.json', 'builtAt': report['builtAt'], 'sourceUpdatedAt': report['sourceUpdatedAt']})
+    # Local-only UI commit marker is always last, after code/assets and data.
+    write_ui_version(dist, web_files)
     return digest
 
 

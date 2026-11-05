@@ -4,8 +4,9 @@
   const navigation = document.querySelector('.nav-wrap');
   if (!options || !navigation || document.getElementById('market-highlights')) return;
   const key = 'astra-market-highlights-v1';
-  let enabled = false, paused = false, report, calculationDetail = false, showPublication = false, showContext = false;
-  try { enabled = localStorage.getItem(key) === 'on'; } catch { /* Default off. */ }
+  let enabled = true, paused = false, report, calculationDetail = false, showPublication = false, showContext = false, abbreviations = true;
+  try { enabled = localStorage.getItem(key) !== 'off'; } catch { /* Default On without persistent storage. */ }
+  try { abbreviations = localStorage.getItem('astra-highlights-abbreviations-v1') !== 'off'; } catch { /* Compact helpers default On. */ }
   const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
   const make = (tag, className, text) => {
     const node = document.createElement(tag);
@@ -63,6 +64,7 @@
   calculationToggle.type='button';calculationToggle.setAttribute('aria-pressed','false');calculationToggle.setAttribute('aria-controls','highlights-fact-grid market-highlights-track');calculationControls.append(calculationToggle);page.append(calculationControls);
   const publicationToggle=make('button','','Show source publication');publicationToggle.type='button';publicationToggle.setAttribute('aria-pressed','false');publicationToggle.setAttribute('aria-controls','highlights-source-publication market-highlights-source-publication');calculationControls.append(publicationToggle);
   const contextToggle=make('button','','Show Wolbi context');contextToggle.type='button';contextToggle.setAttribute('aria-pressed','false');contextToggle.setAttribute('aria-controls','highlights-fact-grid market-highlights-track');calculationControls.append(contextToggle);
+  const abbreviationToggle=make('button');abbreviationToggle.type='button';abbreviationToggle.dataset.highlightsAbbreviations='true';abbreviationToggle.setAttribute('aria-controls','highlights-fact-grid market-highlights-track');
   document.getElementById('content').append(page);
   const navLink = make('a', 'nav-link', 'Highlights & Activity'); navLink.href = '#highlights';
   const nav = navigation.querySelector('nav'), fallback = nav.querySelector('.fallback-link');
@@ -75,28 +77,29 @@
   function highlights(data) {
     const rows = (data.rows || []).filter(row => row.slug && /^[a-z0-9][a-z0-9-]*$/.test(row.slug) && row.name && day(row.priceDay) && positive(row.price));
     const sourceDay=day(String(data.sourceUpdatedAt||'').slice(0,10)),windowDays=Math.round((Date.parse(data.recentEndExclusive)-Date.parse(data.recentStart))/86400000);
-    const items = [], add = (row, type, label, value, date, detail = '', direction = 'neutral') => {
+    const items = [], add = (row, type, label, value, date, detail = '', direction = 'neutral', numericValue = null) => {
       if (!row)return;
       const carried=sourceDay&&row.priceDay<sourceDay,frame=type==='turnover'||type==='volume'?`${windowDays>0?windowDays+'-day window':'Recorded activity window'} · complete source-calendar days`:type==='change'?'Starting price level → latest qualifying price'+(carried?' · earlier price carried':''):carried?'Earlier qualifying daily observation':'Latest source-day observation';
       const provenance=type==='change'?`Reference week ${data.baseStart}–${data.baseEnd} · ${date}`:date;
       const essential=type==='context'?detail:'';
       const displayDate=type==='turnover'||type==='volume'?date:row.priceDay;
-      items.push({ slug:row.slug,name:row.name,type,label,value,date:provenance,displayDate,detail,direction,frame,essential,summary:`${label}: ${row.name} · ${value} · ${displayDate} · ${frame}${essential?' · '+essential:''}`,text:`${label}: ${row.name} · ${value} · ${provenance}${detail?' · '+detail:''}` });
+      const compact=Number.isFinite(numericValue)&&Math.abs(numericValue)>=1000?new Intl.NumberFormat('en-US',{notation:'compact',compactDisplay:'short',maximumFractionDigits:1}).format(numericValue):null;
+      items.push({ slug:row.slug,name:row.name,type,label,value,compact,date:provenance,displayDate,detail,direction,frame,essential,summary:`${label}: ${row.name} · ${value} · ${displayDate} · ${frame}${essential?' · '+essential:''}`,text:`${label}: ${row.name} · ${value} · ${provenance}${detail?' · '+detail:''}` });
     };
     const expensive = largest(rows.filter(row => positive(row.quantity)), 'price');
-    if (expensive) add(expensive, 'median', 'Largest basket daily median', `${number(expensive.price)} mesos / ${expensive.unit || 'unit'}`, `${expensive.priceDay} · ${number(expensive.quantity)} recorded volume`, 'Daily median, not an individual sale');
+    if (expensive) add(expensive, 'median', 'Largest basket daily median', `${number(expensive.price)} mesos / ${expensive.unit || 'unit'}`, `${expensive.priceDay} · ${number(expensive.quantity)} recorded volume`, 'Daily median, not an individual sale', 'neutral', expensive.price);
     const moved = rows.filter(row => Number.isFinite(row.changeBase)).sort((a, b) => Math.abs(b.changeBase) - Math.abs(a.changeBase) || String(a.slug).localeCompare(String(b.slug)))[0];
     if (moved) add(moved, 'change', 'Largest basket move vs reference week', `${moved.changeBase >= 0 ? '+' : ''}${moved.changeBase.toFixed(1)}%`, `price dated ${moved.priceDay}`, 'Change from fixed reference prices', moved.changeBase > 0 ? 'up' : moved.changeBase < 0 ? 'down' : 'flat');
     const end = day(data.recentEndExclusive), through = end ? new Date(Date.parse(end + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10) : null;
     if (day(data.recentStart) && through) {
       const scope = `${data.recentStart}–${through}`;
       const turnover = largest(rows.filter(row => positive(row.recentTurnoverProxy)), 'recentTurnoverProxy');
-      if (turnover) add(turnover, 'turnover', 'Largest basket turnover proxy', `${number(turnover.recentTurnoverProxy)} mesos`, scope, 'daily median × recorded volume');
+      if (turnover) add(turnover, 'turnover', 'Largest basket turnover proxy', `${number(turnover.recentTurnoverProxy)} mesos`, scope, 'daily median × recorded volume', 'neutral', turnover.recentTurnoverProxy);
       const volume = largest(rows.filter(row => positive(row.recentQuantity)), 'recentQuantity');
-      if (volume) add(volume, 'volume', 'Most recorded basket volume', `${number(volume.recentQuantity)} recorded units/count`, scope);
+      if (volume) add(volume, 'volume', 'Most recorded basket volume', `${number(volume.recentQuantity)} recorded units/count`, scope, '', 'neutral', volume.recentQuantity);
     }
     const wolbi = (data.contextItems || []).find(row => row.slug === 'wolbi-throwing-stars' && day(row.priceDay) && positive(row.price) && row.notIndexed === true && row.weight === 0);
-    if (showContext && wolbi) add(wolbi, 'context', 'Wolbi* context', `${number(wolbi.price)} mesos / ${wolbi.unit || 'unit'} daily median`, wolbi.priceDay, 'zero MPI weight · item-specific supply caveat, not broad deflation');
+    if (showContext && wolbi) add(wolbi, 'context', 'Wolbi* context', `${number(wolbi.price)} mesos / ${wolbi.unit || 'unit'} daily median`, wolbi.priceDay, 'zero MPI weight · item-specific supply caveat, not broad deflation', 'neutral', wolbi.price);
     return items;
   }
   function highlightGraphic(item, includeKind, headingLevel) {
@@ -109,6 +112,7 @@
     if(headingLevel){titleLine.setAttribute('role','heading');titleLine.setAttribute('aria-level',String(headingLevel));}
     titleLine.append(make('strong','market-highlight-headline',item.label));
     valueLine.append(make('span','market-highlight-item-name',item.name),make('span','market-highlight-value',' · '+item.value));
+    if(abbreviations&&item.compact)valueLine.append(make('span','market-highlight-abbreviation','('+item.compact+')'));
     if(item.direction!=='neutral')valueLine.append(make('span','market-highlight-direction',item.direction==='up'?'↑ Increased':item.direction==='down'?'↓ Decreased':'→ Unchanged'));fact.append(titleLine,valueLine);
     const dates=make('small','market-highlight-dates');dates.append(document.createTextNode('('),make('strong','market-highlight-date',item.displayDate),make('span','',' · '+item.frame+(item.essential?' · '+item.essential:'')));
     const details=make('span','market-highlight-details',' · '+item.date+(item.detail?' · '+item.detail:''));details.hidden=!calculationDetail;dates.append(details,document.createTextNode(')'));
@@ -231,6 +235,8 @@
   });
   calculationToggle.addEventListener('click',()=>{calculationDetail=!calculationDetail;calculationToggle.setAttribute('aria-pressed',String(calculationDetail));calculationToggle.textContent=calculationDetail?'Hide calculation details':'Show calculation details';document.querySelectorAll('.highlights-method-detail').forEach(note=>note.hidden=!calculationDetail);if(report){drawPage();if(enabled)draw();}});
   const fontButton=make('button','','Heading: Inquisitive');fontButton.type='button';let inquisitive=true;try{inquisitive=localStorage.getItem('astra-highlights-font-v1')!=='plain'}catch{}const applyFont=()=>{panel.dataset.headingFont=inquisitive?'inquisitive':'plain';fontButton.textContent='Heading: '+(inquisitive?'Inquisitive':'Plain');fontButton.setAttribute('aria-pressed',String(inquisitive))};fontButton.addEventListener('click',()=>{inquisitive=!inquisitive;try{localStorage.setItem('astra-highlights-font-v1',inquisitive?'inquisitive':'plain')}catch{}applyFont()});calculationControls.append(fontButton);applyFont();
+  const applyAbbreviations=()=>{abbreviationToggle.textContent='Compact values: '+(abbreviations?'On':'Off');abbreviationToggle.setAttribute('aria-pressed',String(abbreviations));};
+  abbreviationToggle.addEventListener('click',()=>{abbreviations=!abbreviations;try{localStorage.setItem('astra-highlights-abbreviations-v1',abbreviations?'on':'off')}catch{}applyAbbreviations();if(report){drawPage();if(enabled)draw();}});calculationControls.append(abbreviationToggle);applyAbbreviations();
   publicationToggle.addEventListener('click',()=>{showPublication=!showPublication;publicationToggle.setAttribute('aria-pressed',String(showPublication));publicationToggle.textContent=showPublication?'Hide source publication':'Show source publication';publication.hidden=pagePublication.hidden=!showPublication;});
   contextToggle.addEventListener('click',()=>{showContext=!showContext;contextToggle.setAttribute('aria-pressed',String(showContext));contextToggle.textContent=showContext?'Hide Wolbi context':'Show Wolbi context';if(report){drawPage();if(enabled)draw();}});
   pause.addEventListener('click', () => { paused = !paused; update(); });

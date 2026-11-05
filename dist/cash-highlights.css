@@ -5,12 +5,16 @@
 .cash-highlights-status,.cash-highlights-method{font-size:12px;color:var(--muted)}
 .cash-highlights-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin:22px 0;min-width:0}
 .cash-highlights-row:focus-visible{outline:2px solid var(--mint);outline-offset:4px}
-.cash-highlight-card{border:1px solid var(--line);border-radius:9px;background:var(--surface2);padding:18px 13px;text-align:center;min-width:0}
+.cash-highlight-card{border:1px solid var(--muted);border-radius:9px;background:var(--surface2);padding:18px 13px;text-align:center;min-width:0;box-shadow:inset 0 0 0 1px var(--surface),0 3px 9px #00000014}
 .cash-highlight-card h3{font-size:15px;line-height:1.6;min-height:72px;margin:0 0 12px}
 .cash-highlight-card h3 a{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text);text-decoration:underline;text-underline-offset:3px}
 .cash-highlight-card h3 img{flex:none;width:40px;height:40px;object-fit:contain;image-rendering:pixelated}
 .cash-highlight-gauge{display:block;width:140px;max-width:100%;height:auto;margin:8px auto}
 .cash-highlight-gauge text{fill:var(--text);font:10px var(--font)}
+.cash-highlight-arc-backplate{stroke:var(--text)}
+.cash-highlight-arc-track{stroke:var(--bg)}
+.cash-highlight-reference,.cash-highlight-needle{stroke:var(--text)}
+.cash-highlight-pivot{fill:var(--text)}
 .cash-highlight-index{display:block;font-size:31px;line-height:1.4;color:var(--text);overflow-wrap:anywhere}
 .cash-highlight-change{display:block;font-size:15px;font-weight:650;line-height:1.7;color:var(--gold)}
 .cash-highlight-card p{font-size:12px;line-height:1.8;margin:10px 0}
@@ -23,6 +27,9 @@
 .cash-highlights-controls button:focus-visible,.cash-highlight-card a:focus-visible{outline:2px solid var(--mint);outline-offset:4px}
 .cash-highlights-content[hidden]{display:none}
 .cash-highlights-ranking>h3{text-align:center;font-size:23px;line-height:1.4;margin:23px 0 5px}
+.cash-highlights-ranking{text-align:center}
+.cash-ranking-full-list{display:inline-block;margin:0 auto 12px;padding:10px 17px;font:600 15px/1.6 var(--font);color:var(--text);background:var(--surface2);border:1px solid var(--muted);border-radius:6px;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.cash-ranking-full-list:focus-visible{outline:2px solid var(--mint);outline-offset:4px}
 .cash-ranking-direction{text-align:center;font-size:14px;line-height:1.7;color:var(--text);margin:5px 0 10px}
 .cash-highlights-ranking+.cash-highlights-ranking{border-top:1px solid var(--line);padding-top:12px;margin-top:22px}
 .cash-highlight-card h4{font-size:15px;line-height:1.6;min-height:72px;margin:0 0 12px}
@@ -32,3 +39,5 @@ body[data-viewer-preview="on"] #cash-item-highlights{outline:none!important;outl
 body[data-viewer-preview="on"] #cash-item-highlights[data-enabled="false"]{display:none!important}
 @media(max-width:1100px){.cash-highlights-row{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:minmax(215px,1fr);overflow-x:auto;scroll-snap-type:x proximity;padding:4px 1px 12px}.cash-highlight-card{scroll-snap-align:start}}
 @media(max-width:600px){#cash-item-highlights{padding:20px 14px;margin:25px 0}.cash-highlights-row{grid-auto-columns:minmax(220px,1fr)}.cash-highlights-explanation{font-size:13px}.cash-highlight-index{font-size:29px}.cash-highlights-controls small{flex-basis:100%;text-align:center}}
+
+.cash-highlights-gross-badge{display:inline-flex;justify-content:center;margin:0 auto 14px;padding:5px 11px;border:1px solid #b89c58;border-radius:999px;background:#403c28;color:#f4dfae;font-size:13px;font-weight:650;line-height:1.5}

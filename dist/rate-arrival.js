@@ -3,6 +3,9 @@
   if (window.AstraRateArrival) return;
   const positive = v => typeof v === 'number' && Number.isFinite(v) && v > 0;
   function points(report) {
+    if (!report) return [];
+    const selected = window.AstraGoodsNxBenchmark?.history?.(report) ?? window.AstraRollingBenchmark?.series(report)?.[0]?.points;
+    if (selected) return selected.filter(point => /^\d{4}-\d{2}-\d{2}$/.test(point.day || '') && positive(point.value)).map(point => ({ day: point.day, at: point.at, value: point.value, partial: !!point.partial })).sort((a,b) => a.day.localeCompare(b.day)).slice(-3);
     if (!positive(report?.baseNxRate)) return [];
     const days = new Map();
     for (const row of [...(report.history || []), report.latest].filter(Boolean)) {
@@ -59,7 +62,7 @@
   function draw(force = false) {
     cancel();
     const current = generation, series = points(report), headline = window.AstraGoodsNxBenchmark?.headline(report);
-    const definition = { base: positive(report?.baseNxRate) ? report.baseNxRate : null, methodVersion: report?.methodVersion, basketVersion: report?.basketVersion,
+    const definition = { base: positive(report?.baseNxRate) ? report.baseNxRate : null, selectedMode: headline?.mode || window.AstraRollingBenchmark?.getState().mode || 'fixed', anchorWindowDays: headline?.mode==='rolling'?headline.windowDays:null, methodVersion: report?.methodVersion, basketVersion: report?.basketVersion,
       specificationHash: hash(report?.specificationHash), basketHash: hash(report?.basketHash) };
     const dailyKey = JSON.stringify({ definition, sourceAt: sourceTime(report?.sourceUpdatedAt), series });
     const liveKey = JSON.stringify({ definition, at: sourceTime(report?.live?.observedAt), cpi: positive(report?.live?.cpi) ? report.live.cpi : null });
@@ -71,6 +74,7 @@
     // treated as a new source observation or used to start an animation.
     const changed = inputKey !== lastInputKey && fingerprint !== lastKey;
     lastInputKey = inputKey; lastKey = fingerprint;
+    if (headline && !positive(headline.rate)) { value.textContent='—';status.textContent='Selected benchmark unavailable; no older value is presented as current.';status.dataset.phase='unavailable';return; }
     // Qualified intraday MPI has its own real source clock; never replace it
     // with a daily animation or pretend daily points are successive live ticks.
     if (live) {
@@ -79,7 +83,7 @@
       if ((changed || (force && style !== 'ticks')) && enabled && !motion?.matches) arrival();
       return;
     }
-    if (!series.length) { status.textContent=''; delete status.dataset.phase; return; }
+    if (!series.length) { if(positive(headline?.rate))value.textContent=format(headline.rate);status.textContent=''; delete status.dataset.phase; return; }
     const latest = series.at(-1);
     const trail = series.map(p => date(p.day)+': '+format(p.value)).join(' → ');
     const finish = () => {
@@ -106,5 +110,6 @@
   });
   motion?.addEventListener?.('change',() => draw());
   document.addEventListener('astramarketsnapshot',event => { report=event.detail; draw(); });
+  document.addEventListener('astrabenchmarkmodechange',()=>{if(report)draw();});
   renderChoice(); document.dispatchEvent(new Event('astramarkethighlightsready'));
 })();

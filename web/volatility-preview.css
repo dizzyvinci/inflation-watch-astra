@@ -8,4 +8,8 @@
 .volatility-preview-highlight .market-highlight-kind{font-weight:800}
 .volatility-preview-highlight .market-highlight-headline{font-weight:400;font-style:normal}
 .volatility-preview-highlight .volatility-icon-note{display:block;margin-top:3px;text-align:center;font:11px/1.6 system-ui,sans-serif;color:var(--muted)}
+.volatility-table-heading,.volatility-table-cell{min-width:160px;text-align:center;font-variant-numeric:tabular-nums;line-height:1.65}
+.volatility-table-heading button{font:600 13px/1.6 system-ui,sans-serif;color:var(--text);border:0;background:transparent;padding:3px;cursor:pointer;white-space:normal}
+.volatility-table-heading[aria-sort="ascending"] button,.volatility-table-heading[aria-sort="descending"] button{color:var(--gold)}
+.volatility-table-heading button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
 @media(max-width:600px){.volatility-preview-badge{font-size:12px;padding:9px 3px}.volatility-preview-highlight .market-highlight-headline{font-size:15px}}

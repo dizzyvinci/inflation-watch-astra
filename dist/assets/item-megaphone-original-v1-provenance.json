@@ -1,0 +1,20 @@
+{
+  "kind": "game_sprite",
+  "copyright": "Nexon",
+  "provider": "maplestory.io",
+  "sourceUrl": "https://maplestory.io/api/MCW/1/item/5070026/icon",
+  "region": "MCW",
+  "version": "1",
+  "itemId": 5070026,
+  "name": "Item Megaphone",
+  "identityEvidence": "mesos.watch published search_items tool exact ID/name match",
+  "capturedAt": "2026-11-05T14:03:55.087405+00:00",
+  "sha256": "8e811e15ba0daf390c32ab62f941ee5e70f0b7810a40fa1947260d47f3b70ce7",
+  "bytes": 1161,
+  "dimensions": [
+    30,
+    30
+  ],
+  "transformation": "None",
+  "marketImplication": "Decorative art only; no price, tax, availability or NX cost inferred."
+}

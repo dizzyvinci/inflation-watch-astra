@@ -3,15 +3,45 @@ import argparse
 import hashlib
 import http.server
 import json
+import re
 import threading
 import time
 from pathlib import Path
+from urllib.parse import urlsplit
 from engine import ROOT, build, read
+
+def ui_version(root):
+    """Read only the last completed UI build, never live half-copied files."""
+    root = Path(root)
+    if (root / '.collector.lock').exists():
+        return 503, {'status': 'building'}
+    try:
+        path = root / 'dist' / 'ui-version.json'
+        if path.stat().st_size > 1024:
+            raise ValueError('UI marker too large')
+        value = json.loads(path.read_text(encoding='utf-8'))
+        if value.get('schemaVersion') != 1 or value.get('kind') != 'local_preview_ui' or not isinstance(value.get('version'), str) or not re.fullmatch(r'[a-f0-9]{64}', value['version']):
+            raise ValueError('Invalid UI marker')
+        if (root / '.collector.lock').exists():
+            return 503, {'status': 'building'}
+        return 200, {'schemaVersion': 1, 'kind': 'local_preview_ui', 'version': value['version']}
+    except (OSError, ValueError, TypeError, AttributeError):
+        return 503, {'status': 'not_ready'}
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,directory=str(ROOT/'dist'),**kwargs)
     def do_GET(self):
+        if urlsplit(self.path).path == '/__ui_version':
+            status, value = ui_version(ROOT)
+            body = json.dumps(value, separators=(',', ':')).encode('utf-8')
+            self.send_response(status)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            if status == 503:self.send_header('Retry-After', '2')
+            self.end_headers()
+            self.wfile.write(body)
+            return
         path=Path(self.translate_path(self.path))
         try:
             resolved=path.resolve()
@@ -25,14 +55,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.send_response(304);self.send_header('ETag',tag);self.send_header('Cache-Control','no-cache');self.end_headers();return
             self._etag=tag
         super().do_GET()
+    def do_HEAD(self):
+        if urlsplit(self.path).path == '/__ui_version':
+            self.send_response(405);self.send_header('Allow','GET');self.send_header('Content-Length','0');self.end_headers();return
+        super().do_HEAD()
     def end_headers(self):
         if getattr(self,'_etag',None):self.send_header('ETag',self._etag);self._etag=None
-        self.send_header('Cache-Control','no-cache' if not self.path.startswith('/data-') else 'public, max-age=31536000, immutable')
+        self.send_header('Cache-Control','no-store' if urlsplit(self.path).path == '/__ui_version' else 'no-cache' if not self.path.startswith('/data-') else 'public, max-age=31536000, immutable')
         self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Referrer-Policy','strict-origin-when-cross-origin')
         super().end_headers()
     def log_message(self,fmt,*args):
-        if args and str(args[0]).startswith('GET /version.json'):return
+        if args and str(args[0]).startswith(('GET /version.json', 'GET /__ui_version')):return
         super().log_message(fmt,*args)
 
 def collector():

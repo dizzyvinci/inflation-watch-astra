@@ -42,7 +42,7 @@ const wait=async predicate=>{const end=Date.now()+1500;while(!predicate()&&Date.
  assert.match(circle.dataset.chartSeries,/Legacy.*earlier method \/ unverified rolls/);
  assert.match(circle.dataset.chartNote,/roll identity unverified/);
  assert.match(circle.querySelector('title').textContent,/13\.7.*Earlier method/);
- assert.match(doc.getElementById('chart-note').textContent,/modelled, not observed cash sales/);
+ assert.match(doc.getElementById('chart-note').textContent,/modelled, not observed cash sales/i);
  const mapped=review.points([legacy],'nxRate')[0];
  assert.equal(mapped.contentHash,legacy.contentHash);assert.equal(mapped.timestampKind,'captured_at');
  assert.equal(mapped.observationTimestampKnown,false);assert.equal(mapped.value,oldRate);

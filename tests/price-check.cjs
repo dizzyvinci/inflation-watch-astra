@@ -46,10 +46,14 @@ const payload=JSON.parse(fs.readFileSync(path.join(root,'dist/data.json'),'utf8'
 f=fixture(payload);try{
  const provider=new Map();for(const row of [...(payload.rows||[]),...(payload.contextItems||[]),...(payload.cash||[]),...(payload.cashCatalog?.rows||[])])provider.set(row.slug,row);
  const metadata=(payload.cashCatalog?.metadataItems||[]).filter(row=>row.marketDataAvailable===false&&!provider.has(row.providerSlug)&&![...provider.values()].some(item=>item.canonicalId===row.id));
- assert(f.doc.querySelector('.price-check-coverage').textContent.startsWith((provider.size+metadata.length)+' deduplicated public records'));
+ const acceptedRefs=(payload.cashPriceReferences?.items||[]).filter(ref=>Number.isInteger(ref.id)&&ref.id>0&&ref.id===ref.expectedItemId&&typeof ref.name==='string'&&ref.name.toLowerCase()===ref.expectedItemName?.toLowerCase()&&ref.priceBasis==='median of sales'&&ref.price>0&&Number.isInteger(ref.salesCounted)&&ref.salesCounted>0&&ref.windowDays>0&&ref.windowDays<=90&&Number.isFinite(Date.parse(ref.capturedAt)));
+ const knownIds=new Set([...provider.values()].map(row=>row.canonicalId).filter(Number.isInteger).concat(metadata.map(row=>row.id))),supplemental=new Map();for(const ref of acceptedRefs)if(!knownIds.has(ref.id))supplemental.set(ref.id,ref);
+ const expectedCount=provider.size+metadata.length+supplemental.size;
+ assert(f.doc.querySelector('.price-check-coverage').textContent.startsWith(expectedCount+' deduplicated public records'));
  let selected=0,mapped=0;for(const row of provider.values()){type(f,row.slug);const option=options(f).find(item=>item.dataset.priceKey===row.slug);assert(option,'Every accepted public item is reachable by typing its slug: '+row.slug);assert(option.querySelector('img'));assert(option.querySelector('.price-check-suggestion-date').textContent);if(option.querySelector('img').dataset.spriteKind==='item')mapped++;option.click();assert.equal(f.w.location.hash,payload.cashCatalog?.rows.some(item=>item.slug===row.slug)?'#cash-catalog':'#item/'+row.slug);selected++;}
  for(const row of metadata){type(f,String(row.id));const option=options(f).find(item=>item.dataset.priceKey==='metadata-'+row.id);assert(option);option.click();assert.equal(f.w.location.hash,'#cash-catalog');selected++;}
- assert.equal(selected,provider.size+metadata.length);assert(mapped>0,'Accepted local sprites are used, with generic icons explicitly labelled otherwise');assert.equal(f.calls.fetch,0);assert.deepEqual(f.errors,[]);
+ for(const ref of supplemental.values()){type(f,String(ref.id));const option=options(f).find(item=>item.dataset.priceKey==='supplemental-'+ref.id);assert(option,'Verified supplemental ID is searchable: '+ref.id);assert(option.textContent.includes('separate rolling median'));option.click();assert.equal(f.w.location.hash,'#cash-catalog');selected++;}
+ assert.equal(selected,expectedCount);assert(mapped>0,'Accepted local sprites are used, with generic icons explicitly labelled otherwise');assert.equal(f.calls.fetch,0);assert.deepEqual(f.errors,[]);
  console.log(`PASS: ${selected} saved public records searchable/selectable; ${mapped} mapped item sprites; generic icons explicitly identified for the rest`);
 }finally{f.close();}
 assert.doesNotMatch(css,/@import|https?:\/\/|url\(/);assert(css.includes('.nav-link.price-check-nav'));assert(css.includes(':focus-visible'));

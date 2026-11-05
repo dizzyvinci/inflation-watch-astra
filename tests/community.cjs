@@ -5,6 +5,7 @@ const { JSDOM } = require('jsdom');
 
 const script = fs.readFileSync(path.join(__dirname, '../web/community.js'), 'utf8');
 const personalStory = 'This page is an overnight passion project by a Mapler that is also navigating the job  market, recovering from a surgery for cancer treatment, and simultaneously trying to find an open map to farm on.';
+function originalIntroMarkup(node) { const copy=node.cloneNode(true);for(const br of copy.querySelectorAll('.footer-intro-break')){const tail=br.nextSibling;if(tail?.nodeType===3)tail.nodeValue=tail.nodeValue.replace(/^(\s*)That\b/,'$1that');br.remove();}return copy.outerHTML; }
 function fixture({ preferences = new Map(), blocked = false, realFooter = false, initialBrand = null } = {}) {
   const markup=realFooter?fs.readFileSync(path.join(__dirname,'../web/index.html'),'utf8'):`<main id="content"></main><footer><article class="footer-story"><p>${personalStory}</p><p>Suggestions stay in their own paragraph.</p><p id="credits">Game art © Nexon</p></article><div class="footer-links"><a href="#privacy">Privacy</a></div></footer>`;
   const dom = new JSDOM(markup, {
@@ -44,11 +45,27 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 
 (async () => {
   const real=fixture({realFooter:true});
-  assert.equal(real.doc.querySelector('.footer-content>.footer-story>p').outerHTML,real.personalBefore,'only the approved one Mapler wording changes');
+  assert.equal(originalIntroMarkup(real.doc.querySelector('.footer-content>.footer-story>p')),real.personalBefore,'only approved wording, line break and capitalization change');
   assert.equal(real.doc.querySelector('.footer-story>p'),real.personalNodeBefore,'original paragraph node is preserved');
-  assert.equal(real.doc.querySelector('.footer-story>p').outerHTML.replace('by one Mapler','by a Mapler'),real.rawPersonalBefore,'all other personal text is byte-for-byte preserved');
+  const splitControl=real.doc.querySelector('[data-footer-intro-layout]');assert.equal(splitControl.getAttribute('aria-pressed'),'true');assert.equal(real.doc.querySelector('.footer-intro-break').nextSibling.nodeValue.startsWith(' That is also navigating'),true);
+  splitControl.click();assert.equal(real.doc.querySelector('.footer-intro-break'),null);assert.equal(real.preferences.get('astra-footer-intro-layout-v1'),'inline');assert.equal(real.doc.querySelector('.footer-story>p').outerHTML,real.personalBefore);splitControl.click();assert.equal(real.preferences.get('astra-footer-intro-layout-v1'),'split');
+  for(const [saved,blocked,expected] of [['inline',false,false],['invalid',false,true],['inline',true,true]]){const f=fixture({realFooter:true,blocked,preferences:new Map([['astra-footer-intro-layout-v1',saved]])});assert.equal(!!f.doc.querySelector('.footer-intro-break'),expected);f.doc.querySelector('[data-footer-intro-layout]').click();assert.equal(!!f.doc.querySelector('.footer-intro-break'),!expected);assert.equal(originalIntroMarkup(f.doc.querySelector('.footer-story>p')),f.personalBefore);assert.equal(f.calls.network,0);f.dom.window.close();}
+  assert.equal(originalIntroMarkup(real.doc.querySelector('.footer-story>p')).replace('by one Mapler','by a Mapler'),real.rawPersonalBefore,'all other personal text is byte-for-byte preserved');
   assert.equal(real.doc.querySelector('nav a[href="#nx-calculator"]').textContent,'NX ↔ Meso Calculator');
   assert.match(real.doc.querySelector('.footer-story>p').textContent,/grad job  market/);
+  const revisionText = 'As Maplers level up, reach new maps and find better drops, the economy’s representative items can change. Future basket revisions will document those changes, while preserving earlier basket definitions and histories.';
+  const revisionNote = real.doc.getElementById('footer-basket-revisions'), revisionButton = real.doc.querySelector('[data-footer-basket-revisions]');
+  assert.equal(revisionNote.textContent, revisionText); assert.equal(revisionNote.hidden, false); assert(revisionNote.closest('.footer-reliability'));
+  assert.equal(revisionButton.parentElement.lastElementChild.dataset.footerIntroLayout,'true', 'intro layout control is at the end');
+  assert.equal(revisionButton.getAttribute('aria-controls'), revisionNote.id); assert.equal(revisionButton.getAttribute('aria-pressed'), 'true');
+  revisionButton.click(); assert.equal(revisionNote.hidden, true); assert.equal(real.preferences.get('astra-footer-basket-revisions-v1'), 'off');
+  revisionButton.click(); assert.equal(revisionNote.hidden, false); assert.equal(real.preferences.get('astra-footer-basket-revisions-v1'), 'on');
+  for (const [stored, blocked, expectedVisible] of [['off',false,false],['invalid',false,true],['off',true,true]]) {
+    const other = fixture({realFooter:true, blocked, preferences:new Map([['astra-footer-basket-revisions-v1',stored]])});
+    const note=other.doc.getElementById('footer-basket-revisions'); assert.equal(note.hidden,!expectedVisible);
+    other.doc.querySelector('[data-footer-basket-revisions]').click(); assert.equal(note.hidden,expectedVisible); assert.equal(other.calls.network,0);
+    assert.equal(originalIntroMarkup(other.doc.querySelector('.footer-story>p')),other.personalBefore); other.dom.window.close();
+  }
   assert(real.doc.querySelector('.footer-content>.footer-author>.footer-signature'));
   assert.equal(real.doc.querySelector('footer>.footer-credits').textContent.startsWith('Verify current listings before trading.'),true);
   assert.equal(real.doc.querySelector('.footer-story .footer-signature'),null);
@@ -64,34 +81,36 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
   const signature=real.doc.querySelector('.footer-signature'),thanks=real.doc.getElementById('footer-special-thanks');
   assert.equal(thanks.textContent,'A special thanks to my fellow Henehos that helped finalize this site, and to the broader Maple community as a whole for making the game so enjoyable in 2026');
   assert.equal(thanks.parentElement,signature);assert.equal(thanks.hidden,false);assert.match(signature.textContent,/\n[—–-] DishWasher/);assert(real.w.getComputedStyle(signature).fontFamily.includes('system-ui'));assert.equal(real.w.getComputedStyle(signature).fontStyle,'normal');
-  assert.equal(real.doc.querySelector('.footer-copy-options').lastElementChild.dataset.footerThanks,'true','new controls finish the footer wording options');
-  assert.equal(about,real.brandBefore,'the original About link is retained');assert.equal(about.textContent,'About inflation . gg');
+  assert.equal(revisionButton.previousElementSibling.dataset.footerThanks,'true','existing thanks choice remains immediately before the new end control');
+  assert.equal(about,real.brandBefore,'the original About link is retained');assert.equal(about.querySelector('.footer-brand-words').textContent,'About inflation . gg');
   assert.equal(real.doc.querySelector('footer').dataset.footerStyle,'emphasis');
   const changeBrand=detail=>real.doc.dispatchEvent(new real.w.CustomEvent('astrabrandchange',{detail}));
   changeBrand({typeface:'display',case:'upper',placement:'center'});
-  assert.equal(about.textContent,'About inflation . GG');assert(real.w.getComputedStyle(about).fontFamily.includes('Georgia'));assert.equal(real.w.getComputedStyle(about).fontStyle,'normal');assert.equal(real.w.getComputedStyle(about).fontWeight,'750');assert.equal(real.w.getComputedStyle(about).textAlign,'center');
+  assert.equal(about.querySelector('.footer-brand-words').textContent,'About inflation . GG');assert(real.w.getComputedStyle(about).fontFamily.includes('Georgia'));assert.equal(real.w.getComputedStyle(about).fontStyle,'normal');assert.equal(real.w.getComputedStyle(about).fontWeight,'750');assert.equal(real.w.getComputedStyle(about).textAlign,'center');
   assert(real.w.getComputedStyle(signature).fontFamily.includes('Georgia'),'signature follows header typeface');assert.equal(real.w.getComputedStyle(thanks).fontFamily.includes('system-ui'),true,'thanks remains readable body type');
   assert.equal(real.w.getComputedStyle(real.doc.querySelector('.footer-story')).textAlign,'left','only the About link centers');
   real.w.dispatchEvent(new real.w.CustomEvent('astrabrandchange',{detail:{typeface:'arcade',case:'lower',placement:'left'}}));
-  assert.equal(about.textContent,'About inflation . gg');assert(real.w.getComputedStyle(about).fontFamily.includes('monospace'));assert.equal(real.w.getComputedStyle(about).fontWeight,'900');assert.equal(real.w.getComputedStyle(about).textAlign,'left');
+  assert.equal(about.querySelector('.footer-brand-words').textContent,'About inflation . gg');assert(real.w.getComputedStyle(about).fontFamily.includes('monospace'));assert.equal(real.w.getComputedStyle(about).fontWeight,'700');assert.equal(real.w.getComputedStyle(about).textAlign,'left');
+  changeBrand({typeface:'arcade-bold'});assert.equal(real.w.getComputedStyle(about).fontWeight,'900');assert.equal(real.w.getComputedStyle(signature).fontWeight,'900');
   changeBrand({typeface:'pixel',case:'lower',placement:'left'});assert.equal(real.doc.querySelector('footer').dataset.footerBrandTypeface,'pixel');assert(real.w.getComputedStyle(about).fontFamily.includes('Pixelify Sans'));assert.equal(real.w.getComputedStyle(about).fontWeight,'700');assert.equal(about.getAttribute('href'),aboutHref);
+  for(const logo of ['lemon-stack','lemon','pouch','scroll','none']){changeBrand({logo});assert.equal(about.querySelector('.footer-brand-logo').dataset.logo,logo);assert.equal(about.querySelectorAll('.footer-brand-logo-badge').length,logo==='lemon-stack'?1:0);if(logo.startsWith('lemon'))assert.equal(about.querySelector('img').getAttribute('src'),'assets/lemon-original-v1.png');if(logo==='lemon-stack'){assert.equal(about.querySelector('.footer-brand-logo-badge').textContent,'999');assert.equal(real.w.getComputedStyle(about.querySelector('img')).width,'26px');assert.equal(real.w.getComputedStyle(about.querySelector('.footer-brand-logo')).borderTopWidth,'2px');assert.equal(about.querySelectorAll('.footer-brand-logo>*').length,2,'no keybinding label is added');}else if(logo==='lemon'||logo==='pouch')assert.equal(real.w.getComputedStyle(about.querySelector('img')).width,'52px');assert.equal(about.getAttribute('href'),aboutHref);}changeBrand({logo:'lemon-stack'});
   changeBrand({typeface:'sans',case:'upper',placement:'left'});assert(real.w.getComputedStyle(about).fontFamily.includes('system-ui'));assert.equal(real.w.getComputedStyle(about).fontWeight,'850');
-  changeBrand({typeface:'url(evil)',case:'<img>',placement:'absolute'});assert.equal(about.textContent,'About inflation . gg');assert.equal(real.doc.querySelectorAll('.footer-brand img').length,1);assert.equal(real.doc.querySelector('.footer-brand img').getAttribute('src'),'assets/meso-pouch.png');
+  changeBrand({typeface:'url(evil)',case:'<img>',placement:'absolute'});assert.equal(about.querySelector('.footer-brand-words').textContent,'About inflation . gg');assert.equal(real.doc.querySelectorAll('.footer-brand img').length,1);assert.equal(real.doc.querySelector('.footer-brand img').getAttribute('src'),'assets/lemon-original-v1.png');
   assert.equal(about.getAttribute('href'),aboutHref);assert.equal(real.doc.querySelector('.footer-brand'),about);assert.equal(real.doc.querySelector('.footer-story').outerHTML,brandStory);assert.equal(real.doc.querySelector('.footer-author'),author);assert.equal(real.calls.network,0);
   real.dom.window.close();
   const wordChoice=fixture({realFooter:true});
   const originalPersonal=wordChoice.doc.querySelector('.footer-story>p'),wordButtons=[...wordChoice.doc.querySelectorAll('[data-footer-mapler]')];
-  for(const value of ['a','one']){wordButtons.find(button=>button.dataset.footerMapler===value).click();assert.equal(wordChoice.doc.querySelector('.footer-story>p'),originalPersonal);assert.equal(originalPersonal.outerHTML,wordChoice.rawPersonalBefore.replace('by a Mapler','by '+value+' Mapler'));assert.equal(wordChoice.preferences.get('astra-footer-mapler-word-v1'),value);assert.equal(wordButtons.filter(button=>button.getAttribute('aria-pressed')==='true').length,1);}
+  for(const value of ['a','one']){wordButtons.find(button=>button.dataset.footerMapler===value).click();assert.equal(wordChoice.doc.querySelector('.footer-story>p'),originalPersonal);assert.equal(originalIntroMarkup(originalPersonal),wordChoice.rawPersonalBefore.replace('by a Mapler','by '+value+' Mapler'));assert.equal(wordChoice.preferences.get('astra-footer-mapler-word-v1'),value);assert.equal(wordButtons.filter(button=>button.getAttribute('aria-pressed')==='true').length,1);}
   const thanksChoice=wordChoice.doc.querySelector('[data-footer-thanks]'),thanksNode=wordChoice.doc.getElementById('footer-special-thanks');thanksChoice.click();assert.equal(thanksNode.hidden,true);assert.equal(wordChoice.preferences.get('astra-footer-thanks-v1'),'off');thanksChoice.click();assert.equal(thanksNode.hidden,false);assert.equal(wordChoice.doc.getElementById('footer-special-thanks'),thanksNode);assert.equal(wordChoice.calls.network,0);wordChoice.dom.window.close();
   const restoredCopy=fixture({realFooter:true,preferences:new Map([['astra-footer-mapler-word-v1','a'],['astra-footer-thanks-v1','off']])});assert(restoredCopy.doc.querySelector('.footer-story>p').textContent.includes('by a Mapler'));assert.equal(restoredCopy.doc.getElementById('footer-special-thanks').hidden,true);restoredCopy.dom.window.close();
   const blockedCopy=fixture({realFooter:true,blocked:true});assert(blockedCopy.doc.querySelector('.footer-story>p').textContent.includes('by one Mapler'));assert.equal(blockedCopy.doc.getElementById('footer-special-thanks').hidden,false);blockedCopy.doc.querySelector('[data-footer-mapler="a"]').click();assert(blockedCopy.doc.querySelector('.footer-story>p').textContent.includes('by a Mapler'));blockedCopy.doc.querySelector('[data-footer-thanks]').click();assert.equal(blockedCopy.doc.getElementById('footer-special-thanks').hidden,true);assert.equal(blockedCopy.calls.network,0);blockedCopy.dom.window.close();
-  const preloaded=fixture({realFooter:true,initialBrand:{brandTypeface:'arcade',brandCase:'upper',brandPlacement:'center'}});assert.equal(preloaded.doc.querySelector('.footer-brand').textContent,'About inflation . GG');assert.equal(preloaded.doc.querySelector('footer').dataset.footerBrandTypeface,'arcade');assert.equal(preloaded.w.getComputedStyle(preloaded.doc.querySelector('.footer-brand')).textAlign,'center');preloaded.dom.window.close();
+  const preloaded=fixture({realFooter:true,initialBrand:{brandTypeface:'arcade',brandCase:'upper',brandPlacement:'center'}});assert.equal(preloaded.doc.querySelector('.footer-brand-words').textContent,'About inflation . GG');assert.equal(preloaded.doc.querySelector('footer').dataset.footerBrandTypeface,'arcade');assert.equal(preloaded.w.getComputedStyle(preloaded.doc.querySelector('.footer-brand')).textAlign,'center');preloaded.dom.window.close();
   const preferences = new Map();
   const { dom, w, doc, calls, storyBefore } = fixture({ preferences });
   const footer = doc.querySelector('footer');
   const story = doc.querySelector('.footer-story');
-  assert.equal(story.firstElementChild.textContent, personalStory.replace('by a Mapler','by one Mapler'));
-  assert.equal(story.outerHTML, storyBefore);
+  assert.equal(story.firstElementChild.textContent, personalStory.replace('by a Mapler that','by one Mapler That'));
+  assert.equal(originalIntroMarkup(story), storyBefore);
   assert.equal(footer.dataset.footerStyle, 'emphasis');assert.equal(w.getComputedStyle(story).fontWeight,'600');
   assert.equal(w.getComputedStyle(story).fontSize, '14px');
   assert.equal(w.getComputedStyle(story).textAlign, 'left');
@@ -123,7 +142,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
     assert.equal(choices.filter(button => button.getAttribute('aria-pressed') === 'true').length, 1);
     assert.equal(choices.find(button => button.dataset.footerStyleChoice === value).getAttribute('aria-pressed'), 'true');
     assert.equal(preferences.get('inflation-footer-style'), value);
-    assert.equal(story.outerHTML, storyBefore, 'style choices cannot rewrite prose');
+    assert.equal(originalIntroMarkup(story), storyBefore, 'style choices cannot rewrite prose');
     if (value === 'personal') {
       assert(w.getComputedStyle(story).fontFamily.includes('Georgia'));
       assert.equal(w.getComputedStyle(story.firstElementChild).fontStyle, 'italic');
@@ -131,13 +150,13 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
     if (value === 'emphasis') assert.equal(w.getComputedStyle(story).fontWeight, '600');
     const restored = fixture({ preferences });
     assert.equal(restored.doc.querySelector('footer').dataset.footerStyle, value);
-    assert.equal(restored.doc.querySelector('.footer-story').outerHTML, restored.storyBefore);
+    assert.equal(originalIntroMarkup(restored.doc.querySelector('.footer-story')), restored.storyBefore);
     assert.equal(restored.calls.network, 0);
     restored.dom.window.close();
   }
   const invalid = fixture({ preferences: new Map([['inflation-footer-style', '<script>invalid</script>']]) });
   assert.equal(invalid.doc.querySelector('footer').dataset.footerStyle, 'emphasis');
-  assert.equal(invalid.doc.querySelector('.footer-story').outerHTML, invalid.storyBefore);
+  assert.equal(originalIntroMarkup(invalid.doc.querySelector('.footer-story')), invalid.storyBefore);
   invalid.dom.window.close();
   const unavailable = fixture({ blocked: true });
   assert.equal(unavailable.doc.querySelector('footer').dataset.footerStyle,'emphasis');
@@ -213,9 +232,9 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
   assert.equal(doc.querySelectorAll('#open-contact').length, 1);
   assert.equal(calls.network, 0);
   assert.equal(calls.storage, 0);
-  assert.deepEqual(calls.preferenceReads, ['inflation-footer-style','astra-footer-mapler-word-v1']);
+  assert.deepEqual(calls.preferenceReads, ['inflation-footer-style','astra-footer-mapler-word-v1','astra-footer-intro-layout-v1']);
   assert.deepEqual(calls.preferenceWrites, [['inflation-footer-style','personal'],['inflation-footer-style','emphasis'],['inflation-footer-style','clear']]);
-  assert.equal(story.outerHTML, storyBefore, 'contact use also leaves story markup unchanged');
+  assert.equal(originalIntroMarkup(story), storyBefore, 'contact use also leaves story markup unchanged');
   assert.equal(doc.querySelectorAll('.community-footer-styles').length, 1);
   assert.equal(calls.reads, 0);
   assert.equal(doc.cookie, '');

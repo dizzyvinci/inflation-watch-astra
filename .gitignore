@@ -4,6 +4,8 @@ node_modules/
 work/
 __pycache__/
 *.pyc
+dist/ui-version.json
+dist/ui-version.json.tmp
 .env
 .env.*
 .dev.vars

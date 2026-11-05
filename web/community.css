@@ -67,3 +67,12 @@ dialog.community-contact{width:min(560px,calc(100vw - 32px));max-height:calc(100
 footer.community-footer .footer-brand{display:flex;align-items:center;gap:13px}footer.community-footer .footer-brand-logo{display:inline-flex;flex:none;width:52px;height:56px;align-items:center;justify-content:center}footer.community-footer .footer-brand-logo[hidden]{display:none}footer.community-footer .footer-brand-logo img,footer.community-footer .footer-brand-logo svg{width:52px;height:52px;object-fit:contain;image-rendering:pixelated;fill:var(--gold);color:var(--gold)}footer.community-footer .footer-brand-words{min-width:0}footer.community-footer .footer-brand-suffix{letter-spacing:0;word-spacing:0;margin-inline-start:-.12em}footer.community-footer .footer-arbitrage[hidden]{display:none}footer.community-footer[data-footer-brand-placement="center"] .footer-brand{justify-content:center}
 
 .footer-intro{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:4px}footer[data-intro-underline="off"] .footer-intro{text-decoration:none}
+footer.community-footer .footer-basket-revisions{color:var(--text);text-align:inherit}
+footer.community-footer .footer-basket-revisions[hidden]{display:none}
+footer.community-footer .footer-brand-logo{position:relative}
+footer.community-footer .footer-brand-logo[data-logo="lemon-stack"]{width:52px;height:52px;padding:0;border:2px solid #70777e;border-radius:3px;background:linear-gradient(135deg,#d8d9db,#aaaeb4);box-shadow:inset 1px 1px 0 #f5f6f7,inset -1px -1px 0 #8c9198,0 1px 2px #0002}
+footer.community-footer .footer-brand-logo[data-logo="lemon-stack"] img{width:26px;height:26px;margin-bottom:8px;image-rendering:pixelated}
+footer.community-footer .footer-brand-logo-badge{position:absolute;bottom:2px;right:3px;inset-inline-start:auto;text-align:right;color:#fff;font:900 12px/1 Arial,system-ui,sans-serif;letter-spacing:0;text-shadow:-1px -1px 0 #303438,1px -1px 0 #303438,-1px 1px 0 #303438,1px 1px 0 #303438}
+.footer-intro-break{display:block}
+
+footer.community-footer[data-footer-brand-typeface="arcade"] :is(.footer-brand,.footer-author .footer-signature){font-weight:700}footer.community-footer[data-footer-brand-typeface="arcade-bold"] :is(.footer-brand,.footer-author .footer-signature){font-family:ui-monospace,"Cascadia Mono","Segoe UI Mono",Consolas,monospace;font-weight:900;font-style:normal;letter-spacing:.25px}

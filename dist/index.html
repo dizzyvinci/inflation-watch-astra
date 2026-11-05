@@ -37,11 +37,17 @@
   <link rel="stylesheet" href="volatility-preview.css">
   <link rel="stylesheet" href="fm-backdrop-preview.css">
   <link rel="stylesheet" href="category-reference-preview.css">
+  <link rel="stylesheet" href="category-link-preview.css">
+  <link rel="stylesheet" href="rolling-benchmark-preview.css">
+  <link rel="stylesheet" href="fee-preview.css">
+  <link rel="stylesheet" href="short-window-preview.css">
+  <link rel="stylesheet" href="ellinia-backdrop-preview.css">
   <script src="community.js" defer></script>
   <script src="preview-runtime.js" defer></script>
   <script src="privacy-controls.js" defer></script>
   <script src="author-portrait.js" defer></script>
   <script src="app.js" defer></script>
+  <script src="rolling-benchmark-preview.js" defer></script>
   <script src="layout-preview.js" defer></script>
   <script src="chart-interaction.js" defer></script>
   <script src="market-highlights.js" defer></script>
@@ -55,6 +61,7 @@
   <script src="panel-size-preview.js" defer></script>
   <script src="price-check.js" defer></script>
   <script src="cash-highlights.js" defer></script>
+  <script src="fee-preview.js" defer></script>
   <script src="basket-history-layout.js" defer></script>
   <script src="rate-clock.js" defer></script>
   <script src="overview-basket.js" defer></script>
@@ -67,8 +74,11 @@
   <script src="volatility-preview.js" defer></script>
   <script src="fm-backdrop-preview.js" defer></script>
   <script src="category-reference-preview.js" defer></script>
+  <script src="short-window-preview.js" defer></script>
+  <script src="ellinia-backdrop-preview.js" defer></script>
   <script src="viewer-preview.js" defer></script>
   <script src="date-presentation.js" defer></script>
+  <script src="local-preview-refresh.js" defer></script>
 </head>
 <body>
   <a class="skip" href="#content">Skip to dashboard</a>
@@ -105,7 +115,7 @@
         <p class="footnote" id="smega-comparison-note" data-smega-comparison-content hidden></p><p class="footnote" id="smega-history-note"></p>
         <p class="footnote">MapleStory Market’s published hourly chat/megaphone medians. Spread = seller median − buyer median; percentage spread divides that difference by their midpoint. Only matching source/hour pairs are compared; missing sides stay missing. This is a difference between offer medians, not an executable order-book spread, profit opportunity, or evidence of a completed sale. Offers never enter MPI or the cash-item sale estimate.</p>
       </section>
-      
+
       <div class="bottom-grid overview-movers"><article class="panel"><div class="section-heading compact"><h2>What moved the index since the reference week</h2><span class="tiny-tag">INDEX POINT CONTRIBUTION</span></div><p class="small muted" id="movers-period"></p><div id="movers"></div></article><p class="footnote supply-asterisk"><a href="#basket-context">* <span id="wolbi-short">Wolbi’s supply change is an item-specific caveat; see the compact basket note.</span></a></p></div>
       <div class="stat-strip" id="market-stats"></div>
       <section id="reported-section" aria-labelledby="reported-title">
@@ -145,7 +155,7 @@
         <div class="quick-direction" role="group" aria-label="Buy or sell NX"><button type="button" class="secondary" id="quick-buy" data-quick-direction="meso" aria-pressed="false">Buying NX</button><button type="button" class="secondary" id="quick-sell" data-quick-direction="nx" aria-pressed="false">Selling NX</button></div>
         <div class="quick-calculation" id="quick-calculation" hidden>
           <div class="quick-converter-row"><label for="quick-amount"><span id="quick-label">NX to sell</span> <input id="quick-amount" type="number" aria-describedby="quick-fee-note" min="0" max="1000000000000" step="100" value="1000" inputmode="decimal"></label><span aria-hidden="true">→</span><output id="quick-result" for="quick-amount" aria-live="polite">—</output></div>
-          <p class="small muted" id="quick-fee-note">Gross estimate via tradeable cash items at the headline sale rate, before fees. Fees are not deducted; individual item prices vary.</p>
+          <p class="small muted" id="quick-fee-note">Gross estimate from source-reported cash-item sale medians before fees, separate from the modelled goods-inflation NX benchmark. Fees are not deducted; individual item prices vary.</p>
         </div>
       </article>
       <p class="footnote">Daily-history price = Σ(daily median × recorded volume) / Σ(recorded volume), using only qualifying days. This is a volume-weighted daily-median estimate, not exact transaction VWAP or a pooled transaction median. The low/high columns are the minimum/maximum qualifying daily medians divided by fixed NX cost, not a trade range or interquartile range. Rolling capture ranges are unavailable.</p><details class="panel cash-source-backlog"><summary>Why can’t the rolling capture use a custom lookback?</summary><p>The captured scanner supplies one median and one item-specific window per item. These cash-item windows span 3–30 days; there is no underlying daily scanner history here to reconstruct other windows. Source-input backlog: dated historical captures or a documented lookback query, with window bounds, recorded volumes, sold-price basis and timestamps, would be needed before enabling custom rolling windows. No new query or connected source is implied.</p></details><article class="panel cash-goods-comparison" id="cash-goods-comparison"></article><p class="footnote">Single-item NX prices from the documented Cash Shop schedule; bundles, crate cosmetics, expired offers and unknown purchase prices are excluded. Recheck this schedule when Nexon changes prices. Each daily rate weights the item’s meso/NX ratio by that day’s recorded sale volume.</p></section>

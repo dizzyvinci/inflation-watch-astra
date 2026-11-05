@@ -1,0 +1,17 @@
+.ellinia-backdrop-options{min-width:0;margin:16px 0 0;padding:12px;border:1px solid var(--line);border-radius:7px;outline:2px solid #d65b68;outline-offset:3px;text-align:center}
+.ellinia-backdrop-options legend{padding:0 7px;font-size:13px;color:var(--text)}
+.ellinia-backdrop-buttons{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
+.ellinia-backdrop-buttons button{font:600 13px/1.5 var(--font,system-ui);padding:9px 12px;min-height:40px;border:1px solid var(--line);border-radius:5px;color:var(--text);background:var(--surface2);cursor:pointer}
+.ellinia-backdrop-buttons button[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+.ellinia-backdrop-buttons button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.ellinia-backdrop-options>small{display:block;margin-top:10px;color:var(--muted);font-size:12px;line-height:1.7}
+body[data-viewer-preview="on"] #ellinia-backdrop-options{display:none!important}
+/* Each alternative has one continuous ambient base. Transparent original art
+   reveals forest green rather than black; no vertical masks or repeating tiles. */
+body.scenery-on[data-scenery-mode="backdrop"][data-ellinia-backdrop="bright"]::before,
+body.scenery-on[data-scenery-mode="backdrop"][data-ellinia-backdrop="soft"]::before,
+body.scenery-on[data-scenery-mode="backdrop"][data-ellinia-backdrop="framed"]::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;mask-image:none;-webkit-mask-image:none;opacity:1;background-repeat:no-repeat;background-color:#315b3d;background-blend-mode:normal}
+body.scenery-on[data-scenery-mode="backdrop"][data-ellinia-backdrop="bright"]::before{background-image:linear-gradient(180deg,#73984a26,#497c4c26),url("assets/ellinia-game-map-v1.webp");background-size:100% 100%,100% auto;background-position:center,center 42%;filter:brightness(1.12) saturate(1.04)}
+body.scenery-on[data-scenery-mode="backdrop"][data-ellinia-backdrop="soft"]::before{background-color:#345741;background-image:linear-gradient(180deg,#638c6266,#4a735766),url("assets/ellinia-game-map-v1.webp");background-size:100% 100%,100% auto;background-position:center,center 42%;filter:blur(1.2px) saturate(.82) brightness(1.06)}
+body.scenery-on[data-scenery-mode="backdrop"][data-ellinia-backdrop="framed"]::before{background-color:#355d40;background-image:url("assets/ellinia-scenery.png"),url("assets/ellinia-scenery.png"),linear-gradient(180deg,#557846,#335b40 65%,#294c38);background-size:auto 85vh,auto 75vh,100% 100%;background-position:left bottom,right bottom,center;filter:none}
+@media(max-width:700px){.ellinia-backdrop-buttons button{flex:1 1 42%;min-width:0}body.scenery-on[data-scenery-mode="backdrop"][data-ellinia-backdrop="framed"]::before{background-size:auto 62vh,auto 54vh,100% 100%;background-position:left -45px bottom,right -35px bottom,center}}

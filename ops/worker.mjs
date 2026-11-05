@@ -79,7 +79,7 @@ export async function referenceFingerprint(baseline = seed) {
       : value;
   const references = Object.fromEntries([
     'comparisons', 'reportedNxHistory', 'rollingReference',
-    'rollingReferenceHistory', 'smega', 'smegaSource',
+    'rollingReferenceHistory', 'smega', 'smegaSource', 'cashPriceReferences',
   ].map(key => [key, baseline[key] ?? null]));
   references.cashCatalogMetadata = baseline.cashCatalog?.metadataItems ?? null;
   references.cashCatalogIdentityMap = baseline.cashCatalog?.identityMap ?? null;

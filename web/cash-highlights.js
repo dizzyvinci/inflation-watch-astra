@@ -45,8 +45,10 @@
       && positive(row.nx) && positive(row.price) && positive(row.rate) && positive(row.referenceWeight)
       && positive(row.quantity) && positive(row.windowDays) && row.missing !== true && !row.referenceExclusion);
     const compare = (a, b) => a.rate - b.rate || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug);
-    const buy = [...eligible].sort(compare).slice(0, 5), sell = [...eligible].sort((a, b) => b.rate - a.rate || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug)).slice(0, 5);
-    return { ...pricing, buy, sell, eligibleCount: eligible.length, totalCount: pricing.rows.length,
+    const fees=window.AstraTradeFees,feeState=fees?.getState(),feeActive=!!fees&&feeState.mode!=='gross',grossFallback=feeActive&&feeState.rules?.[feeState.mode]?.enabled!==true,netRanking=feeActive&&!grossFallback;
+    const chosen=side=>netRanking?fees.rank(eligible,side).slice(0,5).map(row=>({...row,grossRate:row.rate,rate:row.netRate})):(side==='buy'?[...eligible].sort(compare):[...eligible].sort((a,b)=>b.rate-a.rate||a.name.localeCompare(b.name)||a.slug.localeCompare(b.slug))).slice(0,5);
+    const buy=chosen('buy'),sell=chosen('sell');
+    return { ...pricing, buy, sell, feeActive,grossFallback,netRanking,feeMode:feeState?.mode,feeReferences:netRanking?{buy:fees.reference(eligible,'buy'),sell:fees.reference(eligible,'sell')}:null,eligibleCount: eligible.length, totalCount: pricing.rows.length,
       sourceUpdatedAt: report.sourceUpdatedAt, capturedAt: report.rollingReference?.capturedAt || null };
   }
   function rateScale(values = []) {
@@ -90,11 +92,12 @@
     for (const [offset, color] of [[0, '#40c9d6'], [.5, '#f3d44a'], [.8, '#ed8a37'], [1, '#ef5350']]) add('stop', { offset, 'stop-color': color }, gradient);
     const point = (value, radius = 52) => { const angle = -Math.PI + value / upper * Math.PI; return [70 + radius * Math.cos(angle), 66 + radius * Math.sin(angle)]; };
     const [bx, by] = point(index), [x, y] = point(index, 43), [rx1, ry1] = point(reference, 46), [rx2, ry2] = point(reference, 58), [tx, ty] = point(reference, 65);
-    add('path', { d: 'M18 66A52 52 0 0 1 122 66', fill: 'none', stroke: '#3c4c40', 'stroke-width': 8 });
+    add('path', { class: 'cash-highlight-arc-backplate', d: 'M18 66A52 52 0 0 1 122 66', fill: 'none', 'stroke-width': 12 });
+    add('path', { class: 'cash-highlight-arc-track', d: 'M18 66A52 52 0 0 1 122 66', fill: 'none', 'stroke-width': 8 });
     add('path', { class: 'cash-highlight-value-arc', d: `M18 66A52 52 0 0 1 ${bx} ${by}`, fill: 'none', stroke: `url(#${gradientId})`, 'stroke-width': 8, 'data-end-value': index });
     add('line', { class: 'cash-highlight-reference', x1: rx1, y1: ry1, x2: rx2, y2: ry2, stroke: '#e3e4d6', 'stroke-width': 2 });
     add('line', { class: 'cash-highlight-needle', x1: 70, y1: 66, x2: x, y2: y, stroke: '#e3e4d6', 'stroke-width': 2 });
-    add('circle', { cx: 70, cy: 66, r: 4, fill: '#e3e4d6' });
+    add('circle', { class: 'cash-highlight-pivot', cx: 70, cy: 66, r: 4, fill: '#e3e4d6' });
     add('text', { x: Math.max(12, Math.min(128, tx)), y: Math.max(8, ty - 2), 'text-anchor': 'middle' }).textContent = number(reference);
     add('text', { x: 14, y: 84 }).textContent = '0'; add('text', { x: 126, y: 84, 'text-anchor': 'end' }).textContent = number(upper, 0);
     return svg;
@@ -130,28 +133,37 @@
     const selection = { days: Number(document.getElementById('cash-lookback')?.value || 3), evidence: document.getElementById('cash-evidence')?.value || 'daily' };
     const current = bestModel(report, selection), status = section.querySelector('.cash-highlights-status'), method = section.querySelector('.cash-highlights-method');
     if (!current) { status.textContent = 'Best-value cash dials are unavailable until the cash-pricing table calculation is ready. No modelled benchmark is substituted.'; method.textContent = ''; return; }
-    const window = current.rolling ? `Rolling scanner capture pulled ${current.capturedAt || 'at an unavailable time'}; item-specific windows, not a resliced lookback.` : `${current.days}-source-day lookback · ${current.start || 'Unknown'}–${current.end || 'Unknown'} inclusive${current.partial ? ' · latest day partial' : ''}. Daily source published ${current.sourceUpdatedAt || 'at an unavailable time'}.`;
-    status.textContent = `${window} ${current.eligibleCount} / ${current.totalCount} fixed-price items have eligible evidence. ${current.eligibleCount < 5 ? 'Fewer than five eligible items; missing items are not filled.' : 'Up to five per side.'}`;
+    const evidenceWindow = current.rolling ? `Rolling scanner capture pulled ${current.capturedAt || 'at an unavailable time'}; item-specific windows, not a resliced lookback.` : `${current.days}-source-day lookback · ${current.start || 'Unknown'}–${current.end || 'Unknown'} inclusive${current.partial ? ' · latest day partial' : ''}. Daily source published ${current.sourceUpdatedAt || 'at an unavailable time'}.`;
+    status.textContent = `${evidenceWindow} ${current.eligibleCount} / ${current.totalCount} fixed-price items have eligible evidence. ${current.eligibleCount < 5 ? 'Fewer than five eligible items; missing items are not filled.' : 'Up to five per side.'}${current.grossFallback?' Gross order shown; net unavailable until fee rules are set.':current.netRanking?' Fee scenario: '+window.AstraTradeFees.label()+'. Only computable assumed net/outlay values are ranked; no official fee rule is claimed.':''}`;
     const upper = rateScale([...current.buy, ...current.sell].map(row => row.rate).concat(positive(current.reference) ? current.reference : []));
-    for (const [side, title, rows, meaning] of [['buy', 'Best to buy', current.buy, 'Lower mesos per NX'], ['sell', 'Best to sell', current.sell, 'Higher mesos per NX']]) {
+    for (const [side, title, rows] of [['sell', 'Best to Sell (Higher Meso/NX)', current.sell], ['buy', 'Best to Buy (Lower Meso/NX)', current.buy]]) {
       const group = make('section', undefined, 'cash-highlights-ranking'); group.dataset.cashRanking = side;
-      group.append(make('h3', title), make('p', `${meaning} · ${rows.length} of up to 5 eligible items`, 'cash-ranking-direction'));
+      group.append(make('h3', title));group.dataset.cashRankingBasis=current.grossFallback?'gross_unset_fees':current.netRanking?'manual_net':'gross';if(current.grossFallback)group.append(make('span','Gross ranking · fees unset','cash-highlights-gross-badge'));
       const row = make('div', undefined, 'cash-highlights-row'); row.tabIndex = 0; row.setAttribute('role', 'region'); row.setAttribute('aria-label', `${title} cash dials; scroll horizontally on narrow screens`);
       for (const item of rows) {
-        const card = make('article', undefined, 'cash-highlight-card'); card.dataset.cashHighlightSlug = item.slug; card.dataset.cashRate = item.rate; card.dataset.cashSide = side;
+        const card = make('article', undefined, 'cash-highlight-card'); card.dataset.cashHighlightSlug = item.slug; card.dataset.cashRate = item.rate; card.dataset.cashSide = side;if(item.grossRate!==undefined)card.dataset.cashGrossRate=item.grossRate;
         const heading = make('h4'), link = make('a'); link.href = '#item/' + encodeURIComponent(item.slug);
         const image = make('img'); image.alt = ''; image.width = 40; image.height = 40; image.loading = 'lazy';
         const mapped = report.spriteMap?.[item.slug]; image.src = typeof mapped === 'string' && /^assets\/[A-Za-z0-9._-]+\.(?:png|webp|gif|svg)$/.test(mapped) ? mapped : 'assets/' + item.slug + '.svg';
         link.append(image, make('span', item.name)); heading.append(link); card.append(heading);
-        card.append(gauge(item.rate, upper, item.name, current.reference, true), make('strong', number(item.rate, 2), 'cash-highlight-index'), make('span', 'mesos / NX', 'cash-highlight-change'));
+        const selectedReference=current.feeReferences?.[side]??current.reference;
+        if(item.rate>=0&&positive(selectedReference))card.append(gauge(item.rate,upper,item.name,selectedReference,true));
+        card.append(make('strong', number(item.rate, 2), 'cash-highlight-index'), make('span', current.grossFallback?'Gross mesos/NX':current.netRanking?(side==='buy'?'scenario outlay mesos / NX':'scenario net mesos / NX'):'mesos / NX', 'cash-highlight-change'));
+        if(current.netRanking)card.append(make('small',`Gross ${number(item.grossRate,2)} mesos / NX · ${item.feePreview.itemCount} copies · ${item.feePreview.assumptionProvenance==='user_reported'?'user-reported estimate':'manual estimate'}${item.feePreview.allocatedShopCost?' · allocated shop cost included':''}`));
         card.append(make('p', `${number(item.price, 1)} mesos · fixed ${number(item.nx, 0)} NX`, 'cash-highlight-price'));
         card.append(make('p', current.rolling ? `Pulled ${current.capturedAt || 'time unavailable'} · ${number(item.windowDays)}-day source window` : `Selected dates ${current.start}–${current.end} · ${number(item.windowDays, 0)} qualifying days`, 'cash-highlight-date'));
         card.append(make('small', `${number(item.quantity, 0)} recorded source count${item.windowDays < current.days && !current.rolling ? ' · incomplete daily coverage' : ''}`)); row.append(card);
       }
-      if (!rows.length) row.append(make('p', 'No eligible prices for this evidence window.', 'cash-highlight-unavailable'));
-      group.append(row); cardsRoot.append(group);
+      if (!rows.length) row.append(make('p',current.feeActive?'Net/outlay ranking unavailable until eligible evidence and explicit manual assumptions are available. Gross view remains available.':'No eligible prices for this evidence window.','cash-highlight-unavailable'));
+      const fullList = make('button', `View full ${side === 'sell' ? 'sell' : 'buy'} list`, 'cash-ranking-full-list'); fullList.type = 'button'; fullList.dataset.cashRankingLink = side;
+      fullList.addEventListener('click', () => {
+        // Use the table's existing native button, preserving its sorting and fee events.
+        const sideButton = document.querySelector(`button[data-cash-side="${side}"]`);
+        sideButton?.click(); window.location.hash = '#nx';
+      });
+      group.append(row, fullList); cardsRoot.append(group);
     }
-    method.textContent = 'Same fixed-NX schedule and selected evidence calculation as Best NX items to Buy/Sell. Daily estimates weight qualifying daily sale medians by recorded volume; each day needs at least five recorded sales. Rolling medians retain their own windows; excluded roll/upgrade-premium references are not ranked. Missing prices and unknown NX costs are excluded. Ranking uses all eligible items before table search/verdict filters: low mesos / NX for buying, high for selling, before fees. The dial tick is the selected-evidence cash reference, not 100 or the goods-based benchmark. These estimates are not executable quotes or profit calculations.';
+    method.textContent = (current.grossFallback?'Gross order shown; net unavailable until fee rules are set. No zero-fee assumption is made. ':current.netRanking?'The selected fee scenario uses the same shared AstraTradeFees model as the NX table. No official rate is verified; buyer outlay and seller proceeds are separate, and fixed shop-cost allocation is an explicit business-cost assumption. ':'')+'Same fixed-NX schedule and selected evidence calculation as Best NX items to Buy/Sell. Daily estimates weight qualifying daily sale medians by recorded volume; each day needs at least five recorded sales. Rolling medians retain their own windows; excluded roll/upgrade-premium references are not ranked. Missing prices and unknown NX costs are excluded. Ranking uses all eligible items before table search/verdict filters: low mesos / NX for buying, high for selling, '+(current.netRanking?'under the selected explicit fee assumptions.':'before fees.')+' The dial tick is the selected-evidence cash reference, not 100 or the goods-based benchmark. These estimates are not executable quotes or profit calculations.';
   }
   function draw() {
     section.dataset.enabled = String(enabled); section.dataset.cashHighlightsMode = mode; section.querySelector('.cash-highlights-content').hidden = !enabled;
@@ -161,6 +173,7 @@
   }
   toggle.addEventListener('click', () => { enabled = !enabled; try { localStorage.setItem(key, enabled ? 'on' : 'off'); } catch { /* Tab choice still works. */ } draw(); });
   document.addEventListener('astramarketsnapshot', event => { report = event.detail; draw(); });
+  document.addEventListener('astrafeeschange',draw);
   for (const id of ['cash-lookback', 'cash-evidence']) document.getElementById(id)?.addEventListener('change', draw);
   draw(); document.dispatchEvent(new Event('astramarkethighlightsready'));
 })();

@@ -131,6 +131,9 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   const history = before.main.closest('#main-history-section, .banner-preview-history');
   const originalParent = history.parentNode, originalNext = history.nextSibling;
   assert.equal(doc.body.dataset.bannerLayout, 'original');
+  assert.equal(w.getComputedStyle(before.offersStats).gridTemplateColumns,'repeat(2,minmax(0,1fr))','default original card also uses2x2 stats');
+  assert.equal(w.getComputedStyle(before.offersStats.querySelector('[data-offer-side="buy"]')).gridRow,'1');
+  assert.equal(w.getComputedStyle(before.offersStats.querySelector('[data-offer-side="sell"]')).gridRow,'2');
   assert.equal(before.hero.contains(before.main), false);
   assert.equal(controls.parentElement.id, 'display-options');
   assert.equal(controls.closest('#scenery-options'), null, 'control is available when scenery is off');
@@ -220,7 +223,7 @@ function fixture({ preferences = new Map(), blocked = false, legacy = false, mis
   assert.equal(before.offersChart.firstElementChild,originalOfferSvg);
   assert.equal(doc.getElementById('banner-offers-history-title'),null,'no duplicate title is generated');
   assert.equal(offersSection.getAttribute('aria-labelledby'),originalOffersLabel);
-  assert.equal(w.getComputedStyle(before.offersStats).gridTemplateColumns,'minmax(0,1fr)','four source stats stack vertically');
+  assert.equal(w.getComputedStyle(before.offersStats).gridTemplateColumns,'repeat(2,minmax(0,1fr))','four source stats form2x2');const bid=w.getComputedStyle(before.offersStats.querySelector('[data-offer-side=buy]')),ask=w.getComputedStyle(before.offersStats.querySelector('[data-offer-side=sell]'));assert.equal(bid.gridColumn,'1');assert.equal(bid.gridRow,'1');assert.equal(ask.gridColumn,'1');assert.equal(ask.gridRow,'2','buyers bid above sellers ask');
   assert.equal(before.offersStats.children.length,4);
   assert(doc.querySelector('.banner-offers-note').textContent.includes('Offers cannot change the calculated goods-based NX benchmark'));
   before.offersRange.click();before.offersChart.click();assert.equal(offerWindowClicks,1);assert.equal(offerChartClicks,1);

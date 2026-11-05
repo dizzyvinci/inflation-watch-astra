@@ -18,17 +18,19 @@ w.fetch = async url => {
 };
 doc.addEventListener('astramarketsnapshot', event => published.push({ report: event.detail, rate: doc.getElementById('main-rate').textContent, at: doc.getElementById('rate-kind').dataset.marketAt }));
 w.eval(fs.readFileSync(path.join(project, 'web/community.js'), 'utf8'));
+w.eval(fs.readFileSync(path.join(project, 'web/rolling-benchmark-preview.js'), 'utf8'));
 w.eval(fs.readFileSync(path.join(project, 'web/app.js'), 'utf8') + ';window.__modelExport=mainHistoryExport;csvDownload=(...args)=>window.__download=args;');
 const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-10 * Math.max(1, Math.abs(b)), `${a} != ${b}`);
 const flush = async () => { for (let i = 0; i < 200 && !published.length; i++) await new Promise(resolve => setTimeout(resolve, 5)); assert(published.length, 'No rendered snapshot event'); };
 (async () => {
   try {
     await flush();
-    const api = w.AstraGoodsNxBenchmark, expected = report.baseNxRate * report.latest.cpi / 100;
-    assert(Object.isFrozen(api));
+    const api = w.AstraGoodsNxBenchmark, rollingApi=w.AstraRollingBenchmark, selected=rollingApi.calculate(report), expected=selected.rate;
+    assert(selected.available,selected.reason);
+    assert(Object.isFrozen(api));assert.equal(doc.querySelector('.hero-benchmark-explanation .benchmark-inflation-phrase').textContent,'(amount required to combat inflation)');assert(doc.querySelector('.hero-benchmark-explanation .benchmark-inflation-qualification').textContent.includes('not controlling inflation or meso supply'));assert(doc.querySelector('.hero-benchmark-explanation').nextElementSibling.hidden);
     assert.equal(Number(doc.getElementById('main-rate').textContent), Number(expected.toFixed(2)));
     assert.notEqual(doc.getElementById('main-rate').textContent, report.latest.nxRate.toFixed(2));
-    close(Number(doc.getElementById('rate-change').textContent.replace(/[+%]/g, '')), Number((report.latest.cpi - 100).toFixed(1)));
+    close(Number(doc.getElementById('rate-change').textContent.replace(/[+%]/g, '')), Number(selected.changePercent.toFixed(1)));
     assert.match(doc.getElementById('overview-title').textContent, /Goods-inflation NX benchmark/);
     assert.match(doc.querySelector('.hero-model-note').textContent, /not an observed cash-sale or executable exchange quote/);
     assert.equal(doc.getElementById('rate-kind').dataset.marketAt, report.sourceUpdatedAt);
@@ -40,10 +42,10 @@ const flush = async () => { for (let i = 0; i < 200 && !published.length; i++) a
     assert.equal(doc.querySelector('[data-smega-comparison-toggle]').getAttribute('aria-pressed'), 'false');
     assert.equal(doc.querySelector('#comparison-card .comparison-row strong').textContent, '1:' + report.latest.nxRate.toFixed(1), 'cash page retains actual sale estimate');
     const points = [...doc.querySelectorAll('#main-chart circle[data-chart-value]')];
-    const expectedHistory = report.history.filter(p => Number.isFinite(p.cpi) && p.cpi > 0);
+    const expectedHistory = rollingApi.history(report).filter(p=>p.available);
     assert.equal(points.length, expectedHistory.length);
     points.forEach((point, i) => {
-      const original = expectedHistory[i]; close(Number(point.dataset.chartValue), report.baseNxRate * original.cpi / 100);
+      const original = expectedHistory[i]; close(Number(point.dataset.chartValue), original.rate);
       assert.equal(point.dataset.chartDate, original.at); assert.equal(point.dataset.chartDatePrecision, 'day');
       assert.equal(point.dataset.chartUnit, 'modelled mesos per NX'); assert.match(point.dataset.chartNote, /not an observed cash quote/);
     });
@@ -54,7 +56,7 @@ const flush = async () => { for (let i = 0; i < 200 && !published.length; i++) a
     assert(!headers.includes('nx_rate_mesos_per_nx'), 'model CSV does not mislabel actual cash fields');
     rows.forEach((row, i) => { const cell = Object.fromEntries(headers.map((key, j) => [key, row[j]]));
       close(cell.plotted_value, Number(points[i].dataset.chartValue)); assert.equal(cell.chart_time, points[i].dataset.chartDate);
-      assert.equal(cell.unit, 'modelled_mesos_per_nx'); assert.equal(cell.formula, 'reference_nx_rate * goods_mpi / 100'); });
+      assert.equal(cell.unit, 'modelled_mesos_per_nx'); assert.equal(cell.formula, 'prior_7_day_cash_anchor * goods_mpi / prior_7_day_mean_mpi');assert.equal(cell.anchor_start,expectedHistory[i].startDay);assert.equal(cell.anchor_end,expectedHistory[i].endDay); });
     doc.querySelector('[data-range="2"]').click(); doc.getElementById('export-history').click();
     assert.equal(w.__download[2].length, doc.querySelectorAll('#main-chart circle[data-chart-value]').length, 'CSV follows displayed source-based window');
     const selector = doc.getElementById('chart-metric'); selector.value = 'cpi'; selector.dispatchEvent(new w.Event('change'));
@@ -62,23 +64,62 @@ const flush = async () => { for (let i = 0; i < 200 && !published.length; i++) a
     assert.equal(filename, 'inflation-watch-mpi-history.csv');
     assert(rows.every(row => row[headers.indexOf('unit')] === 'mpi_points'));
     assert(rows.every(row => row[headers.indexOf('plotted_value')] === row[headers.indexOf('goods_mpi')]));
-    const synthetic = { baseNxRate: 10, latest: { cpi: 150, nxRate: 9999 }, sourceUpdatedAt: '2026-11-04T08:30:56Z', history: [
-      { day: '2026-11-01', at: '2026-11-01T12:00:00Z', cpi: 100, nxRate: 1234 },
-      { day: '2026-11-02', at: '2026-11-02T12:00:00Z', cpi: null, nxRate: 4567 },
-      { day: '2026-11-03', at: '2026-11-03T12:00:00Z', nxRate: 8000 },
-      { day: '2026-11-04', at: '2026-11-04T12:00:00Z', cpi: 200, nxRate: 9999 },
-    ] };
-    assert.deepEqual(JSON.parse(JSON.stringify(api.history(synthetic).map(p => [p.day, p.value]))), [['2026-11-01', 10], ['2026-11-04', 20]], 'missing MPI never borrows latest or cash rate');
-    assert.equal(api.value(synthetic, undefined), null); assert.equal(api.value(synthetic, NaN), null); assert.equal(api.value({ baseNxRate: Infinity }, 100), null);
-    const now = Date.parse('2026-11-05T12:00:00Z');
-    let headline = api.headline({ ...synthetic, live: { observedAt: '2026-11-05T11:59:00Z', cpi: 200, nxRate: null } }, now);
-    assert.equal(headline.rate, 20); assert.equal(headline.at, '2026-11-05T11:59:00Z'); assert.equal(headline.live, true);
-    for (const live of [{ observedAt: '2026-11-05T11:59:00Z', cpi: null, nxRate: 9999 },
-      { observedAt: '2026-11-05T11:20:00Z', cpi: 200 }, { observedAt: '2026-11-05T12:01:00Z', cpi: 200 }]) {
-      headline = api.headline({ ...synthetic, live }, now); assert.equal(headline.rate, 15); assert.equal(headline.at, synthetic.sourceUpdatedAt); assert.equal(headline.live, false);
-    }
+    rollingApi.setMode('fixed');
+    const frozen=report.baseNxRate*report.latest.cpi/100;
+    close(Number(doc.getElementById('main-rate').textContent),Number(frozen.toFixed(2)));
+    assert.equal(doc.getElementById('rate-kind').dataset.benchmarkMode,'fixed');
+    assert(doc.querySelector('.hero-benchmark-explanation').textContent.includes('starting buying power'));
+    rollingApi.setMode('compare');
+    selector.value='nx';selector.dispatchEvent(new w.Event('change'));
+    assert.equal(doc.getElementById('main-rate').textContent,frozen.toFixed(2),'Compare keeps fixed-reference headline');
+    const compared=[...doc.querySelectorAll('#main-chart circle[data-chart-value]')];
+    assert.equal(new Set(compared.map(p=>p.dataset.chartSeries)).size,2);
+    doc.getElementById('export-history').click();[filename,headers,rows]=w.__download;
+    assert.equal(rows.length,compared.length,'Compare exports both plotted series');
+    rows.forEach((row,i)=>close(row[headers.indexOf('plotted_value')],Number(compared[i].dataset.chartValue)));
+    assert.equal(new Set(rows.map(row=>row[headers.indexOf('model_series')])).size,2);
+    assert(rows.every(row=>row[headers.indexOf('selected_mode')]==='compare'));
+    rollingApi.setMode('rolling');
+    assert.equal(doc.getElementById('main-rate').textContent,expected.toFixed(2));
+    assert(doc.querySelector('.hero-benchmark-explanation').textContent.includes('previous week'));
+    assert(doc.querySelector('.hero-bottom').textContent.includes(selected.startDay+'–'+selected.endDay));
+    assert(doc.querySelector('.hero-model-note').hidden,'Long equation defaultsOff');
+    doc.querySelector('[aria-controls="rolling-benchmark-explanation"]').click();
+    assert(!doc.querySelector('.hero-model-note').hidden);
+    doc.querySelector('[aria-controls="rolling-benchmark-explanation"]').click();
+    assert(doc.querySelector('.hero-model-note').hidden);
+    const changedLive={...report,live:{observedAt:'2026-11-05T11:59:00Z',cpi:999,nxRate:999}};
+    const daily=api.headline(changedLive,Date.parse('2026-11-05T12:00:00Z'));
+    close(daily.rate,expected);assert.equal(daily.at,report.sourceUpdatedAt);assert.equal(daily.live,false,'Daily-anchor model never substitutes an unrelated live clock');
+    assert.equal(api.value(report,undefined),null);assert.equal(api.value(report,NaN),null);
+    close(api.value(report,report.latest.cpi),expected);close(api.frozenValue(report,report.latest.cpi),frozen);
+    rollingApi.setMode('fixed');close(api.value(report,report.latest.cpi),frozen);rollingApi.setMode('rolling');
+    // Animate only the selected model, cancelling old-model callbacks on mode changes.
+    const nativeTimeout=w.setTimeout.bind(w),nativeClear=w.clearTimeout.bind(w),pending=new Map();let serial=1000000;
+    w.setTimeout=(fn,delay)=>{if(delay<=2000){pending.set(++serial,{fn,delay});return serial;}return nativeTimeout(fn,delay);};
+    w.clearTimeout=id=>{if(!pending.delete(id))nativeClear(id);};
+    const flushArrival=()=>{for(const [id,task]of [...pending].sort((a,b)=>a[1].delay-b[1].delay)){if(pending.delete(id))task.fn();}};
+    w.eval(fs.readFileSync(path.join(project,'web/rate-arrival.js'),'utf8'));
+    const oldCallbacks=[...pending.values()].map(task=>task.fn);assert(oldCallbacks.length>0,'Actual selected rolling history callbacks are queued');
+    rollingApi.setMode('fixed');flushArrival();for(const fn of oldCallbacks)fn();
+    assert.equal(doc.getElementById('main-rate').textContent,frozen.toFixed(2),'Cancelled rolling callbacks cannot overwrite newly selected fixed headline');
+    rollingApi.setMode('rolling');flushArrival();for(const fn of oldCallbacks)fn();
+    assert.equal(doc.getElementById('main-rate').textContent,expected.toFixed(2),'Arrival cannot restore stale frozen value under rolling mode');
+    assert.deepEqual(JSON.parse(JSON.stringify(w.AstraRateArrival.points(report).map(p=>p.value))),JSON.parse(JSON.stringify(api.history(report).slice(-3).map(p=>p.value))));
+    rollingApi.setWindowDays(3);flushArrival();const three=rollingApi.calculate(report);
+    assert.equal(three.windowDays,3);assert.equal(doc.getElementById('main-rate').textContent,three.rate.toFixed(2));assert.notEqual(three.rate,expected);
+    assert(doc.querySelector('.hero-benchmark-explanation').textContent.includes('previous 3 complete source days'));assert.equal(doc.querySelector('.hero-benchmark-explanation').nextElementSibling.hidden,false);assert(doc.querySelector('.hero-benchmark-explanation').nextElementSibling.textContent.includes('Why 3 days?'));assert.equal(doc.querySelectorAll('.hero-benchmark-explanation .benchmark-inflation-phrase').length,1);
+    assert(doc.querySelector('.hero-bottom').textContent.includes('previous 3 complete source days'));
+    assert(doc.querySelector('.hero-bottom').textContent.includes(three.startDay+'–'+three.endDay));
+    assert(doc.getElementById('main-history-legend').textContent.includes('Prior-3-day'));
+    doc.getElementById('export-history').click();[filename,headers,rows]=w.__download;
+    assert(headers.includes('anchor_window_days'));assert(!headers.includes('prior_7_day_mean_mpi'));
+    assert(rows.every(row=>row[headers.indexOf('anchor_window_days')]===3));assert(rows.every(row=>row[headers.indexOf('formula')]==='prior_3_day_cash_anchor * goods_mpi / prior_3_day_mean_mpi'));
+    rollingApi.setMode('compare');flushArrival();assert.equal(doc.getElementById('main-rate').textContent,frozen.toFixed(2));assert(doc.getElementById('main-history-legend').textContent.includes('Prior-3-day'));
+    rollingApi.setWindowDays(7);rollingApi.setMode('rolling');flushArrival();assert.equal(doc.getElementById('main-rate').textContent,expected.toFixed(2));
+    assert.equal(doc.getElementById('rate-kind').dataset.marketAt,report.sourceUpdatedAt);
     assert.equal(JSON.stringify(report), untouched, 'no data, weights, observed cash values or source clocks are rewritten');
     assert.equal(requests.length, 2, 'only the existing snapshot version/data reads'); assert.deepEqual(errors, []);
-    console.log('PASS: goods benchmark Overview, qualified-MPI clocks and missing-point math, matching chart/CSV windows and units, preserved observed cash/offers/JSON, snapshot event after render');
+    console.log('PASS: rolling/fixed/compare Overview, selected facade/headline/chart/CSV/arrival, anchor periods/units and explanationOff, preserved raw cash/offers/JSON/source clocks, snapshot event after render');
   } finally { w.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

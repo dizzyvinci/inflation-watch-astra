@@ -14,7 +14,7 @@
   group.setAttribute('role','group'); group.setAttribute('aria-label','Index movers panel width');
   const label=document.createElement('span');label.textContent='Panel width';group.append(label);
   function select(value) {
-    const size=value==='compact'?'compact':'full';panel.dataset.panelSize=size;
+    const size=value==='full'?'full':'compact';panel.dataset.panelSize=size;
     for(const button of group.querySelectorAll('button[data-panel-size-choice]'))button.setAttribute('aria-pressed',String(button.dataset.panelSizeChoice===size));
   }
   for(const [mode,label] of [['full','Full width'],['compact','Compact width']]) {
