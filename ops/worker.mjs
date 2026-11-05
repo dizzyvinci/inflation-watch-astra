@@ -9,6 +9,8 @@ import catalogIdentities from '../catalog-identities-v2.json' with { type: 'json
 import { createCachedProjectionFactory, HASH_METHOD } from './market-catalog.mjs';
 import { createCatalogRoutes } from './catalog-routes.mjs';
 import {writeCatalogIndexArtifact,validateCatalogIndexDescriptor} from './catalog-index-artifact.mjs';
+import {createPublicCashRoute} from './api-public-cash-routes.mjs';
+const publicCashFetch=createPublicCashRoute();
 
 const catalogProject = createCachedProjectionFactory(catalogIdentities);
 export const catalogIdentityVersion = catalogProject.identityVersion;
@@ -644,6 +646,7 @@ async function serveSnapshot(request, env, data) {
 async function handleFetch(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname;
+  if(path==='/api-cash-items.json')return publicCashFetch(request,env);
   if (path === '/market-index.json' || path.startsWith('/market-item/')) return catalogFetch(request, env, ctx);
   if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
   const dynamic = ['/version.json', '/data.json', '/health.json'].includes(path);

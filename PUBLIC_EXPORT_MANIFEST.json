@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-05T23:00:06+00:00",
+  "exportedAt": "2026-11-05T23:27:17+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -22,8 +22,8 @@
     },
     {
       "path": "DEPLOYMENT.md",
-      "bytes": 14813,
-      "sha256": "f87d3865c393f2ba25896fe59806fc8dc4407e6d4278b54676580e43d84d845b"
+      "bytes": 16129,
+      "sha256": "e91bfef53a4cabfac90c1d6a82fbe99b1d2fce88fdcf916228d07a43facc4ba8"
     },
     {
       "path": "MYSTERY_BOXES_EVIDENCE.json",
@@ -7543,7 +7543,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "8cd71f102f693e946cb7750941abb2352bd331c3c2a2624827ee61b0790be4d3"
+      "sha256": "008045b44da781c96931559dfa305552f1cf7c671d7c3bfb92b21de68bb41e31"
     },
     {
       "path": "cache/market.json",
@@ -7628,7 +7628,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "85c295e686afb9051d92aadd83a7e798fa05ef5bb8972b1af8f13bc392c5f443"
+      "sha256": "2d74855b56b3207f4b6ef5e53bfaee114a98c0bffa3a7df030b6e1bba00ddf88"
     },
     {
       "path": "dist/_headers",
@@ -16046,6 +16046,11 @@
       "sha256": "ce6510bb9ae85dfe518b2c82a73ed6827d8e8860e70f6830f5c0920fd9d91b46"
     },
     {
+      "path": "dist/data-cec1b3060e47ea76.json",
+      "bytes": 992898,
+      "sha256": "cec1b3060e47ea7630da77e66ce5a0c838942da90d943912dbc64fe3bbe3d386"
+    },
+    {
       "path": "dist/data-dad836796be9b3be.json",
       "bytes": 992513,
       "sha256": "dad836796be9b3be73ed80cbf43f45e67ec5b25e907b63909fe4d798669a51b5"
@@ -16098,7 +16103,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "70adc2bb5a9e09869aa5014c59289ec7e5d57529a24ff5341968d8bc8b822e94"
+      "sha256": "cec1b3060e47ea7630da77e66ce5a0c838942da90d943912dbc64fe3bbe3d386"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16118,7 +16123,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "85c295e686afb9051d92aadd83a7e798fa05ef5bb8972b1af8f13bc392c5f443"
+      "sha256": "2d74855b56b3207f4b6ef5e53bfaee114a98c0bffa3a7df030b6e1bba00ddf88"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16378,7 +16383,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "fe60b401b5e980160000c6ee6c0a988e896249d54f2b90ba49e1f1f58a996b85"
+      "sha256": "a577f5014a0fc8b0184b1ef5c7260778a509d633b6505b72d1581e0fe4ffb513"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16482,8 +16487,8 @@
     },
     {
       "path": "ops/api-grant-collector.mjs",
-      "bytes": 3818,
-      "sha256": "5437383278baeb235b37d84aa2a555078f24fcd95ae9de1edf805ac2953af5e0"
+      "bytes": 3943,
+      "sha256": "cf7b1d10af7cbe6f6641e4f8ed90b2fd34b40d80099bc917af27a0e47da0a277"
     },
     {
       "path": "ops/api-observed-firstpass.mjs",
@@ -16492,8 +16497,8 @@
     },
     {
       "path": "ops/api-private-cash-alarm.mjs",
-      "bytes": 8096,
-      "sha256": "0169544c1d0b7280752214579a8df9edc5049283da910153e5f00892866c92c5"
+      "bytes": 9417,
+      "sha256": "4fbcf5d26ca961a34a9754a0d6a655739985361fec93e0a8b4345838be56c669"
     },
     {
       "path": "ops/api-private-cash-materializer.mjs",
@@ -16504,6 +16509,26 @@
       "path": "ops/api-private-health.mjs",
       "bytes": 9571,
       "sha256": "9ca4ad60024038f64aca4c4bcd50ecf509e51138fe3d231ac273cd8e012a5b1d"
+    },
+    {
+      "path": "ops/api-public-cash-contract.mjs",
+      "bytes": 8348,
+      "sha256": "f7351ac41d0f4ba1b01950f35eb8634f1d8659a451c4a722e4360edf89df3883"
+    },
+    {
+      "path": "ops/api-public-cash-publisher.mjs",
+      "bytes": 9326,
+      "sha256": "1fe9cea7832253549d67e4b9a2b737fb7b858b19be0e2e8b2a4ea2e6ac264813"
+    },
+    {
+      "path": "ops/api-public-cash-routes.mjs",
+      "bytes": 4299,
+      "sha256": "63a01ef697d29556e0f6128d4b8054c74d018673f713aedf8560643b61ee3163"
+    },
+    {
+      "path": "ops/api-public-cash-subset.mjs",
+      "bytes": 5896,
+      "sha256": "a7ae78365ea4aeb1219cb4fe42ea21bea23234d8e3a0d5574d585c3f044e7255"
     },
     {
       "path": "ops/api-raw-prices-decoder.mjs",
@@ -16562,8 +16587,8 @@
     },
     {
       "path": "ops/worker.mjs",
-      "bytes": 39634,
-      "sha256": "45b9962cc9838c3e768d8afe2bd266b0d7f1de40d59ff3921f1c6330e3aafc30"
+      "bytes": 39821,
+      "sha256": "6f9b364a435a93b82e8cefc011912b983f7f9418a85b86f6c3698bfe5eac6660"
     },
     {
       "path": "ops/wrangler.jsonc",
@@ -16577,8 +16602,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 5424,
-      "sha256": "1ec86df46bff29ed43e6c421e2173a0556c8314d6f0db929f9b6af0aead4b216"
+      "bytes": 5773,
+      "sha256": "973ce17e5bbef442645a9196f0342ca9acca08d04e3ee01f7e2c1e1927bf6b1b"
     },
     {
       "path": "portable_hash.py",
@@ -16664,6 +16689,31 @@
       "path": "tests/api-private-nx-combined.test.mjs",
       "bytes": 9798,
       "sha256": "7fa7bcf7fba3ebe88f2dbf7ba1c1cbf02dc60b16192508753ee47c83e5ffed7a"
+    },
+    {
+      "path": "tests/api-public-cash-context.test.mjs",
+      "bytes": 1773,
+      "sha256": "f60803d9d8295aca6f7d22765ca470d4fe099b675e6e3b719fcc8f24c1073f3a"
+    },
+    {
+      "path": "tests/api-public-cash-fixture.mjs",
+      "bytes": 6160,
+      "sha256": "8d42b8d4dc1e8fbc03d2314f9e148fbb6af3c9a626ad90d369b3f001eedca686"
+    },
+    {
+      "path": "tests/api-public-cash-publisher.test.mjs",
+      "bytes": 11583,
+      "sha256": "1fd0eb2c8a70f27140e9f8918d93cf3a4927ee13cfa71ee4d8138c4e4abdeed0"
+    },
+    {
+      "path": "tests/api-public-cash-routes.test.mjs",
+      "bytes": 8189,
+      "sha256": "b5a10012b1cc8264e3ca0cc9d295f7866ced3d4e676e2f5802eb4b7bb5e3f0a4"
+    },
+    {
+      "path": "tests/api-public-cash-subset.test.mjs",
+      "bytes": 8422,
+      "sha256": "ae4a1eee2d7ae4f79890a25c7d2894b054974095164577e06f4d29a944be9e5b"
     },
     {
       "path": "tests/asset-bundles.cjs",

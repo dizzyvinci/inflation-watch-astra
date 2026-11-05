@@ -1,6 +1,7 @@
 // WORK proposal: one existing owner/alarm, separate raw-provider and private-decode events.
 import {PrivateCashMaterializer} from './api-private-cash-materializer.mjs';
 import bindings from './api-cash-bindings-v1.json' with {type:'json'};
+import {ApiPublicCashPublisher} from './api-public-cash-publisher.mjs';
 
 export function privateCashConfig(env){
   if(!env.API_PRIVATE_CASH_JSON)return{enabled:false};
@@ -26,6 +27,7 @@ export class ApiPrivateCashAlarm{
       provider_at INTEGER,private_at INTEGER,recovery_at INTEGER,last_kind TEXT,initialized INTEGER NOT NULL DEFAULT 0)`);
     core.sql.exec('INSERT OR IGNORE INTO api_cash_alarm_mux(id) VALUES(1)');
     this.hasMux=true;
+    this.publisher=new ApiPublicCashPublisher(ctx,env,core,()=>this.active);
   }
   async initialize(){
     if(!this.active)return;
@@ -58,7 +60,7 @@ export class ApiPrivateCashAlarm{
   get providerControl(){return{setAlarm:at=>this.setProviderAlarm(at),deleteAlarm:()=>this.clearProviderAlarm()};}
   async arm(){
     const row=this.row(),now=this.core.clock();
-    const choices=[row.provider_at,...(this.active?[row.private_at,row.recovery_at]:[])].filter(value=>value!==null);
+    const choices=[row.provider_at,...(this.active?[row.private_at,row.recovery_at,this.publisher?.nextDue()??null]:[])].filter(value=>value!==null);
     if(!choices.length){await this.ctx.storage.deleteAlarm();return null;}
     const at=Math.max(now+1,Math.min(...choices));await this.ctx.storage.setAlarm(at);return at;
   }
@@ -85,6 +87,7 @@ export class ApiPrivateCashAlarm{
     if(!this.active)return{status:this.status()};
     try{
       const reconciled=this.materializer.reconcileCompletedPrices(8);
+      this.publisher?.reconcile();
       this.refreshPrivateDeadline();await this.arm();
       return{status:'private_projection_scheduled',queued:reconciled.queued};
     }catch{
@@ -98,11 +101,14 @@ export class ApiPrivateCashAlarm{
     const row=this.row(),now=this.core.clock();
     const privateDue=[row.private_at,row.recovery_at].some(at=>at!==null&&at<=now);
     const providerDue=row.provider_at!==null&&row.provider_at<=now;
-    if(!privateDue&&!providerDue)return'early';
+    const publicAt=this.publisher?.nextDue()??null,publicDue=publicAt!==null&&publicAt<=now;
+    if(!privateDue&&!providerDue&&!publicDue)return'early';
     // At most one heavy operation per event; alternate when both are overdue.
-    const kind=privateDue&&(!providerDue||row.last_kind!=='private')?'private':'provider';
+    let kind=privateDue&&(!providerDue||row.last_kind!=='private')?'private':'provider';
+    if(publicDue){const order=['private','public','provider'],start=(order.indexOf(row.last_kind)+1)%3;
+      kind=[...order.slice(start),...order.slice(0,start)].find(k=>({private:privateDue,public:publicDue,provider:providerDue})[k]);}
     this.core.sql.exec(kind==='private'?'UPDATE api_cash_alarm_mux SET last_kind=?,private_at=NULL,recovery_at=NULL WHERE id=1':
-      'UPDATE api_cash_alarm_mux SET last_kind=?,provider_at=NULL WHERE id=1',kind);return kind;
+      kind==='provider'?'UPDATE api_cash_alarm_mux SET last_kind=?,provider_at=NULL WHERE id=1':'UPDATE api_cash_alarm_mux SET last_kind=? WHERE id=1',kind);return kind;
   }
   async runPrivateAlarm(){
     if(!this.active)return{status:this.status()};
@@ -117,12 +123,21 @@ export class ApiPrivateCashAlarm{
     try{
       this.materializer.reconcileCompletedPrices(8);
       const result=await this.materializer.drainOne(); // exactly ONE decode/drain per event
+      this.publisher?.reconcile(); // SQL-only; no public read/publish in raw-decode event
       this.refreshPrivateDeadline(result);await this.arm();
       return{...result,eventKind:'private_projection',providerAttempted:false};
     }catch{
       this.core.sql.exec('UPDATE api_cash_alarm_mux SET private_at=?,recovery_at=NULL WHERE id=1',this.core.clock()+30_000);
       await this.arm();return{status:'private_projection_event_retry',eventKind:'private_projection',providerAttempted:false};
     }
+  }
+  async runPublicAlarm(){
+    if(!this.active||!this.publisher?.active)return{status:'public_disabled'};
+    // Durable fallback BEFORE claim or I/O. Busy callbacks also retain recovery.
+    await this.ctx.storage.setAlarm(this.core.clock()+130000);
+    try{const result=await this.publisher.drainOne(()=>this.arm());
+      this.refreshPrivateDeadline();await this.arm();return{...result,eventKind:'public_subset',providerAttempted:false};}
+    catch{await this.ctx.storage.setAlarm(this.core.clock()+30000);return{status:'public_event_retry',eventKind:'public_subset',providerAttempted:false};}
   }
   health(){
     if(!this.active)return{status:this.status()};

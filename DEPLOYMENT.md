@@ -169,6 +169,25 @@ not prove that every item has history. Chunks, leases and the cursor survive
 restarts. Existing bulk refreshes continue, while repeating the full per-item
 plan or publishing its raw data requires a separate implementation decision.
 
+`API_PUBLIC_CASH_JSON` is a separate derived-display switch, absent by default.
+The reviewed opt-in is `{"schemaVersion":1,"enabled":true,"methodVersion":1,"publicationEnabled":true}`.
+It also requires the existing private29 projection to remain enabled. It does
+not turn raw collection publication on or alter the goods-inflation headline.
+The existing owner stages a whitelisted29-item subset in a separate durable
+outbox and alarm event. Storage retries reuse saved bytes and never request the
+provider again. Original private receipts, player/shop records and progress
+metadata remain private.
+
+`GET /api-cash-items.json` serves only that validated subset through the existing
+preview gate. It coalesces storage reads for30seconds, supports ETag/HEAD, and
+retains verified last-good bytes and their original retrieval clocks on a
+storage failure. A cold missing/invalid publication returns503; disabled returns404.
+The29bound identities carry attributed source links, fixedNX costs, source sale
+medians and reported sale counts. Counts are not physical units. The source
+reports a three-day lookback without exact bounds or individual-sale timestamps;
+neither an HTTP cache refresh nor owner health establishes new market evidence.
+Keep partial/null rows visible and separate from historical daily-source data.
+
 ## Traffic and build planning
 
 Data checks do not rebuild the site: ten-minute scheduling is approximately 4,320 invocations per 30-day month, independently of visitor traffic. Deployments happen on code changes. The [Workers Static Assets billing documentation](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) describes static requests as free and unlimited; JSON Worker invocations, CPU and R2 operations are separately metered under the account's actual plan. See [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) and [R2 pricing](https://developers.cloudflare.com/r2/pricing/) for current terms.

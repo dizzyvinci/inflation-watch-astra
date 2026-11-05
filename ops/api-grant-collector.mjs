@@ -45,13 +45,14 @@ export class ApiGrantCollector extends DurableObject {
   }
   async alarm() {
     await this.ready;
-    if(this.ownerAlarmFlight)return{status:'owner_alarm_busy'};
+    if(this.ownerAlarmFlight){await this.ctx.storage.setAlarm(this.core.clock()+130000);return{status:'owner_alarm_busy'};}
     this.ownerAlarmFlight=this.ownerAlarmEvent();
     try{return await this.ownerAlarmFlight;}finally{this.ownerAlarmFlight=null;}
   }
   async ownerAlarmEvent(){
     const kind=this.privateCash.chooseAlarm();
     if(kind==='private')return this.privateCash.runPrivateAlarm();
+    if(kind==='public')return this.privateCash.runPublicAlarm();
     if(kind==='early'){await this.privateCash.arm();return{status:'early_owner_alarm'};}
     await this.privateCash.beforeProviderEvent();
     let result;
