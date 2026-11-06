@@ -2,6 +2,7 @@
 import {grantConfig} from './api-collector-core.mjs';
 import {createIdentityIndex,createPriceSnapshot,InvalidProfile,sha256} from './api-price-item-dto.mjs';
 import {itemGenerationRetiring} from './api-item-generation-refs.mjs';
+import {decodeCanonicalBase64} from './bounded-base64.mjs';
 export const ITEM_PRODUCER_VERSION='full-item-v1-0bd41244';
 export const ITEM_PROJECTOR_SHA256='0bd41244adb111eb56d4dfe2ce2a2d4a7204c8c73f303b337af905d4a37c8b40';
 export const ITEM_POINTER='_private/provider-api/v1/item-projections/v1/current.json';
@@ -105,8 +106,8 @@ export class PrivateItemProducer{
   check(e.kind==='unverified_provider_api_receipt'&&e.operation==='prices'&&e.sourceUrl===SOURCE&&e.httpStatus===200&&e.attemptId===job.source_attempt&&e.grantReference===job.grant_ref&&e.roundReference===job.round_ref,'raw_attempt_identity');
   check(stamp(e.requestStartedAt)&&Date.parse(e.requestStartedAt)===job.request_at&&stamp(e.capturedAt)&&Date.parse(e.capturedAt)>=job.request_at&&Date.parse(e.capturedAt)<=this.now(),'raw_original_clocks');
   check(e.captureTimeKind==='http_response_completed'&&e.sourceObservedAt===null&&e.observationTimestampKnown===false&&e.schemaVerified===false&&e.publicationEligible===false,'raw_evidence_context');
-  check(e.responseSha256===job.raw_sha&&SHA.test(e.responseSha256)&&Number.isSafeInteger(e.responseBytes)&&e.responseBytes>0&&e.responseBytes<=5000000&&e.rawBodyEncoding==='base64'&&typeof e.rawBodyBase64==='string'&&e.rawBodyBase64.length<=6666668&&/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(e.rawBodyBase64),'raw_byte_envelope');
-  let rawBytes;try{rawBytes=Uint8Array.from(atob(e.rawBodyBase64),c=>c.charCodeAt(0));}catch{throw new InvalidBinding('raw_base64');}check(rawBytes.byteLength===e.responseBytes,'raw_byte_count');return{e,rawBytes};
+  check(e.responseSha256===job.raw_sha&&SHA.test(e.responseSha256)&&Number.isSafeInteger(e.responseBytes)&&e.responseBytes>0&&e.responseBytes<=5000000&&e.rawBodyEncoding==='base64'&&typeof e.rawBodyBase64==='string'&&e.rawBodyBase64.length<=6666668,'raw_byte_envelope');
+  let rawBytes;try{rawBytes=decodeCanonicalBase64(e.rawBodyBase64,e.responseBytes);}catch{throw new InvalidBinding('raw_base64');}check(rawBytes.byteLength===e.responseBytes,'raw_byte_count');return{e,rawBytes};
  }
  async decode(job){check(this.owned(job),'source_job_attempt_changed');
   const object=await storage(()=>this.bucket.get(job.receipt_key));this.fence(job);if(!object)throw new StorageFailure();check(object.size<=40000000,'raw_envelope_bound');
