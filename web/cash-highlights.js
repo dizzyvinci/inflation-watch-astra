@@ -46,10 +46,12 @@
       && positive(row.quantity) && positive(row.windowDays) && row.missing !== true && !row.referenceExclusion);
     const compare = (a, b) => a.rate - b.rate || a.name.localeCompare(b.name) || a.slug.localeCompare(b.slug);
     const fees=window.AstraTradeFees,feeState=fees?.getState(),feeActive=!!fees&&feeState.mode!=='gross',grossFallback=feeActive&&feeState.rules?.[feeState.mode]?.enabled!==true,netRanking=feeActive&&!grossFallback;
-    const chosen=side=>netRanking?fees.rank(eligible,side).slice(0,5).map(row=>({...row,grossRate:row.rate,rate:row.netRate})):(side==='buy'?[...eligible].sort(compare):[...eligible].sort((a,b)=>b.rate-a.rate||a.name.localeCompare(b.name)||a.slug.localeCompare(b.slug))).slice(0,5);
+    const activity=window.AstraCashActivity;let activityResult=null;
+    const chosen=side=>{let rows=netRanking?fees.rank(eligible,side).map(row=>({...row,grossRate:row.rate,rate:row.netRate})):(side==='buy'?[...eligible].sort(compare):[...eligible].sort((a,b)=>b.rate-a.rate||a.name.localeCompare(b.name)||a.slug.localeCompare(b.slug)));
+      const result=activity?.rank(rows,{side,model:pricing});if(result){rows=result.rows;activityResult=result;}return rows.slice(0,5);};
     const buy=chosen('buy'),sell=chosen('sell');
     const fullFeeReference=!pricing.api||(eligible.length===29&&(!netRanking||(fees.rank(eligible,'buy').length===29&&fees.rank(eligible,'sell').length===29)));
-    return { ...pricing, buy, sell, feeActive,grossFallback,netRanking,feeMode:feeState?.mode,feeReferences:netRanking&&fullFeeReference?{buy:fees.reference(eligible,'buy'),sell:fees.reference(eligible,'sell')}:null,eligibleCount: eligible.length, totalCount: pricing.rows.length,
+    return { ...pricing, buy, sell, activityResult, feeActive,grossFallback,netRanking,feeMode:feeState?.mode,feeReferences:netRanking&&fullFeeReference?{buy:fees.reference(eligible,'buy'),sell:fees.reference(eligible,'sell')}:null,eligibleCount: eligible.length, totalCount: pricing.rows.length,
       sourceUpdatedAt: pricing.api?null:report.sourceUpdatedAt, capturedAt: pricing.api?pricing.capturedAt:report.rollingReference?.capturedAt || null, apiFallbackReason:pricing.api?null:window.AstraApiCash?.fallbackReason()||null };
   }
   function rateScale(values = []) {
@@ -113,6 +115,7 @@
     const button = make('button', label); button.type = 'button'; button.dataset.cashHighlightsMode = value; button.setAttribute('aria-controls', 'cash-highlights-content');
     button.addEventListener('click', () => { mode = value; try { localStorage.setItem(modeKey, mode); } catch {} draw(); }); controls.append(button);
   }
+  window.AstraCashActivity?.mount(section);
   controls.append(make('small', 'Display only · saved in this browser. No basket or price calculation changes.')); section.append(controls);
   const goods = document.getElementById('category-section'); if (goods?.parentElement === view) goods.after(section); else view.append(section);
   let serial = 0;
@@ -139,6 +142,7 @@
     return svg;
   }
   function drawReference() {
+    window.AstraCashActivity?.configure(section,{referenceOnly:true});
     section.dataset.apiEvidence='false';apiCredit.hidden=true;
     cardsRoot.className = 'cash-highlights-row';
     const current = model(report), row = cardsRoot; row.replaceChildren();
@@ -170,14 +174,16 @@
     const selection = { days: Number(document.getElementById('cash-lookback')?.value || 3), evidence: document.getElementById('cash-evidence')?.value || 'daily' };
     const current = bestModel(report, selection), status = section.querySelector('.cash-highlights-status'), method = section.querySelector('.cash-highlights-method');
     if (!current) { status.textContent = 'Best-value cash dials are unavailable until the cash-pricing table calculation is ready. No modelled benchmark is substituted.'; method.textContent = ''; return; }
+    window.AstraCashActivity?.configure(section,current);
     section.dataset.apiEvidence=String(current.api===true);apiCredit.hidden=current.api!==true;
     const evidenceWindow = () => current.api ? `${current.retained?'Retained API reference':'API sale medians'} · reported 3-day window (exact bounds unknown) · API retrieved ${instant(current.capturedAt)}; individual sale/scan times unknown.` : current.rolling ? `Rolling scanner capture · Batch retrieved ${instant(current.capturedAt)}; item timestamps and lookbacks are separate. Retrieval times are not trade times; source times unavailable where not supplied.` : `${current.days}-source-day lookback · (${calendarDay(current.start)}–${calendarDay(current.end)}) inclusive${current.partial ? ' · latest day partial' : ''}. Daily source published ${instant(current.sourceUpdatedAt)}.`;
-    bindClock(status, () => `${current.apiFallbackReason?current.apiFallbackReason+'. ':''}${evidenceWindow()} ${current.eligibleCount} / ${current.totalCount} fixed-price items have eligible evidence. ${current.eligibleCount < 5 ? 'Fewer than five eligible items; missing items are not filled.' : 'Up to five per side.'}${current.grossFallback?' Gross order shown; net unavailable until fee rules are set.':current.netRanking?' Fee assumptions: '+window.AstraTradeFees.label()+'. Only computable estimated costs/proceeds are ranked; no official fee rule is claimed.':''}`, { rawSourcePublicationAt: current.sourceUpdatedAt, rawBatchCapturedAt: current.rolling ? current.capturedAt : null });
+    bindClock(status, () => `${current.apiFallbackReason?current.apiFallbackReason+'. ':''}${evidenceWindow()} ${current.activityResult?.note||''} ${current.eligibleCount} / ${current.totalCount} fixed-price items have eligible evidence. ${current.eligibleCount < 5 ? 'Fewer than five eligible items; missing items are not filled.' : 'Up to five per side.'}${current.grossFallback?' Gross order shown; net unavailable until fee rules are set.':current.netRanking?' Fee assumptions: '+window.AstraTradeFees.label()+'. Only computable estimated costs/proceeds are ranked; no official fee rule is claimed.':''}`, { rawSourcePublicationAt: current.sourceUpdatedAt, rawBatchCapturedAt: current.rolling ? current.capturedAt : null });
     const upper = rateScale([...current.buy, ...current.sell].map(row => row.rate).concat(positive(current.reference) ? current.reference : []));
     for (const [side, title, rows] of [['sell', 'Best to Sell (Higher Meso/NX)', current.sell], ['buy', 'Best to Buy (Lower Meso/NX)', current.buy]]) {
       const group = make('section', undefined, 'cash-highlights-ranking'); group.dataset.cashRanking = side;
-      group.append(make('h3', title));group.dataset.cashRankingBasis=current.grossFallback?'gross_unset_fees':current.netRanking?'manual_net':'gross';if(current.grossFallback)group.append(make('span','Gross ranking · fees unset','cash-highlights-gross-badge'));
-      const row = make('div', undefined, 'cash-highlights-row'); row.tabIndex = 0; row.setAttribute('role', 'region'); row.setAttribute('aria-label', `${title} cash dials; scroll horizontally on narrow screens`);
+      const rankingTitle=current.activityResult?.active?(side==='sell'?'Best to Sell · activity-adjusted value':'Best to Buy · activity-adjusted value'):title;
+      group.append(make('h3', rankingTitle));group.dataset.cashRankingBasis=current.grossFallback?'gross_unset_fees':current.netRanking?'manual_net':'gross';if(current.grossFallback)group.append(make('span','Gross ranking · fees unset','cash-highlights-gross-badge'));
+      const row = make('div', undefined, 'cash-highlights-row'); row.tabIndex = 0; row.setAttribute('role', 'region'); row.setAttribute('aria-label', `${rankingTitle} cash dials; scroll horizontally on narrow screens`);
       for (const item of rows) {
         const card = make('article', undefined, 'cash-highlight-card'); card.dataset.cashHighlightSlug = item.slug; card.dataset.cashRate = item.rate; card.dataset.cashCardSide = side;if(item.grossRate!==undefined)card.dataset.cashGrossRate=item.grossRate;
         const heading = make('h4'), link = make('a'); link.href = '#item/' + encodeURIComponent(item.slug);
@@ -188,6 +194,7 @@
         if(item.rate>=0&&positive(selectedReference))card.append(gauge(item.rate,upper,item.name,selectedReference,true));
         card.append(make('strong', number(item.rate, 2), 'cash-highlight-index'), make('span', current.grossFallback?'Gross mesos/NX':current.netRanking?(side==='buy'?'Estimated cost · mesos / NX':'Estimated proceeds · mesos / NX'):'mesos / NX', 'cash-highlight-change'));
         if(current.netRanking)card.append(make('small',`Gross ${number(item.grossRate,2)} mesos / NX · ${item.feePreview.itemCount} copies · ${item.feePreview.assumptionProvenance==='user_reported'?'user-reported estimate':'manual estimate'}${item.feePreview.allocatedShopCost?' · allocated shop cost included':''}`));
+        if(current.activityResult?.active&&Number.isFinite(item.activityScore))card.append(make('small',`Activity score ${number(item.activityScore,1)} / 100 · count factor ${number(item.activityFactor,2)} · heuristic, not liquidity`));
         card.append(make('p', `${number(item.price, 1)} mesos · fixed ${number(item.nx, 0)} NX`, 'cash-highlight-price'));
         const dateLabel = make('p', undefined, 'cash-highlight-date'); let sourceLabel = null;
         if (current.api) {
@@ -231,7 +238,7 @@
   toggle.addEventListener('click', () => { enabled = !enabled; try { localStorage.setItem(key, enabled ? 'on' : 'off'); } catch { /* Tab choice still works. */ } draw(); });
   document.addEventListener('astramarketsnapshot', event => { report = event.detail; draw(); });
   document.getElementById('display-timezone')?.addEventListener('change', refreshClocks);
-  document.addEventListener('astrafeeschange',draw);
+  document.addEventListener('astrafeeschange',draw);document.addEventListener('astracashactivitychange',draw);
   document.addEventListener('astraapicashchange',draw);document.addEventListener('astraapicashchoice',draw);
   for (const id of ['cash-lookback', 'cash-evidence']) document.getElementById(id)?.addEventListener('change', draw);
   draw(); document.dispatchEvent(new Event('astramarkethighlightsready'));

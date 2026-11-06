@@ -5,3 +5,9 @@
 .api-cash-converter-note{text-align:center;font-size:16px;line-height:1.6;max-width:900px;margin:18px auto;padding:12px;border:1px solid #759d8b;border-radius:10px}
 
 .api-source-legend{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px 18px;width:100%;padding:16px;margin:12px auto 0;border:1px solid #759d8b;border-radius:12px;font-size:15px;line-height:1.6}.api-source-legend>strong,.api-source-legend>small{flex-basis:100%;font-size:15px}.api-source-legend .source-status-dot{width:9px;height:9px;min-width:9px}#sources-cards [data-status-key=api] .source-clock{font-size:24px}#sources-cards [data-status-key=api] .source-clock small{font-size:15px;line-height:1.6}#sources-cards [data-status-key=api]>p:last-child{font-size:16px;line-height:1.7;text-align:center}
+
+.cash-activity-controls{display:flex;flex-wrap:wrap;gap:1rem;align-items:end;width:100%;padding:1rem;border:1px solid var(--line,#49515b);border-radius:.5rem;margin:1rem 0}
+.cash-activity-controls h3{width:100%;text-align:center;font-size:1.1rem;margin:0}
+.cash-activity-controls label{display:flex;flex-direction:column;gap:.35rem;font-size:1rem;flex:1 1 15rem}
+.cash-activity-controls input,.cash-activity-controls select{font-size:1rem;min-height:44px;max-width:100%;width:100%}
+.cash-activity-controls details{flex-basis:100%;font-size:1rem}.cash-activity-controls summary{min-height:44px;cursor:pointer}

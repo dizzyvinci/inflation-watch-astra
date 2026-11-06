@@ -14,7 +14,7 @@ const heading=host.querySelector('.page-heading');if(heading)heading.after(secti
 // Keep original source DOM/handlers as a separate option, not a rewritten series.
 const legacy=make('details','panel api-cash-legacy');legacy.id='api-cash-other-sources';const summary=make('summary','','Other dated cash sources · daily / rolling references');legacy.append(summary);
 for(const child of [...host.children])if(child!==section&&child!==heading&&child.id!=='nx-calculator'&&child!==legacy)legacy.append(child);
-host.append(legacy);const converter=document.getElementById('nx-calculator');if(converter){const note=make('p','api-cash-converter-note','This converter keeps the separate dated daily / rolling cash reference and its original source clock. It does not use the API29 table above.');converter.append(note);}const table=section.querySelector('.api-cash-table');let legacyTouched=false;
+host.append(legacy);const converter=document.getElementById('nx-calculator');if(converter){const note=make('p','api-cash-converter-note','This converter keeps the separate dated daily / rolling cash reference and its original source clock. It does not use the API29 table above.');converter.append(note);}const table=section.querySelector('.api-cash-table');let legacyTouched=false;window.AstraCashActivity?.mount(section.querySelector('.api-cash-controls'));
 summary.addEventListener('click',()=>{legacyTouched=true;});
 function sourceControls(where){
  if(where.querySelector('.api-cash-source-choice'))return;
@@ -60,27 +60,31 @@ if(statusLegendHost&&!document.getElementById('api-cash-source-legend')){
 function statusText(){const s=api.getState(),m=api.model();if(!s.data)return s.status==='not_published'?'The API subset is not published here. Other dated source views remain separate.':s.status==='site_access'?'Site access is required to read this cached API reference.':'API reference unavailable or loading. Missing values are not zero; no provider request is made by this page.';
  return`${m.retained?'Retained API reference':'API reference'} · ${m.eligibleCount} / 29 items with eligible sale medians. API retrieved ${clock(m.capturedAt)}. Underlying sale/scan times unknown. ${api.client.freshness()==='recent_retrieval'?'Recent retrieval only; not verified fresh trades.':api.client.freshness()==='clock_uncertain'?'Clock age uncertain; no freshness claim.':'This is an older retrieval; original clocks are retained.'}`;}
 function draw(){
- const model=api.model(),fm=feesModel(model),s=api.getState();section.dataset.apiStatus=s.status;section.dataset.retrievalAge=api.client.freshness();
+ const model=api.model(),fm=feesModel(model),s=api.getState();window.AstraCashActivity?.configure(section.querySelector('.api-cash-controls'),model);section.dataset.apiStatus=s.status;section.dataset.retrievalAge=api.client.freshness();
  section.querySelector('.api-cash-status').textContent=statusText();
  for(const b of document.querySelectorAll('[data-api-cash-choice]'))b.setAttribute('aria-pressed',String(api.getChoice()===b.dataset.apiCashChoice));
  for(const b of section.querySelectorAll('[data-api-cash-side]'))b.setAttribute('aria-pressed',String(side===b.dataset.apiCashSide));
  for(const b of section.querySelectorAll('[data-api-fee-mode]')){b.setAttribute('aria-pressed',String((fm.state?.mode||'gross')===b.dataset.apiFeeMode));b.disabled=!fm.fees;}
  const effectiveKey=sortKey==='value'?(fm.net?'netRate':'rate'):sortKey,asc=sortKey==='value'?side==='buy':sortAsc;
- const rows=fm.rows.filter(r=>r.name.toLowerCase().includes(query.trim().toLowerCase())).map((r,index)=>({...r,index}));
- rows.sort((a,b)=>{const av=a[effectiveKey],bv=b[effectiveKey];if(effectiveKey==='name')return(asc?1:-1)*av.localeCompare(bv)||a.id-b.id;
+ const activity=window.AstraCashActivity?.rank(fm.rows,{side,rateKey:fm.net?'netRate':'rate',model})||{rows:fm.rows,active:false,note:''};
+ const rows=activity.rows.filter(r=>r.name.toLowerCase().includes(query.trim().toLowerCase())).map((r,index)=>({...r,index}));
+ if(!(activity.orderingApplied&&sortKey==='value'))rows.sort((a,b)=>{const av=a[effectiveKey],bv=b[effectiveKey];if(effectiveKey==='name')return(asc?1:-1)*av.localeCompare(bv)||a.id-b.id;
   const aValid=Number.isFinite(av),bValid=Number.isFinite(bv);if(!aValid||!bValid)return aValid?-1:bValid?1:a.id-b.id;return(asc?1:-1)*(av-bv)||a.id-b.id;});
- const ranking=sortKey==='value'?fm.net?(rows.some(r=>Number.isFinite(r.netRate))?'Best value first under the selected fee assumptions.':'Net ranking unavailable; gross source prices stay visible.'):'Best value first by gross mesos / NX.':`Sorted by ${effectiveKey} (${asc?'ascending':'descending'}).`;
- section.querySelector('.api-cash-ranking').textContent=`${rows.length} / 29 shown · ${side==='sell'?'Higher proceeds per NX favors selling':'Lower cost per NX favors buying'}. ${ranking} ${fm.unset?'Gross order shown; net unavailable until fee rules are set.':fm.net?'Fee assumptions: '+fm.fees.label()+'. These are estimates, not official verified fees.':'Gross prices before fees.'}`;
+ const activityBest=activity.active&&sortKey==='value',displaySortKey=activityBest?'activityScore':effectiveKey,displaySortAsc=activityBest?false:asc;
+ const ranking=activityBest?'Activity-adjusted value first by descending heuristic score; actual rates remain visible.':sortKey==='value'?fm.net?(rows.some(r=>Number.isFinite(r.netRate))?'Best value first under the selected fee assumptions.':'Net ranking unavailable; gross source prices stay visible.'):'Best value first by gross mesos / NX.':`Sorted by ${effectiveKey} (${asc?'ascending':'descending'}).`;
+ section.querySelector('.api-cash-ranking').textContent=`${rows.length} / 29 shown · ${side==='sell'?'Higher proceeds per NX favors selling':'Lower cost per NX favors buying'}. ${ranking} ${activity.active&&sortKey!=='value'?'Column sort overrides the optional activity ordering.':activity.note} ${activity.active?'Scores use this complete source cohort before search; minimum count filter is shared with the cards. ':''}${fm.unset?'Gross order shown; net unavailable until fee rules are set.':fm.net?'Fee assumptions: '+fm.fees.label()+'. These are estimates, not official verified fees.':'Gross prices before fees.'}`;
+ section.querySelector('[data-api-best]').textContent=activity.active?'Best activity-adjusted first':'Best value first';
  section.querySelector('[data-api-best]').setAttribute('aria-pressed',String(sortKey==='value'));
  const headers=[['name','Item'],['nx','Fixed NX cost'],['price','API sale median · mesos'],['rate','Gross mesos / NX'],['quantity','Reported sale count']];
  if(fm.active)headers.push(['effectiveMeso',side==='buy'?'Estimated transaction cost':'Estimated transaction proceeds'],['netRate',side==='buy'?'Estimated cost / NX':'Estimated proceeds / NX']);
- headers.push(['source','Source']);const tbl=make('table'),caption=make('caption','sr-only','Separate API item-sale medians. Reported 3-day lookback; actual bounds and sale times unknown.');tbl.append(caption);
- const thead=make('thead'),tr=make('tr');for(const [key,label]of headers){const th=make('th');th.setAttribute('aria-sort',key===effectiveKey?(asc?'ascending':'descending'):'none');
-  if(key==='source')th.textContent=label;else{const b=make('button','',label+(key===effectiveKey?(asc?' ↑':' ↓'):''));b.type='button';b.dataset.apiCashSort=key;th.append(b);}tr.append(th);}thead.append(tr);tbl.append(thead);
+ if(activity.active)headers.push(['activityScore','Activity score · heuristic']);headers.push(['source','Source']);const tbl=make('table'),caption=make('caption','sr-only','Separate API item-sale medians. Reported 3-day lookback; actual bounds and sale times unknown.');tbl.append(caption);
+ const thead=make('thead'),tr=make('tr');for(const [key,label]of headers){const th=make('th');th.setAttribute('aria-sort',key===displaySortKey?(displaySortAsc?'ascending':'descending'):'none');
+  if(key==='source')th.textContent=label;else{const b=make('button','',label+(key===displaySortKey?(displaySortAsc?' ↑':' ↓'):''));b.type='button';b.dataset.apiCashSort=key;th.append(b);}tr.append(th);}thead.append(tr);tbl.append(thead);
  const tbody=make('tbody');for(const row of rows){const line=make('tr');line.dataset.apiCashItem=row.slug;line.dataset.apiItemId=String(row.id);
   const name=make('td'),link=make('a','item-link');link.href='#item/'+encodeURIComponent(row.slug);link.append(image(row),make('span','',row.name));name.append(link);line.append(name);
   for(const field of ['nx','price','rate','quantity']){const cell=make('td','',number(row[field],field==='rate'?2:field==='quantity'||field==='nx'?0:1));cell.dataset.sortValue=Number.isFinite(row[field])?String(row[field]):'';if(row.missing&&field==='price')cell.append(make('small','','API median/count unavailable'));line.append(cell);}
   if(fm.active)for(const field of ['effectiveMeso','netRate']){const cell=make('td','',number(row[field],field==='netRate'?2:1));if(!Number.isFinite(row[field]))cell.append(make('small','',row.feePreview?.reason||'Fee estimate unavailable'));line.append(cell);}
+  if(activity.active)line.append(make('td','',number(row.activityScore,1)));
   const source=make('td'),credit=make('a','','Source ↗');credit.href=row.sourceCreditUrl;credit.target='_blank';credit.rel='noopener noreferrer';source.append(credit);line.append(source);tbody.append(line);
  }tbl.append(tbody);const focusedSort=document.activeElement?.dataset.apiCashSort;table.replaceChildren(tbl);
  if(focusedSort)table.querySelector(`[data-api-cash-sort="${focusedSort}"]`)?.focus();
@@ -107,9 +111,10 @@ function appendItemEvidence(container,item){
  box.append(make('small','','Item-level qualities can mix. This is separate from every daily history/rolling capture below and changes no index or quote.'));
  const a=make('a','','Prices from maplestory.market ↗');a.href=row.sourceCreditUrl;a.target='_blank';a.rel='noopener noreferrer';box.append(a);container.append(box);
 }
-function focusList(value='sell'){if(['buy','sell'].includes(value))side=value;location.hash='#nx';draw();document.getElementById('api-cash-title').focus();section.scrollIntoView?.({block:'start'});}
+function focusList(value='sell'){sortKey='value';if(['buy','sell'].includes(value))side=value;location.hash='#nx';draw();document.getElementById('api-cash-title').focus();section.scrollIntoView?.({block:'start'});}
 window.AstraApiCashUi=Object.freeze({clock,sourceDescriptor,appendItemEvidence,focusList});
 document.addEventListener('astramarketsnapshot',e=>{report=e.detail;draw();});
 for(const event of ['astraapicashchange','astraapicashchoice','astrafeeschange'])document.addEventListener(event,draw);
+document.addEventListener('astracashactivitychange',()=>{sortKey='value';draw();});
 document.getElementById('display-timezone')?.addEventListener('change',draw);draw();document.dispatchEvent(new Event('astraapicashstatusready'));document.dispatchEvent(new Event('astramarkethighlightsready'));
 })();
