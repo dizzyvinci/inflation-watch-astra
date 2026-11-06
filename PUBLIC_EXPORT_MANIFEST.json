@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-06T04:54:25+00:00",
+  "exportedAt": "2026-11-06T05:27:54+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7531,6 +7531,16 @@
       "sha256": "ac00286ebde2ad3db2ec5b45c90b27137eedf390d59a09ea786bfca43a7bb71e"
     },
     {
+      "path": "browser/nx-history-client.mjs",
+      "bytes": 9007,
+      "sha256": "17f65ca8d2a83492a7836efc524db38e267e4913956e200a5c7bc9d69ae521bc"
+    },
+    {
+      "path": "browser/nx-history-merge.mjs",
+      "bytes": 3438,
+      "sha256": "1902504b3df5e47177674ff20cfe667f19d28e423910495baa18dad9eff06be5"
+    },
+    {
       "path": "cache/basket-v1.json",
       "bytes": 8166,
       "sha256": "246bc5b42bbd6b3bf56f9eb5032526e5202623e28f5be943a3e35b6621095319"
@@ -7563,7 +7573,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "f51b2be66e361bc51b20dd3401d1dacc4a3c3084d6f878eae3169e34b5f55d6c"
+      "sha256": "1a1f1d692f3d98c9914d7d8f7584ce764b00324efd1670b8c7acdd757d1e366c"
     },
     {
       "path": "cache/market.json",
@@ -7648,7 +7658,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "46fdb409ded48473fbeb6b851ee9ef2e8e121f55424a3f237a31d721947e2688"
+      "sha256": "e8bc023f90496217c313f603b62d623582a30f66370a9aef1eca6c375786f9ec"
     },
     {
       "path": "dist/_headers",
@@ -16276,6 +16286,11 @@
       "sha256": "e264a6160d66348abc2c85278aeced8e65fbf2626bc23b09353fe5d031a8724c"
     },
     {
+      "path": "dist/data-e2e68d79afa02046.json",
+      "bytes": 992898,
+      "sha256": "e2e68d79afa02046fd6cdc76f8ebbbdc707f9d9a8412c8bf619f233ab40d27aa"
+    },
+    {
       "path": "dist/data-e7e31eb0bbae38f1.json",
       "bytes": 797582,
       "sha256": "e7e31eb0bbae38f12ad70e83473111f44d692767f85e8d9c123e6dc679108b5c"
@@ -16328,7 +16343,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "6249c1b63220581a6c48aa09a47d91990bd1f0ad55bbc99c0b60af42d5a42880"
+      "sha256": "e2e68d79afa02046fd6cdc76f8ebbbdc707f9d9a8412c8bf619f233ab40d27aa"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16348,7 +16363,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "46fdb409ded48473fbeb6b851ee9ef2e8e121f55424a3f237a31d721947e2688"
+      "sha256": "e8bc023f90496217c313f603b62d623582a30f66370a9aef1eca6c375786f9ec"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16618,7 +16633,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "7da7fc809ba66ae391faf0008f3f60adc19fce5e439aeb18db35e37266fedad3"
+      "sha256": "14fe8bb2d8953469670e838b6ad363214fc202e281216e0bdb4796170746be89"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16717,8 +16732,8 @@
     },
     {
       "path": "ops/api-alarm-scheduler.mjs",
-      "bytes": 14266,
-      "sha256": "59587ccca657c98c209575bebca67974bbd91c882841e0bef17bb5ee42a05d7e"
+      "bytes": 14461,
+      "sha256": "3735fc96f7ffe86db643ac0328cf610989b317133ea2cc3bdc56ec48b1f9edd7"
     },
     {
       "path": "ops/api-cash-bindings-v1.json",
@@ -16732,8 +16747,8 @@
     },
     {
       "path": "ops/api-collector-core.mjs",
-      "bytes": 27672,
-      "sha256": "5ac168ca6a5acae8e0af2d6bf4cf4d9af54544b5aea8a7f6c9237d71362e4698"
+      "bytes": 27883,
+      "sha256": "000d505bd583d1aea5dbfc9dad8099c0067f3937b2bcb9410b33407cb4995e6a"
     },
     {
       "path": "ops/api-cron-hook.mjs",
@@ -16747,8 +16762,8 @@
     },
     {
       "path": "ops/api-grant-collector.mjs",
-      "bytes": 4263,
-      "sha256": "32ec194309edbb95baded96843185780b0c9ad197b6b73a8c67bc83386ef1320"
+      "bytes": 4996,
+      "sha256": "924a8431598ed09a5edc03f85b2b078ad8ea37fd44af306e01c3275fe13d99a0"
     },
     {
       "path": "ops/api-item-cleanup.mjs",
@@ -16782,13 +16797,13 @@
     },
     {
       "path": "ops/api-item-hour-history-ledger.mjs",
-      "bytes": 8750,
-      "sha256": "d6685e9e5451f070af82a2b15ba3e20742a2d65b7daa50c88e1f0958e36faf86"
+      "bytes": 9108,
+      "sha256": "c18105d39bf4a0a880caf9298ec4a6d5b43e149d9e6bd2807fb4427353f976f0"
     },
     {
       "path": "ops/api-item-hour-history-profile.mjs",
-      "bytes": 10428,
-      "sha256": "e87d06ba52968ba0c6e7537f0f2e24c0dd55283baf3881d77bcd95be297d1924"
+      "bytes": 10951,
+      "sha256": "1b008858f6ba3fa4a21735f33585b81e0c38a57dea718b13721e108f47711cd1"
     },
     {
       "path": "ops/api-item-metadata-loader.mjs",
@@ -16799,6 +16814,16 @@
       "path": "ops/api-item-price-route.mjs",
       "bytes": 11946,
       "sha256": "3986f94f64e763080c9050358f73fe535c21a814dc3707ae35559b2ea5a4a6da"
+    },
+    {
+      "path": "ops/api-item-recurring-health.mjs",
+      "bytes": 11264,
+      "sha256": "5430d82f840558279f06aba968eeeb7309f67bd276be6d94c5823f6c0c3639d5"
+    },
+    {
+      "path": "ops/api-item-recurring.mjs",
+      "bytes": 21997,
+      "sha256": "f508e9a6d15e76479a29a0aa320e046d7996536b27b9add48e7fe7dfd3c40ebc"
     },
     {
       "path": "ops/api-item-reference-protocol.mjs",
@@ -16832,8 +16857,8 @@
     },
     {
       "path": "ops/api-private-cash-alarm.mjs",
-      "bytes": 22474,
-      "sha256": "1004ed4dc327b4adac8208f26236555f2d874217ca58ba35afe8fb0cdb18aaa0"
+      "bytes": 25579,
+      "sha256": "91db8e8840362ca409e275d934652b3c0bc4b6eb901c236e6173500f26e23098"
     },
     {
       "path": "ops/api-private-cash-materializer.mjs",
@@ -16842,8 +16867,8 @@
     },
     {
       "path": "ops/api-private-health.mjs",
-      "bytes": 11915,
-      "sha256": "8056223abc83ec8a306fd17b0bad793e0bfa6cddf9901468ebafcf4caaf26420"
+      "bytes": 12215,
+      "sha256": "3b0c8265803a90d2597d70a42cc8fbada89ee41a20ba9322c07fda855792c856"
     },
     {
       "path": "ops/api-private-item-discovery-health.mjs",
@@ -16862,8 +16887,8 @@
     },
     {
       "path": "ops/api-private-item-history-contract.mjs",
-      "bytes": 4727,
-      "sha256": "cd85984858a28b17eae2fcd9fd792dcdfe78feddf9e847775abf321ebb82e92e"
+      "bytes": 5013,
+      "sha256": "40588ed5764e4dddff27a080f6d62ae3e14f52083930a830e6c99795d97c922a"
     },
     {
       "path": "ops/api-private-item-history-health.mjs",
@@ -16877,8 +16902,8 @@
     },
     {
       "path": "ops/api-private-item-history-work.mjs",
-      "bytes": 14997,
-      "sha256": "c40e0752adddbdf0e1b4483adc7e45f9a31dd86eec1b000452eb9c71902150c6"
+      "bytes": 15235,
+      "sha256": "43a0acddedced2959d84ce0f3e333ac7083e85282850f067e99ebf2f86236aad"
     },
     {
       "path": "ops/api-private-item-pilot.mjs",
@@ -16986,9 +17011,44 @@
       "sha256": "a5675857799556e5c9e09d2c58a79c91b1bb86db4ab1d26af2964a90b537d4e7"
     },
     {
+      "path": "ops/item-recurring-budget.mjs",
+      "bytes": 4546,
+      "sha256": "fe3cf79f6d5fa5c81ffbe5513f40a2957cca7a4286fe9dd3c20c3ae705796ee1"
+    },
+    {
+      "path": "ops/item-recurring-registry.mjs",
+      "bytes": 16990,
+      "sha256": "36a4a01d80beb79abdcf547d829488818f09f5a48de75c2ee540a69adfcf5b95"
+    },
+    {
       "path": "ops/market-catalog.mjs",
       "bytes": 12404,
       "sha256": "764d338a2fee1948fe10562e6045ea7c3ac56d4b37183950cba008175ee5d220"
+    },
+    {
+      "path": "ops/nx-history-contract.mjs",
+      "bytes": 13995,
+      "sha256": "27d86318eb6be7ec1fcf8c548398bc95ae784d5a3b3b5eefe28ba2e676f49b9d"
+    },
+    {
+      "path": "ops/nx-history-health.mjs",
+      "bytes": 2903,
+      "sha256": "b25f3bce270b6bcf6873eaf88dad3249fb3606c44524c050b92e9ccde8e4bc9b"
+    },
+    {
+      "path": "ops/nx-history-owner-work.mjs",
+      "bytes": 7319,
+      "sha256": "e9d22d6818ef6d53ad061b24cf175f1ee06df97fad55b8f31f8fd4c0c0f71590"
+    },
+    {
+      "path": "ops/nx-history-producer.mjs",
+      "bytes": 21904,
+      "sha256": "6cf112ace9306d65d0b533ed2fdabc513c531287aa3b26320e56b6fe7209694d"
+    },
+    {
+      "path": "ops/nx-history-reader.mjs",
+      "bytes": 6760,
+      "sha256": "07073ec28a1dff683b97b9968480af22d88b3031e8cf63e6255fa2ef488ddc8f"
     },
     {
       "path": "ops/observed-firstpass-plan.mjs",
@@ -17032,8 +17092,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 9575,
-      "sha256": "a84d89b0e4b5fda4c83c35312a2d5a91a323a6a30c0922665dcc427a4c23d2fa"
+      "bytes": 10570,
+      "sha256": "1cb5df3641313532bd1b3d1247fd1e01add240aab2a04d18a4501ed21c16dadd"
     },
     {
       "path": "portable_hash.py",
@@ -17169,6 +17229,26 @@
       "path": "tests/api-item-price-reader.test.mjs",
       "bytes": 10507,
       "sha256": "1b5b64abe5493d26fc378d297760e93b612f64da202fec0fc817b2c69e24a227"
+    },
+    {
+      "path": "tests/api-item-recurring-budget.test.mjs",
+      "bytes": 3118,
+      "sha256": "e23141bb058d1df626fd5a4cfdacc8ec5f1ce642f5263f1e16cf8d20841ef26d"
+    },
+    {
+      "path": "tests/api-item-recurring-health.test.mjs",
+      "bytes": 10248,
+      "sha256": "e02c734829c6a464383c132876d30221192ea84c0a62d77bcf475c6bb544f9ab"
+    },
+    {
+      "path": "tests/api-item-recurring-registry.test.mjs",
+      "bytes": 12433,
+      "sha256": "6bc288cc46c33feee1f185072aad622d3f2158b481195609672b38ea263c2658"
+    },
+    {
+      "path": "tests/api-item-recurring.test.mjs",
+      "bytes": 19992,
+      "sha256": "1bc8e9e69607f72d03759c0a2ce7cc882bb841f9bb4d66631954873dc0326212"
     },
     {
       "path": "tests/api-item-retention-plan.test.mjs",
@@ -17611,6 +17691,61 @@
       "sha256": "3f8f8876bf955e40ca899602e98091acb6ee3649d22d6d67a5af3a4b4429e072"
     },
     {
+      "path": "tests/nx-history-archive-fixture.mjs",
+      "bytes": 1171,
+      "sha256": "64d1440c7ffaeaca47204f16f354d9b47364d85502489b1b901c681c8a0a2c17"
+    },
+    {
+      "path": "tests/nx-history-contract.test.mjs",
+      "bytes": 5853,
+      "sha256": "432853af9521dbb547fdcd58531b734108b2ddc0fcdc0536b577d6cc23f4aac3"
+    },
+    {
+      "path": "tests/nx-history-independent.test.mjs",
+      "bytes": 8354,
+      "sha256": "9d32255424352b722ada08afe11f74be26f063d970c0cf0696a7910461dc85e9"
+    },
+    {
+      "path": "tests/nx-history-merge.test.mjs",
+      "bytes": 4347,
+      "sha256": "311cbcd9410cc63978c0bb64aa734bf216f4ecdf118cccf9b3e682bfda5bf0b9"
+    },
+    {
+      "path": "tests/nx-history-owner-bootstrap.test.mjs",
+      "bytes": 6109,
+      "sha256": "934d04b012ede132533908ff2c942d64913284df216e498a59da72601d6f2365"
+    },
+    {
+      "path": "tests/nx-history-owner-health.test.mjs",
+      "bytes": 2416,
+      "sha256": "cea1a7c1769704224b917c88310eb9b7889f24fb126abadefc2b7b33946cfed1"
+    },
+    {
+      "path": "tests/nx-history-owner-integration.test.mjs",
+      "bytes": 10549,
+      "sha256": "a0794cf49a00a8519882124166f28d2c9c9ef09edad0a9df7915199ea2a00119"
+    },
+    {
+      "path": "tests/nx-history-producer.test.mjs",
+      "bytes": 4142,
+      "sha256": "7a56cd3df9423ccf39172293166c5c95a7414e141a1c183848bd11055efb1fc1"
+    },
+    {
+      "path": "tests/nx-history-reader-client.test.mjs",
+      "bytes": 8913,
+      "sha256": "593807f9b22eb1fac79a5dbce27754e0fa20a962b76997efe8652f56e5fcab32"
+    },
+    {
+      "path": "tests/nx-history-recovery.test.mjs",
+      "bytes": 6803,
+      "sha256": "822ec3d792fc2f2c93eba1498a492e168cce59f3e1f6b3c3a49be78f6ba52536"
+    },
+    {
+      "path": "tests/nx-history-source-fixture.mjs",
+      "bytes": 5048,
+      "sha256": "8ee81696cfe3e93bbe28a6fe795fc380cad95c0e564fe8e51027f544c203094a"
+    },
+    {
       "path": "tests/nx-overview-benchmark.cjs",
       "bytes": 12671,
       "sha256": "37b5cc02b4783913db2687b04a163ef767a3150ae483cc84d4011060bc4c3853"
@@ -17669,6 +17804,11 @@
       "path": "tests/rate-clock.cjs",
       "bytes": 6026,
       "sha256": "a3a076504a096d0cfc4c0eef5d470bba9c44164a3d81e8eabfd7c8217ad6af5f"
+    },
+    {
+      "path": "tests/recurring-fixture.mjs",
+      "bytes": 7783,
+      "sha256": "da9f0f06a5ef93e0a3c77b2785fe2c4be0645cfc63f3c44a008095f4b56f7ef7"
     },
     {
       "path": "tests/review-observed-nx.cjs",

@@ -3,6 +3,7 @@ import {ApiCollectorCore} from './api-collector-core.mjs';
 import {ApiPrivateHealth} from './api-private-health.mjs';
 import {ApiAlarmScheduler} from './api-alarm-scheduler.mjs';
 import {ApiPrivateCashAlarm} from './api-private-cash-alarm.mjs';
+import {ItemRecurringWork,CompositeItemScope,itemRecurringRequested} from './api-item-recurring.mjs';
 import {ObservedFirstPass,loadObservedPlan} from './api-observed-firstpass.mjs';
 import {OBSERVED_PLAN_SHA256,observedPlanBytes} from './observed-firstpass-plan.mjs';
 
@@ -10,27 +11,30 @@ export class ApiGrantCollector extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
     this.ready = ctx.blockConcurrencyWhile(async () => {
-      this.firstPass = env.API_OBSERVED_FIRSTPASS_JSON && JSON.parse(env.API_OBSERVED_FIRSTPASS_JSON).enabled === true
+      this.firstPass = (env.API_OBSERVED_FIRSTPASS_JSON && JSON.parse(env.API_OBSERVED_FIRSTPASS_JSON).enabled === true)||itemRecurringRequested(env)
         ? new ObservedFirstPass(ctx,env,await loadObservedPlan(observedPlanBytes(),OBSERVED_PLAN_SHA256)) : null;
       this.core = new ApiCollectorCore(ctx, env,{observedScope:this.firstPass});
+      this.recurring=new ItemRecurringWork(ctx,env,this.core,this.firstPass);
+      this.core.recurring=this.recurring;
+      if(this.recurring.active)this.core.observed=new CompositeItemScope(this.firstPass,this.recurring);
       this.privateHealth = new ApiPrivateHealth(ctx, env, this.core);
       this.privateCash = new ApiPrivateCashAlarm(ctx, env, this.core);
       await this.privateCash.initialize();
-      this.scheduler = new ApiAlarmScheduler(ctx, env, this.core,{firstPass:this.firstPass,...(this.privateCash.hasMux?{alarmControl:this.privateCash.providerControl}:{})});
+      this.scheduler = new ApiAlarmScheduler(ctx, env, this.core,{firstPass:this.firstPass,recurring:this.recurring,...(this.privateCash.hasMux?{alarmControl:this.privateCash.providerControl}:{})});
     });
   }
   async enqueueProbeRound(round) {await this.ready; return this.core.enqueueProbeRound(round);}
   async runOne() {
-    await this.ready;
+    await this.ready;const recurringFrame=this.recurring.eventFrame();
     await this.privateCash.beforeProviderEvent();
     let result;
     try {result=await this.core.runOne();}
     catch(error) {
-      await this.privateCash.afterProviderEvent();
+      await this.privateCash.afterProviderEvent(recurringFrame);
       try {await this.privateHealth.afterRun({status:'internal_error'});} catch {}
       throw error;
     }
-    await this.privateCash.afterProviderEvent();
+    await this.privateCash.afterProviderEvent(recurringFrame);
     try {
       const mirrored=await this.privateHealth.afterRun(result);
       return mirrored.status==='private_health_pending'?{...result,privateHealthPending:true}:result;
@@ -38,7 +42,7 @@ export class ApiGrantCollector extends DurableObject {
   }
   async health() {await this.ready; return {...this.core.health(),schedule:this.scheduler.health(),privateProjection:this.privateCash.health()};}
   async kickScheduledCollection() {
-    await this.ready;await this.privateCash.scheduleStoredWork();const result=await this.scheduler.kick();
+    await this.ready;const recurringFrame=this.recurring.eventFrame();await this.privateCash.scheduleStoredWork(recurringFrame);const result=await this.scheduler.kick();
     // Optional private-health outbox repair costs no provider attempt.
     try {await this.privateHealth?.flush();} catch {return {...result,privateHealthPending:true};}
     return result;
@@ -46,10 +50,10 @@ export class ApiGrantCollector extends DurableObject {
   async alarm() {
     await this.ready;
     if(this.ownerAlarmFlight){await this.ctx.storage.setAlarm(this.core.clock()+130000);return{status:'owner_alarm_busy'};}
-    this.ownerAlarmFlight=this.ownerAlarmEvent();
+    this.ownerAlarmFlight=this.ownerAlarmEvent(this.recurring.eventFrame());
     try{return await this.ownerAlarmFlight;}finally{this.ownerAlarmFlight=null;}
   }
-  async ownerAlarmEvent(){
+  async ownerAlarmEvent(recurringFrame){
     const kind=this.privateCash.chooseAlarm();
     if(kind==='private')return this.privateCash.runPrivateAlarm();
     if(kind==='public')return this.privateCash.runPublicAlarm();
@@ -58,11 +62,13 @@ export class ApiGrantCollector extends DurableObject {
     if(kind==='items')return this.privateCash.runItemsAlarm();
     if(kind==='history')return this.privateCash.runHistoryAlarm();
     if(kind==='discovery')return this.privateCash.runDiscoveryAlarm();
+    if(kind==='registry')return this.privateCash.runRegistryAlarm(recurringFrame);
+    if(kind==='nx-history')return this.privateCash.runNxHistoryAlarm();
     if(kind==='early'){await this.privateCash.arm();return{status:'early_owner_alarm'};}
     await this.privateCash.beforeProviderEvent();
     let result;
     try{result=await this.scheduler.alarm();}
-    finally{await this.privateCash.afterProviderEvent();}
+    finally{await this.privateCash.afterProviderEvent(recurringFrame);}
     if(result.ownerRunStatus&&this.privateHealth){
       try {await this.privateHealth.afterRun({status:result.ownerRunStatus});}
       catch {return {...result,privateHealthPending:true};}

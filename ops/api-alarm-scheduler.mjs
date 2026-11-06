@@ -26,8 +26,8 @@ export function scheduleConfig(env){
 }
 
 export class ApiAlarmScheduler{
-  constructor(ctx,env,core,{alarmControl=ctx.storage,firstPass=null}={}){
-    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.alarmControl=alarmControl;this.firstPass=firstPass;
+  constructor(ctx,env,core,{alarmControl=ctx.storage,firstPass=null,recurring=null}={}){
+    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.alarmControl=alarmControl;this.firstPass=firstPass;this.recurring=recurring;
     ctx.storage.transactionSync(()=>{
       core.sql.exec(`CREATE TABLE IF NOT EXISTS api_alarm_plans(schedule_ref TEXT PRIMARY KEY,config_json TEXT NOT NULL,
         round_ref TEXT NOT NULL,started_at INTEGER NOT NULL,target_at INTEGER NOT NULL,initial_complete_at INTEGER,phase TEXT NOT NULL)`);
@@ -141,7 +141,7 @@ export class ApiAlarmScheduler{
       WHERE schedule_ref=? AND active_job_key IS NULL`,schedule.scheduleReference).at;
     const storage=this.storageGate();
     const outbox=this.core.row('SELECT pointer_pending FROM api_control WHERE id=1').pointer_pending;
-    const candidates=[pending,event,outbox?Math.max(now+1,storage.blocked_until):null].filter(value=>value!==null);
+    const candidates=[pending,event,this.recurring?.nextProviderDue()??null,outbox?Math.max(now+1,storage.blocked_until):null].filter(value=>value!==null);
     if(!candidates.length)return{...result,...await this.stop('raw_probe_round_complete_no_recurring_work')};
     // Pace request STARTS, not response completion. Existing reservations/cooldowns stay authoritative.
     const latest=this.core.row('SELECT MAX(at) AS at FROM api_attempts').at;
@@ -150,7 +150,7 @@ export class ApiAlarmScheduler{
     await this.alarmControl.setAlarm(next);
     return{...result,alarmScheduled:true,nextAlarmAt:new Date(next).toISOString()};
   }
-  async kick(){return this.arm(this.plan());}
+  async kick(){const checked=this.plan();if(checked.status==='ready')this.recurring?.enqueueDue(8);return this.arm(checked);}
   async alarm(){
     if(this.flight)return{status:'scheduler_busy'};
     this.flight=this.tick();try{return await this.flight;}finally{this.flight=null;}
@@ -158,6 +158,7 @@ export class ApiAlarmScheduler{
   async tick(){
     const checked=this.plan();if(checked.status!=='ready')return this.stop(checked.status);
     if(this.core.row('SELECT auth_stopped AS stopped FROM api_control WHERE id=1').stopped)return this.stop('authentication_stopped');
+    this.recurring?.enqueueDue(8);
     const gate=this.storageGate();
     if(this.core.clock()<gate.blocked_until)return this.arm(checked,{status:'private_storage_backoff'});
     const result=await this.core.runOne();

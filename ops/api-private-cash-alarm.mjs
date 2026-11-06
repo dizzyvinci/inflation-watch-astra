@@ -13,6 +13,8 @@ import {privateHistoryConfiguration} from './api-private-item-history-contract.m
 import {privateItemHistoryHealth} from './api-private-item-history-health.mjs';
 import {PrivateItemWork} from './api-private-item-work.mjs';
 import {privateItemConfiguration,privateItemHealth} from './api-private-item-health.mjs';
+import {NxHistoryArchiveWork,nxHistoryArchiveConfiguration} from './nx-history-owner-work.mjs';
+import {nxHistoryArchiveHealth} from './nx-history-health.mjs';
 
 export function privateCashConfig(env){
   if(!env.API_PRIVATE_CASH_JSON)return{enabled:false};
@@ -26,7 +28,7 @@ export function privateCashConfig(env){
 
 export class ApiPrivateCashAlarm{
   constructor(ctx,env,core){
-    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;
+    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.recurringWork=core.recurring;
     // A retained mux must keep tracking legacy provider set/delete operations
     // while the private feature is off. Never create one just for default-off.
     this.hasMux=!!core.row("SELECT name FROM sqlite_master WHERE type='table' AND name='api_cash_alarm_mux'")&&
@@ -39,7 +41,8 @@ export class ApiPrivateCashAlarm{
     if(this.itemsStatus()==='ready')this.itemWork=new PrivateItemWork(ctx,env,core);
     if(this.historyStatus()==='ready')this.historyWork=new PrivateItemHistoryWork(ctx,env,core);
     if(this.discoveryStatus()==='ready')this.discoveryWork=new PrivateItemDiscoveryWork(ctx,env,core,{getItemWork:()=>this.itemWork});
-    if(!this.cashActive&&!this.nxActive&&!this.itemsActive&&!this.historyActive&&!this.discoveryActive)return;
+    if(nxHistoryArchiveConfiguration(env)==='ready')this.nxArchiveWork=new NxHistoryArchiveWork(ctx,env,{getSourceProducer:()=>this.core.config().enabled===true?this.nxProducer:null,now:()=>core.clock()});
+    if(!this.cashActive&&!this.nxActive&&!this.itemsActive&&!this.historyActive&&!this.discoveryActive&&!this.recurringActive&&!this.nxArchiveActive)return;
     core.sql.exec(`CREATE TABLE IF NOT EXISTS api_cash_alarm_mux(id INTEGER PRIMARY KEY CHECK(id=1),
       provider_at INTEGER,private_at INTEGER,recovery_at INTEGER,last_kind TEXT,initialized INTEGER NOT NULL DEFAULT 0)`);
     core.sql.exec('INSERT OR IGNORE INTO api_cash_alarm_mux(id) VALUES(1)');
@@ -90,7 +93,9 @@ export class ApiPrivateCashAlarm{
   get nxR2Active(){return this.nxPublisher!==undefined&&this.nxActive&&this.nxR2Status()==='ready';}
   get cashActive(){return this.materializer!==undefined&&this.status()==='ready';}
   get nxActive(){return this.nxProducer!==undefined&&this.nxStatus()==='ready';}
-  get active(){return this.cashActive||this.nxActive||this.itemsActive||this.historyActive||this.discoveryActive;}
+  get recurringActive(){return this.recurringWork?.active===true;}
+  get nxArchiveActive(){return this.nxArchiveWork?.active===true;}
+  get active(){return this.cashActive||this.nxActive||this.itemsActive||this.historyActive||this.discoveryActive||this.recurringActive||this.nxArchiveActive;}
   row(){return this.core.row('SELECT * FROM api_cash_alarm_mux WHERE id=1');}
   async setProviderAlarm(at){
     this.ctx.storage.transactionSync(()=>{
@@ -109,7 +114,7 @@ export class ApiPrivateCashAlarm{
   get providerControl(){return{setAlarm:at=>this.setProviderAlarm(at),deleteAlarm:()=>this.clearProviderAlarm()};}
   async arm(){
     const row=this.row(),now=this.core.clock();
-    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[]),...(this.nxR2Active?[this.nxPublisher.nextDue()]:[]),...(this.itemsActive?[this.itemWork.nextDue()]:[]),...(this.historyActive?[this.historyWork.nextDue()]:[]),...(this.discoveryActive?[this.discoveryWork.nextDue()]:[])].filter(value=>value!==null);
+    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[]),...(this.nxR2Active?[this.nxPublisher.nextDue()]:[]),...(this.itemsActive?[this.itemWork.nextDue()]:[]),...(this.historyActive?[this.historyWork.nextDue()]:[]),...(this.discoveryActive?[this.discoveryWork.nextDue()]:[]),...(this.recurringActive?[this.recurringWork.nextDue()]:[]),...(this.nxArchiveActive?[this.nxArchiveWork.nextDue()]:[])].filter(value=>value!==null);
     if(!choices.length){await this.ctx.storage.deleteAlarm();return null;}
     const at=Math.max(now+1,Math.min(...choices));await this.ctx.storage.setAlarm(at);return at;
   }
@@ -139,7 +144,7 @@ export class ApiPrivateCashAlarm{
     const providerStopped=control.auth_stopped||paused;
     const consumedProvider=mux.provider_at===null&&(mux.last_kind==='provider'||rawLease!==null);
     if(consumedProvider&&!providerStopped){
-      const candidates=[this.core.nextAttemptAt(this.core.config())].filter(at=>at!==null);
+      const candidates=[this.core.nextAttemptAt(this.core.config()),this.recurringActive?this.recurringWork.nextProviderDue():null].filter(at=>at!==null);
       let storageAt=0;
       if(this.core.row("SELECT name FROM sqlite_master WHERE type='table' AND name='api_alarm_events'")){
         let schedule;try{schedule=scheduleConfig(this.env);}catch{}
@@ -154,7 +159,7 @@ export class ApiPrivateCashAlarm{
     const recoveryAt=rawLease===null||rawLease<=now||providerStopped?null:Math.max(now+30_000,rawLease+1);
     this.core.sql.exec('UPDATE api_cash_alarm_mux SET private_at=?,recovery_at=? WHERE id=1',privateAt,recoveryAt);
   }
-  async scheduleStoredWork(){
+  async scheduleStoredWork(recurringFrame){
     if(!this.active)return{status:this.status()};
     try{
       const reconciled=this.cashActive?this.materializer.reconcileCompletedPrices(8):{queued:0};
@@ -164,6 +169,8 @@ export class ApiPrivateCashAlarm{
       if(this.itemsActive)this.itemWork.reconcile();
       if(this.historyActive)this.historyWork.reconcile(8);
       if(this.discoveryActive)this.discoveryWork.reconcile();
+      if(this.nxArchiveActive)this.nxArchiveWork.reconcile(8);
+      if(this.recurringActive)this.recurringWork.reconcile(8,recurringFrame);
       this.refreshPrivateDeadline();await this.arm();
       return{status:'private_projection_scheduled',queued:reconciled.queued};
     }catch{
@@ -175,10 +182,12 @@ export class ApiPrivateCashAlarm{
       if(this.itemsActive)this.itemWork.defer();
       if(this.historyActive)this.historyWork.defer();
       if(this.discoveryActive)this.discoveryWork.defer();
+      if(this.nxArchiveActive)this.nxArchiveWork.defer();
+      if(this.recurringActive)this.recurringWork.defer();
       await this.arm();return{status:'private_projection_schedule_retry'};
     }
   }
-  async afterProviderEvent(){return this.scheduleStoredWork();} // SQL only; never decode here.
+  async afterProviderEvent(recurringFrame){return this.scheduleStoredWork(recurringFrame);} // SQL only; never decode here.
   chooseAlarm(){
     if(!this.active)return'provider';
     const row=this.row(),now=this.core.clock();
@@ -191,11 +200,13 @@ export class ApiPrivateCashAlarm{
     const itemsAt=this.itemsActive?this.itemWork.nextDue():null,itemsDue=itemsAt!==null&&itemsAt<=now;
     const historyAt=this.historyActive?this.historyWork.nextDue():null,historyDue=historyAt!==null&&historyAt<=now;
     const discoveryAt=this.discoveryActive?this.discoveryWork.nextDue():null,discoveryDue=discoveryAt!==null&&discoveryAt<=now;
-    if(!privateDue&&!providerDue&&!publicDue&&!nxDue&&!nxR2Due&&!itemsDue&&!historyDue&&!discoveryDue)return'early';
+    const registryAt=this.recurringActive?this.recurringWork.nextDue():null,registryDue=registryAt!==null&&registryAt<=now;
+    const nxArchiveAt=this.nxArchiveActive?this.nxArchiveWork.nextDue():null,nxArchiveDue=nxArchiveAt!==null&&nxArchiveAt<=now;
+    if(!privateDue&&!providerDue&&!publicDue&&!nxDue&&!nxR2Due&&!itemsDue&&!historyDue&&!discoveryDue&&!registryDue&&!nxArchiveDue)return'early';
     // At most one heavy operation per event; alternate when both are overdue.
     let kind=privateDue&&(!providerDue||row.last_kind!=='private')?'private':'provider';
-    if(publicDue||nxDue||nxR2Due||itemsDue||historyDue||discoveryDue){const order=['private','public','nx','nx-r2','items','history','discovery','provider'],start=(order.indexOf(row.last_kind)+1)%order.length;
-      kind=[...order.slice(start),...order.slice(0,start)].find(k=>({private:privateDue,public:publicDue,nx:nxDue,'nx-r2':nxR2Due,items:itemsDue,history:historyDue,discovery:discoveryDue,provider:providerDue})[k]);}
+    if(publicDue||nxDue||nxR2Due||itemsDue||historyDue||discoveryDue||registryDue||nxArchiveDue){const order=['private','public','nx','nx-r2','items','history','discovery','registry','nx-history','provider'],start=(order.indexOf(row.last_kind)+1)%order.length;
+      kind=[...order.slice(start),...order.slice(0,start)].find(k=>({private:privateDue,public:publicDue,nx:nxDue,'nx-r2':nxR2Due,items:itemsDue,history:historyDue,discovery:discoveryDue,registry:registryDue,'nx-history':nxArchiveDue,provider:providerDue})[k]);}
     this.core.sql.exec(kind==='private'?'UPDATE api_cash_alarm_mux SET last_kind=?,private_at=NULL,recovery_at=NULL WHERE id=1':
       kind==='provider'?'UPDATE api_cash_alarm_mux SET last_kind=?,provider_at=NULL WHERE id=1':'UPDATE api_cash_alarm_mux SET last_kind=? WHERE id=1',kind);return kind;
   }
@@ -303,10 +314,27 @@ export class ApiPrivateCashAlarm{
       return{status:'private_item_discovery_event_retry',eventKind:'private_item_discovery',providerAttempted:false};
     }
   }
+  async runRegistryAlarm(recurringFrame){
+    if(!this.recurringActive)return{status:'disabled',eventKind:'private_item_registry',providerAttempted:false};
+    try{await this.armItemsRecovery(this.core.clock()+130000);const result=await this.recurringWork.drainOne(until=>this.armItemsRecovery(until),recurringFrame);this.refreshPrivateDeadline();await this.arm();return{...result,eventKind:'private_item_registry',providerAttempted:false};}
+    catch{const at=this.recurringWork.defer();try{await this.arm();}catch{if(Number.isSafeInteger(at)){const prior=await this.ctx.storage.getAlarm();await this.ctx.storage.setAlarm(prior===null?at:Math.min(prior,at));}}return{status:'private_item_registry_retry',eventKind:'private_item_registry',providerAttempted:false};}
+  }
+  async runNxHistoryAlarm(){
+    if(!this.nxArchiveActive)return{status:'disabled',eventKind:'nx_history_archive',providerAttempted:false};
+    try{
+      await this.armItemsRecovery(this.core.clock()+130000);
+      const result=await this.nxArchiveWork.drainOne(until=>this.armItemsRecovery(until));
+      this.refreshPrivateDeadline();await this.arm();return{...result,eventKind:'nx_history_archive',providerAttempted:false};
+    }catch{
+      const at=this.nxArchiveWork.defer();
+      try{await this.arm();}catch{if(Number.isSafeInteger(at)){const prior=await this.ctx.storage.getAlarm();await this.ctx.storage.setAlarm(prior===null?at:Math.min(prior,at));}}
+      return{status:'nx_history_archive_event_retry',eventKind:'nx_history_archive',providerAttempted:false};
+    }
+  }
   health(){
     if(!this.active)return{status:this.status()};
     const row=this.row();return{status:'private_only_ready',methodVersion:1,publicationEligible:false,
-      privateAlarmAt:row.private_at,recoveryAlarmAt:row.recovery_at,privateNxPublication:privateNxR2Health(this.core,this.env),privateItems:privateItemHealth(this.core,this.env),privateItemHistory:privateItemHistoryHealth(this.core,this.env),privateItemDiscovery:privateItemDiscoveryHealth(this.core,this.env),
+      privateAlarmAt:row.private_at,recoveryAlarmAt:row.recovery_at,privateNxPublication:privateNxR2Health(this.core,this.env),privateItems:privateItemHealth(this.core,this.env),privateItemHistory:privateItemHistoryHealth(this.core,this.env),privateItemDiscovery:privateItemDiscoveryHealth(this.core,this.env),privateNxHistoryArchive:nxHistoryArchiveHealth(this.core,this.env),
       jobs:this.cashActive?this.core.sql.exec('SELECT state,COUNT(*) AS count FROM private_cash_jobs GROUP BY state').toArray():[],
       ...(this.nxProducer?{nxOffers:this.nxActive?this.nxProducer.health():{status:this.nxStatus()}}:{})};
   }

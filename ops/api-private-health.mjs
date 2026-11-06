@@ -1,3 +1,5 @@
+import {privateItemRefreshHealth} from './api-item-recurring-health.mjs';
+import {nxHistoryArchiveHealth} from './nx-history-health.mjs';
 import {privateItemDiscoveryHealth} from './api-private-item-discovery-health.mjs';
 import {privateNxHealth} from './api-private-nx-health.mjs';
 import {privateNxR2Health} from './api-private-nx-r2-health.mjs';
@@ -60,7 +62,7 @@ export class ApiPrivateHealth{
       }).map(row=>({operation:row.operation,receiptKey:row.receipt_key,roundReference:row.round_ref}));
   }
   observedFirstPassProgress(config){
-    const scope=this.core.observed;if(!scope)return{status:'disabled'};
+    const scope=this.core.observed?.firstPass??this.core.observed;if(!scope)return{status:'disabled'};
     let checked;try{checked=scope.config(config);}catch{return{status:'invalid_configuration'};}
     if(!checked.enabled)return{status:'disabled'};
     scope.ensureTables();
@@ -120,8 +122,8 @@ export class ApiPrivateHealth{
       publicCashPublication:this.publicCashProgress(),
       privateNxOffers:privateNxHealth(this.core,this.env),
       privateNxPublication:privateNxR2Health(this.core,this.env),
-      privateItems:privateItemHealth(this.core,this.env),
-      privateItemHistory:privateItemHistoryHealth(this.core,this.env),privateItemDiscovery:privateItemDiscoveryHealth(this.core,this.env),
+      privateItems:privateItemHealth(this.core,this.env),privateItemRefresh:privateItemRefreshHealth(this.core,this.env),
+      privateItemHistory:privateItemHistoryHealth(this.core,this.env),privateItemDiscovery:privateItemDiscoveryHealth(this.core,this.env),privateNxHistoryArchive:nxHistoryArchiveHealth(this.core,this.env),
       ...(this.core.observed?{observedFirstPass:this.observedFirstPassProgress(config)}:{}),
       ...(config.nxSchemaProbesEnabled===true?{nxSchemaProbes:this.nxSchemaProbeProgress(config),completedNxProbeReceipts:this.completedNxProbeReceipts(config)}:{}),
       dailyCeilingMeaning:'configured_restriction_not_an_inferred_provider_daily_grant'};

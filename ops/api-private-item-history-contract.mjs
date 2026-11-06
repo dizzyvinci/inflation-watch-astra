@@ -1,4 +1,5 @@
 // Same-owner retained history scope only. No transport, keys or job authorization.
+import {bindRecurringCompleted} from './api-item-recurring.mjs';
 import {OBSERVED_PLAN_SHA256} from './observed-firstpass-plan.mjs';
 import {historyOperation,ItemHistoryContractError} from './api-item-hour-history-profile.mjs';
 export {OBSERVED_PLAN_SHA256};
@@ -12,7 +13,7 @@ export function privateHistoryConfiguration(env,core){try{
 }catch{return'invalid_configuration';}}
 export function historyScope(core){const g=core.config();if(g.enabled!==true)throw new HistoryAuthorityPause('history_grant_disabled');return{enabled:true,grantReference:g.grantReference,roundReference:g.probeRound,observedPlanHash:OBSERVED_PLAN_SHA256};}
 export function ownedHistorySource(core,plan,receiptKey){
- const scope=historyScope(core),m=/^_private\/provider-api\/v1\/receipts\/([0-9]{12,16})-(apple-history|observed-history-[1-9][0-9]{0,8})-([a-f0-9]{64})\.json$/.exec(receiptKey??'');need(m,'history_receipt_key');const id=Number(m[1]),operation=m[2],definition=historyOperation(operation);need(Number.isSafeInteger(id)&&id>0&&String(id).padStart(12,'0')===m[1]&&definition,'history_source_target');
+ const scope=historyScope(core);if(typeof receiptKey==='string'&&receiptKey.includes('-recurring-history-')){try{return bindRecurringCompleted(core.sql,scope,receiptKey);}catch{throw new ItemHistoryContractError('history_recurring_owned_cycle');}}const m=/^_private\/provider-api\/v1\/receipts\/([0-9]{12,16})-(apple-history|observed-history-[1-9][0-9]{0,8})-([a-f0-9]{64})\.json$/.exec(receiptKey??'');need(m,'history_receipt_key');const id=Number(m[1]),operation=m[2],definition=historyOperation(operation);need(Number.isSafeInteger(id)&&id>0&&String(id).padStart(12,'0')===m[1]&&definition,'history_source_target');
  // Completed transport deliberately clears api_jobs.attempt_id; it is a lease, not history authority.
  const a=core.row("SELECT * FROM api_attempts WHERE id=? AND result='success'",id);need(a&&Number.isSafeInteger(a.at)&&a.at>0,'history_successful_source_attempt');
  const j=core.row('SELECT * FROM api_jobs WHERE job_key=? AND receipt_key=?',a.job_key,receiptKey);need(j&&j.state==='complete'&&j.operation===operation,'history_completed_source_job');

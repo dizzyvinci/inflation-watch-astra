@@ -1,9 +1,10 @@
 // Private append-only accepted-hour ledger. No R2, source transport, native timer or route.
 import {projectItemHistoryReceipt,historyOperation,ItemHistoryContractError,validateProjectedHour} from './api-item-hour-history-profile.mjs';
+import {bindRecurringCompleted} from './api-item-recurring.mjs';
 import {portableHash} from './portable-hash.mjs';
 const check=(v,code)=>{if(!v)throw new ItemHistoryContractError(code);};
 const REF=/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,159}$/,HEX=/^[a-f0-9]{64}$/;
-const KEY=/^_private\/provider-api\/v1\/receipts\/([0-9]{12,16})-(apple-history|observed-history-[1-9][0-9]{0,8})-([a-f0-9]{64})\.json$/;
+const KEY=/^_private\/provider-api\/v1\/receipts\/([0-9]{12,16})-(apple-history|(?:observed|recurring)-history-[1-9][0-9]{0,8})-([a-f0-9]{64})\.json$/;
 export class PrivateItemHourLedger{
  constructor(ctx,{enabled=false,isEnabled=()=>true,getScope=()=>({enabled:false})}={}){this.ctx=ctx;this.enabled=enabled===true;this.sql=this.enabled?ctx.storage.sql:null;this.isEnabled=isEnabled;this.getScope=getScope;this.flight=null;if(this.active)this.initialize();}
  get active(){try{return this.enabled&&this.isEnabled()===true&&this.scope().enabled===true;}catch{return false;}}
@@ -19,11 +20,13 @@ export class PrivateItemHourLedger{
   check(this.active,'history_private_feature_disabled');const scope=this.scope(),m=KEY.exec(receiptKey??'');check(m,'history_owned_key');const attemptId=Number(m[1]),operation=m[2],target=historyOperation(operation);check(Number.isSafeInteger(attemptId)&&attemptId>0&&target,'history_owned_target');
   const r=this.row(`SELECT j.job_key,j.operation,j.round_ref,j.state,j.receipt_key,a.id,a.at,a.result,a.grant_ref FROM api_jobs j JOIN api_attempts a ON a.job_key=j.job_key AND a.id=? WHERE j.receipt_key=?`,attemptId,receiptKey);
   check(r&&r.state==='complete'&&r.operation===operation&&r.result==='success'&&r.id===attemptId&&r.grant_ref===scope.grantReference&&r.round_ref===scope.roundReference&&Number.isSafeInteger(r.at)&&r.at>0,'history_successful_owned_attempt_required');
+  let recurringMetadata;
+  if(operation.startsWith('recurring-')){let bound;try{bound=bindRecurringCompleted(this.sql,scope,receiptKey);}catch{check(false,'history_recurring_owned_cycle');}recurringMetadata=bound.recurringMetadata;}
   if(operation.startsWith('observed-')){
    check(HEX.test(scope.observedPlanHash??''),'history_registered_plan_required');const registered=this.row('SELECT item_id,kind,operation,plan_hash FROM api_observed_jobs WHERE job_key=?',r.job_key);
    check(registered&&registered.item_id===target.itemId&&registered.kind==='history'&&registered.operation===operation&&registered.plan_hash===scope.observedPlanHash,'history_registered_operation_target');
   }
-  return{operation,itemId:target.itemId,sourceUrl:target.sourceUrl,attemptId,receiptKey,requestStartedAt:new Date(r.at).toISOString(),grantReference:scope.grantReference,roundReference:scope.roundReference,observedPlanHash:scope.observedPlanHash};
+  return{operation,itemId:target.itemId,sourceUrl:target.sourceUrl,attemptId,receiptKey,requestStartedAt:new Date(r.at).toISOString(),grantReference:scope.grantReference,roundReference:scope.roundReference,observedPlanHash:scope.observedPlanHash,...(recurringMetadata?{recurringMetadata}:{})};
  }
  async append(receiptKey,input,{onAccepted=()=>{}}={}){if(!this.active)return{status:'disabled'};if(this.flight)return{status:'busy'};this.flight=this.perform(receiptKey,input,onAccepted);try{return await this.flight;}finally{this.flight=null;}}
  async perform(receiptKey,input,onAccepted){

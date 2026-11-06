@@ -370,6 +370,8 @@ export class ApiCollectorCore {
     try {
       const path = own(OPERATIONS,job.operation)?OPERATIONS[job.operation]:this.observed?.path(job.operation,config);
       if(!path)throw new TypeError('Unapproved operation');
+      // Own complete job metadata BEFORE the first provider await. Never call a mutable scope afterward.
+      const requestMetadata=structuredClone(this.observed?.metadataForJob?.(job,config)??this.observed?.metadata(job.operation)??{});
       const response = await this.fetcher(ORIGIN+path, {method: 'GET', redirect: 'manual',
         signal: AbortSignal.timeout(20_000), headers: {Authorization: 'Bearer '+key,
           Accept: 'application/json', 'User-Agent': 'inflation.watch/1.0 (+https://inflation.gg; approved raw schema probe)'}});
@@ -388,7 +390,7 @@ export class ApiCollectorCore {
           roundReference: job.round_ref,
           ...(job.operation.startsWith('apple-') ? {expectedItemId:2010001,expectedItemName:'Apple',
             identityStatus:'known_canonical_id_not_yet_verified_in_this_provider_response'} : {}),
-          ...(this.observed?.metadata(job.operation)??{}), ...data};
+          ...requestMetadata, ...data};
         const receiptKey = PRIVATE_PREFIX+`receipts/${String(job.attempt_id).padStart(12, '0')}-${job.operation}-${data.responseSha256}.json`;
         const serialized = JSON.stringify(receipt);
         if (serialized.includes(key)) throw new TypeError('Credential in receipt metadata');
