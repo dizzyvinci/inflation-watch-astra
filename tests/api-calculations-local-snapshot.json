@@ -1,0 +1,7313 @@
+{
+  "schemaVersion": 1,
+  "kind": "api_linked_market_calculations",
+  "methodVersion": "api-v2-chainlink-20261104-v1",
+  "definitionHash": "865944dc992219e01b2aad45a6191174d112f3f1902e4ac86c79a6d23a481e17",
+  "calibration": {
+    "linkDay": "2026-11-04",
+    "basketHash": "46c0c5fd9add028b0d24c9f61b8e41d8d3ed78ae76ab8ff14ebeecd7c46f4d19",
+    "legacySourceUpdatedAt": "2026-11-04T08:30:56+00:00",
+    "legacyReportSha256": "61846f6176e268f66dea918a7436b8de187eb946928293e0a5f0716cb6f8c10e",
+    "anchorOverviewRawSha256": "40c33a982482a860fb1a941f5fe9d6cb4f4cd44faf1deaadb09f730a4451fbff",
+    "anchorOverviewCapturedAt": "2026-11-05T21:43:47.968Z",
+    "qualityConstant": false,
+    "retrospectiveLink": true
+  },
+  "sources": {
+    "prices": {
+      "operation": "prices",
+      "sourceUrl": "https://maplestory.market/api/prices",
+      "rawBodySha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "capturedAt": "2026-11-06T12:00:00.000Z",
+      "sourceObservedAt": null,
+      "captureTimeKind": "http_response_completed",
+      "reportedDays": 3,
+      "exactStartAt": null,
+      "exactEndAt": null,
+      "captureHash": "45c767113ed92214b707e6b71b521012c9a5bb6940256fc91e2f8a35465972b7"
+    },
+    "overview": {
+      "operation": "overview",
+      "sourceUrl": "https://maplestory.market/api/market/overview",
+      "rawBodySha256": "a69779beb3e4fe93045393809dae1e98a8d6630c0f1d494db4756be61b7cf739",
+      "capturedAt": "2026-11-06T12:00:00.000Z",
+      "sourceObservedAt": null,
+      "captureTimeKind": "http_response_completed",
+      "sourceGeneratedAt": "2026-11-06T11:59:00.000Z"
+    }
+  },
+  "current": {
+    "basis": "api_reported_3day_sale_median_reference",
+    "status": "available",
+    "available": true,
+    "index": 156.07895235794464,
+    "expectedItems": 50,
+    "availableItems": 50,
+    "observedWeight": 1.0000000000000002,
+    "rows": [
+      {
+        "itemId": 2040801,
+        "slug": "gloves-attack-scroll-intermediate",
+        "name": "Gloves Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.08,
+        "basePrice": 793345.2130977131,
+        "legacyLinkPrice": 1999999,
+        "APIlinkPrice": "1999999.0",
+        "currentSaleMedianLexeme": "1999999",
+        "currentLinkedPrice": 1999999,
+        "indexContribution": 20.16775514095066,
+        "changeContribution": 12.16775514095066,
+        "changeBase": 152.09693926188325,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040805,
+        "slug": "gloves-magic-attack-scroll-intermediate",
+        "name": "Gloves Magic Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.06691572540929447,
+        "basePrice": 209027.93516042782,
+        "legacyLinkPrice": 274999.5,
+        "APIlinkPrice": "450000.0",
+        "currentSaleMedianLexeme": "450000",
+        "currentLinkedPrice": 274999.5,
+        "indexContribution": 8.803508017036096,
+        "changeContribution": 2.1119354761066482,
+        "changeBase": 31.561123535444846,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2070003,
+        "slug": "kumbi-throwing-stars",
+        "name": "Kumbi Throwing Stars",
+        "category": "Weapons",
+        "weight": 0.054820882383706054,
+        "basePrice": 359305.79803646565,
+        "legacyLinkPrice": 699999,
+        "APIlinkPrice": "749999.0",
+        "currentSaleMedianLexeme": "749999",
+        "currentLinkedPrice": 699999,
+        "indexContribution": 10.680195826903203,
+        "changeContribution": 5.198107588532597,
+        "changeBase": 94.8198453310118,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2044701,
+        "slug": "claw-attack-scroll-intermediate",
+        "name": "Claw Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.05198004146055375,
+        "basePrice": 197166.7362012987,
+        "legacyLinkPrice": 499999,
+        "APIlinkPrice": "517499.5",
+        "currentSaleMedianLexeme": "517499.5",
+        "currentLinkedPrice": 499999,
+        "indexContribution": 13.181720837383432,
+        "changeContribution": 7.983716691328057,
+        "changeBase": 153.59196466564353,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040313,
+        "slug": "earring-luk-scroll-intermediate",
+        "name": "Earring LUK Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.03968634942455667,
+        "basePrice": 82942.49329159212,
+        "legacyLinkPrice": 149999,
+        "APIlinkPrice": "159000.0",
+        "currentSaleMedianLexeme": "159000",
+        "currentLinkedPrice": 149999,
+        "indexContribution": 7.177156715564425,
+        "changeContribution": 3.208521773108757,
+        "changeBase": 80.846986927032,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2043301,
+        "slug": "dagger-attack-scroll-intermediate",
+        "name": "Dagger Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.03651684217793313,
+        "basePrice": 180962.7783669141,
+        "legacyLinkPrice": 398944,
+        "APIlinkPrice": "424999.5",
+        "currentSaleMedianLexeme": "424999.5",
+        "currentLinkedPrice": 398944,
+        "indexContribution": 8.050371030607966,
+        "changeContribution": 4.398686812814653,
+        "changeBase": 120.45638534080992,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040309,
+        "slug": "earring-int-scroll-intermediate",
+        "name": "Earring INT Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.03192979380414028,
+        "basePrice": 68258.02058554438,
+        "legacyLinkPrice": 109999,
+        "APIlinkPrice": "120000.0",
+        "currentSaleMedianLexeme": "120000",
+        "currentLinkedPrice": 109999,
+        "indexContribution": 5.145542397116402,
+        "changeContribution": 1.9525630167023733,
+        "changeBase": 61.15175778082187,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040301,
+        "slug": "earring-str-scroll-intermediate",
+        "name": "Earring STR Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.031452213539328006,
+        "basePrice": 64211.550458715596,
+        "legacyLinkPrice": 94999,
+        "APIlinkPrice": "100000.0",
+        "currentSaleMedianLexeme": "100000",
+        "currentLinkedPrice": 94999,
+        "indexContribution": 4.653257572317446,
+        "changeContribution": 1.5080362183846452,
+        "changeBase": 47.94690257647491,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040305,
+        "slug": "earring-dex-scroll-intermediate",
+        "name": "Earring DEX Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.028372106571338162,
+        "basePrice": 67888.63440860216,
+        "legacyLinkPrice": 99999,
+        "APIlinkPrice": "109999.0",
+        "currentSaleMedianLexeme": "109999",
+        "currentLinkedPrice": 99999,
+        "indexContribution": 4.179171240875256,
+        "changeContribution": 1.3419605837414401,
+        "changeBase": 47.29858815267192,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1092002,
+        "slug": "pan-lid",
+        "name": "Pan Lid",
+        "category": "Equipment",
+        "weight": 0.028153419245381568,
+        "basePrice": 65782.2745,
+        "legacyLinkPrice": 84999,
+        "APIlinkPrice": "89999.0",
+        "currentSaleMedianLexeme": "89999",
+        "currentLinkedPrice": 84999,
+        "indexContribution": 3.637777046517581,
+        "changeContribution": 0.8224351219794245,
+        "changeBase": 29.212619426833598,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2048001,
+        "slug": "pet-equip-speed-scroll-intermediate",
+        "name": "Pet Equip Speed Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.02535094576615993,
+        "basePrice": 68756.95298897273,
+        "legacyLinkPrice": 105000,
+        "APIlinkPrice": "119999.0",
+        "currentSaleMedianLexeme": "119999",
+        "currentLinkedPrice": 105000,
+        "indexContribution": 3.8713892773487233,
+        "changeContribution": 1.3362947007327304,
+        "changeBase": 52.71182831042549,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2043701,
+        "slug": "wand-magic-attack-scroll-intermediate",
+        "name": "Wand Magic Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.024380796562818854,
+        "basePrice": 164883.64399421128,
+        "legacyLinkPrice": 194999,
+        "APIlinkPrice": "350000.0",
+        "currentSaleMedianLexeme": "350000",
+        "currentLinkedPrice": 194999,
+        "indexContribution": 2.8833854188230004,
+        "changeContribution": 0.445305762541115,
+        "changeBase": 18.264610895454258,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2070002,
+        "slug": "mokbi-throwing-stars",
+        "name": "Mokbi Throwing Stars",
+        "category": "Weapons",
+        "weight": 0.023837763573419157,
+        "basePrice": 139246.16875,
+        "legacyLinkPrice": 199999,
+        "APIlinkPrice": "220000.0",
+        "currentSaleMedianLexeme": "220000",
+        "currentLinkedPrice": 199999,
+        "indexContribution": 3.4238133226342415,
+        "changeContribution": 1.0400369652923256,
+        "changeBase": 43.62980453636358,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1372006,
+        "slug": "fairy-wand",
+        "name": "Fairy Wand",
+        "category": "Weapons",
+        "weight": 0.02314954669195535,
+        "basePrice": 130969.50242130751,
+        "legacyLinkPrice": 99999,
+        "APIlinkPrice": "99999.0",
+        "currentSaleMedianLexeme": "99999",
+        "currentLinkedPrice": 99999,
+        "indexContribution": 1.7675347900475993,
+        "changeContribution": -0.5474198791479358,
+        "changeBase": -23.64711008955387,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040001,
+        "slug": "hat-accuracy-scroll-intermediate",
+        "name": "Hat Accuracy Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.02304957276895981,
+        "basePrice": 26955.35985985986,
+        "legacyLinkPrice": 42250,
+        "APIlinkPrice": "49999.0",
+        "currentSaleMedianLexeme": "49999",
+        "currentLinkedPrice": 42250,
+        "indexContribution": 3.612804483232802,
+        "changeContribution": 1.3078472063368205,
+        "changeBase": 56.740626797996896,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2044501,
+        "slug": "bow-attack-scroll-intermediate",
+        "name": "Bow Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.021997086435197048,
+        "basePrice": 122667.31980906922,
+        "legacyLinkPrice": 219900,
+        "APIlinkPrice": "249999.0",
+        "currentSaleMedianLexeme": "249999",
+        "currentLinkedPrice": 219900,
+        "indexContribution": 3.9433153953545523,
+        "changeContribution": 1.7436067518348475,
+        "changeBase": 79.26534984401121,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1032007,
+        "slug": "emerald-earrings",
+        "name": "Emerald Earrings",
+        "category": "Equipment",
+        "weight": 0.020160185781952222,
+        "basePrice": 17682.27120870871,
+        "legacyLinkPrice": 19999,
+        "APIlinkPrice": "21000.0",
+        "currentSaleMedianLexeme": "21000",
+        "currentLinkedPrice": 19999,
+        "indexContribution": 2.280157060676064,
+        "changeContribution": 0.26413848248084215,
+        "changeBase": 13.10198652620076,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2430045,
+        "slug": "mystery-palette-exchange-coupon",
+        "name": "Mystery Palette Exchange Coupon",
+        "category": "Consumables",
+        "weight": 0.020057961546398818,
+        "basePrice": 94968.01823708207,
+        "legacyLinkPrice": 124999,
+        "APIlinkPrice": "145555.0",
+        "currentSaleMedianLexeme": "145555",
+        "currentLinkedPrice": 124999,
+        "indexContribution": 2.640073133967233,
+        "changeContribution": 0.634276979327351,
+        "changeBase": 31.622205370177724,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2070009,
+        "slug": "wooden-top",
+        "name": "Wooden Top",
+        "category": "Weapons",
+        "weight": 0.019739007559943917,
+        "basePrice": 139762.00151515153,
+        "legacyLinkPrice": 200000,
+        "APIlinkPrice": "222222.0",
+        "currentSaleMedianLexeme": "222222",
+        "currentLinkedPrice": 200000,
+        "indexContribution": 2.8246601144738217,
+        "changeContribution": 0.8507593584794297,
+        "changeBase": 43.10041200885213,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 4001000,
+        "slug": "arwens-glass-shoe",
+        "name": "Arwen's Glass Shoe",
+        "category": "Materials",
+        "weight": 0.01676352450466836,
+        "basePrice": 63124.984689766316,
+        "legacyLinkPrice": 55000,
+        "APIlinkPrice": "59999.0",
+        "currentSaleMedianLexeme": "59999",
+        "currentLinkedPrice": 55000,
+        "indexContribution": 1.4605846675258387,
+        "changeContribution": -0.21576778294099744,
+        "changeBase": -12.871265996653014,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2044301,
+        "slug": "spear-attack-scroll-intermediate",
+        "name": "Spear Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.016682375015431166,
+        "basePrice": 79226.5081300813,
+        "legacyLinkPrice": 150000,
+        "APIlinkPrice": "175000.0",
+        "currentSaleMedianLexeme": "175000",
+        "currentLinkedPrice": 150000,
+        "indexContribution": 3.1584835825480004,
+        "changeContribution": 1.4902460810048839,
+        "changeBase": 89.33057071468595,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1472014,
+        "slug": "steel-avarice",
+        "name": "Steel Avarice",
+        "category": "Weapons",
+        "weight": 0.01609047925786032,
+        "basePrice": 81289.59891891891,
+        "legacyLinkPrice": 74999,
+        "APIlinkPrice": "75000.0",
+        "currentSaleMedianLexeme": "75000",
+        "currentLinkedPrice": 74999,
+        "indexContribution": 1.4845316865986025,
+        "changeContribution": -0.12451623918742968,
+        "changeBase": -7.738504067652463,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2044401,
+        "slug": "polearm-attack-scroll-intermediate",
+        "name": "Polearm Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.01543925793426703,
+        "basePrice": 105791.25806451614,
+        "legacyLinkPrice": 199999,
+        "APIlinkPrice": "221110.5",
+        "currentSaleMedianLexeme": "221110.5",
+        "currentLinkedPrice": 199999,
+        "indexContribution": 2.9188008575456905,
+        "changeContribution": 1.3748750641189877,
+        "changeBase": 89.05059232591019,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1332013,
+        "slug": "korean-fan",
+        "name": "Korean Fan",
+        "category": "Weapons",
+        "weight": 0.0154342409527228,
+        "basePrice": 87214.2599758162,
+        "legacyLinkPrice": 73499,
+        "APIlinkPrice": "80000.0",
+        "currentSaleMedianLexeme": "80000",
+        "currentLinkedPrice": 73499,
+        "indexContribution": 1.3007061873812071,
+        "changeContribution": -0.24271790789107273,
+        "changeBase": -15.725937455204376,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2044601,
+        "slug": "crossbow-attack-scroll-intermediate",
+        "name": "Crossbow Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.014799732629452285,
+        "basePrice": 77361.35794183445,
+        "legacyLinkPrice": 111111,
+        "APIlinkPrice": "129000.0",
+        "currentSaleMedianLexeme": "129000",
+        "currentLinkedPrice": 111111,
+        "indexContribution": 2.1256259403143556,
+        "changeContribution": 0.6456526773691271,
+        "changeBase": 43.625969031646065,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2044001,
+        "slug": "two-handed-sword-attack-scroll-intermediate",
+        "name": "Two-handed Sword Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.014682157222134326,
+        "basePrice": 73538.70203644158,
+        "legacyLinkPrice": 66666,
+        "APIlinkPrice": "119999.0",
+        "currentSaleMedianLexeme": "119999",
+        "currentLinkedPrice": 66666,
+        "indexContribution": 1.3310007741036403,
+        "changeContribution": -0.1372149481097923,
+        "changeBase": -9.345693962664537,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040518,
+        "slug": "overall-armor-luk-scroll-greater",
+        "name": "Overall Armor LUK Scroll: Greater",
+        "category": "Scrolls",
+        "weight": 0.01385317040801408,
+        "basePrice": 16224.97418546366,
+        "legacyLinkPrice": 16699,
+        "APIlinkPrice": "28000.0",
+        "currentSaleMedianLexeme": "28000",
+        "currentLinkedPrice": 16699,
+        "indexContribution": 1.4257902046505866,
+        "changeContribution": 0.04047316384917836,
+        "changeBase": 2.9215813172820404,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040815,
+        "slug": "gloves-crit-rate-scroll-chaos",
+        "name": "Gloves Crit. Rate Scroll: Chaos",
+        "category": "Scrolls",
+        "weight": 0.013508384262844106,
+        "basePrice": 67950.93326157158,
+        "legacyLinkPrice": 99999,
+        "APIlinkPrice": "109943.5",
+        "currentSaleMedianLexeme": "109943.5",
+        "currentLinkedPrice": 99999,
+        "indexContribution": 1.9879416706467554,
+        "changeContribution": 0.6371032443623447,
+        "changeBase": 47.16354169127008,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1050010,
+        "slug": "blue-sauna-robe",
+        "name": "Blue Sauna Robe",
+        "category": "Equipment",
+        "weight": 0.01316618546354111,
+        "basePrice": 22537.46446886447,
+        "legacyLinkPrice": 35000,
+        "APIlinkPrice": "40000.0",
+        "currentSaleMedianLexeme": "40000",
+        "currentLinkedPrice": 35000,
+        "indexContribution": 2.044668741954346,
+        "changeContribution": 0.7280501956002351,
+        "changeBase": 55.29697250705614,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1002156,
+        "slug": "dark-pilfer",
+        "name": "Dark Pilfer",
+        "category": "Equipment",
+        "weight": 0.012438030455931476,
+        "basePrice": 44988.01547987616,
+        "legacyLinkPrice": 45000,
+        "APIlinkPrice": "48994.5",
+        "currentSaleMedianLexeme": "48994.5",
+        "currentLinkedPrice": 45000,
+        "indexContribution": 1.2441343867841517,
+        "changeContribution": 0.0003313411910039021,
+        "changeBase": 0.026639361607760925,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040514,
+        "slug": "overall-armor-int-scroll-greater",
+        "name": "Overall Armor INT Scroll: Greater",
+        "category": "Scrolls",
+        "weight": 0.012355824501013586,
+        "basePrice": 15434.471264367816,
+        "legacyLinkPrice": 15749,
+        "APIlinkPrice": "25999.5",
+        "currentSaleMedianLexeme": "25999.5",
+        "currentLinkedPrice": 15749,
+        "indexContribution": 1.2607615559575391,
+        "changeContribution": 0.025179105856180616,
+        "changeBase": 2.0378329146804486,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1472012,
+        "slug": "silver-guardian",
+        "name": "Silver Guardian",
+        "category": "Weapons",
+        "weight": 0.012173298388246729,
+        "basePrice": 60777.125,
+        "legacyLinkPrice": 64999,
+        "APIlinkPrice": "65000.0",
+        "currentSaleMedianLexeme": "65000",
+        "currentLinkedPrice": 64999,
+        "indexContribution": 1.3018914960812136,
+        "changeContribution": 0.08456165725654056,
+        "changeBase": 6.946486856691569,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1102008,
+        "slug": "black-napoleon",
+        "name": "Black Napoleon",
+        "category": "Equipment",
+        "weight": 0.011660237824523835,
+        "basePrice": 86905.5677830941,
+        "legacyLinkPrice": 80000,
+        "APIlinkPrice": "99999.0",
+        "currentSaleMedianLexeme": "99999",
+        "currentLinkedPrice": 80000,
+        "indexContribution": 1.0733708435000524,
+        "changeContribution": -0.09265293895233125,
+        "changeBase": -7.946059106741665,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1060059,
+        "slug": "dark-shadow-pants",
+        "name": "Dark Shadow Pants",
+        "category": "Equipment",
+        "weight": 0.011212101645553316,
+        "basePrice": 75606.91630591631,
+        "legacyLinkPrice": 94999,
+        "APIlinkPrice": "99999.0",
+        "currentSaleMedianLexeme": "99999",
+        "currentLinkedPrice": 94999,
+        "indexContribution": 1.4087844026282175,
+        "changeContribution": 0.2875742380728858,
+        "changeBase": 25.64855788539313,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2048000,
+        "slug": "pet-equip-speed-scroll-lesser",
+        "name": "Pet Equip Speed Scroll: Lesser",
+        "category": "Scrolls",
+        "weight": 0.010979267908168876,
+        "basePrice": 20984.675255623722,
+        "legacyLinkPrice": 39999.5,
+        "APIlinkPrice": "48999.0",
+        "currentSaleMedianLexeme": "48999",
+        "currentLinkedPrice": 39999.5,
+        "indexContribution": 2.0927901973374987,
+        "changeContribution": 0.9948634065206112,
+        "changeBase": 90.61290924328438,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2044101,
+        "slug": "two-handed-axe-attack-scroll-intermediate",
+        "name": "Two-handed Axe Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.010956393938955509,
+        "basePrice": 59054.94579008074,
+        "legacyLinkPrice": 66000,
+        "APIlinkPrice": "99999.0",
+        "currentSaleMedianLexeme": "99999",
+        "currentLinkedPrice": 66000,
+        "indexContribution": 1.2244901596244018,
+        "changeContribution": 0.12885076572885096,
+        "changeBase": 11.760326111561348,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040506,
+        "slug": "overall-armor-str-scroll-greater",
+        "name": "Overall Armor STR Scroll: Greater",
+        "category": "Scrolls",
+        "weight": 0.010793196418979549,
+        "basePrice": 14760.899912203688,
+        "legacyLinkPrice": 12999,
+        "APIlinkPrice": "19999.0",
+        "currentSaleMedianLexeme": "19999",
+        "currentLinkedPrice": 12999,
+        "indexContribution": 0.9504892051623521,
+        "changeContribution": -0.12883043673560282,
+        "changeBase": -11.936263525146074,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2043801,
+        "slug": "staff-magic-attack-scroll-intermediate",
+        "name": "Staff Magic Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.010499296953750627,
+        "basePrice": 67211.73287671233,
+        "legacyLinkPrice": 120000,
+        "APIlinkPrice": "148998.0",
+        "currentSaleMedianLexeme": "148998",
+        "currentLinkedPrice": 120000,
+        "indexContribution": 1.8745471668780822,
+        "changeContribution": 0.8246174715030193,
+        "changeBase": 78.54025608909406,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 4003005,
+        "slug": "fairy-wing",
+        "name": "Fairy Wing",
+        "category": "Materials",
+        "weight": 0.009877438400026098,
+        "basePrice": 78234.81355932204,
+        "legacyLinkPrice": 59999,
+        "APIlinkPrice": "63000.0",
+        "currentSaleMedianLexeme": "63000",
+        "currentLinkedPrice": 59999,
+        "indexContribution": 0.7575098598704981,
+        "changeContribution": -0.23023398013211158,
+        "changeBase": -23.30907780012106,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040705,
+        "slug": "shoes-speed-scroll-intermediate",
+        "name": "Shoes Speed Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.00969660344550808,
+        "basePrice": 69499.19478527608,
+        "legacyLinkPrice": 133000,
+        "APIlinkPrice": "140000.0",
+        "currentSaleMedianLexeme": "140000",
+        "currentLinkedPrice": 133000,
+        "indexContribution": 1.8556305036872114,
+        "changeContribution": 0.8859701591364034,
+        "changeBase": 91.36912364368435,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1050025,
+        "slug": "blue-starlight",
+        "name": "Blue Starlight",
+        "category": "Equipment",
+        "weight": 0.00925136532501713,
+        "basePrice": 45128.20459290188,
+        "legacyLinkPrice": 43333,
+        "APIlinkPrice": "45000.0",
+        "currentSaleMedianLexeme": "45000",
+        "currentLinkedPrice": 43333,
+        "indexContribution": 0.8883345066469194,
+        "changeContribution": -0.03680202585479363,
+        "changeBase": -3.9780102246395166,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040510,
+        "slug": "overall-armor-dex-scroll-greater",
+        "name": "Overall Armor DEX Scroll: Greater",
+        "category": "Scrolls",
+        "weight": 0.009070538930075218,
+        "basePrice": 13920.458128078817,
+        "legacyLinkPrice": 12260.5,
+        "APIlinkPrice": "20000.0",
+        "currentSaleMedianLexeme": "20000",
+        "currentLinkedPrice": 12260.5,
+        "indexContribution": 0.7988913980342929,
+        "changeContribution": -0.10816249497322898,
+        "changeBase": -11.924594096012775,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1082063,
+        "slug": "dark-cleave",
+        "name": "Dark Cleave",
+        "category": "Equipment",
+        "weight": 0.008840051800479818,
+        "basePrice": 58513.737960339946,
+        "legacyLinkPrice": 44000,
+        "APIlinkPrice": "44000.0",
+        "currentSaleMedianLexeme": "44000",
+        "currentLinkedPrice": 44000,
+        "indexContribution": 0.6647366802728394,
+        "changeContribution": -0.2192684997751424,
+        "changeBase": -24.803983587883614,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1050017,
+        "slug": "dark-crusader-chainmail",
+        "name": "Dark Crusader Chainmail",
+        "category": "Equipment",
+        "weight": 0.008129637584293702,
+        "basePrice": 60494.97133757962,
+        "legacyLinkPrice": 44444,
+        "APIlinkPrice": "43499.0",
+        "currentSaleMedianLexeme": "43499",
+        "currentLinkedPrice": 44444,
+        "indexContribution": 0.5972622266074211,
+        "changeContribution": -0.21570153182194904,
+        "changeBase": -26.532736494758403,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1072128,
+        "slug": "squishy-shoes",
+        "name": "Squishy Shoes",
+        "category": "Equipment",
+        "weight": 0.007045269397414632,
+        "basePrice": 8936.875678610206,
+        "legacyLinkPrice": 15000,
+        "APIlinkPrice": "19999.0",
+        "currentSaleMedianLexeme": "19999",
+        "currentLinkedPrice": 15000,
+        "indexContribution": 1.1825054388319955,
+        "changeContribution": 0.47797849909053225,
+        "changeBase": 67.84389242318167,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2044201,
+        "slug": "two-handed-blunt-weapon-attack-scroll-intermediate",
+        "name": "Two-handed Blunt Weapon Attack Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.006921985822782007,
+        "basePrice": 34157.68743400211,
+        "legacyLinkPrice": 30000,
+        "APIlinkPrice": "58444.0",
+        "currentSaleMedianLexeme": "58444",
+        "currentLinkedPrice": 30000,
+        "indexContribution": 0.6079438928197066,
+        "changeContribution": -0.08425468945849396,
+        "changeBase": -12.172040165293385,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2041008,
+        "slug": "cape-str-scroll-lesser",
+        "name": "Cape STR Scroll: Lesser",
+        "category": "Scrolls",
+        "weight": 0.006801201430382483,
+        "basePrice": 29239.08831646734,
+        "legacyLinkPrice": 69999,
+        "APIlinkPrice": "79500.0",
+        "currentSaleMedianLexeme": "79500",
+        "currentLinkedPrice": 69999,
+        "indexContribution": 1.6282221038240052,
+        "changeContribution": 0.9481019607857569,
+        "changeBase": 139.40212924004487,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2040000,
+        "slug": "hat-accuracy-scroll-lesser",
+        "name": "Hat Accuracy Scroll: Lesser",
+        "category": "Scrolls",
+        "weight": 0.006782054086615597,
+        "basePrice": 8635.806811989101,
+        "legacyLinkPrice": 14499,
+        "APIlinkPrice": "15000.0",
+        "currentSaleMedianLexeme": "15000",
+        "currentLinkedPrice": 14499,
+        "indexContribution": 1.1386660718871537,
+        "changeContribution": 0.460460663225594,
+        "changeBase": 67.8939827587507,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 2048005,
+        "slug": "pet-equip-jump-scroll-intermediate",
+        "name": "Pet Equip Jump Scroll: Intermediate",
+        "category": "Scrolls",
+        "weight": 0.006279787790328642,
+        "basePrice": 17572.60838323353,
+        "legacyLinkPrice": 17000,
+        "APIlinkPrice": "19999.5",
+        "currentSaleMedianLexeme": "19999.5",
+        "currentLinkedPrice": 17000,
+        "indexContribution": 0.6075159140144833,
+        "changeContribution": -0.020462865018380873,
+        "changeBase": -3.258528106617753,
+        "recordedSalesCount": 5
+      },
+      {
+        "itemId": 1372005,
+        "slug": "wizard-wand",
+        "name": "Wizard Wand",
+        "category": "Weapons",
+        "weight": 0.0062666695979803405,
+        "basePrice": 20280.43836565097,
+        "legacyLinkPrice": 24555,
+        "APIlinkPrice": "24471.5",
+        "currentSaleMedianLexeme": "24471.5",
+        "currentLinkedPrice": 24555,
+        "indexContribution": 0.7587512123950483,
+        "changeContribution": 0.13208425259701428,
+        "changeBase": 21.077264491426707,
+        "recordedSalesCount": 5
+      }
+    ],
+    "categories": [
+      {
+        "category": "Scrolls",
+        "index": 172.85762747969417,
+        "changeBase": 72.85762747969417,
+        "weight": 0.6517327026189832,
+        "observedWeight": 0.6517327026189832,
+        "expectedItems": 29,
+        "availableItems": 29
+      },
+      {
+        "category": "Weapons",
+        "index": 137.26211550309102,
+        "changeBase": 37.262115503091024,
+        "weight": 0.17151188840583467,
+        "observedWeight": 0.17151188840583467,
+        "expectedItems": 8,
+        "availableItems": 8
+      },
+      {
+        "category": "Equipment",
+        "index": 115.50159447557029,
+        "changeBase": 15.501594475570286,
+        "weight": 0.13005648452408883,
+        "observedWeight": 0.13005648452408883,
+        "expectedItems": 10,
+        "availableItems": 10
+      },
+      {
+        "category": "Consumables",
+        "index": 131.62220537017774,
+        "changeBase": 31.62220537017774,
+        "weight": 0.020057961546398818,
+        "observedWeight": 0.020057961546398818,
+        "expectedItems": 1,
+        "availableItems": 1
+      },
+      {
+        "category": "Materials",
+        "index": 83.25879718880138,
+        "changeBase": -16.74120281119862,
+        "weight": 0.02664096290469446,
+        "observedWeight": 0.02664096290469446,
+        "expectedItems": 2,
+        "availableItems": 2
+      }
+    ],
+    "reason": null
+  },
+  "daily": {
+    "basis": "api_overview_daily_linked_v2",
+    "activeWindowDays": 64,
+    "availableDayCount": 7,
+    "latestDay": "2026-11-05",
+    "history": [
+      {
+        "day": "2026-10-30",
+        "index": 156.07895235794464,
+        "status": "available",
+        "observedWeight": 1.0000000000000002,
+        "carriedWeight": 0,
+        "partialCalendarDay": false,
+        "backcast": true,
+        "nxRate": 3.09581507629175,
+        "cashItems": 29,
+        "cashRecordedSalesCount": 145
+      },
+      {
+        "day": "2026-10-31",
+        "index": 156.07895235794464,
+        "status": "available",
+        "observedWeight": 1.0000000000000002,
+        "carriedWeight": 0,
+        "partialCalendarDay": false,
+        "backcast": true,
+        "nxRate": 3.09581507629175,
+        "cashItems": 29,
+        "cashRecordedSalesCount": 145
+      },
+      {
+        "day": "2026-11-01",
+        "index": 156.07895235794464,
+        "status": "available",
+        "observedWeight": 1.0000000000000002,
+        "carriedWeight": 0,
+        "partialCalendarDay": false,
+        "backcast": true,
+        "nxRate": 3.09581507629175,
+        "cashItems": 29,
+        "cashRecordedSalesCount": 145
+      },
+      {
+        "day": "2026-11-02",
+        "index": 156.07895235794464,
+        "status": "available",
+        "observedWeight": 1.0000000000000002,
+        "carriedWeight": 0,
+        "partialCalendarDay": false,
+        "backcast": true,
+        "nxRate": 3.09581507629175,
+        "cashItems": 29,
+        "cashRecordedSalesCount": 145
+      },
+      {
+        "day": "2026-11-03",
+        "index": 156.07895235794464,
+        "status": "available",
+        "observedWeight": 1.0000000000000002,
+        "carriedWeight": 0,
+        "partialCalendarDay": false,
+        "backcast": true,
+        "nxRate": 3.09581507629175,
+        "cashItems": 29,
+        "cashRecordedSalesCount": 145
+      },
+      {
+        "day": "2026-11-04",
+        "index": 156.07895235794464,
+        "status": "available",
+        "observedWeight": 1.0000000000000002,
+        "carriedWeight": 0,
+        "partialCalendarDay": false,
+        "backcast": false,
+        "nxRate": 3.09581507629175,
+        "cashItems": 29,
+        "cashRecordedSalesCount": 145
+      },
+      {
+        "day": "2026-11-05",
+        "index": 156.07895235794464,
+        "status": "available",
+        "observedWeight": 1.0000000000000002,
+        "carriedWeight": 0,
+        "partialCalendarDay": false,
+        "backcast": false,
+        "nxRate": 3.09581507629175,
+        "cashItems": 29,
+        "cashRecordedSalesCount": 145
+      }
+    ],
+    "itemHistory": {
+      "schemaVersion": 1,
+      "basis": "actual_api_overview_daily_medians_not_3day_snapshots",
+      "windowDays": 31,
+      "startDayInclusive": "2026-10-06",
+      "endDayInclusive": "2026-11-05",
+      "columns": [
+        "day",
+        "medianUnitPriceLexeme",
+        "recordedSalesCount",
+        "reportedUnitCount",
+        "qualified",
+        "partialCalendarDay",
+        "sourceContextId",
+        "linkedPrice"
+      ],
+      "contexts": [
+        {
+          "contextId": "c0",
+          "captureHash": "617a0c08f6f12e30515393bc818cf06bfde5b17fb37f5402010df95bc86451b7",
+          "operation": "overview",
+          "sourceUrl": "https://maplestory.market/api/market/overview",
+          "rawBodySha256": "a69779beb3e4fe93045393809dae1e98a8d6630c0f1d494db4756be61b7cf739",
+          "capturedAt": "2026-11-06T12:00:00.000Z",
+          "sourceObservedAt": null,
+          "captureTimeKind": "http_response_completed",
+          "sourceGeneratedAt": "2026-11-06T11:59:00.000Z"
+        }
+      ],
+      "rows": [
+        {
+          "itemId": 2040801,
+          "slug": "gloves-attack-scroll-intermediate",
+          "name": "Gloves Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "1999999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              1999999
+            ],
+            [
+              "2026-10-31",
+              "1999999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              1999999
+            ],
+            [
+              "2026-11-01",
+              "1999999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              1999999
+            ],
+            [
+              "2026-11-02",
+              "1999999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              1999999
+            ],
+            [
+              "2026-11-03",
+              "1999999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              1999999
+            ],
+            [
+              "2026-11-04",
+              "1999999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              1999999
+            ],
+            [
+              "2026-11-05",
+              "1999999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              1999999
+            ]
+          ]
+        },
+        {
+          "itemId": 2040805,
+          "slug": "gloves-magic-attack-scroll-intermediate",
+          "name": "Gloves Magic Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "450000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              274999.5
+            ],
+            [
+              "2026-10-31",
+              "450000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              274999.5
+            ],
+            [
+              "2026-11-01",
+              "450000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              274999.5
+            ],
+            [
+              "2026-11-02",
+              "450000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              274999.5
+            ],
+            [
+              "2026-11-03",
+              "450000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              274999.5
+            ],
+            [
+              "2026-11-04",
+              "450000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              274999.5
+            ],
+            [
+              "2026-11-05",
+              "450000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              274999.5
+            ]
+          ]
+        },
+        {
+          "itemId": 2070003,
+          "slug": "kumbi-throwing-stars",
+          "name": "Kumbi Throwing Stars",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "749999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              699999
+            ],
+            [
+              "2026-10-31",
+              "749999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              699999
+            ],
+            [
+              "2026-11-01",
+              "749999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              699999
+            ],
+            [
+              "2026-11-02",
+              "749999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              699999
+            ],
+            [
+              "2026-11-03",
+              "749999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              699999
+            ],
+            [
+              "2026-11-04",
+              "749999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              699999
+            ],
+            [
+              "2026-11-05",
+              "749999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              699999
+            ]
+          ]
+        },
+        {
+          "itemId": 2044701,
+          "slug": "claw-attack-scroll-intermediate",
+          "name": "Claw Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "517499.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              499999
+            ],
+            [
+              "2026-10-31",
+              "517499.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              499999
+            ],
+            [
+              "2026-11-01",
+              "517499.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              499999
+            ],
+            [
+              "2026-11-02",
+              "517499.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              499999
+            ],
+            [
+              "2026-11-03",
+              "517499.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              499999
+            ],
+            [
+              "2026-11-04",
+              "517499.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              499999
+            ],
+            [
+              "2026-11-05",
+              "517499.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              499999
+            ]
+          ]
+        },
+        {
+          "itemId": 2040313,
+          "slug": "earring-luk-scroll-intermediate",
+          "name": "Earring LUK Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "159000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              149999
+            ],
+            [
+              "2026-10-31",
+              "159000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              149999
+            ],
+            [
+              "2026-11-01",
+              "159000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              149999
+            ],
+            [
+              "2026-11-02",
+              "159000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              149999
+            ],
+            [
+              "2026-11-03",
+              "159000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              149999
+            ],
+            [
+              "2026-11-04",
+              "159000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              149999
+            ],
+            [
+              "2026-11-05",
+              "159000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              149999
+            ]
+          ]
+        },
+        {
+          "itemId": 2043301,
+          "slug": "dagger-attack-scroll-intermediate",
+          "name": "Dagger Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "424999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              398944
+            ],
+            [
+              "2026-10-31",
+              "424999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              398944
+            ],
+            [
+              "2026-11-01",
+              "424999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              398944
+            ],
+            [
+              "2026-11-02",
+              "424999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              398944
+            ],
+            [
+              "2026-11-03",
+              "424999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              398944
+            ],
+            [
+              "2026-11-04",
+              "424999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              398944
+            ],
+            [
+              "2026-11-05",
+              "424999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              398944
+            ]
+          ]
+        },
+        {
+          "itemId": 2040309,
+          "slug": "earring-int-scroll-intermediate",
+          "name": "Earring INT Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "120000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              109999
+            ],
+            [
+              "2026-10-31",
+              "120000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              109999
+            ],
+            [
+              "2026-11-01",
+              "120000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              109999
+            ],
+            [
+              "2026-11-02",
+              "120000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              109999
+            ],
+            [
+              "2026-11-03",
+              "120000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              109999
+            ],
+            [
+              "2026-11-04",
+              "120000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              109999
+            ],
+            [
+              "2026-11-05",
+              "120000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              109999
+            ]
+          ]
+        },
+        {
+          "itemId": 2040301,
+          "slug": "earring-str-scroll-intermediate",
+          "name": "Earring STR Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "100000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-10-31",
+              "100000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-01",
+              "100000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-02",
+              "100000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-03",
+              "100000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-04",
+              "100000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-05",
+              "100000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ]
+          ]
+        },
+        {
+          "itemId": 2040305,
+          "slug": "earring-dex-scroll-intermediate",
+          "name": "Earring DEX Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "109999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-10-31",
+              "109999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-01",
+              "109999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-02",
+              "109999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-03",
+              "109999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-04",
+              "109999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-05",
+              "109999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ]
+          ]
+        },
+        {
+          "itemId": 1092002,
+          "slug": "pan-lid",
+          "name": "Pan Lid",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "89999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              84999
+            ],
+            [
+              "2026-10-31",
+              "89999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              84999
+            ],
+            [
+              "2026-11-01",
+              "89999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              84999
+            ],
+            [
+              "2026-11-02",
+              "89999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              84999
+            ],
+            [
+              "2026-11-03",
+              "89999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              84999
+            ],
+            [
+              "2026-11-04",
+              "89999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              84999
+            ],
+            [
+              "2026-11-05",
+              "89999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              84999
+            ]
+          ]
+        },
+        {
+          "itemId": 2048001,
+          "slug": "pet-equip-speed-scroll-intermediate",
+          "name": "Pet Equip Speed Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              105000
+            ],
+            [
+              "2026-10-31",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              105000
+            ],
+            [
+              "2026-11-01",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              105000
+            ],
+            [
+              "2026-11-02",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              105000
+            ],
+            [
+              "2026-11-03",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              105000
+            ],
+            [
+              "2026-11-04",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              105000
+            ],
+            [
+              "2026-11-05",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              105000
+            ]
+          ]
+        },
+        {
+          "itemId": 2043701,
+          "slug": "wand-magic-attack-scroll-intermediate",
+          "name": "Wand Magic Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "350000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              194999
+            ],
+            [
+              "2026-10-31",
+              "350000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              194999
+            ],
+            [
+              "2026-11-01",
+              "350000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              194999
+            ],
+            [
+              "2026-11-02",
+              "350000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              194999
+            ],
+            [
+              "2026-11-03",
+              "350000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              194999
+            ],
+            [
+              "2026-11-04",
+              "350000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              194999
+            ],
+            [
+              "2026-11-05",
+              "350000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              194999
+            ]
+          ]
+        },
+        {
+          "itemId": 2070002,
+          "slug": "mokbi-throwing-stars",
+          "name": "Mokbi Throwing Stars",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "220000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-10-31",
+              "220000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-01",
+              "220000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-02",
+              "220000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-03",
+              "220000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-04",
+              "220000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-05",
+              "220000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ]
+          ]
+        },
+        {
+          "itemId": 1372006,
+          "slug": "fairy-wand",
+          "name": "Fairy Wand",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-10-31",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-01",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-02",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-03",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-04",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-05",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ]
+          ]
+        },
+        {
+          "itemId": 2040001,
+          "slug": "hat-accuracy-scroll-intermediate",
+          "name": "Hat Accuracy Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "49999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              42250
+            ],
+            [
+              "2026-10-31",
+              "49999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              42250
+            ],
+            [
+              "2026-11-01",
+              "49999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              42250
+            ],
+            [
+              "2026-11-02",
+              "49999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              42250
+            ],
+            [
+              "2026-11-03",
+              "49999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              42250
+            ],
+            [
+              "2026-11-04",
+              "49999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              42250
+            ],
+            [
+              "2026-11-05",
+              "49999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              42250
+            ]
+          ]
+        },
+        {
+          "itemId": 2044501,
+          "slug": "bow-attack-scroll-intermediate",
+          "name": "Bow Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "249999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              219900
+            ],
+            [
+              "2026-10-31",
+              "249999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              219900
+            ],
+            [
+              "2026-11-01",
+              "249999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              219900
+            ],
+            [
+              "2026-11-02",
+              "249999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              219900
+            ],
+            [
+              "2026-11-03",
+              "249999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              219900
+            ],
+            [
+              "2026-11-04",
+              "249999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              219900
+            ],
+            [
+              "2026-11-05",
+              "249999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              219900
+            ]
+          ]
+        },
+        {
+          "itemId": 1032007,
+          "slug": "emerald-earrings",
+          "name": "Emerald Earrings",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "21000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              19999
+            ],
+            [
+              "2026-10-31",
+              "21000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              19999
+            ],
+            [
+              "2026-11-01",
+              "21000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              19999
+            ],
+            [
+              "2026-11-02",
+              "21000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              19999
+            ],
+            [
+              "2026-11-03",
+              "21000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              19999
+            ],
+            [
+              "2026-11-04",
+              "21000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              19999
+            ],
+            [
+              "2026-11-05",
+              "21000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              19999
+            ]
+          ]
+        },
+        {
+          "itemId": 2430045,
+          "slug": "mystery-palette-exchange-coupon",
+          "name": "Mystery Palette Exchange Coupon",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "145555",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              124999
+            ],
+            [
+              "2026-10-31",
+              "145555",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              124999
+            ],
+            [
+              "2026-11-01",
+              "145555",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              124999
+            ],
+            [
+              "2026-11-02",
+              "145555",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              124999
+            ],
+            [
+              "2026-11-03",
+              "145555",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              124999
+            ],
+            [
+              "2026-11-04",
+              "145555",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              124999
+            ],
+            [
+              "2026-11-05",
+              "145555",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              124999
+            ]
+          ]
+        },
+        {
+          "itemId": 2070009,
+          "slug": "wooden-top",
+          "name": "Wooden Top",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "222222",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              200000
+            ],
+            [
+              "2026-10-31",
+              "222222",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              200000
+            ],
+            [
+              "2026-11-01",
+              "222222",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              200000
+            ],
+            [
+              "2026-11-02",
+              "222222",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              200000
+            ],
+            [
+              "2026-11-03",
+              "222222",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              200000
+            ],
+            [
+              "2026-11-04",
+              "222222",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              200000
+            ],
+            [
+              "2026-11-05",
+              "222222",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              200000
+            ]
+          ]
+        },
+        {
+          "itemId": 4001000,
+          "slug": "arwens-glass-shoe",
+          "name": "Arwen's Glass Shoe",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "59999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              55000
+            ],
+            [
+              "2026-10-31",
+              "59999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              55000
+            ],
+            [
+              "2026-11-01",
+              "59999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              55000
+            ],
+            [
+              "2026-11-02",
+              "59999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              55000
+            ],
+            [
+              "2026-11-03",
+              "59999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              55000
+            ],
+            [
+              "2026-11-04",
+              "59999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              55000
+            ],
+            [
+              "2026-11-05",
+              "59999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              55000
+            ]
+          ]
+        },
+        {
+          "itemId": 2044301,
+          "slug": "spear-attack-scroll-intermediate",
+          "name": "Spear Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "175000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              150000
+            ],
+            [
+              "2026-10-31",
+              "175000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              150000
+            ],
+            [
+              "2026-11-01",
+              "175000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              150000
+            ],
+            [
+              "2026-11-02",
+              "175000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              150000
+            ],
+            [
+              "2026-11-03",
+              "175000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              150000
+            ],
+            [
+              "2026-11-04",
+              "175000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              150000
+            ],
+            [
+              "2026-11-05",
+              "175000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              150000
+            ]
+          ]
+        },
+        {
+          "itemId": 1472014,
+          "slug": "steel-avarice",
+          "name": "Steel Avarice",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "75000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              74999
+            ],
+            [
+              "2026-10-31",
+              "75000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              74999
+            ],
+            [
+              "2026-11-01",
+              "75000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              74999
+            ],
+            [
+              "2026-11-02",
+              "75000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              74999
+            ],
+            [
+              "2026-11-03",
+              "75000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              74999
+            ],
+            [
+              "2026-11-04",
+              "75000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              74999
+            ],
+            [
+              "2026-11-05",
+              "75000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              74999
+            ]
+          ]
+        },
+        {
+          "itemId": 2044401,
+          "slug": "polearm-attack-scroll-intermediate",
+          "name": "Polearm Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "221110.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-10-31",
+              "221110.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-01",
+              "221110.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-02",
+              "221110.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-03",
+              "221110.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-04",
+              "221110.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ],
+            [
+              "2026-11-05",
+              "221110.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              199999
+            ]
+          ]
+        },
+        {
+          "itemId": 1332013,
+          "slug": "korean-fan",
+          "name": "Korean Fan",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "80000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              73499
+            ],
+            [
+              "2026-10-31",
+              "80000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              73499
+            ],
+            [
+              "2026-11-01",
+              "80000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              73499
+            ],
+            [
+              "2026-11-02",
+              "80000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              73499
+            ],
+            [
+              "2026-11-03",
+              "80000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              73499
+            ],
+            [
+              "2026-11-04",
+              "80000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              73499
+            ],
+            [
+              "2026-11-05",
+              "80000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              73499
+            ]
+          ]
+        },
+        {
+          "itemId": 2044601,
+          "slug": "crossbow-attack-scroll-intermediate",
+          "name": "Crossbow Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "129000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              111111
+            ],
+            [
+              "2026-10-31",
+              "129000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              111111
+            ],
+            [
+              "2026-11-01",
+              "129000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              111111
+            ],
+            [
+              "2026-11-02",
+              "129000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              111111
+            ],
+            [
+              "2026-11-03",
+              "129000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              111111
+            ],
+            [
+              "2026-11-04",
+              "129000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              111111
+            ],
+            [
+              "2026-11-05",
+              "129000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              111111
+            ]
+          ]
+        },
+        {
+          "itemId": 2044001,
+          "slug": "two-handed-sword-attack-scroll-intermediate",
+          "name": "Two-handed Sword Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66666
+            ],
+            [
+              "2026-10-31",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66666
+            ],
+            [
+              "2026-11-01",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66666
+            ],
+            [
+              "2026-11-02",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66666
+            ],
+            [
+              "2026-11-03",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66666
+            ],
+            [
+              "2026-11-04",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66666
+            ],
+            [
+              "2026-11-05",
+              "119999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66666
+            ]
+          ]
+        },
+        {
+          "itemId": 2040518,
+          "slug": "overall-armor-luk-scroll-greater",
+          "name": "Overall Armor LUK Scroll: Greater",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "28000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              16699
+            ],
+            [
+              "2026-10-31",
+              "28000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              16699
+            ],
+            [
+              "2026-11-01",
+              "28000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              16699
+            ],
+            [
+              "2026-11-02",
+              "28000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              16699
+            ],
+            [
+              "2026-11-03",
+              "28000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              16699
+            ],
+            [
+              "2026-11-04",
+              "28000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              16699
+            ],
+            [
+              "2026-11-05",
+              "28000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              16699
+            ]
+          ]
+        },
+        {
+          "itemId": 2040815,
+          "slug": "gloves-crit-rate-scroll-chaos",
+          "name": "Gloves Crit. Rate Scroll: Chaos",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "109943.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-10-31",
+              "109943.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-01",
+              "109943.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-02",
+              "109943.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-03",
+              "109943.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-04",
+              "109943.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ],
+            [
+              "2026-11-05",
+              "109943.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              99999
+            ]
+          ]
+        },
+        {
+          "itemId": 1050010,
+          "slug": "blue-sauna-robe",
+          "name": "Blue Sauna Robe",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "40000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              35000
+            ],
+            [
+              "2026-10-31",
+              "40000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              35000
+            ],
+            [
+              "2026-11-01",
+              "40000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              35000
+            ],
+            [
+              "2026-11-02",
+              "40000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              35000
+            ],
+            [
+              "2026-11-03",
+              "40000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              35000
+            ],
+            [
+              "2026-11-04",
+              "40000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              35000
+            ],
+            [
+              "2026-11-05",
+              "40000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              35000
+            ]
+          ]
+        },
+        {
+          "itemId": 1002156,
+          "slug": "dark-pilfer",
+          "name": "Dark Pilfer",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "48994.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              45000
+            ],
+            [
+              "2026-10-31",
+              "48994.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              45000
+            ],
+            [
+              "2026-11-01",
+              "48994.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              45000
+            ],
+            [
+              "2026-11-02",
+              "48994.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              45000
+            ],
+            [
+              "2026-11-03",
+              "48994.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              45000
+            ],
+            [
+              "2026-11-04",
+              "48994.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              45000
+            ],
+            [
+              "2026-11-05",
+              "48994.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              45000
+            ]
+          ]
+        },
+        {
+          "itemId": 2040514,
+          "slug": "overall-armor-int-scroll-greater",
+          "name": "Overall Armor INT Scroll: Greater",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "25999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15749
+            ],
+            [
+              "2026-10-31",
+              "25999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15749
+            ],
+            [
+              "2026-11-01",
+              "25999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15749
+            ],
+            [
+              "2026-11-02",
+              "25999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15749
+            ],
+            [
+              "2026-11-03",
+              "25999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15749
+            ],
+            [
+              "2026-11-04",
+              "25999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15749
+            ],
+            [
+              "2026-11-05",
+              "25999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15749
+            ]
+          ]
+        },
+        {
+          "itemId": 1472012,
+          "slug": "silver-guardian",
+          "name": "Silver Guardian",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "65000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              64999
+            ],
+            [
+              "2026-10-31",
+              "65000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              64999
+            ],
+            [
+              "2026-11-01",
+              "65000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              64999
+            ],
+            [
+              "2026-11-02",
+              "65000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              64999
+            ],
+            [
+              "2026-11-03",
+              "65000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              64999
+            ],
+            [
+              "2026-11-04",
+              "65000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              64999
+            ],
+            [
+              "2026-11-05",
+              "65000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              64999
+            ]
+          ]
+        },
+        {
+          "itemId": 1102008,
+          "slug": "black-napoleon",
+          "name": "Black Napoleon",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              80000
+            ],
+            [
+              "2026-10-31",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              80000
+            ],
+            [
+              "2026-11-01",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              80000
+            ],
+            [
+              "2026-11-02",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              80000
+            ],
+            [
+              "2026-11-03",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              80000
+            ],
+            [
+              "2026-11-04",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              80000
+            ],
+            [
+              "2026-11-05",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              80000
+            ]
+          ]
+        },
+        {
+          "itemId": 1060059,
+          "slug": "dark-shadow-pants",
+          "name": "Dark Shadow Pants",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-10-31",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-01",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-02",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-03",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-04",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ],
+            [
+              "2026-11-05",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              94999
+            ]
+          ]
+        },
+        {
+          "itemId": 2048000,
+          "slug": "pet-equip-speed-scroll-lesser",
+          "name": "Pet Equip Speed Scroll: Lesser",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "48999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              39999.5
+            ],
+            [
+              "2026-10-31",
+              "48999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              39999.5
+            ],
+            [
+              "2026-11-01",
+              "48999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              39999.5
+            ],
+            [
+              "2026-11-02",
+              "48999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              39999.5
+            ],
+            [
+              "2026-11-03",
+              "48999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              39999.5
+            ],
+            [
+              "2026-11-04",
+              "48999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              39999.5
+            ],
+            [
+              "2026-11-05",
+              "48999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              39999.5
+            ]
+          ]
+        },
+        {
+          "itemId": 2044101,
+          "slug": "two-handed-axe-attack-scroll-intermediate",
+          "name": "Two-handed Axe Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66000
+            ],
+            [
+              "2026-10-31",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66000
+            ],
+            [
+              "2026-11-01",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66000
+            ],
+            [
+              "2026-11-02",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66000
+            ],
+            [
+              "2026-11-03",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66000
+            ],
+            [
+              "2026-11-04",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66000
+            ],
+            [
+              "2026-11-05",
+              "99999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              66000
+            ]
+          ]
+        },
+        {
+          "itemId": 2040506,
+          "slug": "overall-armor-str-scroll-greater",
+          "name": "Overall Armor STR Scroll: Greater",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12999
+            ],
+            [
+              "2026-10-31",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12999
+            ],
+            [
+              "2026-11-01",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12999
+            ],
+            [
+              "2026-11-02",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12999
+            ],
+            [
+              "2026-11-03",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12999
+            ],
+            [
+              "2026-11-04",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12999
+            ],
+            [
+              "2026-11-05",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12999
+            ]
+          ]
+        },
+        {
+          "itemId": 2043801,
+          "slug": "staff-magic-attack-scroll-intermediate",
+          "name": "Staff Magic Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "148998",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              120000
+            ],
+            [
+              "2026-10-31",
+              "148998",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              120000
+            ],
+            [
+              "2026-11-01",
+              "148998",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              120000
+            ],
+            [
+              "2026-11-02",
+              "148998",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              120000
+            ],
+            [
+              "2026-11-03",
+              "148998",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              120000
+            ],
+            [
+              "2026-11-04",
+              "148998",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              120000
+            ],
+            [
+              "2026-11-05",
+              "148998",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              120000
+            ]
+          ]
+        },
+        {
+          "itemId": 4003005,
+          "slug": "fairy-wing",
+          "name": "Fairy Wing",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "63000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              59999
+            ],
+            [
+              "2026-10-31",
+              "63000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              59999
+            ],
+            [
+              "2026-11-01",
+              "63000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              59999
+            ],
+            [
+              "2026-11-02",
+              "63000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              59999
+            ],
+            [
+              "2026-11-03",
+              "63000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              59999
+            ],
+            [
+              "2026-11-04",
+              "63000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              59999
+            ],
+            [
+              "2026-11-05",
+              "63000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              59999
+            ]
+          ]
+        },
+        {
+          "itemId": 2040705,
+          "slug": "shoes-speed-scroll-intermediate",
+          "name": "Shoes Speed Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "140000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              133000
+            ],
+            [
+              "2026-10-31",
+              "140000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              133000
+            ],
+            [
+              "2026-11-01",
+              "140000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              133000
+            ],
+            [
+              "2026-11-02",
+              "140000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              133000
+            ],
+            [
+              "2026-11-03",
+              "140000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              133000
+            ],
+            [
+              "2026-11-04",
+              "140000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              133000
+            ],
+            [
+              "2026-11-05",
+              "140000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              133000
+            ]
+          ]
+        },
+        {
+          "itemId": 1050025,
+          "slug": "blue-starlight",
+          "name": "Blue Starlight",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "45000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              43333
+            ],
+            [
+              "2026-10-31",
+              "45000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              43333
+            ],
+            [
+              "2026-11-01",
+              "45000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              43333
+            ],
+            [
+              "2026-11-02",
+              "45000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              43333
+            ],
+            [
+              "2026-11-03",
+              "45000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              43333
+            ],
+            [
+              "2026-11-04",
+              "45000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              43333
+            ],
+            [
+              "2026-11-05",
+              "45000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              43333
+            ]
+          ]
+        },
+        {
+          "itemId": 2040510,
+          "slug": "overall-armor-dex-scroll-greater",
+          "name": "Overall Armor DEX Scroll: Greater",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "20000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12260.5
+            ],
+            [
+              "2026-10-31",
+              "20000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12260.5
+            ],
+            [
+              "2026-11-01",
+              "20000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12260.5
+            ],
+            [
+              "2026-11-02",
+              "20000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12260.5
+            ],
+            [
+              "2026-11-03",
+              "20000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12260.5
+            ],
+            [
+              "2026-11-04",
+              "20000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12260.5
+            ],
+            [
+              "2026-11-05",
+              "20000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              12260.5
+            ]
+          ]
+        },
+        {
+          "itemId": 1082063,
+          "slug": "dark-cleave",
+          "name": "Dark Cleave",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "44000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44000
+            ],
+            [
+              "2026-10-31",
+              "44000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44000
+            ],
+            [
+              "2026-11-01",
+              "44000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44000
+            ],
+            [
+              "2026-11-02",
+              "44000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44000
+            ],
+            [
+              "2026-11-03",
+              "44000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44000
+            ],
+            [
+              "2026-11-04",
+              "44000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44000
+            ],
+            [
+              "2026-11-05",
+              "44000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44000
+            ]
+          ]
+        },
+        {
+          "itemId": 1050017,
+          "slug": "dark-crusader-chainmail",
+          "name": "Dark Crusader Chainmail",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "43499",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44444
+            ],
+            [
+              "2026-10-31",
+              "43499",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44444
+            ],
+            [
+              "2026-11-01",
+              "43499",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44444
+            ],
+            [
+              "2026-11-02",
+              "43499",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44444
+            ],
+            [
+              "2026-11-03",
+              "43499",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44444
+            ],
+            [
+              "2026-11-04",
+              "43499",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44444
+            ],
+            [
+              "2026-11-05",
+              "43499",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              44444
+            ]
+          ]
+        },
+        {
+          "itemId": 1072128,
+          "slug": "squishy-shoes",
+          "name": "Squishy Shoes",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15000
+            ],
+            [
+              "2026-10-31",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15000
+            ],
+            [
+              "2026-11-01",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15000
+            ],
+            [
+              "2026-11-02",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15000
+            ],
+            [
+              "2026-11-03",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15000
+            ],
+            [
+              "2026-11-04",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15000
+            ],
+            [
+              "2026-11-05",
+              "19999",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              15000
+            ]
+          ]
+        },
+        {
+          "itemId": 2044201,
+          "slug": "two-handed-blunt-weapon-attack-scroll-intermediate",
+          "name": "Two-handed Blunt Weapon Attack Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "58444",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              30000
+            ],
+            [
+              "2026-10-31",
+              "58444",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              30000
+            ],
+            [
+              "2026-11-01",
+              "58444",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              30000
+            ],
+            [
+              "2026-11-02",
+              "58444",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              30000
+            ],
+            [
+              "2026-11-03",
+              "58444",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              30000
+            ],
+            [
+              "2026-11-04",
+              "58444",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              30000
+            ],
+            [
+              "2026-11-05",
+              "58444",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              30000
+            ]
+          ]
+        },
+        {
+          "itemId": 2041008,
+          "slug": "cape-str-scroll-lesser",
+          "name": "Cape STR Scroll: Lesser",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "79500",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              69999
+            ],
+            [
+              "2026-10-31",
+              "79500",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              69999
+            ],
+            [
+              "2026-11-01",
+              "79500",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              69999
+            ],
+            [
+              "2026-11-02",
+              "79500",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              69999
+            ],
+            [
+              "2026-11-03",
+              "79500",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              69999
+            ],
+            [
+              "2026-11-04",
+              "79500",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              69999
+            ],
+            [
+              "2026-11-05",
+              "79500",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              69999
+            ]
+          ]
+        },
+        {
+          "itemId": 2040000,
+          "slug": "hat-accuracy-scroll-lesser",
+          "name": "Hat Accuracy Scroll: Lesser",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "15000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              14499
+            ],
+            [
+              "2026-10-31",
+              "15000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              14499
+            ],
+            [
+              "2026-11-01",
+              "15000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              14499
+            ],
+            [
+              "2026-11-02",
+              "15000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              14499
+            ],
+            [
+              "2026-11-03",
+              "15000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              14499
+            ],
+            [
+              "2026-11-04",
+              "15000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              14499
+            ],
+            [
+              "2026-11-05",
+              "15000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              14499
+            ]
+          ]
+        },
+        {
+          "itemId": 2048005,
+          "slug": "pet-equip-jump-scroll-intermediate",
+          "name": "Pet Equip Jump Scroll: Intermediate",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "19999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              17000
+            ],
+            [
+              "2026-10-31",
+              "19999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              17000
+            ],
+            [
+              "2026-11-01",
+              "19999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              17000
+            ],
+            [
+              "2026-11-02",
+              "19999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              17000
+            ],
+            [
+              "2026-11-03",
+              "19999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              17000
+            ],
+            [
+              "2026-11-04",
+              "19999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              17000
+            ],
+            [
+              "2026-11-05",
+              "19999.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              17000
+            ]
+          ]
+        },
+        {
+          "itemId": 1372005,
+          "slug": "wizard-wand",
+          "name": "Wizard Wand",
+          "role": "goods",
+          "fixedNxCost": null,
+          "points": [
+            [
+              "2026-10-30",
+              "24471.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              24555
+            ],
+            [
+              "2026-10-31",
+              "24471.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              24555
+            ],
+            [
+              "2026-11-01",
+              "24471.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              24555
+            ],
+            [
+              "2026-11-02",
+              "24471.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              24555
+            ],
+            [
+              "2026-11-03",
+              "24471.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              24555
+            ],
+            [
+              "2026-11-04",
+              "24471.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              24555
+            ],
+            [
+              "2026-11-05",
+              "24471.5",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              24555
+            ]
+          ]
+        },
+        {
+          "itemId": 1802000,
+          "slug": "red-ribbon",
+          "name": "Red Ribbon",
+          "role": "cash",
+          "fixedNxCost": 3200,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 1802001,
+          "slug": "yellow-hat",
+          "name": "Yellow Hat",
+          "role": "cash",
+          "fixedNxCost": 3200,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 1802002,
+          "slug": "red-hat",
+          "name": "Red Hat",
+          "role": "cash",
+          "fixedNxCost": 3200,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 1802003,
+          "slug": "black-hat",
+          "name": "Black Hat",
+          "role": "cash",
+          "fixedNxCost": 3200,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 1802007,
+          "slug": "red-top-hat",
+          "name": "Red Top Hat",
+          "role": "cash",
+          "fixedNxCost": 3200,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5000000,
+          "slug": "brown-kitty",
+          "name": "Brown Kitty",
+          "role": "cash",
+          "fixedNxCost": 3500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5000001,
+          "slug": "brown-puppy",
+          "name": "Brown Puppy",
+          "role": "cash",
+          "fixedNxCost": 3500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5000002,
+          "slug": "pink-bunny",
+          "name": "Pink Bunny",
+          "role": "cash",
+          "fixedNxCost": 3500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5000004,
+          "slug": "black-kitty",
+          "name": "Black Kitty",
+          "role": "cash",
+          "fixedNxCost": 3500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5000005,
+          "slug": "white-bunny",
+          "name": "White Bunny",
+          "role": "cash",
+          "fixedNxCost": 3500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5000007,
+          "slug": "black-pig",
+          "name": "Black Pig",
+          "role": "cash",
+          "fixedNxCost": 3500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5050100,
+          "slug": "ap-reset-scroll",
+          "name": "AP Reset Scroll",
+          "role": "cash",
+          "fixedNxCost": 7000,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5051001,
+          "slug": "sp-reset-scroll",
+          "name": "SP Reset Scroll",
+          "role": "cash",
+          "fixedNxCost": 7000,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5150000,
+          "slug": "mystery-hair-coupon",
+          "name": "Mystery Hair Coupon",
+          "role": "cash",
+          "fixedNxCost": 5500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5150100,
+          "slug": "signature-hair-coupon",
+          "name": "Signature Hair Coupon",
+          "role": "cash",
+          "fixedNxCost": 7500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5151000,
+          "slug": "mystery-hair-color-coupon",
+          "name": "Mystery Hair Color Coupon",
+          "role": "cash",
+          "fixedNxCost": 1700,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5151100,
+          "slug": "signature-hair-color-coupon",
+          "name": "Signature Hair Color Coupon",
+          "role": "cash",
+          "fixedNxCost": 4500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5152000,
+          "slug": "mystery-face-coupon",
+          "name": "Mystery Face Coupon",
+          "role": "cash",
+          "fixedNxCost": 3500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5152100,
+          "slug": "signature-eye-color-coupon",
+          "name": "Signature Eye Color Coupon",
+          "role": "cash",
+          "fixedNxCost": 2500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5152200,
+          "slug": "signature-face-coupon",
+          "name": "Signature Face Coupon",
+          "role": "cash",
+          "fixedNxCost": 5500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5153000,
+          "slug": "signature-skin-color-coupon",
+          "name": "Signature Skin Color Coupon",
+          "role": "cash",
+          "fixedNxCost": 2000,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5170000,
+          "slug": "pet-name-tag",
+          "name": "Pet Name Tag",
+          "role": "cash",
+          "fixedNxCost": 1800,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5180000,
+          "slug": "water-of-life",
+          "name": "Water of Life",
+          "role": "cash",
+          "fixedNxCost": 2000,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5190000,
+          "slug": "auto-hp-potion-skill",
+          "name": "Auto HP Potion Skill",
+          "role": "cash",
+          "fixedNxCost": 2500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5190001,
+          "slug": "auto-mp-potion-skill",
+          "name": "Auto MP Potion Skill",
+          "role": "cash",
+          "fixedNxCost": 2500,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5190002,
+          "slug": "auto-move-skill",
+          "name": "Auto Move Skill",
+          "role": "cash",
+          "fixedNxCost": 3000,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5190003,
+          "slug": "expanded-auto-move-skill",
+          "name": "Expanded Auto Move Skill",
+          "role": "cash",
+          "fixedNxCost": 3000,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5680000,
+          "slug": "storage-room-5-slot-coupon",
+          "name": "Storage Room 5-slot Coupon",
+          "role": "cash",
+          "fixedNxCost": 5000,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        },
+        {
+          "itemId": 5680001,
+          "slug": "selective-5-slot-coupon",
+          "name": "Selective 5-slot Coupon",
+          "role": "cash",
+          "fixedNxCost": 5000,
+          "points": [
+            [
+              "2026-10-30",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-10-31",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-01",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-02",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-03",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-04",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ],
+            [
+              "2026-11-05",
+              "10000",
+              5,
+              500,
+              true,
+              false,
+              "c0",
+              null
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  "benchmarks": {
+    "fixed": {
+      "status": "available",
+      "available": true,
+      "rateMesosPerNx": 19.30714854735594,
+      "basis": "frozen_legacy_nx_base_x_current_3day_index",
+      "baseRate": 12.370116697783677
+    },
+    "rolling7": {
+      "status": "available",
+      "available": true,
+      "rateMesosPerNx": 3.095815076291748,
+      "reason": null,
+      "cashAnchorRate": 3.095815076291748,
+      "meanLinkedDailyMpi": 156.07895235794464,
+      "windowStart": "2026-10-30",
+      "windowEndExclusive": "2026-11-06",
+      "dayCount": 7,
+      "missingDays": [],
+      "basis": "cash_daily_anchor_x_current_3day_index_over_daily_mean",
+      "currentCapturedAt": "2026-11-06T12:00:00.000Z"
+    },
+    "rolling3": {
+      "status": "available",
+      "available": true,
+      "rateMesosPerNx": 3.0958150762917502,
+      "reason": null,
+      "cashAnchorRate": 3.0958150762917502,
+      "meanLinkedDailyMpi": 156.07895235794464,
+      "windowStart": "2026-11-03",
+      "windowEndExclusive": "2026-11-06",
+      "dayCount": 3,
+      "missingDays": [],
+      "basis": "cash_daily_anchor_x_current_3day_index_over_daily_mean",
+      "currentCapturedAt": "2026-11-06T12:00:00.000Z"
+    }
+  },
+  "maxInputCapturedAt": "2026-11-06T12:00:00.000Z",
+  "publicationEligible": false,
+  "sourceObservedAt": null,
+  "qualifiedIndividualTrades": 0,
+  "limitations": {
+    "qualityConstant": false,
+    "countsAreVerifiedTradeUnits": false,
+    "exactWindowBoundsKnown": false,
+    "sourceCashFlagIsEconomicClassification": false,
+    "linkedHistoryReplacesLegacyHistory": false
+  },
+  "dailyInputHash": "05794e6928ed192633a515c669119548a62ee0c30a5a3423c8290af2327e399a",
+  "snapshotHash": "cd92516f2e47d2a94ab7a77e19eda424a7c3417bf6ca4af29036cd950dcaf5c8"
+}

@@ -1,4 +1,7 @@
 import {DurableObject} from 'cloudflare:workers';
+import {apiIndexOwnerConfiguration,ApiIndexOwnerBridge} from './api-index-owner-bridge.mjs';
+import * as indexApi from './api-index-calculations.mjs';
+import {loadApiIndexDefinition} from './api-index-definition.mjs';
 import {ApiCollectorCore} from './api-collector-core.mjs';
 import {ApiPrivateHealth} from './api-private-health.mjs';
 import {ApiAlarmScheduler} from './api-alarm-scheduler.mjs';
@@ -17,6 +20,11 @@ export class ApiGrantCollector extends DurableObject {
       this.recurring=new ItemRecurringWork(ctx,env,this.core,this.firstPass);
       this.core.recurring=this.recurring;
       if(this.recurring.active)this.core.observed=new CompositeItemScope(this.firstPass,this.recurring);
+      if(apiIndexOwnerConfiguration(env).status==='ready'){
+        // A failed optional compiled definition closes this feature, never the raw owner.
+        try{const definition=await loadApiIndexDefinition();const registry=this.recurring.registry;
+          if(registry){this.core.indexBridge=new ApiIndexOwnerBridge(ctx,env,this.core,{definition,api:indexApi,registry});registry.setCalculationSink(this.core.indexBridge);}}catch{this.core.indexBridgeInitialization='definition_or_scope_review';}
+      }
       this.privateHealth = new ApiPrivateHealth(ctx, env, this.core);
       this.privateCash = new ApiPrivateCashAlarm(ctx, env, this.core);
       await this.privateCash.initialize();
@@ -64,6 +72,7 @@ export class ApiGrantCollector extends DurableObject {
     if(kind==='discovery')return this.privateCash.runDiscoveryAlarm();
     if(kind==='registry')return this.privateCash.runRegistryAlarm(recurringFrame);
     if(kind==='nx-history')return this.privateCash.runNxHistoryAlarm();
+    if(kind==='calculations')return this.privateCash.runIndexAlarm();
     if(kind==='early'){await this.privateCash.arm();return{status:'early_owner_alarm'};}
     await this.privateCash.beforeProviderEvent();
     let result;

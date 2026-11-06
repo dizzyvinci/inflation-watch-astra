@@ -28,7 +28,7 @@ export function privateCashConfig(env){
 
 export class ApiPrivateCashAlarm{
   constructor(ctx,env,core){
-    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.recurringWork=core.recurring;
+    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.recurringWork=core.recurring;this.indexWork=core.indexBridge;
     // A retained mux must keep tracking legacy provider set/delete operations
     // while the private feature is off. Never create one just for default-off.
     this.hasMux=!!core.row("SELECT name FROM sqlite_master WHERE type='table' AND name='api_cash_alarm_mux'")&&
@@ -42,7 +42,7 @@ export class ApiPrivateCashAlarm{
     if(this.historyStatus()==='ready')this.historyWork=new PrivateItemHistoryWork(ctx,env,core);
     if(this.discoveryStatus()==='ready')this.discoveryWork=makePrivateItemDiscoveryWork(ctx,env,core,{getItemWork:()=>this.itemWork});
     if(nxHistoryArchiveConfiguration(env)==='ready')this.nxArchiveWork=new NxHistoryArchiveWork(ctx,env,{getSourceProducer:()=>this.core.config().enabled===true?this.nxProducer:null,now:()=>core.clock()});
-    if(!this.cashActive&&!this.nxActive&&!this.itemsActive&&!this.historyActive&&!this.discoveryActive&&!this.recurringActive&&!this.nxArchiveActive)return;
+    if(!this.cashActive&&!this.nxActive&&!this.itemsActive&&!this.historyActive&&!this.discoveryActive&&!this.recurringActive&&!this.nxArchiveActive&&!this.indexActive)return;
     core.sql.exec(`CREATE TABLE IF NOT EXISTS api_cash_alarm_mux(id INTEGER PRIMARY KEY CHECK(id=1),
       provider_at INTEGER,private_at INTEGER,recovery_at INTEGER,last_kind TEXT,initialized INTEGER NOT NULL DEFAULT 0)`);
     core.sql.exec('INSERT OR IGNORE INTO api_cash_alarm_mux(id) VALUES(1)');
@@ -95,7 +95,8 @@ export class ApiPrivateCashAlarm{
   get nxActive(){return this.nxProducer!==undefined&&this.nxStatus()==='ready';}
   get recurringActive(){return this.recurringWork?.active===true;}
   get nxArchiveActive(){return this.nxArchiveWork?.active===true;}
-  get active(){return this.cashActive||this.nxActive||this.itemsActive||this.historyActive||this.discoveryActive||this.recurringActive||this.nxArchiveActive;}
+  get indexActive(){return this.indexWork?.active===true;}
+  get active(){return this.cashActive||this.nxActive||this.itemsActive||this.historyActive||this.discoveryActive||this.recurringActive||this.nxArchiveActive||this.indexActive;}
   row(){return this.core.row('SELECT * FROM api_cash_alarm_mux WHERE id=1');}
   async setProviderAlarm(at){
     this.ctx.storage.transactionSync(()=>{
@@ -114,7 +115,7 @@ export class ApiPrivateCashAlarm{
   get providerControl(){return{setAlarm:at=>this.setProviderAlarm(at),deleteAlarm:()=>this.clearProviderAlarm()};}
   async arm(){
     const row=this.row(),now=this.core.clock();
-    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[]),...(this.nxR2Active?[this.nxPublisher.nextDue()]:[]),...(this.itemsActive?[this.itemWork.nextDue()]:[]),...(this.historyActive?[this.historyWork.nextDue()]:[]),...(this.discoveryActive?[this.discoveryWork.nextDue()]:[]),...(this.recurringActive?[this.recurringWork.nextDue()]:[]),...(this.nxArchiveActive?[this.nxArchiveWork.nextDue()]:[])].filter(value=>value!==null);
+    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[]),...(this.nxR2Active?[this.nxPublisher.nextDue()]:[]),...(this.itemsActive?[this.itemWork.nextDue()]:[]),...(this.historyActive?[this.historyWork.nextDue()]:[]),...(this.discoveryActive?[this.discoveryWork.nextDue()]:[]),...(this.recurringActive?[this.recurringWork.nextDue()]:[]),...(this.nxArchiveActive?[this.nxArchiveWork.nextDue()]:[]),...(this.indexActive?[this.indexWork.nextDue()]:[])].filter(value=>value!==null);
     if(!choices.length){await this.ctx.storage.deleteAlarm();return null;}
     const at=Math.max(now+1,Math.min(...choices));await this.ctx.storage.setAlarm(at);return at;
   }
@@ -171,6 +172,7 @@ export class ApiPrivateCashAlarm{
       if(this.discoveryActive)this.discoveryWork.reconcile();
       if(this.nxArchiveActive)this.nxArchiveWork.reconcile(8);
       if(this.recurringActive)this.recurringWork.reconcile(8,recurringFrame);
+      if(this.indexActive)this.indexWork.reconcile(8);
       this.refreshPrivateDeadline();await this.arm();
       return{status:'private_projection_scheduled',queued:reconciled.queued};
     }catch{
@@ -184,6 +186,7 @@ export class ApiPrivateCashAlarm{
       if(this.discoveryActive)this.discoveryWork.defer();
       if(this.nxArchiveActive)this.nxArchiveWork.defer();
       if(this.recurringActive)this.recurringWork.defer();
+      if(this.indexActive)this.indexWork.defer();
       await this.arm();return{status:'private_projection_schedule_retry'};
     }
   }
@@ -202,11 +205,12 @@ export class ApiPrivateCashAlarm{
     const discoveryAt=this.discoveryActive?this.discoveryWork.nextDue():null,discoveryDue=discoveryAt!==null&&discoveryAt<=now;
     const registryAt=this.recurringActive?this.recurringWork.nextDue():null,registryDue=registryAt!==null&&registryAt<=now;
     const nxArchiveAt=this.nxArchiveActive?this.nxArchiveWork.nextDue():null,nxArchiveDue=nxArchiveAt!==null&&nxArchiveAt<=now;
-    if(!privateDue&&!providerDue&&!publicDue&&!nxDue&&!nxR2Due&&!itemsDue&&!historyDue&&!discoveryDue&&!registryDue&&!nxArchiveDue)return'early';
+    const indexAt=this.indexActive?this.indexWork.nextDue():null,indexDue=indexAt!==null&&indexAt<=now;
+    if(!indexDue&&!privateDue&&!providerDue&&!publicDue&&!nxDue&&!nxR2Due&&!itemsDue&&!historyDue&&!discoveryDue&&!registryDue&&!nxArchiveDue)return'early';
     // At most one heavy operation per event; alternate when both are overdue.
     let kind=privateDue&&(!providerDue||row.last_kind!=='private')?'private':'provider';
-    if(publicDue||nxDue||nxR2Due||itemsDue||historyDue||discoveryDue||registryDue||nxArchiveDue){const order=['private','public','nx','nx-r2','items','history','discovery','registry','nx-history','provider'],start=(order.indexOf(row.last_kind)+1)%order.length;
-      kind=[...order.slice(start),...order.slice(0,start)].find(k=>({private:privateDue,public:publicDue,nx:nxDue,'nx-r2':nxR2Due,items:itemsDue,history:historyDue,discovery:discoveryDue,registry:registryDue,'nx-history':nxArchiveDue,provider:providerDue})[k]);}
+    if(publicDue||nxDue||nxR2Due||itemsDue||historyDue||discoveryDue||registryDue||nxArchiveDue||indexDue){const order=['private','public','nx','nx-r2','items','history','discovery','registry','nx-history','calculations','provider'],start=(order.indexOf(row.last_kind)+1)%order.length;
+      kind=[...order.slice(start),...order.slice(0,start)].find(k=>({private:privateDue,public:publicDue,nx:nxDue,'nx-r2':nxR2Due,items:itemsDue,history:historyDue,discovery:discoveryDue,registry:registryDue,'nx-history':nxArchiveDue,calculations:indexDue,provider:providerDue})[k]);}
     this.core.sql.exec(kind==='private'?'UPDATE api_cash_alarm_mux SET last_kind=?,private_at=NULL,recovery_at=NULL WHERE id=1':
       kind==='provider'?'UPDATE api_cash_alarm_mux SET last_kind=?,provider_at=NULL WHERE id=1':'UPDATE api_cash_alarm_mux SET last_kind=? WHERE id=1',kind);return kind;
   }
@@ -330,6 +334,11 @@ export class ApiPrivateCashAlarm{
       try{await this.arm();}catch{if(Number.isSafeInteger(at)){const prior=await this.ctx.storage.getAlarm();await this.ctx.storage.setAlarm(prior===null?at:Math.min(prior,at));}}
       return{status:'nx_history_archive_event_retry',eventKind:'nx_history_archive',providerAttempted:false};
     }
+  }
+  async runIndexAlarm(){
+    if(!this.indexActive)return{status:'disabled',eventKind:'market_calculations',providerAttempted:false};
+    try{await this.armItemsRecovery(this.core.clock()+130000);const result=await this.indexWork.drainOne(until=>this.armItemsRecovery(until));this.indexWork.reconcile(8);this.refreshPrivateDeadline();await this.arm();return{...result,eventKind:'market_calculations',providerAttempted:false};}
+    catch{const at=this.indexWork.defer();try{await this.arm();}catch{if(Number.isSafeInteger(at))await this.ctx.storage.setAlarm(at);}return{status:'index_event_retry',eventKind:'market_calculations',providerAttempted:false};}
   }
   health(){
     if(!this.active)return{status:this.status()};

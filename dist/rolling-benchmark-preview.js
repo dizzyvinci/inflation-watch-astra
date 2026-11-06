@@ -66,6 +66,7 @@
       units: method.units, kind: `prior_${days}_complete_days_cash_anchored_goods_model` };
   }
   function calculate(report, { day: requestedDay, windowDays: requestedDays = windowDays } = {}) {
+    if(report?.apiCalculationView){const model=window.AstraApiCalculations?.headline();return !requestedDay&&requestedDays===windowDays&&model?model:failure(requestedDay,'API historical model captures are distinct from daily observations; no legacy fallback.');}
     const idx = index(report), date = requestedDay ?? report?.latest?.day ?? idx.source;
     return point(report, idx, date, requestedDays);
   }
@@ -84,7 +85,10 @@
   try { const saved = localStorage.getItem(key); if (modes.has(saved)) mode = saved; const days = Number(localStorage.getItem(daysKey)); if (method.allowedWindowDays.includes(days)) windowDays = days; showExplanation = localStorage.getItem(explanationKey) === 'on'; } catch { /* User-approved weekly rolling default; math text stays off. */ }
   try { showWhyThree = localStorage.getItem(whyThreeKey) !== 'off'; showInflationPhrase = localStorage.getItem(inflationPhraseKey) !== 'off'; } catch { /* Concise notes remain on without storage. */ }
   const getState = () => ({ mode, windowDays, showExplanation, showWhyThree, showInflationPhrase });
+  let latestApiReport=null;
   function decorateExplanations() {
+    if(note&&latestApiReport?.apiCalculationView)note.textContent='API model: latest reported 3-day sale-median reference, linked retrospectively to the frozen November 4 index. Rolling NX = count-weighted daily fixed-NX cash anchor over the previous '+windowDays+' complete UTC source-calendar days × current linked goods index / arithmetic mean linked daily MPI over those same days. All 50 same-capture current goods prices are required; no cross-capture carry or reweighting is used for that current reference. Daily goods indices retain the last qualified daily observation where needed and require at least 80% observed basket weight. Every selected complete anchor day must qualify; no seven-to-three-day fallback. Exact 3-day observation bounds and trade times are unknown. The fixed-anchor option retains the frozen reference NX rate. Smega offers and asks do not enter this model.';
+
     for (const target of document.querySelectorAll('.hero-benchmark-explanation, [data-nx-model-description]')) {
       target.querySelector('[data-benchmark-inflation-copy]')?.remove();
       if (showInflationPhrase && target.textContent.trim()) {
@@ -101,8 +105,9 @@
   }
   let decorationQueued = false;
   function queueDecoration() { if (decorationQueued) return; decorationQueued = true; queueMicrotask(() => { decorationQueued = false; decorateExplanations(); }); }
-  document.addEventListener('astramarketsnapshot', queueDecoration);
+  document.addEventListener('astramarketsnapshot', event=>{latestApiReport=event.detail;queueDecoration();});
   function headline(report) {
+    if(report?.apiCalculationView&&window.AstraApiCalculations)return window.AstraApiCalculations.headline();
     const rolling = calculate(report), fixed = frozenPoint(report), requestedMode = mode;
     if (mode === 'rolling' && rolling.available) return { ...rolling, mode: 'rolling', requestedMode, label: `Rolling-anchor goods NX benchmark · ${windowDays} complete days`, changeLabel: `vs previous ${windowDays} complete source days`, observed: false };
     const fallback = mode === 'rolling';
@@ -111,6 +116,7 @@
       changeLabel: 'vs fixed reference week', fallbackReason: fallback ? rolling.reason : null, observed: false };
   }
   function series(report) {
+    if(report?.apiCalculationView)return (window.AstraApiCalculations?.sourceSeries('nx')||[]).map(s=>({...s,label:s.name}));
     const effective = headline(report).mode, fixed = { id: 'fixed', label: effective === 'fixed_fallback' ? 'Reference-week model · rolling fallback' : 'Reference-week goods NX benchmark', points: [] };
     const idx = index(report);
     if (effective !== 'rolling') for (const point of [...idx.goods.values()].sort((a, b) => a.day.localeCompare(b.day))) {

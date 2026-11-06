@@ -52,13 +52,16 @@
   const make = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined) node.textContent = text; return node; };
   const number = value => Number.isFinite(value) ? value.toLocaleString('en-US', { maximumFractionDigits: 0 }) : 'Unavailable';
   const preference = 'astra-popular-fashion-v1';
-  let enabled = true, report = null, sortKey = 'quantity', ascending = false, showAll = false, section, body, tableHost, scope, toggle, expand;
+  let enabled = true, report = null, sortKey = 'quantity', ascending = false, showAll = false, section, body, tableHost, scope, toggle, expand,apiScope;
   try { const stored = localStorage.getItem(preference); if (stored === 'on' || stored === 'off') enabled = stored === 'on'; } catch { /* The default remains usable when storage is blocked. */ }
   function draw() {
     if (!section) return;
     body.hidden = !enabled; toggle.setAttribute('aria-pressed', String(enabled)); toggle.textContent = enabled ? 'Fashion activity: On' : 'Fashion activity: Off';
     section.dataset.enabled = String(enabled); tableHost.replaceChildren();
     const result = calculate(report);
+    const apiItems=report?.apiDailyItems,apiActive=!!report?.apiCalculationView;
+    apiScope.hidden=!apiActive;
+    if(apiActive){const valid=Array.isArray(apiItems)&&apiItems.length===79&&new Set(apiItems.map(r=>r.itemId)).size===79&&apiItems.filter(r=>r.role==='goods').length===50&&apiItems.filter(r=>r.role==='cash').length===29,matches=valid?apiItems.filter(r=>typeof r.name==='string'&&names.has(r.name.toLocaleLowerCase('en-US'))).length:null;apiScope.textContent=matches===0?'The current API calculation scope contains 50 goods and 29 fixed-NX items, with no exact-name matches to these official fashion tables. It does not refresh the broader fashion ranking below. Those retained source rows keep their own publication and daily window.':matches===null?'Current API daily scope is unavailable for fashion coverage. The broader ranking retains its separately dated source.':`${matches} exact-name candidates occur within the partial 79-item API calculation scope; that is not a full fashion universe. This broader ranking remains on its separately dated source until all-item API daily activity is connected.`;}
     if (!result) { scope.textContent = 'No dated cash-catalog history is connected. No fashion popularity is inferred from client metadata.'; expand.hidden = true; return; }
     scope.textContent = `Seven complete source-calendar days: ${result.startDay}–${result.endDay}. Current source day ${result.sourceDay} is excluded. ${result.classifiedItems} exact-name fashion matches / ${result.providerItems} cash market records; ${result.withActivity} have retained counts in this window. Source publication: ${result.publication}.`;
     const rows = [...result.rows].sort((a, b) => {
@@ -96,7 +99,8 @@
     const note = make('p', 'popular-fashion-note', 'Popularity here means recorded source count, not unique buyers, verified transactions, current availability or all server fashion activity. Counts use all retained daily buckets, including low-count days; missing days remain missing. Turnover is Σ(daily median × recorded count), an estimate rather than exact traded mesos. Item-specific quantity conventions can differ. Separate rolling scanner windows and metadata-only items are not added to these counts.');
     const sources = make('details', 'popular-fashion-provenance'), summary = make('summary', '', 'How fashion classification is bounded'); sources.append(summary, make('p', '', 'Only exact, case-insensitive, unambiguous item-name matches to these official Classic World fashion reward tables are included. No fuzzy aliases, assumed crate contents or cash-category-wide classification. This is classification evidence, not proof of a canonical ID, release date or current availability.'));
     for (const edition of evidence.editions) { const p = make('p'), link = make('a', '', edition.title + ' ↗'); link.href = edition.url; link.target = '_blank'; link.rel = 'noopener noreferrer'; p.append(link, document.createTextNode(` · ${edition.names.length} named rewards · receipt ${edition.capturedAt} · SHA-256 ${edition.sha256}`)); sources.append(p); }
-    const more = make('a', '', 'Browse all cash-source evidence →'); more.href = '#cash-catalog'; body.append(title, scope, tableHost, expand, note, more, sources);
+    apiScope=make('p','popular-fashion-api-scope');apiScope.dataset.apiFashionScope='true';apiScope.hidden=true;
+    const more = make('a', '', 'Browse all cash-source evidence →'); more.href = '#cash-catalog'; body.append(title, scope,apiScope, tableHost, expand, note, more, sources);
     const controls = make('div', 'popular-fashion-controls'); controls.dataset.previewControls = 'popular-fashion'; controls.setAttribute('role', 'group'); controls.setAttribute('aria-label', 'Fashion activity visibility'); toggle = make('button'); toggle.type = 'button'; toggle.setAttribute('aria-controls', body.id); controls.append(toggle, make('small', '', 'Display choice only; indices and source collection are unchanged.')); section.append(body, controls);
     const before = host.querySelector('.highlights-activity'); if (before) before.before(section); else host.append(section);
     toggle.addEventListener('click', () => { enabled = !enabled; try { localStorage.setItem(preference, enabled ? 'on' : 'off'); } catch { /* Continue without persistence. */ } draw(); });

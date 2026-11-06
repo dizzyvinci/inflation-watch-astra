@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "kind": "generated_api_calculations_browser_bundle",
+  "buildTool": "esbuild",
+  "buildVersion": "0.28.2",
+  "inputHashMode": "utf8_lf",
+  "target": "es2022",
+  "inputs": [
+    {
+      "path": "ops/api-index-definition-data-v1.json",
+      "sha256": "f13747ca6dc7a7210efb2cb5f8e6b34b5957bb37c95f6f327952ecb6835a7331"
+    },
+    {
+      "path": "ops/api-index-public-contract.mjs",
+      "sha256": "d0757bbbbdba6ccef2a1321c8566c07b610fd6baf900902e446add6e4e972b07"
+    },
+    {
+      "path": "ops/portable-hash.mjs",
+      "sha256": "97549f7ff3aae7e67352ff811505eb8bac246ecf65ec5c3601182e378342680e"
+    },
+    {
+      "path": "ui-src/api-calculations/client.mjs",
+      "sha256": "18155951349d3976bd3c744b4bbc3a133fd37b8311486cfbd3b085bc2e893e67"
+    },
+    {
+      "path": "ui-src/api-calculations/entry.mjs",
+      "sha256": "aaf4f063f62239feccf8819b4bb0365c88f62fefc6be7431712f03a53ff001fe"
+    },
+    {
+      "path": "ui-src/api-calculations/runtime.mjs",
+      "sha256": "71f1eca41af25fb1ce10af134efa9f11012ea9f99df8aa1a7f03c5b231cb6917"
+    },
+    {
+      "path": "ui-src/api-calculations/view-model.mjs",
+      "sha256": "5af725d762c52a22eb54c84ca9caf042285aa9019ee72e1cb8d48e46256b5c7f"
+    }
+  ],
+  "output": {
+    "path": "web/api-calculations.js",
+    "sha256": "17d3bbb0832d1eb3068b8a4785ff593e6e9c5ed610aa2fb16fc7977cb6af53c6",
+    "bytes": 74247
+  }
+}

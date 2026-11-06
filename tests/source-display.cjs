@@ -11,7 +11,7 @@ function setup(initial={status:'ready',serverMode:'accepted_cache',data:valid()}
  const offerHelpers=app.slice(app.indexOf('function smegaReport()'),app.indexOf('function smegaWindow('));
  const health=app.slice(app.indexOf('function sourceHealth('),app.indexOf('function renderOverviewFreshness(')),sources=app.slice(app.indexOf('function renderSources('),app.indexOf('\nfunction conversionValue('));
  const listener="for(const event of ['astraapicashchange','astraapicashstatusready'])document.addEventListener(event,()=>{if(snapshot)renderSources();});";
- assert(app.includes(listener));w.eval('let snapshot=window.__report;'+offerHelpers+health+sources+listener+'window.renderSources=renderSources;window.getTestSnapshot=()=>snapshot;');w.renderSources();const before=[...d.querySelectorAll('[data-status-key]')].filter(n=>n.dataset.statusKey!=='api').map(n=>n.outerHTML);w.eval(script);
+ assert(app.includes(listener));w.eval('let snapshot=window.__report;const apiView=()=>null,apiBindingFailure=()=>null;'+offerHelpers+health+sources+listener+'window.renderSources=renderSources;window.getTestSnapshot=()=>snapshot;');w.renderSources();const before=[...d.querySelectorAll('[data-status-key]')].filter(n=>n.dataset.statusKey!=='api').map(n=>n.outerHTML);w.eval(script);
  return{w,d,errors,before,get fetches(){return fetches},set(value){state=value;d.dispatchEvent(new w.Event('astraapicashchange'))},api:()=>d.querySelector('[data-status-key=api]'),close:()=>w.close()};
 }
 

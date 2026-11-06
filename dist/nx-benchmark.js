@@ -5,6 +5,12 @@
   const positive = value => typeof value === 'number' && Number.isFinite(value) && value > 0;
   // This is a hypothetical comparison, never an observed exchange-rate series.
   function calculate(report) {
+    if(report?.apiCalculationUnavailable)return null;
+    if(report?.apiCalculationView){const view=report.apiCalculationView,active=view.headline,observed=[...view.daily.history].reverse().find(p=>positive(p.nxRate)&&p.cashItems>=3);if(!active.available||!observed)return null;
+      const anchorMpi=active.mode!=='rolling'?100:active.meanMpi,anchorNxRate=active.mode!=='rolling'?report.baseNxRate:active.cashAnchor,factor=view.index/anchorMpi,adjusted=observed.nxRate/factor;
+      if(![anchorMpi,anchorNxRate,factor,adjusted].every(positive))return null;
+      return {api:true,baseNxRate:report.baseNxRate,cpi:view.index,observedNxRate:observed.nxRate,observedDay:observed.day,observedPartial:observed.partialCalendarDay,goodsPriceFactor:factor,anchorMpi,anchorNxRate,modelBenchmarkRate:active.rate,observedGoodsAdjustedRate:adjusted,goodsBuyingPowerChange:100*(adjusted/anchorNxRate-1),rolling:active.mode==='rolling',windowDays:active.windowDays,mode:active.mode,modelLabel:active.label,anchorStart:active.startDay,anchorEnd:active.endExclusive,frozenBenchmarkRate:report.baseNxRate*view.index/100,fallbackReason:null};
+    }
     const baseNxRate = report?.baseNxRate, observedNxRate = report?.latest?.nxRate;
     const active = window.AstraGoodsNxBenchmark?.headline(report) ?? window.AstraRollingBenchmark?.headline(report);
     const selected = positive(active?.rate), rolling = selected && active.mode === 'rolling', cpi = selected ? active.currentMpi ?? active.cpi : report?.latest?.cpi;
@@ -66,7 +72,25 @@
   }
 
   let lastReport;
+  function receiveApi(report){
+    const view=report.apiCalculationView,values=calculate(report),active=view.headline;
+    for(const section of sections){
+      section.querySelector('.nx-benchmark-results').hidden=!values;
+      section.querySelector('.nx-benchmark-intro').textContent='The headline uses the linked 3-day goods-price reference. Actual daily cash-item evidence stays separate: its dates, lookback and trading mix differ.';
+      section.querySelector('.nx-benchmark-status').textContent=`Price reference captured ${view.clocks.currentPrices}; daily anchor evidence captured ${view.clocks.dailyCapture}. Original legacy source ${view.clocks.legacyDaily} is retained separately. These are HTTP receipt clocks, not trade times.`;
+      section.querySelector('.nx-benchmark-inputs').textContent=values?`Latest actual daily cash reference (${values.observedDay}${values.observedPartial?' · partial calendar day':''}): ${number(values.observedNxRate)} mesos/NX. Current linked 3-day goods MPI: ${number(view.index)}. Selected anchor: ${active.mode!=='rolling'?'frozen reference':active.windowDays+' previous complete source-calendar days ('+active.startDay+'–'+active.endExclusive+', end exclusive)'}. These source windows differ; this is a model comparison, not a matched trade.`:active.reason||'The selected model or comparable daily cash evidence is unavailable; no legacy fallback is substituted.';
+      section.querySelector('[data-nx-model-title]').textContent=active.label;
+      section.querySelector('[data-nx-model-description]').textContent='Modelled mesos per NX preserving the selected anchor’s buying power in the fixed goods basket; not an executable exchange quote.';
+      section.querySelector('[data-nx-adjusted-description]').textContent='Latest source-day cash reference divided by the modelled goods-price factor. Its daily window differs from the current three-day price reference.';
+      section.querySelector('[data-nx-change-description]').textContent='Change in that model comparison against the selected cash anchor; not realized profit or a direct exchange spread.';
+      section.querySelector('[data-nx-model-formula]').textContent=active.mode!=='rolling'?'Frozen reference NX rate × linked current goods index / 100.':'Count-weighted fixed-NX daily cash anchor over the previous '+active.windowDays+' complete source-calendar days × current linked goods index / arithmetic mean linked daily MPI over the same days. Every selected anchor day must qualify; missing windows remain unavailable.';
+      section.querySelector('[data-nx-model-limit]').textContent='The frozen November 4 retrospective source link preserves the legacy index level, not identical samples or constant item quality. All 50 current same-capture goods prices are required. Raw API three-day sale medians differ from linked index prices. Exact three-day bounds and individual trade timestamps are unknown. Pre-link API index history is a backcast; legacy history remains separate. Cash anchors still reflect changing cash supply, demand and composition.';
+      for(const node of section.querySelectorAll('[data-nx-benchmark]')){const key=node.dataset.nxBenchmark;node.textContent=values?(key==='model'?number(values.modelBenchmarkRate):key==='adjusted'?number(values.observedGoodsAdjustedRate):signed(values.goodsBuyingPowerChange)):'—';}
+    }
+  }
   function receive(report) {
+    if(report?.apiCalculationView){lastReport=report;receiveApi(report);return;}
+
     lastReport = report;
     const values = calculate(report);
     const published = typeof report?.sourceUpdatedAt === 'string' ? report.sourceUpdatedAt : null;

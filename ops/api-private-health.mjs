@@ -1,3 +1,4 @@
+import {committedCalculationVerificationPins} from './api-index-verification-health.mjs';
 import {privateSqliteStorageHealth} from './api-private-sqlite-size-health.mjs';
 import {privateItemHourExportHealth} from './api-item-hour-export-health.mjs';
 import {privateItemRefreshHealth} from './api-item-recurring-health.mjs';
@@ -124,6 +125,7 @@ export class ApiPrivateHealth{
       configuredDailyCeiling:caps.length?Math.min(...caps):null,
       completedReceipts:this.completedReceipts(config),
       publicCashPublication:this.publicCashProgress(),
+      ...(this.core.indexBridge?.active?{privateMarketCalculations:{...this.core.indexBridge.health(),verificationPins:committedCalculationVerificationPins(this.core,{checkedAt})}}:{}),
       privateNxOffers:privateNxHealth(this.core,this.env),
       privateNxPublication:privateNxR2Health(this.core,this.env),
       privateItems:privateItemHealth(this.core,this.env),privateItemRefresh:privateItemRefreshHealth(this.core,this.env),

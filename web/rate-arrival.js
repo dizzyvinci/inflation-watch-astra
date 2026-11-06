@@ -4,6 +4,7 @@
   const positive = v => typeof v === 'number' && Number.isFinite(v) && v > 0;
   function points(report) {
     if (!report) return [];
+    if(report.apiCalculationView)return (window.AstraGoodsNxBenchmark?.history(report)||[]).filter(p=>positive(p.value)&&typeof p.at==='string'&&Number.isFinite(Date.parse(p.at))).map(p=>({at:p.at,value:p.value,pricesCapturedAt:report.apiCalculationView.clocks.currentPrices,snapshotHash:p.snapshotHash,datePrecision:'capture'})).sort((a,b)=>Date.parse(a.at)-Date.parse(b.at)).slice(-3);
     const selected = window.AstraGoodsNxBenchmark?.history?.(report) ?? window.AstraRollingBenchmark?.series(report)?.[0]?.points;
     if (selected) return selected.filter(point => /^\d{4}-\d{2}-\d{2}$/.test(point.day || '') && positive(point.value)).map(point => ({ day: point.day, at: point.at, value: point.value, partial: !!point.partial })).sort((a,b) => a.day.localeCompare(b.day)).slice(-3);
     if (!positive(report?.baseNxRate)) return [];
@@ -62,6 +63,14 @@
   function draw(force = false) {
     cancel();
     const current = generation, series = points(report), headline = window.AstraGoodsNxBenchmark?.headline(report);
+    if(report?.apiCalculationView){
+      const view=report.apiCalculationView,key=JSON.stringify([view.snapshotHash,headline?.mode,headline?.windowDays,headline?.rate]),changed=key!==lastKey;lastKey=key;lastInputKey=key;
+      if(!positive(headline?.rate)){value.textContent='—';status.textContent='Selected API benchmark unavailable; no legacy value is substituted.';status.dataset.phase='unavailable';return;}
+      const stamp=raw=>{const zone=document.getElementById('display-timezone')?.value||'UTC';try{return new Date(raw).toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23',timeZone:zone})+' '+zone;}catch{return raw;}};
+      const finish=()=>{if(current!==generation)return;value.textContent=format(headline.rate);status.textContent='Latest accepted calculation · price reference captured ('+stamp(view.clocks.currentPrices)+'). Calculation capture history is session-only; receipt times are not trade times.';status.dataset.phase='latest-api';if((changed||(force&&style!=='ticks'))&&enabled&&!motion?.matches)arrival();};
+      if(!enabled||motion?.matches||style==='pulse'||series.length<2||(!force&&!changed)){finish();return;}
+      status.dataset.phase='history';series.slice(0,-1).forEach((point,index)=>later(()=>{if(current!==generation)return;value.textContent=format(point.value);status.textContent='Earlier accepted calculation capture ('+stamp(point.at)+') → latest accepted calculation.';if(style==='fade')arrival();},index*650));later(finish,(series.length-1)*650);return;
+    }
     const definition = { base: positive(report?.baseNxRate) ? report.baseNxRate : null, selectedMode: headline?.mode || window.AstraRollingBenchmark?.getState().mode || 'fixed', anchorWindowDays: headline?.mode==='rolling'?headline.windowDays:null, methodVersion: report?.methodVersion, basketVersion: report?.basketVersion,
       specificationHash: hash(report?.specificationHash), basketHash: hash(report?.basketHash) };
     const dailyKey = JSON.stringify({ definition, sourceAt: sourceTime(report?.sourceUpdatedAt), series });

@@ -40,6 +40,7 @@
   pageHeading.append(pageHeadingCopy);
   const pagePublication = make('p', 'highlights-page-publication');
   pagePublication.id='highlights-source-publication';pagePublication.hidden=true;
+  const apiEvidenceScope=make('p','highlights-api-scope');apiEvidenceScope.hidden=true;
   const cards = make('div', 'highlights-fact-grid');
   cards.id = 'highlights-fact-grid';
   const transactionNote = make('p', 'highlights-evidence-note', 'Individual-transaction trivia is pending: this snapshot contains no qualified individual transaction records. A daily median, recorded count or high/low price cannot identify a largest completed sale.');
@@ -59,7 +60,7 @@
     make('p', 'highlights-evidence-note', 'These are source-published poster counts for each UTC hour, not completed trades, unique people across hours, meso turnover or total server activity. A poster can appear in multiple hours or on both sides. Missing buckets and sides are left missing.'));
   const overview = make('p', 'highlights-overview-link'), overviewLink = make('a', '', 'View estimated meso turnover on Overview →');
   overviewLink.href = '#volume-title'; overview.append(overviewLink);
-  page.append(pageHeading, pagePublication, cards, transactionNote, activity, overview);
+  page.append(pageHeading, pagePublication,apiEvidenceScope, cards, transactionNote, activity, overview);
   const calculationControls=make('div','highlights-detail-controls'),calculationToggle=make('button','','Show calculation details');calculationControls.dataset.previewControls='true';
   calculationToggle.type='button';calculationToggle.setAttribute('aria-pressed','false');calculationToggle.setAttribute('aria-controls','highlights-fact-grid market-highlights-track');calculationControls.append(calculationToggle);page.append(calculationControls);
   const publicationToggle=make('button','','Show source publication');publicationToggle.type='button';publicationToggle.setAttribute('aria-pressed','false');publicationToggle.setAttribute('aria-controls','highlights-source-publication market-highlights-source-publication');calculationControls.append(publicationToggle);
@@ -74,7 +75,7 @@
   const positive = value => Number.isFinite(value) && value > 0;
   const day = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
   const largest = (rows, key) => rows.filter(row => Number.isFinite(row[key])).sort((a, b) => b[key] - a[key] || String(a.slug).localeCompare(String(b.slug)))[0];
-  function highlights(data) {
+  function legacyHighlights(data) {
     const rows = (data.rows || []).filter(row => row.slug && /^[a-z0-9][a-z0-9-]*$/.test(row.slug) && row.name && day(row.priceDay) && positive(row.price));
     const sourceDay=day(String(data.sourceUpdatedAt||'').slice(0,10)),windowDays=Math.round((Date.parse(data.recentEndExclusive)-Date.parse(data.recentStart))/86400000);
     const items = [], add = (row, type, label, value, date, detail = '', direction = 'neutral', numericValue = null) => {
@@ -101,6 +102,38 @@
     const wolbi = (data.contextItems || []).find(row => row.slug === 'wolbi-throwing-stars' && day(row.priceDay) && positive(row.price) && row.notIndexed === true && row.weight === 0);
     if (showContext && wolbi) add(wolbi, 'context', 'Wolbi* context', `${number(wolbi.price)} mesos / ${wolbi.unit || 'unit'} daily median`, wolbi.priceDay, 'zero MPI weight · item-specific supply caveat, not broad deflation', 'neutral', wolbi.price);
     return items;
+  }
+  const sourceDay=value=>{try{return !!day(value)&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;}catch{return false;}};
+  const shiftDay=(value,n)=>new Date(Date.parse(value+'T00:00:00Z')+n*86400000).toISOString().slice(0,10);
+  function receiptClock(value){
+    if(typeof value!=='string'||!Number.isFinite(Date.parse(value)))return 'Unknown';
+    let zone=document.getElementById('display-timezone')?.value||'UTC';try{new Intl.DateTimeFormat('en-US',{timeZone:zone});}catch{zone='UTC';}
+    const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23',timeZoneName:'short'}).formatToParts(new Date(value)).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]));
+    return `${parts.month}-${parts.day}-${parts.year} ${parts.hour}:${parts.minute}:${parts.second} ${parts.timeZoneName}`;
+  }
+  function apiHighlights(data){
+    const view=data?.apiCalculationView,items=data?.apiDailyItems,latest=view?.daily?.latestDay;
+    if(!view||!sourceDay(latest)||!Array.isArray(data.rows)||data.rows.length!==50||new Set(data.rows.map(r=>r.slug)).size!==50||new Set(data.rows.map(r=>r.currentApiReference?.itemId)).size!==50||!Array.isArray(items)||items.length!==79||items.filter(i=>i.role==='goods').length!==50||items.filter(i=>i.role==='cash').length!==29||new Set(items.map(i=>i.itemId)).size!==79||new Set(items.map(i=>i.slug)).size!==79)return [];
+    const rows=[];
+    for(const row of data.rows){const item=items.find(i=>i.role==='goods'&&i.slug===row.slug&&i.name===row.name&&i.itemId===row.currentApiReference?.itemId);if(!item||!Array.isArray(item.points)||item.points.length>31)continue;const points=new Map();let valid=true;
+      for(const p of item.points){const median=p?.medianUnitPriceLexeme,known=typeof median==='string'&&median.length<=160&&/^\d+(?:\.\d+)?$/.test(median)&&Number.isFinite(Number(median))&&Number(median)<=Number.MAX_SAFE_INTEGER;if(!p||!sourceDay(p.day)||points.has(p.day)||median!==null&&!known||!Number.isSafeInteger(p.recordedSalesCount)||p.recordedSalesCount<0||!Number.isSafeInteger(p.reportedUnitCount)||p.reportedUnitCount<0||typeof p.partialCalendarDay!=='boolean'||p.qualified!==(known&&Number(median)>0&&p.recordedSalesCount>=5)||!Number.isFinite(Date.parse(p.source?.capturedAt))||p.linkedPrice!==null&&!positive(p.linkedPrice)){valid=false;break;}points.set(p.day,p);}
+      if(valid)rows.push({...row,points});
+    }
+    const out=[],latestRows=rows.filter(r=>r.points.get(latest)?.qualified),days=Array.from({length:7},(_,i)=>shiftDay(latest,i-7)),completeRows=rows.filter(r=>days.every(d=>r.points.has(d)&&!r.points.get(d).partialCalendarDay));
+    const add=(r,type,label,value,points,numericValue,eligibleCount)=>{if(!r)return;const captures=points.map(p=>p.source.capturedAt).sort((a,b)=>Date.parse(a)-Date.parse(b)),partial=points.some(p=>p.partialCalendarDay),frame=`Actual API daily basis · ${type==='api-count'||type==='api-proxy'?'previous 7 complete source-calendar days':partial?'partial API source day':'completed source-calendar day'} · ${eligibleCount}/50 goods with required evidence`,date=type==='api-count'||type==='api-proxy'?`${days[0]}–${days.at(-1)}`:latest,detail=`Original daily retrievals ${receiptClock(captures[0])}–${receiptClock(captures.at(-1))}; source days stay UTC; calendar cutoff does not prove 24 scanned hours. ${type==='api-proxy'?'Sum of daily median × reported sales count; not exact turnover. ':''}${type==='api-change'?'Frozen linked base; quality/rolls not constant. ':''}Counts are not verified physical units or individual trades.`;
+      out.push({slug:r.slug,name:r.name,type,label,value,compact:Number.isFinite(numericValue)&&Math.abs(numericValue)>=1000?new Intl.NumberFormat('en-US',{notation:'compact',compactDisplay:'short',maximumFractionDigits:1}).format(numericValue):null,date,displayDate:date,detail,direction:'neutral',frame,essential:'',summary:`${label}: ${r.name} · ${value} · ${date} · ${frame}`,text:`${label}: ${r.name} · ${value} · ${date} · ${frame} · ${detail}`,numericValue});};
+    const median=largest(latestRows.map(r=>({...r,observedMedian:Number(r.points.get(latest).medianUnitPriceLexeme)})),'observedMedian');add(median,'api-median','Largest covered API goods daily median',median?`${number(median.observedMedian)} mesos / source unit`:'',median?[median.points.get(latest)]:[],median?.observedMedian,latestRows.length);
+    const changedRows=latestRows.filter(r=>positive(r.basePrice)&&positive(r.points.get(latest).linkedPrice)).map(r=>({...r,dailyLinkedChange:100*(r.points.get(latest).linkedPrice/r.basePrice-1)})).filter(r=>Number.isFinite(r.dailyLinkedChange)),changed=changedRows.sort((a,b)=>Math.abs(b.dailyLinkedChange)-Math.abs(a.dailyLinkedChange)||a.slug.localeCompare(b.slug))[0];add(changed,'api-change','Largest covered API daily linked move',changed?`${changed.dailyLinkedChange>=0?'+':''}${changed.dailyLinkedChange.toFixed(1)}%`:'',changed?[changed.points.get(latest)]:[],changed?.dailyLinkedChange,changedRows.length);
+    const activity=completeRows.map(r=>{let count=0,proxy=0,priced=true;for(const d of days){const p=r.points.get(d);count+=p.recordedSalesCount;if(!p.qualified)priced=false;else proxy+=Number(p.medianUnitPriceLexeme)*p.recordedSalesCount;}return {...r,count:Number.isSafeInteger(count)?count:null,proxy:priced&&Number.isFinite(proxy)&&proxy<=Number.MAX_SAFE_INTEGER?proxy:null};});
+    const countRows=activity.filter(r=>Number.isFinite(r.count)),proxyRows=activity.filter(r=>Number.isFinite(r.proxy));
+    const count=largest(countRows,'count');add(count,'api-count','Most covered API goods reported sales',count?`${number(count.count)} reported sales counts`:'',count?days.map(d=>count.points.get(d)):[],count?.count,countRows.length);
+    const proxy=largest(proxyRows,'proxy');add(proxy,'api-proxy','Largest covered API goods turnover proxy',proxy?`${number(proxy.proxy)} mesos proxy`:'',proxy?days.map(d=>proxy.points.get(d)):[],proxy?.proxy,proxyRows.length);
+    return out;
+  }
+  function highlights(data){
+    if(!data?.apiCalculationView)return legacyHighlights(data);
+    const legacy=legacyHighlights({...data,rows:Array.isArray(data.retainedLegacyRows)?data.retainedLegacyRows:[]}).map(item=>({...item,label:'Retained source · '+item.label,frame:'Retained legacy source · '+item.frame,summary:'Retained legacy source · '+item.summary,text:'Retained legacy source · '+item.text}));
+    return [...apiHighlights(data),...legacy];
   }
   function highlightGraphic(item, includeKind, headingLevel) {
     const graphic = make('span', 'market-highlight-graphic'), image = make('img', 'market-highlight-sprite');
@@ -144,6 +177,8 @@
   }
   function drawPage() {
     if (!report) return;
+    apiEvidenceScope.hidden=!report.apiCalculationView;
+    if(report.apiCalculationView){const v=report.apiCalculationView;apiEvidenceScope.textContent=`API facts cover only the fixed 50 goods, using actual UTC daily aggregates through ${sourceDay(v.daily?.latestDay)?v.daily.latestDay:'an unavailable source day'}. Daily publication ${receiptClock(v.clocks?.dailyPublisher)}; original daily retrieval ${receiptClock(v.clocks?.dailyCapture)}. A latest partial source day is identified on its facts; prior-week facts require all seven prior calendar days per ranked item. These are not the current 3-day reference or a full-market ranking. Retained legacy facts keep their separate original dates.`;}
     pagePublication.textContent = 'Daily source publication: ' + utc(report.sourceUpdatedAt) + '. Item dates and the activity capture below are separately dated.';
     pageHeading.title=pagePublication.textContent;pagePublication.hidden=!showPublication;
     cards.replaceChildren();
@@ -243,6 +278,7 @@
   motion?.addEventListener?.('change', update);
   window.addEventListener('hashchange',()=>{if(window.location.hash==='#highlights'&&report)drawPage();});
   window.addEventListener('resize',()=>{if(report&&!page.hidden)drawCountChart(hourlyActivity(report));});
+  document.addEventListener('change',event=>{if(event.target?.id==='display-timezone'&&report?.apiCalculationView){drawPage();if(enabled)draw();}});
   document.addEventListener('astramarketsnapshot', event => {
     if (!event.detail || !Array.isArray(event.detail.rows)) return;
     report = event.detail;

@@ -4,7 +4,9 @@
   const DAY = 86400000, positive = v => typeof v === 'number' && Number.isFinite(v) && v > 0;
   const validDay = v => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v) && Number.isFinite(Date.parse(v + 'T00:00:00Z')) && new Date(v + 'T00:00:00Z').toISOString().slice(0, 10) === v;
   const shift = (day, n) => new Date(Date.parse(day + 'T00:00:00Z') + n * DAY).toISOString().slice(0, 10);
+  const capture=value=>{if(typeof value!=='string'||!Number.isFinite(Date.parse(value)))return 'unknown';const zone=document.getElementById('display-timezone')?.value||'UTC';try{return new Date(value).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:zone})+' '+zone+' '+new Date(value).toLocaleDateString('en-US',{year:'numeric',timeZone:zone});}catch{return value;}};
   function sourceWindow(report) {
+    if(report?.apiCalculationView){const publisher=report.apiCalculationView.clocks?.dailyPublisher,day=typeof publisher==='string'?publisher.slice(0,10):null;if(!validDay(day)||!/(?:Z|[+-]\d\d:\d\d)$/.test(publisher)||!Number.isFinite(Date.parse(publisher)))return null;const end=shift(day,-1);return {start:shift(end,-6),end,days:7,possibleReturns:6};}
     const published = String(report?.sourceUpdatedAt || '').slice(0, 10);
     if (!validDay(published)) return null;
     let end = validDay(report.lastCompleteDay) && report.lastCompleteDay <= published ? report.lastCompleteDay : report.latest?.partial === false ? published : shift(published, -1);
@@ -36,7 +38,7 @@
     sorted.forEach((row, index) => { if (index === 0 || row.value !== prior) rank = index + 1; prior = row.value; values.set(row.slug, { ...row, rank }); });
     return { values, eligible: sorted.length, total: unique.size };
   }
-  function model(report) {
+  function legacyModel(report) {
     const window = sourceWindow(report); if (!window) return null;
     const cash = new Map(), goods = new Map();
     const accept = (map, row) => {
@@ -57,6 +59,26 @@
     let nxRows = report.cash || []; try { if (typeof windowThis.buildCashPricing === 'function') nxRows = windowThis.buildCashPricing(report).rows; } catch { /* Retained cash rows still define a bounded fallback cohort. */ }
     return { window, cashItems, goodsItems, bySlug, categories, cohorts: { goods: rankCohort(report.rows, bySlug), nx: rankCohort(nxRows, bySlug), catalog: rankCohort(report.cashCatalog?.rows, bySlug) }, cashWinner: winner(cashItems), goodsWinner: winner(goodsItems), sourceUpdatedAt: report.sourceUpdatedAt };
   }
+  function model(report) {
+    if(!report?.apiCalculationView)return legacyModel(report);
+    const view=report.apiCalculationView,window=sourceWindow(report);if(!window)return null;
+    const items=Array.isArray(report.apiDailyItems)?report.apiDailyItems:[],ids=new Set(),slugs=new Set(),api=[];
+    if(items.length!==79||items.filter(r=>r?.role==='goods').length!==50||items.filter(r=>r?.role==='cash').length!==29)return null;
+    for(const row of items){if(!row||!Number.isSafeInteger(row.itemId)||row.itemId<1||ids.has(row.itemId)||typeof row.slug!=='string'||!/^[a-z0-9][a-z0-9-]*$/.test(row.slug)||slugs.has(row.slug)||!['goods','cash'].includes(row.role)||!Array.isArray(row.points)||row.points.length>31)return null;ids.add(row.itemId);slugs.add(row.slug);
+      const seen=new Set();let duplicate=false;const history=[];for(const p of row.points){if(!p||!validDay(p.day))continue;if(seen.has(p.day)){duplicate=true;break;}seen.add(p.day);if(p.qualified!==true||p.partialCalendarDay!==false||!Number.isSafeInteger(p.recordedSalesCount)||p.recordedSalesCount<5)continue;const price=row.role==='goods'?p.linkedPrice:typeof p.medianUnitPriceLexeme==='string'?Number(p.medianUnitPriceLexeme):null;if(positive(price))history.push([p.day,price,p.recordedSalesCount]);}
+      const base=(report.rows||[]).find(r=>r.slug===row.slug);if(row.role==='goods'&&!base)return null;
+      const usedDays=new Set((duplicate?[]:history).filter(p=>p[0]>=window.start&&p[0]<=window.end).map(p=>p[0]));
+      const originalReceipts=row.points.filter(p=>usedDays.has(p?.day)&&typeof p.source?.capturedAt==='string'&&Number.isFinite(Date.parse(p.source.capturedAt))).map(p=>p.source.capturedAt).sort((a,b)=>Date.parse(a)-Date.parse(b));
+      api.push({slug:row.slug,name:row.name,category:row.role==='goods'?base.category:'Cash Shop',role:row.role,history:duplicate?[]:history,originalReceipts});
+    }
+    const describe=row=>({slug:row.slug,name:row.name,category:row.category,oldestOriginalReceipt:row.originalReceipts[0]??null,newestOriginalReceipt:row.originalReceipts.at(-1)??null,...dailyVolatility(row.history,window)}),cashItems=api.filter(r=>r.role==='cash').map(describe),goodsItems=api.filter(r=>r.role==='goods').map(describe),bySlug=new Map([...cashItems,...goodsItems].map(r=>[r.slug,r]));
+    const categories=(report.categories||[]).map(category=>{const members=(report.rows||[]).filter(r=>r.category===category.name),qualified=members.map(r=>bySlug.get(r.slug)).filter(r=>Number.isFinite(r?.value)).sort((a,b)=>a.value-b.value),middle=Math.floor(qualified.length/2);return {name:category.name,value:qualified.length?qualified.length%2?qualified[middle].value:(qualified[middle-1].value+qualified[middle].value)/2:null,eligible:qualified.length,total:members.length,kind:'median_member_volatility'};});
+    const winner=rows=>[...rows].filter(r=>Number.isFinite(r.value)).sort((a,b)=>b.value-a.value||a.slug.localeCompare(b.slug))[0]||null;
+    const {apiCalculationView:_view,apiDailyItems:_items,...legacyReport}=report;
+    legacyReport.sourceUpdatedAt=report.cashCatalog?.sourceUpdatedAt||view.clocks?.legacyDaily;delete legacyReport.lastCompleteDay;legacyReport.latest={...report.latest,partial:true};
+    const legacy=legacyModel(legacyReport),catalog=legacy?.cohorts.catalog||rankCohort(report.cashCatalog?.rows,new Map());
+    return {basis:'api_actual_daily',window,cashItems,goodsItems,bySlug,categories,cohorts:{goods:rankCohort(report.rows,bySlug),nx:rankCohort(api.filter(r=>r.role==='cash'),bySlug),catalog},cashWinner:winner(cashItems),goodsWinner:winner(goodsItems),sourceUpdatedAt:view.clocks.dailyPublisher,dailyCapturedAt:view.clocks.dailyCapture,catalogWindow:legacy?.window??null,legacyCatalogPublished:legacyReport.sourceUpdatedAt};
+  }
   const windowThis = window;
   window.AstraVolatilityPreview = Object.freeze({ sourceWindow, dailyVolatility, model, rankCohort });
   const options = document.getElementById('display-options'); if (!options) return;
@@ -68,7 +90,7 @@
   try { tablesEnabled = localStorage.getItem(tableKey) !== 'off'; } catch { /* Table columns default on. */ }
   const controls = make('div', undefined, 'hero-layout-options volatility-preview-options'); controls.dataset.previewControls = ''; controls.setAttribute('role', 'group'); controls.setAttribute('aria-label', 'Daily price volatility preview');
   const toggle = make('button'), categoryToggle = make('button'), cashToggle = make('button'), tableToggle = make('button'); toggle.type = categoryToggle.type = cashToggle.type = tableToggle.type = 'button'; categoryToggle.dataset.categoryVolatility = ''; categoryToggle.setAttribute('aria-controls', 'category-cards');cashToggle.dataset.cashVolatility = '';cashToggle.setAttribute('aria-controls','cash-item-highlights');tableToggle.dataset.tableVolatility = '';tableToggle.setAttribute('aria-controls','basket-table cash-table view-cash-catalog');
-  controls.append(toggle, categoryToggle, cashToggle, tableToggle, make('small', 'Independent display choices. 7-day window; daily medians, not individual trades. Category labels summarize member volatilities, not category-index volatility.')); options.append(controls);
+  const scopeNote=make('small', 'Independent display choices. 7-day window; daily medians, not individual trades. Category labels summarize member volatilities, not category-index volatility.');controls.append(toggle, categoryToggle, cashToggle, tableToggle, scopeNote); options.append(controls);
   const scopes = '#category-cards,#cash-item-highlights,#market-highlights-track,#highlights-fact-grid,#basket-table,#cash-table';
   const observer = new MutationObserver(records => {
     if (!current || scheduled || !(enabled || categoryEnabled || cashEnabled || tablesEnabled)) return;
@@ -84,7 +106,7 @@
   const tableRows = (table, kind) => [...(table.tBodies[0]?.rows || [])].filter(row => kind === 'nx' ? row.dataset.cashItem : row.cells[0]?.querySelector('[data-item]'));
   const tableSlug = (row, kind) => kind === 'nx' ? row.dataset.cashItem : row.cells[0]?.querySelector('[data-item]')?.dataset.item;
   function tableTitle(cohort, kind) {
-    return `${current.window.start}–${current.window.end}: sample SD of consecutive qualified daily-median log returns × 100; minimum five of six returns, no missing-day bridge or annualization. Rank 1 is highest volatility, not best trading value. ${cohort.eligible} eligible / ${cohort.total} ${kind === 'goods' ? 'fixed goods-basket' : 'fixed-NX cash'} items before search/filter. Ranking uses unrounded values; exact ties share a competition rank.`;
+    return `${current.basis==='api_actual_daily'?'API actual daily medians · ':''}${current.window.start}–${current.window.end}: sample SD of consecutive qualified daily-median log returns × 100; minimum five of six returns, no missing-day bridge or annualization. Rank 1 is highest volatility, not best trading value. ${cohort.eligible} eligible / ${cohort.total} ${kind === 'goods' ? 'fixed goods-basket' : 'fixed-NX cash'} items before search/filter. Ranking uses unrounded values; exact ties share a competition rank.${current.basis==='api_actual_daily'?` Partial UTC source days excluded. Daily receipt ${capture(current.dailyCapturedAt)}; reported sales counts are not units; quality is mixed/unknown. Current 3-day reference is separate.`:''}`;
   }
   function sortRows(table, kind, state) {
     const cohort = current.cohorts[kind], rows = tableRows(table, kind), key = state.key === 'rank' ? 'rank' : 'value';
@@ -116,14 +138,15 @@
         for (const key of ['value', 'rank']) {
           let cell = [...row.cells].find(td => td.dataset.volatilityColumn === key); if (!cell) { cell = make('td', undefined, 'volatility-table-cell'); cell.dataset.volatilityColumn = key; row.append(cell); }
           const text = point ? key === 'value' ? `${percent(point.value)} · ${point.returns}/6 returns` : `#${point.rank} of ${cohort.eligible} eligible / ${cohort.total} items` : 'Unavailable';
-          if (cell.textContent !== text) cell.textContent = text; cell.dataset.sortValue = point ? String(point[key]) : ''; cell.title = title;
+          if (cell.textContent !== text) cell.textContent = text; cell.dataset.sortValue = point ? String(point[key]) : ''; cell.title = title+(current.basis==='api_actual_daily'&&point?` Original used daily receipt range ${capture(point.oldestOriginalReceipt)}–${capture(point.newestOriginalReceipt)}; not individual sale times.`:'');
         }
       }
       if (tableStates.has(kind)) sortRows(table, kind, tableStates.get(kind));
     }
   }
   function syncCatalog(force = false) {
-    const cohort = current?.cohorts.catalog, detail = tablesEnabled && current ? { enabled: true, start: current.window.start, end: current.window.end, eligible: cohort.eligible, total: cohort.total,
+    const cohort = current?.cohorts.catalog,window=current?.basis==='api_actual_daily'?current.catalogWindow:current?.window, detail = tablesEnabled && current && window ? { enabled: true, start: window.start, end: window.end, eligible: cohort.eligible, total: cohort.total,
+      ...(current.basis==='api_actual_daily'?{sourceKind:'legacy_daily_catalog',sourcePublishedAt:current.legacyCatalogPublished}:{}),
       rows: [...cohort.values.values()].map(row => ({ slug: row.slug, value: row.value, rank: row.rank, returns: row.returns })) } : { enabled: false };
     const fingerprint = JSON.stringify(detail); if (!force && fingerprint === lastCatalogKey) return; lastCatalogKey = fingerprint;
     document.dispatchEvent(new CustomEvent('astracashcatalogvolatility', { detail }));
@@ -142,9 +165,9 @@
     if (!fallback) image.src = local ? mapped : `assets/${item.slug}.svg`;
     image.addEventListener('error', () => { if (megaphone) { failedMegaphoneSprites.set(item.slug, mapped); image.replaceWith(generic()); } else if (image.getAttribute('src') === 'assets/meso-pouch.png') image.hidden = true; else image.src = 'assets/meso-pouch.png'; });
     const copy = make('span', undefined, 'market-highlight-copy'), title = make('span', undefined, 'market-highlight-title-line'), value = make('span', undefined, 'market-highlight-value-line');
-    title.append(make('strong', kind === 'cash' ? 'Most volatile cash item' : 'Most volatile goods item', 'market-highlight-kind'), make('span', item.name, 'market-highlight-headline'));
+    title.append(make('strong', current.basis==='api_actual_daily'?kind==='cash'?'Most volatile fixed-NX cash item':'Most volatile goods-basket item':kind === 'cash' ? 'Most volatile cash item' : 'Most volatile goods item', 'market-highlight-kind'), make('span', item.name, 'market-highlight-headline'));
     value.append(make('strong', `${percent(item.value)} daily price volatility`, 'market-highlight-value'));
-    copy.append(title, value, make('small', `${current.window.start}–${current.window.end} · ${item.returns} consecutive daily returns · medians, not individual trades`, 'market-highlight-dates'));
+    copy.append(title, value, make('small', `${current.basis==='api_actual_daily'?'API actual daily · ':''}${current.window.start}–${current.window.end} · ${item.returns} consecutive daily returns · medians, not individual trades${current.basis==='api_actual_daily'?` · original daily receipt range ${capture(item.oldestOriginalReceipt)}–${capture(item.newestOriginalReceipt)}`:''}`, 'market-highlight-dates'));
     if (fallback) copy.append(make('small', 'Generic megaphone icon', 'volatility-icon-note'));
     root.append(fallback ? generic() : image, copy); return root;
   }
@@ -153,7 +176,7 @@
     card.dataset.highlightType = 'volatility-' + kind;
     const link = make(duplicate ? 'span' : 'a');
     if (!duplicate) { const known = [...(report.rows || []), ...(report.cash || []), ...(report.contextItems || [])].some(row => row.slug === item.slug); link.href = known ? '#item/' + encodeURIComponent(item.slug) : '#cash-catalog'; }
-    link.setAttribute('aria-label', `Highest observed daily price volatility in ${kind === 'cash' ? 'the captured cash catalog' : 'the captured goods-basket/context cohort (source-category scope)'}: ${item.name}; ${percent(item.value)}; ${current.window.start}–${current.window.end}; ${item.returns} daily returns.`);
+    link.setAttribute('aria-label', `Highest observed daily price volatility in ${current.basis==='api_actual_daily'?kind==='cash'?'the fixed 29 NX-cost API cash cohort':'the fixed 50 API goods basket':kind === 'cash' ? 'the captured cash catalog' : 'the captured goods-basket/context cohort (source-category scope)'}: ${item.name}; ${percent(item.value)}; ${current.window.start}–${current.window.end}; ${item.returns} daily returns.`);
     link.title = 'Sample standard deviation of consecutive qualified daily-median log returns × 100. Minimum five returns; no annualization. Ranking is limited to the captured cohort.';
     link.append(graphic(item, kind)); card.append(link); return card;
   }
@@ -165,9 +188,10 @@
       categoryToggle.textContent = 'Category member volatility: ' + (categoryEnabled ? 'On' : 'Off'); categoryToggle.setAttribute('aria-pressed', String(categoryEnabled));
       cashToggle.textContent = 'Cash-card volatility: ' + (cashEnabled ? 'On' : 'Off'); cashToggle.setAttribute('aria-pressed', String(cashEnabled));
       tableToggle.textContent = 'Volatility table columns: ' + (tablesEnabled ? 'On' : 'Off'); tableToggle.setAttribute('aria-pressed', String(tablesEnabled));
+      scopeNote.textContent=current?.basis==='api_actual_daily'?`API actual daily medians: fixed 50 goods / 29 fixed-NX cash items, complete UTC source days only. Current 3-day reference is separate. Latest overview receipt ${capture(current.dailyCapturedAt)}. Broader cash-catalog volatility remains the separate legacy daily source${current.catalogWindow?` (${current.catalogWindow.start}–${current.catalogWindow.end}; published ${capture(current.legacyCatalogPublished)})`:': unavailable'}. Category labels summarize member volatilities, not category-index volatility.`:'Independent display choices. 7-day window; daily medians, not individual trades. Category labels summarize member volatilities, not category-index volatility.';
       decorateTables(); syncCatalog();
       if (!current) return;
-      const dates = `${current.window.start}–${current.window.end}; up to six within-window returns. Each daily median needs at least five recorded source sales. No missing-day bridge or carry-forward. Sample SD of daily log returns × 100; not annualized.`;
+      const dates = `${current.basis==='api_actual_daily'?'API actual daily basis; partial source days excluded. ':''}${current.window.start}–${current.window.end}; up to six within-window returns. Each daily median needs at least five recorded source sales. No missing-day bridge or carry-forward. Sample SD of daily log returns × 100; not annualized.${current.basis==='api_actual_daily'?` Daily receipt ${capture(current.dailyCapturedAt)}; reported sale counts not physical units; no constant stat/quality history is inferred.`:''}`;
       for (const card of categoryEnabled ? document.querySelectorAll('.category-card') : []) {
         const name = card.querySelector('[data-category]')?.dataset.category, category = current.categories.find(row => row.name === name); if (!category) continue;
         badge(card, `7-day median member volatility: ${percent(category.value)} · ${category.eligible}/${category.total} items`, `${dates} Unweighted median of sufficiently sampled member volatilities; this is not the category index's volatility.`);
@@ -195,5 +219,6 @@
   document.addEventListener('click', event => { if(event.target.closest?.('button[data-cash-best-value],button[data-cash-side]'))tableStates.delete('nx');const header = event.target.closest?.('th'); if (!header || !event.target.closest('button') || event.target.closest('[data-volatility-sort]')) return; const kind = header.closest('table')?.dataset.volatilityTable; if (kind) tableStates.delete(kind); }, true);
   document.addEventListener('astracashcatalogcolumnsready', () => syncCatalog(true));
   document.addEventListener('astramarketsnapshot', event => { if (event.detail && typeof event.detail === 'object') { report = event.detail; calculate(); } });
+  document.addEventListener('change',event=>{if(event.target?.id==='display-timezone')calculate();});
   decorate(); document.dispatchEvent(new Event('astramarkethighlightsready'));
 })();

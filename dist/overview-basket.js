@@ -32,7 +32,26 @@
   const headingKey='astra-overview-basket-heading-v1';let concise=false;try{concise=localStorage.getItem(headingKey)==='concise'}catch{}const headingToggle=make('button');headingToggle.type='button';headingToggle.dataset.overviewBasketHeading='true';const updateHeading=()=>{section.querySelector('h2').textContent=concise?'All 50 items, in context.':'The representative 50 items of the Maple Economy and Meso Price Index';headingToggle.textContent=concise?'Heading: Concise':'Heading: Representative 50';headingToggle.setAttribute('aria-pressed',String(!concise))};headingToggle.addEventListener('click',()=>{concise=!concise;try{localStorage.setItem(headingKey,concise?'concise':'representative')}catch{}updateHeading()});controls.append(headingToggle);updateHeading();
   controls.append(make('small', 'Display only · the original statistics strip and its values are preserved.'));
   section.append(controls); toggle.addEventListener('click', () => { enabled = !enabled; apply(); try { localStorage.setItem(key, enabled ? 'on' : 'off'); } catch { /* Tab choice still works. */ } });
+  let dateBindings=[],statusReport=null;
+  const captureClock=value=>typeof value==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|\+00:00)$/.test(value)&&Number.isFinite(Date.parse(value));
+  function captureLabel(value){
+    if(!captureClock(value))return 'Unknown';let zone=document.getElementById('display-timezone')?.value||'UTC';try{new Intl.DateTimeFormat('en-US',{timeZone:zone});}catch{zone='UTC';}
+    const p=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23',timeZoneName:'short'}).formatToParts(new Date(value)).filter(p=>p.type!=='literal').map(p=>[p.type,p.value]));return `(${p.month}-${p.day}-${p.year} ${p.hour}:${p.minute}:${p.second} ${p.timeZoneName})`;
+  }
+  function updateDate(node,row,report){
+    delete node.dataset.rawPriceCapturedAt;
+    if(!report.apiCalculationView){node.textContent=day(row.priceDay)?'Source price: '+row.priceDay:'Source price date unavailable';return;}
+    const ref=row.currentApiReference,view=report.apiCalculationView,bound=view.kind==='api_calculation_view'&&ref&&Number.isSafeInteger(ref.itemId)&&ref.itemId>0&&ref.slug===row.slug&&ref.name===row.name&&(row.canonicalId==null||row.canonicalId===ref.itemId)&&ref.reportedDays===3&&captureClock(ref.capturedAt)&&ref.capturedAt===view.clocks?.currentPrices;
+    const known=bound&&typeof ref.currentSaleMedianLexeme==='string'&&ref.currentSaleMedianLexeme.length<=160&&/^\d+(?:\.\d+)?$/.test(ref.currentSaleMedianLexeme)&&Number.isFinite(Number(ref.currentSaleMedianLexeme))&&Number(ref.currentSaleMedianLexeme)>0&&Number(ref.currentSaleMedianLexeme)<=Number.MAX_SAFE_INTEGER&&Number.isSafeInteger(ref.recordedSalesCount)&&ref.recordedSalesCount>=5;
+    node.dataset.rawDate='true';node.dataset.priceReferenceBasis='api_reported_3day_sale_median';node.textContent=(known?'Reported 3-day sale median':'API 3-day reference unavailable')+(bound?' · retrieved '+captureLabel(ref.capturedAt):' · retrieval context unavailable');node.title='Reported 3-day lookback; exact bounds and individual sale times unknown. Retrieval time is not a daily source price date.';if(bound)node.dataset.rawPriceCapturedAt=ref.capturedAt;
+  }
+  function updateStatus(report){
+    const status=section.querySelector('.overview-basket-status');
+    if(report?.apiCalculationView){const v=report.apiCalculationView;status.textContent=`The same 50-item goods basket and category cards as Methodology · basket version ${Number.isSafeInteger(report.basketVersion)?report.basketVersion:'unknown'}. Current labels identify the reported 3-day API sale-median reference where available, retrieved ${captureLabel(v.clocks?.currentPrices)}; exact source-window bounds and individual sale times are unknown. Retained legacy daily source publication: ${captureLabel(report.sourceUpdatedAt)}. Frozen reference ${day(report.baseStart)?report.baseStart:'unknown'}–${day(report.baseEnd)?report.baseEnd:'unknown'}. No retrieval clock is substituted for a source day; membership, weights and calculations are unchanged.`;return;}
+    status.textContent = `The same 50-item goods basket and category cards as Methodology · basket version ${Number.isSafeInteger(report.basketVersion) ? report.basketVersion : 'unknown'}. Fixed reference ${day(report.baseStart) ? report.baseStart : 'unknown'}–${day(report.baseEnd) ? report.baseEnd : 'unknown'}; daily source published ${typeof report.sourceUpdatedAt === 'string' ? report.sourceUpdatedAt : 'unknown'}. Individual qualified price dates, frozen weights and item-history actions are retained. This display changes no membership, price, source clock or calculation.${report.sourceStatus?.status === 'degraded' ? ' Source checks are degraded; these prices retain their source dates.' : ''}`;
+  }
   function receive(report) {
+    dateBindings=[];statusReport=null;
     const source = document.getElementById('method-tiles'), target = section.querySelector('.overview-basket-tiles');
     const rows = report?.rows, originals = source ? [...source.querySelectorAll('button[data-item]')] : [];
     const rowMap = new Map(Array.isArray(rows) ? rows.filter(row => row && typeof row.slug === 'string').map(row => [row.slug, row]) : []);
@@ -47,13 +66,14 @@
       target.replaceChildren(); section.querySelector('.overview-basket-status').textContent = 'The category layout could not be verified. Open the full basket details below.'; apply(); return;
     }
     for (const copy of copies) for (const button of copy.querySelectorAll('button[data-item]')) {
-      const row = rowMap.get(button.dataset.item), date = make('small', day(row.priceDay) ? 'Source price: ' + row.priceDay : 'Source price date unavailable', 'overview-basket-price-date');
+      const row = rowMap.get(button.dataset.item), date = make('small', undefined, 'overview-basket-price-date');updateDate(date,row,report);dateBindings.push({node:date,row,report});
       const price = button.querySelector('strong'); if (price) price.after(date); else button.append(date);
     }
     target.replaceChildren(...copies);
-    section.querySelector('.overview-basket-status').textContent = `The same 50-item goods basket and category cards as Methodology · basket version ${Number.isSafeInteger(report.basketVersion) ? report.basketVersion : 'unknown'}. Fixed reference ${day(report.baseStart) ? report.baseStart : 'unknown'}–${day(report.baseEnd) ? report.baseEnd : 'unknown'}; daily source published ${typeof report.sourceUpdatedAt === 'string' ? report.sourceUpdatedAt : 'unknown'}. Individual qualified price dates, frozen weights and item-history actions are retained. This display changes no membership, price, source clock or calculation.${report.sourceStatus?.status === 'degraded' ? ' Source checks are degraded; these prices retain their source dates.' : ''}`;
+    statusReport=report;updateStatus(report);
     apply();
   }
   document.addEventListener('astramarketsnapshot', event => receive(event.detail));
+  document.addEventListener('change',event=>{if(event.target?.id!=='display-timezone')return;for(const b of dateBindings)if(b.report.apiCalculationView)updateDate(b.node,b.row,b.report);if(statusReport?.apiCalculationView)updateStatus(statusReport);});
   apply(); receive(null); document.dispatchEvent(new Event('astramarkethighlightsready'));
 })();

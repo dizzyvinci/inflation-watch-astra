@@ -18,6 +18,7 @@ from local_nx_reader import LocalNxReader
 from local_item_reader import LocalItemReader
 from local_nx_history_reader import LocalNxHistoryReader
 from local_item_hour_reader import LocalItemHourReader
+from local_calculations_reader import LocalCalculationsReader, inject_local_availability
 
 ROOT = Path(__file__).resolve().parent
 BUILD_TIMEOUT_SECONDS = 120
@@ -28,6 +29,7 @@ _nx = LocalNxReader()
 _items = LocalItemReader(ROOT)
 _nx_history = LocalNxHistoryReader(ROOT)
 _item_hours = LocalItemHourReader(ROOT)
+_calculations = LocalCalculationsReader(ROOT, enabled=lambda: os.environ.get("LOCAL_API_CALCULATIONS") == "1")
 
 
 class PreviewBuildError(RuntimeError):
@@ -165,6 +167,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args,directory=str(ROOT/'dist'),**kwargs)
     def do_GET(self):
         if self._serve_catalog():return
+        if self._serve_calculation_index():return
         if urlsplit(self.path).path == '/__ui_version':
             status, value = ui_version(ROOT)
             body = json.dumps(value, separators=(',', ':')).encode('utf-8')
@@ -190,12 +193,32 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
     def do_HEAD(self):
         if self._serve_catalog():return
+        if self._serve_calculation_index():return
         if urlsplit(self.path).path == '/__ui_version':
             self.send_response(405);self.send_header('Allow','GET');self.send_header('Content-Length','0');self.end_headers();return
         super().do_HEAD()
+    def _serve_calculation_index(self):
+        # Only add the explicit local availability gate; preserve other HTML,
+        # controls password/review footer and completed-build inputs unchanged.
+        if urlsplit(self.path).path not in ('/', '/index.html'):return False
+        try:
+            path = ROOT / 'dist' / 'index.html'
+            if path.stat().st_size > 2_000_000:return False
+            raw = path.read_bytes()
+            body = inject_local_availability(raw, _calculations.active())
+        except (OSError, ValueError):return False
+        if body == raw:return False
+        self.send_response(200)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        if self.command != 'HEAD':self.wfile.write(body)
+        return True
     def _serve_catalog(self):
         self._catalog_response = False
-        response = _cash.handle(self.command, self.path, self.headers,
+        response = _calculations.handle(self.command, self.path, self.headers,
+                                        bind_host=self.server.server_address[0],client_host=self.client_address[0])
+        if response is None:response = _cash.handle(self.command, self.path, self.headers,
                                bind_host=self.server.server_address[0],client_host=self.client_address[0])
         if response is None:response = _nx.handle(self.command, self.path, self.headers,
                                                 bind_host=self.server.server_address[0],client_host=self.client_address[0])

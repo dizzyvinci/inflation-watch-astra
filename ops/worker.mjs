@@ -21,6 +21,8 @@ import {createPublicItemPriceRoute} from './api-public-item-routes.mjs';
 const publicItemPriceFetch=createPublicItemPriceRoute();
 import {createPublicItemIdentitiesRoute} from './api-public-item-identity-routes.mjs';
 const publicItemIdentitiesFetch=createPublicItemIdentitiesRoute();
+import {createPublicCalculationsRoute,calculationsAvailability} from './api-public-calculations-routes.mjs';
+const publicCalculationsFetch=createPublicCalculationsRoute();
 
 const catalogProject = createCachedProjectionFactory(catalogIdentities);
 export const catalogIdentityVersion = catalogProject.identityVersion;
@@ -656,6 +658,7 @@ async function serveSnapshot(request, env, data) {
 async function handleFetch(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname;
+  if(path==='/api-market-calculations.json')return publicCalculationsFetch(request,env);
   if(path==='/api-cash-items.json')return publicCashFetch(request,env);
   if(path==='/api-nx-offers.json')return publicNxFetch(request,env);
  if(path==='/api-nx-history.json'||path.startsWith('/api-nx-history/'))return publicNxHistoryFetch(request,env);
@@ -681,7 +684,7 @@ async function handleFetch(request, env, ctx) {
       response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
       return response;
     }
-    return asset;
+    return calculationsAvailability(asset,env,request);
   }
   const cache = globalThis.caches?.default;
   const cacheKey = new Request(`${url.origin}${path}`, { method: 'GET' });

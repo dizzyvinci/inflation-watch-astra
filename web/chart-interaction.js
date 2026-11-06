@@ -57,8 +57,10 @@
       const date = d.chartDateLabel || d.chartDate || '';
       const precision = d.chartDatePrecision === 'day' ? 'source time unspecified' : '';
       const value = d.chartValue.trim() ? Number(d.chartValue) : NaN;
+      const displayCandidate=typeof d.chartDisplayValue==='string'&&d.chartDisplayValue.length<=40&&/^(?:\d{1,3}(?:,\d{3})*|\d+)\.\d$/.test(d.chartDisplayValue)?d.chartDisplayValue:null;
+      const exactDisplay=displayCandidate!==null&&Number.isFinite(value)&&value>=0&&Math.abs(Number(displayCandidate.replaceAll(',',''))-value)<=.05+Math.abs(value)*Number.EPSILON*2?displayCandidate:null;
       const measurement = Number.isFinite(value)
-        ? `${displayValue(value)}${d.chartUnit ? ' ' + d.chartUnit : ''}` : 'unavailable';
+        ? `${exactDisplay??displayValue(value)}${d.chartUnit ? ' ' + d.chartUnit : ''}` : 'unavailable';
       text = [d.chartSeries, date, precision, measurement, d.chartNote].filter(Boolean).join(' · ');
     } else text = legacyLabel(d.chartLabel || title?.textContent.trim() || '');
     if (title && title.textContent !== text) title.textContent = text;

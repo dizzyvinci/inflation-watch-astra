@@ -7,7 +7,7 @@ const dom=new JSDOM(fs.readFileSync(path.join(root,'web/index.html'),'utf8'),{ur
 w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=function(){};w.HTMLDialogElement.prototype.showModal=function(){this.open=true;};w.HTMLDialogElement.prototype.close=function(){this.open=false;};w.AbortSignal.timeout=()=>undefined;
 w.fetch=async url=>{requests.push(url);assert(['version.json','data-0123456789abcdef.json'].includes(url));return{ok:true,json:async()=>url==='version.json'?{version:'fixture',data:'data-0123456789abcdef.json'}:seed};};
 const style=doc.createElement('style');style.textContent=fs.readFileSync(path.join(root,'web/style.css'),'utf8')+'\n'+fs.readFileSync(path.join(root,'web/viewer-preview.css'),'utf8')+'\n'+css;doc.head.append(style);
-w.eval(fs.readFileSync(path.join(root,'web/community.js'),'utf8'));w.eval(fs.readFileSync(path.join(root,'web/app.js'),'utf8')+';window.__overviewUpdate=data=>{snapshot=data;render();};');
+w.eval(fs.readFileSync(path.join(root,'web/community.js'),'utf8'));w.eval(fs.readFileSync(path.join(root,'web/app.js'),'utf8')+';window.__overviewUpdate=data=>{legacySnapshot=data;snapshot=data;render();};');
 const wait=async predicate=>{const end=Date.now()+2000;while(!predicate()&&Date.now()<end)await new Promise(r=>setTimeout(r,5));assert(predicate(),'View did not settle');};
 const key='astra-overview-basket-v1',orderKey='astra-overview-basket-stats-order-v1';
 (async()=>{try{
