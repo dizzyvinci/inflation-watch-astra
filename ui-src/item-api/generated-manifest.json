@@ -7,6 +7,10 @@
   "target": "es2022",
   "inputs": [
     {
+      "path": "ops/api-cash-projection.mjs",
+      "sha256": "9dc60f5e94236ec4f8f3ba37d50b698a9ef0bfb3edb9892f343d3ece8375f525"
+    },
+    {
       "path": "ops/api-discovery-membership.mjs",
       "sha256": "8b0943e5c84153a5e1a48f2748cc95543cc93d17b09b3999204dc83be87a5561"
     },
@@ -15,12 +19,32 @@
       "sha256": "79aa11a5d881027f26d645c4820fb0107ff5555021ba5b26f01e98c6a1886f1c"
     },
     {
+      "path": "ops/api-item-hour-history-profile.mjs",
+      "sha256": "1b008858f6ba3fa4a21735f33585b81e0c38a57dea718b13721e108f47711cd1"
+    },
+    {
       "path": "ops/api-item-reference-protocol.mjs",
       "sha256": "ff6544350f45f5b6da9b8121537d0d0dc68a382f6282740caaa84356f66ea31e"
     },
     {
       "path": "ops/api-price-item-dto.mjs",
       "sha256": "2c8315dbbc01470d8a4ca999f085e9485c07e6274e700c67cd0c5d758c8c6ae5"
+    },
+    {
+      "path": "ops/api-raw-prices-decoder.mjs",
+      "sha256": "7c998f9ba7e72d77a7e6f5b26010c9983a126dd50c584be9d16f618411c1be28"
+    },
+    {
+      "path": "ops/item-hour-client.mjs",
+      "sha256": "3860487e4bc51d4083c342bcc9c5f8b4648ad06327b864e13324e39a9c2a1a9b"
+    },
+    {
+      "path": "ops/item-hour-public-contract.mjs",
+      "sha256": "b8c5135dd8c9cca93a749f2c00f68a9ee2d51b1116f93a959b693f8c56ff2804"
+    },
+    {
+      "path": "ops/portable-hash.mjs",
+      "sha256": "97549f7ff3aae7e67352ff811505eb8bac246ecf65ec5c3601182e378342680e"
     },
     {
       "path": "ui-src/item-api/discovery-bridge.mjs",
@@ -32,7 +56,11 @@
     },
     {
       "path": "ui-src/item-api/entry.mjs",
-      "sha256": "edb5be516072ded58bba48561b4ce91290d9273a217f2f2eb5b1303b1789f9ac"
+      "sha256": "c2ce406913b80e0ff847d2aaa9b6f091bce55fea29fb7f10636ebadb8f9d19f9"
+    },
+    {
+      "path": "ui-src/item-api/history.mjs",
+      "sha256": "498e1cfe2ab2550bd4611a6688b9febf7115ae18ef8dede76dc7993f1174f9b4"
     },
     {
       "path": "ui-src/item-api/item-loader.mjs",
@@ -49,7 +77,7 @@
   ],
   "output": {
     "path": "web/item-api-preview.js",
-    "sha256": "55d3ad422c0c4c0baedece03908df17ea96915dda6d3783e2b3dd191b9fbd1fb",
-    "bytes": 72198
+    "sha256": "14add956d30b8976055d49871a8bf86c6d38e776ec88530fb5987053057ada83",
+    "bytes": 114324
   }
 }

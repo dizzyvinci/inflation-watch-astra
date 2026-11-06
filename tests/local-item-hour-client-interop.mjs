@@ -1,0 +1,5 @@
+// Tests only: real accepted browser client receives local-adapter response bytes.
+import{createItemHourClient}from'../ops/item-hour-client.mjs';
+let packet='';for await(const p of process.stdin)packet+=p;const replies=JSON.parse(packet);let calls=0;
+const client=createItemHourClient({origin:'http://127.0.0.1:8765',enabled:true,fetcher:async(path,options)=>{calls++;if(!Object.hasOwn(replies,path))throw Error('Unknown own path');if(options.redirect!=='error'||options.credentials!=='same-origin')throw Error('Context');const r=replies[path];return new Response(Buffer.from(r.body,'base64'),{status:r.status,headers:r.headers});}}),model=await client.select(1082002);
+if(model.status!=='ready'||model.data.rows[0].hour.sold.median_unit_price!=='9007199254740994.125'||model.data.qualityConstant!==false||model.data.individualTradesQualified!==0)throw Error('Invalid exact local selection');process.stdout.write(JSON.stringify({ok:true,rows:model.data.rows.length,revisions:model.data.revisions.length,capture:model.data.latestOriginalRetrievedAt,calls}));

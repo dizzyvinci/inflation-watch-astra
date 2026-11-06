@@ -15,6 +15,8 @@ import {createPublicCashRoute} from './api-public-cash-routes.mjs';
 const publicCashFetch=createPublicCashRoute();
 import {createPublicNxRoute} from './api-public-nx-routes.mjs';
 const publicNxFetch=createPublicNxRoute();
+import {createPublicItemHourRoute} from './api-public-item-hour-routes.mjs';
+const publicItemHourFetch=createPublicItemHourRoute();
 import {createPublicItemPriceRoute} from './api-public-item-routes.mjs';
 const publicItemPriceFetch=createPublicItemPriceRoute();
 import {createPublicItemIdentitiesRoute} from './api-public-item-identity-routes.mjs';
@@ -657,6 +659,7 @@ async function handleFetch(request, env, ctx) {
   if(path==='/api-cash-items.json')return publicCashFetch(request,env);
   if(path==='/api-nx-offers.json')return publicNxFetch(request,env);
  if(path==='/api-nx-history.json'||path.startsWith('/api-nx-history/'))return publicNxHistoryFetch(request,env);
+  if(path==='/api-item-history'||path.startsWith('/api-item-history/'))return publicItemHourFetch(request,env);
   if(path.startsWith('/api-item-prices/'))return publicItemPriceFetch(request,env);
   if(path==='/api-item-identities.json'||path.startsWith('/api-item-identities/'))return publicItemIdentitiesFetch(request,env);
   if (path === '/market-index.json' || path.startsWith('/market-item/')) return catalogFetch(request, env, ctx);

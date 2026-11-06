@@ -17,6 +17,7 @@ from local_cash_reader import LocalCashReader
 from local_nx_reader import LocalNxReader
 from local_item_reader import LocalItemReader
 from local_nx_history_reader import LocalNxHistoryReader
+from local_item_hour_reader import LocalItemHourReader
 
 ROOT = Path(__file__).resolve().parent
 BUILD_TIMEOUT_SECONDS = 120
@@ -26,6 +27,7 @@ _cash = LocalCashReader(ROOT)
 _nx = LocalNxReader()
 _items = LocalItemReader(ROOT)
 _nx_history = LocalNxHistoryReader(ROOT)
+_item_hours = LocalItemHourReader(ROOT)
 
 
 class PreviewBuildError(RuntimeError):
@@ -198,6 +200,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if response is None:response = _nx.handle(self.command, self.path, self.headers,
                                                 bind_host=self.server.server_address[0],client_host=self.client_address[0])
         if response is None:response = _nx_history.handle(self.command, self.path, self.headers,
+                                                        bind_host=self.server.server_address[0],client_host=self.client_address[0])
+        if response is None:response = _item_hours.handle(self.command, self.path, self.headers,
                                                         bind_host=self.server.server_address[0],client_host=self.client_address[0])
         if response is None:response = _items.handle(self.command, self.path, self.headers,
                                                    bind_host=self.server.server_address[0],client_host=self.client_address[0])

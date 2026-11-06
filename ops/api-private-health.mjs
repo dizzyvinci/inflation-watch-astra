@@ -1,3 +1,4 @@
+import {privateSqliteStorageHealth} from './api-private-sqlite-size-health.mjs';
 import {privateItemHourExportHealth} from './api-item-hour-export-health.mjs';
 import {privateItemRefreshHealth} from './api-item-recurring-health.mjs';
 import {nxHistoryArchiveHealth} from './nx-history-health.mjs';
@@ -107,6 +108,7 @@ export class ApiPrivateHealth{
     const checkedAt=new Date(this.core.clock()).toISOString();const source=this.core.health();
     const config=this.core.config();
     const itemHourExport=await privateItemHourExportHealth(this.core,this.env,checkedAt);
+    const sqliteStorage=privateSqliteStorageHealth(this.ctx,this.env,{checkedAt});
     const caps=[config.grantedPerDay,config.operatorDailyRequestCap].filter(value=>integer(value)&&value>0);
     const safe={schemaVersion:1,kind:'private_api_collector_health',providerAlarmRecoveryVersion:1,checkedAt,
       checkedAtMeaning:'owner_check_completion_not_market_observation',
@@ -129,6 +131,7 @@ export class ApiPrivateHealth{
       privateItemHistory:privateItemHistoryHealth(this.core,this.env),privateItemDiscovery:privateItemDiscoveryHealth(this.core,this.env),privateNxHistoryArchive:nxHistoryArchiveHealth(this.core,this.env),
       ...(this.core.observed?{observedFirstPass:this.observedFirstPassProgress(config)}:{}),
       ...(config.nxSchemaProbesEnabled===true?{nxSchemaProbes:this.nxSchemaProbeProgress(config),completedNxProbeReceipts:this.completedNxProbeReceipts(config)}:{}),
+      ...(sqliteStorage===null?{}:{privateSqliteStorage:sqliteStorage}),
       dailyCeilingMeaning:'configured_restriction_not_an_inferred_provider_daily_grant'};
     this.ctx.storage.transactionSync(()=>{
       const row=this.core.row('SELECT revision FROM api_private_health WHERE id=1');
