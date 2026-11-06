@@ -10,7 +10,7 @@
     "API_GRANT_JSON": "{\"enabled\":false,\"publicationEnabled\":false}"
   },
   "limits": {
-    "cpu_ms": 1000
+    "cpu_ms": 5000
   },
   "assets": {
     "directory": "../dist",

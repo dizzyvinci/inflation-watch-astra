@@ -8,7 +8,7 @@ import {privateNxR2Configuration,privateNxR2Health} from './api-private-nx-r2-he
 import {scheduleConfig} from './api-alarm-scheduler.mjs';
 import {PrivateItemDiscoveryWork,privateDiscoveryConfiguration} from './api-private-item-discovery-work.mjs';
 import {privateItemDiscoveryHealth} from './api-private-item-discovery-health.mjs';
-import {PrivateItemHistoryWork} from './api-private-item-history-work.mjs';
+import {PrivateItemHistoryWithExportWork as PrivateItemHistoryWork} from './api-item-history-with-export-work.mjs';
 import {privateHistoryConfiguration} from './api-private-item-history-contract.mjs';
 import {privateItemHistoryHealth} from './api-private-item-history-health.mjs';
 import {makePrivateItemWork,makePrivateItemDiscoveryWork} from './api-item-continuous-lifecycle.mjs';

@@ -44,12 +44,12 @@
     },
     {
       "path": "ui-src/item-api/panel.mjs",
-      "sha256": "a12117f44cf96cf5b9419353df0cc2ec7973dbf1f20b105d8f100cd0d659951b"
+      "sha256": "5f6266f7fe5fe40102e3ece443418764f93bc0b00b3f127f42733d50e8927728"
     }
   ],
   "output": {
     "path": "web/item-api-preview.js",
-    "sha256": "cf858b422a8207c9c01968a5caa3141549d6015fcdb623210afe245eeec16bb7",
-    "bytes": 71491
+    "sha256": "55d3ad422c0c4c0baedece03908df17ea96915dda6d3783e2b3dd191b9fbd1fb",
+    "bytes": 72198
   }
 }

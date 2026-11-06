@@ -810,9 +810,14 @@ var pools = { reported_stats: "Reported stats", scroll_state: "Scroll state", at
 var labels = { "0": "STR", "1": "DEX", "2": "INT", "3": "LUK", "4": "Max HP", "5": "Max MP", "6": "Speed", "7": "Jump", "9": "Magic ATT", "10": "Weapon DEF", "11": "Magic DEF", "12": "Accuracy", "13": "Avoidability", "14": "Crit rate", "15": "Crit damage", "16": "Weapon ATT" };
 var own2 = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 function exactMoney(value) {
-  if (value === null) return "Unknown";
-  const [whole, decimal] = value.split(".");
-  return whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (decimal === void 0 ? "" : "." + decimal);
+  if (typeof value !== "string" || value.length > 160 || !/^\d+(?:\.\d+)?$/.test(value)) return "Unknown";
+  const [whole, fraction = ""] = value.split(".");
+  let tenths = BigInt(whole) * 10n + BigInt(fraction[0] || "0");
+  if ((fraction[1] || "0") >= "5") tenths++;
+  return (tenths / 10n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "." + (tenths % 10n).toString();
+}
+function displayInteger(value) {
+  return Number.isSafeInteger(value) ? value.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "Unknown";
 }
 function retrievalClock(iso2, zone2 = "UTC") {
   if (!Number.isFinite(Date.parse(iso2))) return "Unknown";
@@ -824,7 +829,7 @@ function retrievalClock(iso2, zone2 = "UTC") {
   }
 }
 var spritePath = (value) => typeof value === "string" && /^\/?assets\/[A-Za-z0-9._/-]+\.png$/.test(value) && !value.split("/").includes("..") ? value : null;
-var signature = (row) => Object.entries(labels).filter(([code]) => own2(row.reportedStats, code)).map(([code, label]) => `${label} ${row.reportedStats[code]}`).join(" \xB7 ") || "No stats reported";
+var signature = (row, formatted = false) => Object.entries(labels).filter(([code]) => own2(row.reportedStats, code)).map(([code, label]) => `${label} ${formatted ? displayInteger(row.reportedStats[code]) : row.reportedStats[code]}`).join(" \xB7 ") || "No stats reported";
 function itemPanelModel(dto, query = { kind: "reported_stats" }, search = "") {
   assertSafeItemDto(dto);
   const result = filterEvidenceGroups(dto, query), needle = String(search).trim().toLowerCase();
@@ -1014,9 +1019,9 @@ function mountItemPricingPanel(container, input, { timezone = "UTC", spriteMap =
       summary.append(box);
     };
     const s = dto.aggregate.sold, a = dto.aggregate.asking, r = dto.aggregate.reference;
-    card("Source-labelled sales", [`Median: ${exactMoney(s?.medianUnitPrice ?? null)} mesos`, `Average (AVG): ${exactMoney(s?.averageUnitPrice ?? null)} mesos`, s ? `${s.reportedSalesCount} reported sales \xB7 ${s.reportedUnitCount} reported units` : "Sales counts unknown", s ? `Source day counters: ${s.reportedDaySalesCount} sales \xB7 ${s.reportedDayUnitCount} units (bounds unknown)` : ""]);
-    card("Asking prices", [`Median ask: ${exactMoney(a?.medianUnitPrice ?? null)} mesos`, `P25: ${exactMoney(a?.p25UnitPrice ?? null)} \xB7 P75: ${exactMoney(a?.p75UnitPrice ?? null)} mesos`, a ? `${a.reportedListingCount} reported listings \xB7 ${a.reportedSellerCount} reported sellers` : "Listing and seller counts unknown"]);
-    card("Publisher reference", [r ? `${r.aggregation === "average" ? "Average of source-labelled sales" : "Median asking price"}: ${exactMoney(r.unitPrice)} mesos` : "Reference unavailable", r ? `${r.reportedSamples} reported reference samples` : "", "The reference is kept separate from the sale median."]);
+    card("Source-labelled sales", [`Median: ${exactMoney(s?.medianUnitPrice ?? null)} mesos`, `Average (AVG): ${exactMoney(s?.averageUnitPrice ?? null)} mesos`, s ? `${displayInteger(s.reportedSalesCount)} reported sales \xB7 ${displayInteger(s.reportedUnitCount)} reported units` : "Sales counts unknown", s ? `Source day counters: ${displayInteger(s.reportedDaySalesCount)} sales \xB7 ${displayInteger(s.reportedDayUnitCount)} units (bounds unknown)` : ""]);
+    card("Asking prices", [`Median ask: ${exactMoney(a?.medianUnitPrice ?? null)} mesos`, `P25: ${exactMoney(a?.p25UnitPrice ?? null)} \xB7 P75: ${exactMoney(a?.p75UnitPrice ?? null)} mesos`, a ? `${displayInteger(a.reportedListingCount)} reported listings \xB7 ${displayInteger(a.reportedSellerCount)} reported sellers` : "Listing and seller counts unknown"]);
+    card("Publisher reference", [r ? `${r.aggregation === "average" ? "Average of source-labelled sales" : "Median asking price"}: ${exactMoney(r.unitPrice)} mesos` : "Reference unavailable", r ? `${displayInteger(r.reportedSamples)} reported reference samples` : "", "The reference is kept separate from the sale median."]);
   }
   let selectedPool = "";
   function fillPoolOptions() {
@@ -1083,7 +1088,7 @@ function mountItemPricingPanel(container, input, { timezone = "UTC", spriteMap =
     }
     const total = model.rows.length, pages = Math.max(1, Math.ceil(total / 25));
     page = Math.max(0, Math.min(page, pages - 1));
-    feedback.textContent = `${total} matching groups. ${near.checked && pool !== "reported_stats" ? "Nearby fallbacks included." : "Nearby fallbacks off."} Prices are mesos per item.`;
+    feedback.textContent = `${displayInteger(total)} matching groups. ${near.checked && pool !== "reported_stats" ? "Nearby fallbacks included." : "Nearby fallbacks off."} Prices are mesos per item.`;
     const table = el("table"), caption = el("caption", pools[pool] + " \xB7 reported 3-day lookback"), thead = el("thead"), head = el("tr"), tbody = el("tbody");
     table.append(caption, thead, tbody);
     thead.append(head);
@@ -1111,9 +1116,9 @@ function mountItemPricingPanel(container, input, { timezone = "UTC", spriteMap =
     for (const row of model.rows.slice(page * 25, page * 25 + 25)) {
       const tr = el("tr");
       tr.dataset.groupKey = row.groupKey;
-      const r = row.reference, deal = row.dealReference, nearText = deal ? deal.isNearFallback && !near.checked ? "Off" : `${exactMoney(deal.unitPrice)} mesos \xB7 ${deal.basis === "sold" ? "source sold" : "asking"} \xB7 ${deal.reportedSamples} samples${deal.isNearFallback ? " \xB7 nearby, qualities may differ" : ""}` : "Unavailable";
-      const common = [r ? exactMoney(r.unitPrice) : "Unknown", r ? `${r.basis === "sold" ? "Source sold" : "Asking"} \xB7 ${r.reportedSamples} samples${r.isNearFallback ? " \xB7 nearby" : ""}` : "Unknown", nearText];
-      const values = pool === "attack_pool" ? [row.reportedAttack, `${exactMoney(row.sold?.medianUnitPrice ?? null)} / ${exactMoney(row.sold?.averageUnitPrice ?? null)}`, row.sold ? `${row.sold.reportedSalesCount} / ${row.sold.reportedUnitCount}` : "Unknown", row.asking ? `${exactMoney(row.asking.medianUnitPrice)} / ${row.asking.reportedListingCount}` : "Unknown", ...common] : [pool === "reported_stats" ? signature(row) : "Scroll-state pool", row.slotsLeft, row.successfulUpgrades, ...common];
+      const r = row.reference, deal = row.dealReference, nearText = deal ? deal.isNearFallback && !near.checked ? "Off" : `${exactMoney(deal.unitPrice)} mesos \xB7 ${deal.basis === "sold" ? "source sold" : "asking"} \xB7 ${displayInteger(deal.reportedSamples)} samples${deal.isNearFallback ? " \xB7 nearby, qualities may differ" : ""}` : "Unavailable";
+      const common = [r ? exactMoney(r.unitPrice) : "Unknown", r ? `${r.basis === "sold" ? "Source sold" : "Asking"} \xB7 ${displayInteger(r.reportedSamples)} samples${r.isNearFallback ? " \xB7 nearby" : ""}` : "Unknown", nearText];
+      const values = pool === "attack_pool" ? [displayInteger(row.reportedAttack), `${exactMoney(row.sold?.medianUnitPrice ?? null)} / ${exactMoney(row.sold?.averageUnitPrice ?? null)}`, row.sold ? `${displayInteger(row.sold.reportedSalesCount)} / ${displayInteger(row.sold.reportedUnitCount)}` : "Unknown", row.asking ? `${exactMoney(row.asking.medianUnitPrice)} / ${displayInteger(row.asking.reportedListingCount)}` : "Unknown", ...common] : [pool === "reported_stats" ? signature(row, true) : "Scroll-state pool", displayInteger(row.slotsLeft), displayInteger(row.successfulUpgrades), ...common];
       for (const value of values) tr.append(el("td", String(value)));
       tbody.append(tr);
     }
@@ -1124,7 +1129,7 @@ function mountItemPricingPanel(container, input, { timezone = "UTC", spriteMap =
       tbody.append(tr);
     }
     tableWrap.replaceChildren(table);
-    pageText.textContent = `Page ${page + 1} of ${pages}`;
+    pageText.textContent = `Page ${displayInteger(page + 1)} of ${displayInteger(pages)}`;
     previous.disabled = page === 0;
     next.disabled = page + 1 === pages;
   }
