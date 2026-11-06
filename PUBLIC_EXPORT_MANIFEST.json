@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-06T20:36:32+00:00",
+  "exportedAt": "2026-11-06T21:36:08+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7583,7 +7583,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "18a6bc5746aaff52cccbd9452f517de78b2b27ffa31a967cdc8e80853628fb47"
+      "sha256": "43836a475d2b0dc3fb66f3f4c45d874ebf1271e9ea4703a557458da09c2bfa58"
     },
     {
       "path": "cache/market.json",
@@ -7668,7 +7668,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "f67b44a952d424ae7dad2ef9d320986ffcec22d4d9153a3e99b68adc7f359f10"
+      "sha256": "22dc87fb4773a654c09560950b738354b9c6611e8c69c6ed715453cb62a81ea6"
     },
     {
       "path": "dist/_headers",
@@ -16441,6 +16441,11 @@
       "sha256": "abeea92e46ffca8aaa02e82c4316b4b759451b7bb969a7d205cb14dd07f079c2"
     },
     {
+      "path": "dist/data-adae21002fb0126e.json",
+      "bytes": 992898,
+      "sha256": "adae21002fb0126e70b36d1b5835ffb654561da97ab566a23f3ad98eb1641fc6"
+    },
+    {
       "path": "dist/data-afeef5831a222c8b.json",
       "bytes": 220243,
       "sha256": "afeef5831a222c8b3de280f69ed901207fb926bce808666159bd336705a9a229"
@@ -16563,7 +16568,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "5d5283320509ccd20a827c9ffd53be67e4fcaded2a63081e21db5d9ab4415305"
+      "sha256": "adae21002fb0126e70b36d1b5835ffb654561da97ab566a23f3ad98eb1641fc6"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16583,7 +16588,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "f67b44a952d424ae7dad2ef9d320986ffcec22d4d9153a3e99b68adc7f359f10"
+      "sha256": "22dc87fb4773a654c09560950b738354b9c6611e8c69c6ed715453cb62a81ea6"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16873,7 +16878,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "6cdd47f35092d1dd60be2a20557c85fcd4719577eafb83cc6faab7a5ca6a613e"
+      "sha256": "cc10151e0763d41ef07e504e60193ed5d064063ccdc969c59b464e99801f4e19"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -17092,8 +17097,8 @@
     },
     {
       "path": "ops/api-item-continuous-lifecycle.mjs",
-      "bytes": 22752,
-      "sha256": "7947cf7e39ca7f5f33c519b3f3131353903e96df0eaea93e07ac6b7fe64e7360"
+      "bytes": 25378,
+      "sha256": "aa1e89d3ba9b693aef8018c56bf5f78f171c913b4f10440e49d8aaa6de782392"
     },
     {
       "path": "ops/api-item-discovery-contract.mjs",
@@ -17107,8 +17112,8 @@
     },
     {
       "path": "ops/api-item-discovery-progress-health.mjs",
-      "bytes": 3047,
-      "sha256": "aa3cf81ae9c673f37eb3829b18f009afb4ca9cd278901e5d22eef67d5bd40746"
+      "bytes": 4203,
+      "sha256": "3f834e3ba9f47c1a0dd8dc1eb6f00cf4627f9e4ca924ff8009b6b1b3e10ae761"
     },
     {
       "path": "ops/api-item-discovery-reader.mjs",
@@ -17227,8 +17232,8 @@
     },
     {
       "path": "ops/api-private-health.mjs",
-      "bytes": 13230,
-      "sha256": "50fd4b97f8f3eefb1348533c172e9287c19c745af08eecfacbe89b74fd4b6b60"
+      "bytes": 13268,
+      "sha256": "e20a396f63708debf66bc7f204bde8f1087e74255dee3bd846a7daf5b9ca4115"
     },
     {
       "path": "ops/api-private-item-discovery-health.mjs",
@@ -17507,8 +17512,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 15473,
-      "sha256": "f0f3401c8a878379faa6d18f34aa9628e8edb355d6d7b145a3e3b9787e75819b"
+      "bytes": 15523,
+      "sha256": "5736ae79ea7e49dbb9c529219721beaa082208fb12de27b8e55eca5fad387c2d"
     },
     {
       "path": "portable_hash.py",
@@ -17741,14 +17746,19 @@
       "sha256": "b86c135e30a7d081f5067e3ba01055e2be0b6e8d9172617553555fe87c1d764b"
     },
     {
+      "path": "tests/api-item-discovery-decision-health.test.mjs",
+      "bytes": 10932,
+      "sha256": "1b3a17d2b113729a3a560b171449565f3df8eb515026998ad10d2ea3d9d93596"
+    },
+    {
       "path": "tests/api-item-discovery-fixture.mjs",
       "bytes": 4460,
       "sha256": "178b5280b004ef80a39e2d27c04cf1a9dba29850712e60db46e22c3213b0f6eb"
     },
     {
       "path": "tests/api-item-discovery-progress-health.test.mjs",
-      "bytes": 9941,
-      "sha256": "e1567ceed25da00a5f54d988ca06dce73f86ecaaf3f81d82e185db72654f8e1b"
+      "bytes": 9994,
+      "sha256": "7b8ec3d86a358fe21a9978269cecf39d959d2cecac9e569d86ee425411eb7496"
     },
     {
       "path": "tests/api-item-discovery.test.mjs",

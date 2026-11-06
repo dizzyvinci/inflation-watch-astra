@@ -1,5 +1,5 @@
 import {committedCalculationVerificationPins} from './api-index-verification-health.mjs';
-import {privateItemDiscoveryProgressHealth} from './api-item-discovery-progress-health.mjs';
+import {privateItemDiscoveryDecisionHealth as privateItemDiscoveryProgressHealth} from './api-item-discovery-progress-health.mjs';
 import {privateSqliteStorageHealth} from './api-private-sqlite-size-health.mjs';
 import {privateItemHourExportHealth} from './api-item-hour-export-health.mjs';
 import {privateItemRefreshHealth} from './api-item-recurring-health.mjs';
