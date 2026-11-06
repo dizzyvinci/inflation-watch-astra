@@ -1,6 +1,7 @@
 // WORK-only private producer. No provider fetch, key, alarms, mux or HTTP route.
 import {grantConfig} from './api-collector-core.mjs';
 import {createIdentityIndex,createPriceSnapshot,InvalidProfile,sha256} from './api-price-item-dto.mjs';
+import {itemGenerationRetiring} from './api-item-generation-refs.mjs';
 export const ITEM_PRODUCER_VERSION='full-item-v1-0bd41244';
 export const ITEM_PROJECTOR_SHA256='0bd41244adb111eb56d4dfe2ce2a2d4a7204c8c73f303b337af905d4a37c8b40';
 export const ITEM_POINTER='_private/provider-api/v1/item-projections/v1/current.json';
@@ -62,7 +63,7 @@ export class PrivateItemProducer{
   return this.row("SELECT MIN(available_at) AS at FROM private_item_jobs WHERE state='pending'").at;
  }
  health(){if(!this.active)return{status:'disabled'};return{status:'private_only',producerVersion:ITEM_PRODUCER_VERSION,publicationEligible:false,sourceObservedAt:null,qualifiedIndividualTrades:0,nextPrivateDue:this.nextDue(),jobs:this.sql.exec('SELECT state,COUNT(*) AS count FROM private_item_jobs GROUP BY state').toArray(),stagedShards:this.row('SELECT COUNT(*) AS n FROM private_item_shards').n};}
- fence(job){this.guard();const scope=this.scope();if(job.grant_ref!==scope.grant||job.round_ref!==scope.round)throw new AuthorityPause('authority_context_changed');const current=this.row('SELECT state,claim,lease_until FROM private_item_jobs WHERE receipt_key=?',job.receipt_key);if(current?.state!=='running'||current.claim!==job.claim||current.lease_until<=this.now())throw new LostLease();}
+ fence(job){this.guard();const scope=this.scope();if(job.grant_ref!==scope.grant||job.round_ref!==scope.round)throw new AuthorityPause('authority_context_changed');const current=this.row('SELECT state,claim,lease_until FROM private_item_jobs WHERE receipt_key=?',job.receipt_key);if(current?.state!=='running'||current.claim!==job.claim||current.lease_until<=this.now())throw new LostLease();if(job.generation&&itemGenerationRetiring(this.ctx,job.generation))throw new ArtifactHold();}
  claim(){const now=this.now();return this.ctx.storage.transactionSync(()=>{this.syncAuthority(this.scope());
   this.sql.exec("UPDATE private_item_jobs SET state='pending',lease_until=NULL,last_result='interrupted' WHERE state='running' AND lease_until<=?",now);
   if(this.row("SELECT 1 FROM private_item_jobs WHERE state='running' LIMIT 1"))return null;
@@ -126,7 +127,7 @@ export class PrivateItemProducer{
   const manifest={schemaVersion:1,kind:'private_api_item_manifest',producerVersion:ITEM_PRODUCER_VERSION,projectorSha256:ITEM_PROJECTOR_SHA256,generation,sourceAttemptId:job.source_attempt,rawReceiptKey:job.receipt_key,rawBodySha256:job.raw_sha,requestStartedAt:e.requestStartedAt,capturedAt:e.capturedAt,sourceObservedAt:null,publicationEligible:false,metadata,itemCount:ids.length,totalItemBytes:total,shards:shards.map(s=>({ordinal:s.ordinal,key:s.key,sha256:s.sha,bytes:size(s.body)})),items};
   const manifestBody=JSON.stringify(manifest);check(size(manifestBody)<=MAX_MANIFEST,'private_manifest_bound');const manifestSha=await sha256(enc.encode(manifestBody));
   const pointerBody=JSON.stringify({schemaVersion:1,kind:'private_api_item_pointer',producerVersion:ITEM_PRODUCER_VERSION,generation,sourceAttemptId:job.source_attempt,manifestKey:prefix+'manifest.json',manifestSha256:manifestSha,manifestBytes:size(manifestBody),itemCount:ids.length,rawBodySha256:job.raw_sha,capturedAt:e.capturedAt,sourceObservedAt:null,publicationEligible:false});
-  this.ctx.storage.transactionSync(()=>{this.fence(job);check(this.owned(job),'source_job_attempt_changed');
+  this.ctx.storage.transactionSync(()=>{this.fence(job);check(this.owned(job),'source_job_attempt_changed');this.artifact(!itemGenerationRetiring(this.ctx,generation));
    for(const s of shards)this.sql.exec('INSERT INTO private_item_shards(receipt_key,ordinal,body,body_sha,object_key) VALUES(?,?,?,?,?)',job.receipt_key,s.ordinal,s.body,s.sha,s.key);
    this.sql.exec('UPDATE private_item_jobs SET generation=?,manifest=?,manifest_sha=?,pointer_body=? WHERE receipt_key=? AND claim=?',generation,manifestBody,manifestSha,pointerBody,job.receipt_key,job.claim);this.finishPhase(job,'shards');
   });return{status:'private_staged',items:ids.length,shards:shards.length,providerAttempted:false};

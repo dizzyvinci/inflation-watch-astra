@@ -13,6 +13,10 @@ import {createPublicCashRoute} from './api-public-cash-routes.mjs';
 const publicCashFetch=createPublicCashRoute();
 import {createPublicNxRoute} from './api-public-nx-routes.mjs';
 const publicNxFetch=createPublicNxRoute();
+import {createPublicItemPriceRoute} from './api-public-item-routes.mjs';
+const publicItemPriceFetch=createPublicItemPriceRoute();
+import {createPublicItemIdentitiesRoute} from './api-public-item-identity-routes.mjs';
+const publicItemIdentitiesFetch=createPublicItemIdentitiesRoute();
 
 const catalogProject = createCachedProjectionFactory(catalogIdentities);
 export const catalogIdentityVersion = catalogProject.identityVersion;
@@ -650,6 +654,8 @@ async function handleFetch(request, env, ctx) {
   const path = url.pathname;
   if(path==='/api-cash-items.json')return publicCashFetch(request,env);
   if(path==='/api-nx-offers.json')return publicNxFetch(request,env);
+  if(path.startsWith('/api-item-prices/'))return publicItemPriceFetch(request,env);
+  if(path==='/api-item-identities.json'||path.startsWith('/api-item-identities/'))return publicItemIdentitiesFetch(request,env);
   if (path === '/market-index.json' || path.startsWith('/market-item/')) return catalogFetch(request, env, ctx);
   if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
   const dynamic = ['/version.json', '/data.json', '/health.json'].includes(path);

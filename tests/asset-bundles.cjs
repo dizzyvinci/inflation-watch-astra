@@ -23,7 +23,10 @@ async function open(html,{immediate=false,activeManifest=manifest,appFailure=fal
  vc.on('jsdomError',e=>errors.push(e.message));vc.on('error',(...args)=>errors.push(args.join(' ')));
  const resources={interceptors:[requestInterceptor(request=>{const u=new URL(request.url);assert.equal(u.origin,'https://inflation.gg');assert(!u.search&&!u.hash);const name=u.pathname.slice(1);assert(scripts.includes(name)||styles.includes(name)||[...activeManifest.js.map(entry=>entry.file),activeManifest.css.file,...activeManifest.preservedScripts.map(entry=>entry.file)].includes(name),'Unapproved resource: '+name);calls.resources.push(name);return new Response(fs.readFileSync(path.join(temporary,name)),{headers:{'Content-Type':name.endsWith('.css')?'text/css':'application/javascript'}});})],dispatcher:{dispatch(){throw Error('No real network transport');}}};
  const dom=new JSDOM(html,{url:'https://inflation.gg/',runScripts:'dangerously',resources,pretendToBeVisual:true,virtualConsole:vc,beforeParse(w){
-  w.structuredClone=structuredClone;w.TextEncoder=TextEncoder;w.TextDecoder=TextDecoder;
+  w.structuredClone=structuredClone;
+  // JSDOM needs Node's encoder, but strict browser parsers correctly require the
+  // encoded bytes to belong to this window's Uint8Array realm.
+  w.TextEncoder=class extends TextEncoder{encode(value){return new w.Uint8Array(super.encode(value));}};w.TextDecoder=TextDecoder;
   Object.defineProperty(w,'crypto',{value:crypto.webcrypto});
   w.localStorage.setItem('inflation-optional-analytics-consent-v1','off');w.document.addEventListener('astrauimoduleerror',event=>calls.moduleFailures.push(event.detail));
   w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=function(){};

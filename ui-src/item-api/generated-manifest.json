@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "kind": "generated_item_api_browser_bundle",
+  "buildTool": "esbuild",
+  "buildVersion": "0.28.2",
+  "inputHashMode": "utf8_lf",
+  "target": "es2022",
+  "inputs": [
+    {
+      "path": "ops/api-discovery-membership.mjs",
+      "sha256": "8b0943e5c84153a5e1a48f2748cc95543cc93d17b09b3999204dc83be87a5561"
+    },
+    {
+      "path": "ops/api-item-discovery-contract.mjs",
+      "sha256": "79aa11a5d881027f26d645c4820fb0107ff5555021ba5b26f01e98c6a1886f1c"
+    },
+    {
+      "path": "ops/api-item-reference-protocol.mjs",
+      "sha256": "ff6544350f45f5b6da9b8121537d0d0dc68a382f6282740caaa84356f66ea31e"
+    },
+    {
+      "path": "ops/api-price-item-dto.mjs",
+      "sha256": "2c8315dbbc01470d8a4ca999f085e9485c07e6274e700c67cd0c5d758c8c6ae5"
+    },
+    {
+      "path": "ui-src/item-api/discovery-bridge.mjs",
+      "sha256": "8ebf1dbb8a702bc843e7671c5d462db6fca2e9fa79cd5eb5f485be1aeaba2c5a"
+    },
+    {
+      "path": "ui-src/item-api/discovery-client.mjs",
+      "sha256": "11b500086bca98593293cfa7c344b57f6b34e7dbe8959d35acd30b7c40c06f5f"
+    },
+    {
+      "path": "ui-src/item-api/entry.mjs",
+      "sha256": "edb5be516072ded58bba48561b4ce91290d9273a217f2f2eb5b1303b1789f9ac"
+    },
+    {
+      "path": "ui-src/item-api/item-loader.mjs",
+      "sha256": "3e01a3e168e22f2afc072188558acbd85b819442ce0066d720c1e32cff5b390f"
+    },
+    {
+      "path": "ui-src/item-api/lifecycle.mjs",
+      "sha256": "9e6aa9e247907e7435938d396adcfc6861d395b22c435401fad80b2b94edfb6d"
+    },
+    {
+      "path": "ui-src/item-api/panel.mjs",
+      "sha256": "a12117f44cf96cf5b9419353df0cc2ec7973dbf1f20b105d8f100cd0d659951b"
+    }
+  ],
+  "output": {
+    "path": "web/item-api-preview.js",
+    "sha256": "cf858b422a8207c9c01968a5caa3141549d6015fcdb623210afe245eeec16bb7",
+    "bytes": 71491
+  }
+}
