@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-06T00:40:44+00:00",
+  "exportedAt": "2026-11-06T01:01:13+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7543,7 +7543,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "a33da55bff79688ac73626ce00b878112063606954b7358cad1bd0a352601ca4"
+      "sha256": "b77c32633a6e8e07fc48a5982d3aed42c1c4e936763bd88fce7c4d92ec480d19"
     },
     {
       "path": "cache/market.json",
@@ -7628,7 +7628,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "d5ad0185ca73eacc8d92d65ffb22ee116b6406a5d8e5794adcdd17d77ea872d1"
+      "sha256": "cc68e4991fe6fc6bb43086e428b4419ea5f885d3a0307c6b5beae2108ef4cb75"
     },
     {
       "path": "dist/_headers",
@@ -7662,8 +7662,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 147044,
-      "sha256": "c8a27f1a91c40e4940bbee956c995a74af4cc57bf8f428ca813d494462439b90"
+      "bytes": 147189,
+      "sha256": "2b32a7ca9c698dd601476f2a54947820a9407049f5dd55e979a6349ab1806b6b"
     },
     {
       "path": "dist/assets/PixelifySans-9ba86cd010a4de30.ttf",
@@ -15676,6 +15676,11 @@
       "sha256": "b41c8755d5be0528952d6b836404869c6c7b786f960ca94f59ad3149b5bd7353"
     },
     {
+      "path": "dist/astra-app-2b32a7ca9c698dd6.js",
+      "bytes": 147189,
+      "sha256": "2b32a7ca9c698dd601476f2a54947820a9407049f5dd55e979a6349ab1806b6b"
+    },
+    {
       "path": "dist/astra-app-452892c0be27ebb3.js",
       "bytes": 139896,
       "sha256": "452892c0be27ebb377567eb2e5a94bf7fd522cd763de1e7edc3b71387e0e159b"
@@ -15834,6 +15839,11 @@
       "path": "dist/astra-ui-f0b3ca4ce19dc653.js",
       "bytes": 367778,
       "sha256": "f0b3ca4ce19dc653795f6bba1add23c6c86861535a5fe31164651cea77d7bb55"
+    },
+    {
+      "path": "dist/astra-ui-f326702ab9d34ecd.js",
+      "bytes": 391092,
+      "sha256": "f326702ab9d34ecdb58b4b598846db8077d93120a4ddfaeb2662b2cd25496fc1"
     },
     {
       "path": "dist/astra-ui-f6353d368b8a4d4c.css",
@@ -16141,6 +16151,11 @@
       "sha256": "eeebf04b6dfc455c438dbe6a2c105444ab2e24f058bcf14031254a3f1e70d125"
     },
     {
+      "path": "dist/data-f310efe0e02ac203.json",
+      "bytes": 992898,
+      "sha256": "f310efe0e02ac203a1a4ef3b98a08d6edc290c762fb67b650c7d8d924181e4ed"
+    },
+    {
       "path": "dist/data-f419e20e43c77729.json",
       "bytes": 848186,
       "sha256": "f419e20e43c777295a33fa295b914ca2ac1a35f40aab798dc94311a4022cc3b4"
@@ -16178,12 +16193,12 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "e264a6160d66348abc2c85278aeced8e65fbf2626bc23b09353fe5d031a8724c"
+      "sha256": "f310efe0e02ac203a1a4ef3b98a08d6edc290c762fb67b650c7d8d924181e4ed"
     },
     {
       "path": "dist/date-presentation.js",
-      "bytes": 2662,
-      "sha256": "0d4b661885692125c87aee6cd9344234872e8288b1d8217dc8104d73f5d6ac52"
+      "bytes": 2684,
+      "sha256": "929c2253440f569ec2479396c0fcb724896d75c479777b982fadfa32f056efc6"
     },
     {
       "path": "dist/ellinia-backdrop-preview.css",
@@ -16198,7 +16213,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "d5ad0185ca73eacc8d92d65ffb22ee116b6406a5d8e5794adcdd17d77ea872d1"
+      "sha256": "cc68e4991fe6fc6bb43086e428b4419ea5f885d3a0307c6b5beae2108ef4cb75"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16233,7 +16248,7 @@
     {
       "path": "dist/index.html",
       "bytes": 50498,
-      "sha256": "517ec890d702c5681230d9a5f3de83639775a8f3896236478f4240693b5bc589"
+      "sha256": "6436b56487249cf3650c0196780fe32c0822e012b8122deb836f5c42510d0797"
     },
     {
       "path": "dist/layout-preview.css",
@@ -16453,12 +16468,12 @@
     {
       "path": "dist/ui-bundles.json",
       "bytes": 10239,
-      "sha256": "5473a4fbdfdd92dfe19f8326279ff674cef74ad5389cc8f680ac5d8bf078732d"
+      "sha256": "27340eb063f18374e65ca59b1b2baccc6914a5c043eeed9e43fb0dbe39ef04df"
     },
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "8ac4491dcd17a76219b2e4ca7b9f2aa74709b5a92ce7e5607dd882ec6dec2190"
+      "sha256": "fb53aed13fcc8a534036c9ccf1010e8cb22701600b1ce1c05dc54ae98e69540f"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16592,13 +16607,18 @@
     },
     {
       "path": "ops/api-private-health.mjs",
-      "bytes": 11237,
-      "sha256": "45efa516c88269cae75f43eebf6ebde43d0284307befa226093bd415ebec82b7"
+      "bytes": 11357,
+      "sha256": "e50cc226043c5d1f048155c4b33361195c85870ae9343c6ab5dbbc03e4e0d5eb"
+    },
+    {
+      "path": "ops/api-private-nx-health.mjs",
+      "bytes": 4656,
+      "sha256": "931575d1a1a63d92c1d66bc5ac538ebc159b87c4d908e345b4272a22d0317c59"
     },
     {
       "path": "ops/api-private-nx-offers.mjs",
-      "bytes": 8230,
-      "sha256": "d5bcb47cf184249492a753a1187678320a73682c643685ca43253638d6997195"
+      "bytes": 8583,
+      "sha256": "574963ec195bb663dd3b6c892912b5a1f5a91b85e29688b1709138bd477281c7"
     },
     {
       "path": "ops/api-public-cash-contract.mjs",
@@ -16692,8 +16712,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 6348,
-      "sha256": "a01e61070b9d998ca04b17bf04948b5e3c580b9716cae04c717f1169fe669949"
+      "bytes": 6464,
+      "sha256": "498b9824af37b14ba767426e6d3fec5deb2c6fdf236a8006f0b822ef0fbaa559"
     },
     {
       "path": "portable_hash.py",
@@ -16804,6 +16824,11 @@
       "path": "tests/api-private-nx-combined.test.mjs",
       "bytes": 9798,
       "sha256": "7fa7bcf7fba3ebe88f2dbf7ba1c1cbf02dc60b16192508753ee47c83e5ffed7a"
+    },
+    {
+      "path": "tests/api-private-nx-health.test.mjs",
+      "bytes": 11231,
+      "sha256": "f49e3e02dd904a0684e29f957195b52c698d30cea28cd9772c6b00a97213d8ab"
     },
     {
       "path": "tests/api-private-nx-offers-integration.test.mjs",
@@ -17126,6 +17151,11 @@
       "sha256": "d64af5c1d244023075ebf16617f8460c5c7878e0552b485d5e57fdd1670f1361"
     },
     {
+      "path": "tests/source-display.cjs",
+      "bytes": 6548,
+      "sha256": "8546680853bacc22e3b46bb5eb6b36c38ee586cca3505881e42c8b145d04f067"
+    },
+    {
       "path": "tests/speculation.cjs",
       "bytes": 10120,
       "sha256": "dea5dc51b6abfc8621c2aec810956838a77d58a6f147291a15251022fb75341a"
@@ -17337,8 +17367,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 147044,
-      "sha256": "c8a27f1a91c40e4940bbee956c995a74af4cc57bf8f428ca813d494462439b90"
+      "bytes": 147189,
+      "sha256": "2b32a7ca9c698dd601476f2a54947820a9407049f5dd55e979a6349ab1806b6b"
     },
     {
       "path": "web/author-portrait.css",
@@ -17452,8 +17482,8 @@
     },
     {
       "path": "web/date-presentation.js",
-      "bytes": 2662,
-      "sha256": "0d4b661885692125c87aee6cd9344234872e8288b1d8217dc8104d73f5d6ac52"
+      "bytes": 2684,
+      "sha256": "929c2253440f569ec2479396c0fcb724896d75c479777b982fadfa32f056efc6"
     },
     {
       "path": "web/ellinia-backdrop-preview.css",

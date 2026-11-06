@@ -7,6 +7,9 @@ class Disabled extends Error{}
 export class PrivateNxOffersProducer{
  constructor(ctx,bucket,{enabled=false,now=Date.now,isEnabled=()=>true}={}){this.ctx=ctx;this.sql=ctx.storage.sql;this.bucket=bucket;this.enabled=enabled===true;this.isEnabled=isEnabled;this.now=now;this.flight=null;if(!this.active)return;
   this.sql.exec(`CREATE TABLE IF NOT EXISTS private_nx_captures(receipt_key TEXT PRIMARY KEY,operation TEXT NOT NULL,source_attempt INTEGER NOT NULL,state TEXT NOT NULL DEFAULT 'pending',available_at INTEGER NOT NULL,lease_until INTEGER,claim INTEGER NOT NULL DEFAULT 0,failures INTEGER NOT NULL DEFAULT 0,raw_sha TEXT,captured_at TEXT,last_result TEXT)`);
+  // Cover health's latest-completed lookup and state counts without sorting raw rows.
+  this.sql.exec('CREATE INDEX IF NOT EXISTS private_nx_capture_latest_v1 ON private_nx_captures(operation,state,captured_at DESC,source_attempt DESC,raw_sha)');
+  this.sql.exec('CREATE INDEX IF NOT EXISTS private_nx_capture_state_v1 ON private_nx_captures(state)');
   this.sql.exec(`CREATE TABLE IF NOT EXISTS private_nx_latest(source_url TEXT NOT NULL,hour_label TEXT NOT NULL,side TEXT NOT NULL,captured_at TEXT NOT NULL,source_attempt INTEGER NOT NULL,receipt_key TEXT NOT NULL,body TEXT NOT NULL,PRIMARY KEY(source_url,hour_label,side))`);
   this.sql.exec(`CREATE TABLE IF NOT EXISTS private_nx_revisions(id INTEGER PRIMARY KEY AUTOINCREMENT,source_url TEXT NOT NULL,hour_label TEXT NOT NULL,side TEXT NOT NULL,captured_at TEXT NOT NULL,source_attempt INTEGER NOT NULL,receipt_key TEXT NOT NULL,body TEXT NOT NULL,UNIQUE(source_url,hour_label,side,receipt_key))`);
  }
