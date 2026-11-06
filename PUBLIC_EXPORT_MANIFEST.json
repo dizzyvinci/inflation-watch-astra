@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-06T06:14:33+00:00",
+  "exportedAt": "2026-11-06T06:21:59+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -17807,8 +17807,8 @@
     },
     {
       "path": "tests/nx-capacity.test.mjs",
-      "bytes": 4198,
-      "sha256": "dc494241a8168209cecb4b27dbe73b1c94c23b27b658fc35a6db9e4ab04d41cf"
+      "bytes": 4629,
+      "sha256": "ac0be4b86b9356eda9d5d4c266f32462b351214638f42885a1166b02200f8ad5"
     },
     {
       "path": "tests/nx-history-archive-fixture.mjs",
@@ -17947,8 +17947,8 @@
     },
     {
       "path": "tests/reader-capacity.test.mjs",
-      "bytes": 7965,
-      "sha256": "5d9ae70dd613b7df25fe2ea73531dd31e232ea4a0a3f8a61cdfaeb1bf89a6be3"
+      "bytes": 8251,
+      "sha256": "6ab5e9543479339a56409d54b92374bb2d732b5a04a863101fd0e1725e9cf45e"
     },
     {
       "path": "tests/recurring-fixture.mjs",
