@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-06T01:01:13+00:00",
+  "exportedAt": "2026-11-06T01:51:25+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7543,7 +7543,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "b77c32633a6e8e07fc48a5982d3aed42c1c4e936763bd88fce7c4d92ec480d19"
+      "sha256": "27768749eb115479e8371522038793e6e75b27b8ceffbbbaa391b6a9bec98579"
     },
     {
       "path": "cache/market.json",
@@ -7628,7 +7628,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "cc68e4991fe6fc6bb43086e428b4419ea5f885d3a0307c6b5beae2108ef4cb75"
+      "sha256": "ffb008f081f147655486a930d69e56ea2b19ef46c722e4b774d163272e5bd00b"
     },
     {
       "path": "dist/_headers",
@@ -16071,6 +16071,11 @@
       "sha256": "80474ab1026b29546b1d11c4475342090f0c8e4d21f9e8f514653e6d90dc5491"
     },
     {
+      "path": "dist/data-8306bfc1299e4c68.json",
+      "bytes": 992898,
+      "sha256": "8306bfc1299e4c68899e43131ff30f71855ec76c3b6289f4b7b9932421225fa1"
+    },
+    {
       "path": "dist/data-8da04b6a5d7d6150.json",
       "bytes": 218967,
       "sha256": "8da04b6a5d7d6150788b9866f2fa48165d8cc14320bd8f7bc760186c384b45a7"
@@ -16193,7 +16198,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "f310efe0e02ac203a1a4ef3b98a08d6edc290c762fb67b650c7d8d924181e4ed"
+      "sha256": "8306bfc1299e4c68899e43131ff30f71855ec76c3b6289f4b7b9932421225fa1"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16213,7 +16218,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "cc68e4991fe6fc6bb43086e428b4419ea5f885d3a0307c6b5beae2108ef4cb75"
+      "sha256": "ffb008f081f147655486a930d69e56ea2b19ef46c722e4b774d163272e5bd00b"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16473,7 +16478,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "fb53aed13fcc8a534036c9ccf1010e8cb22701600b1ce1c05dc54ae98e69540f"
+      "sha256": "b19125ffa95bf26b40c096a3c3b8862949cd5af4a12e1b1d8d18ec8726b0b6f7"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16582,8 +16587,8 @@
     },
     {
       "path": "ops/api-grant-collector.mjs",
-      "bytes": 4000,
-      "sha256": "020a6872107e8eccecad65d03a7ccdc2cda1f456d1cea8c28d1aca024e777d4e"
+      "bytes": 4062,
+      "sha256": "0e5f6b62625dadc1f21743722c90d154a2eba124ede8e12d0b452a04119147d2"
     },
     {
       "path": "ops/api-nx-offers.mjs",
@@ -16596,9 +16601,14 @@
       "sha256": "255e6ad68de04c75d7431cafa598586dae2e28d8fe745ec645ba1bb2269896e5"
     },
     {
+      "path": "ops/api-price-item-dto.mjs",
+      "bytes": 25376,
+      "sha256": "2c8315dbbc01470d8a4ca999f085e9485c07e6274e700c67cd0c5d758c8c6ae5"
+    },
+    {
       "path": "ops/api-private-cash-alarm.mjs",
-      "bytes": 14975,
-      "sha256": "e443e59cd90c4b7a022ecc9adacdd5ed859d01b585608cf57b6478f8e8825da2"
+      "bytes": 17074,
+      "sha256": "ce98c499636392c5c80f600e20884e0579cf33b7aee12ae17e8d99ec595ab108"
     },
     {
       "path": "ops/api-private-cash-materializer.mjs",
@@ -16607,18 +16617,38 @@
     },
     {
       "path": "ops/api-private-health.mjs",
-      "bytes": 11357,
-      "sha256": "e50cc226043c5d1f048155c4b33361195c85870ae9343c6ab5dbbc03e4e0d5eb"
+      "bytes": 11489,
+      "sha256": "b7eff03ba7f71216fe3f63b2db4d2fd20bee55d5b9bc5a013f584797049d1377"
+    },
+    {
+      "path": "ops/api-private-item-producer.mjs",
+      "bytes": 26159,
+      "sha256": "c98e3c5ab4a85a22406339ef13583dadbe197147cffed6ce3348ec4b38cc7612"
     },
     {
       "path": "ops/api-private-nx-health.mjs",
-      "bytes": 4656,
-      "sha256": "931575d1a1a63d92c1d66bc5ac538ebc159b87c4d908e345b4272a22d0317c59"
+      "bytes": 4667,
+      "sha256": "3f59e6d624d211f9db355719c78eddd2b3528f513dffe1f735f310d665a9960b"
     },
     {
       "path": "ops/api-private-nx-offers.mjs",
-      "bytes": 8583,
-      "sha256": "574963ec195bb663dd3b6c892912b5a1f5a91b85e29688b1709138bd477281c7"
+      "bytes": 8939,
+      "sha256": "dbd2c0f6568bf1b9a277a43623386ad9c73d8181fd7973fb24de3f44e07a32f3"
+    },
+    {
+      "path": "ops/api-private-nx-projection.mjs",
+      "bytes": 19219,
+      "sha256": "8667ffd8b1a90832662257ac7c1967fed0fa8faf3bd714b3bbd8e790aa6266e1"
+    },
+    {
+      "path": "ops/api-private-nx-publisher.mjs",
+      "bytes": 12987,
+      "sha256": "8fcbd05d76c53e8a645c75b852f9ec1b667692fe486982c1ee1273267c116496"
+    },
+    {
+      "path": "ops/api-private-nx-r2-health.mjs",
+      "bytes": 2721,
+      "sha256": "e98f55532f174d2a731567595384b07c5cb0e04d64c241c0560dc2a67177ffb7"
     },
     {
       "path": "ops/api-public-cash-contract.mjs",
@@ -16712,8 +16742,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 6464,
-      "sha256": "498b9824af37b14ba767426e6d3fec5deb2c6fdf236a8006f0b822ef0fbaa559"
+      "bytes": 6899,
+      "sha256": "867cb04f9cef01174f0a9e02a770cba3b29f8f69953a5d9f5de5eeef2c8df3ea"
     },
     {
       "path": "portable_hash.py",
@@ -16811,6 +16841,21 @@
       "sha256": "fea111fe851c8f0948f0a71d8930576656561f8f4b4c6d6776a03b0c0ce99dc5"
     },
     {
+      "path": "tests/api-price-item-dto.test.mjs",
+      "bytes": 10038,
+      "sha256": "e61403af2da39bdb1d7aa2d8f7d5f852b388d8ff376c7e473b3e5b9bcb94fa29"
+    },
+    {
+      "path": "tests/api-price-item-fixture.json",
+      "bytes": 1330,
+      "sha256": "67dbb270bca8635634e97c40eb38455a01039baf7bc60460f5b852e41643ac44"
+    },
+    {
+      "path": "tests/api-price-item-ownership.test.mjs",
+      "bytes": 4355,
+      "sha256": "d076240ef191e3a893b1243702ccd3248f6690fb3220528d305ab243911bb29e"
+    },
+    {
       "path": "tests/api-private-cash-integration.test.mjs",
       "bytes": 15905,
       "sha256": "805d9d1d6f94522c2f762df533b7359e914938e45bcf619dd6f9243cd18054d6"
@@ -16821,19 +16866,44 @@
       "sha256": "3c838150a182c5c9bc26bb384729bc54c9c12b99b34e7275106b5aea5a2ec47f"
     },
     {
+      "path": "tests/api-private-item-fixture.mjs",
+      "bytes": 6503,
+      "sha256": "ed55c86cef380dc013546fcff8fe606e7bd0cae1fe0513db9beeccb9c9b69bbc"
+    },
+    {
+      "path": "tests/api-private-item-producer.test.mjs",
+      "bytes": 18450,
+      "sha256": "d4ff9758eeafde1111101e9f0c9d0e3b1701553afcc39f6b0db77bdc509dfa99"
+    },
+    {
       "path": "tests/api-private-nx-combined.test.mjs",
       "bytes": 9798,
       "sha256": "7fa7bcf7fba3ebe88f2dbf7ba1c1cbf02dc60b16192508753ee47c83e5ffed7a"
     },
     {
       "path": "tests/api-private-nx-health.test.mjs",
-      "bytes": 11231,
-      "sha256": "f49e3e02dd904a0684e29f957195b52c698d30cea28cd9772c6b00a97213d8ab"
+      "bytes": 11357,
+      "sha256": "4f080c1b48b3283d2a7cbac6615d9e467dc350d06bcb46cea5e23558326520d3"
     },
     {
       "path": "tests/api-private-nx-offers-integration.test.mjs",
       "bytes": 10148,
       "sha256": "d049f7cb6462aaaa3d7217ca41d9daf24442da09b7fd282f37bfaf4c12aee87b"
+    },
+    {
+      "path": "tests/api-private-nx-publication-fixture.mjs",
+      "bytes": 5048,
+      "sha256": "8ee81696cfe3e93bbe28a6fe795fc380cad95c0e564fe8e51027f544c203094a"
+    },
+    {
+      "path": "tests/api-private-nx-publication.test.mjs",
+      "bytes": 29435,
+      "sha256": "a5b49cc630856f5216b59d77edb27e8b9ec65be3efaf0bc696e41f886f43496c"
+    },
+    {
+      "path": "tests/api-private-nx-r2-mux.test.mjs",
+      "bytes": 15708,
+      "sha256": "b3fb1686405890bf1d51278144b3b930b56c654adf136c452eb2c0f832b26d98"
     },
     {
       "path": "tests/api-provider-alarm-recovery.test.mjs",

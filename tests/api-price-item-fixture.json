@@ -1,0 +1,17 @@
+[
+  {
+    "item_id":1082000,
+    "sold":{"sales":2,"units":19,"day_sales":0,"day_units":0,"avg_unit_price":10.123456789123456789,"median_unit_price":9.500},
+    "seen":{"listings":3,"sellers":2,"median_unit_price":12.25,"p25_unit_price":11.0,"p75_unit_price":null},
+    "reference":{"unit_price":10.123456789123456789,"basis":"sold","samples":2,"scope":"item"},
+    "by_stats":[
+      {"upgrades":1,"slots_left":3,"stats":{"14":1,"16":2},"reference":{"unit_price":200.25,"basis":"sold","samples":3,"scope":"stats"}},
+      {"upgrades":0,"slots_left":5,"stats":{"14":2},"reference":{"unit_price":100.5,"basis":"listed","samples":1,"scope":"stats"}},
+      {"upgrades":0,"slots_left":5,"stats":{"14":0,"16":0},"reference":null}
+    ],
+    "by_scrolls":[{"upgrades":1,"slots_left":3,"reference":{"unit_price":201,"basis":"sold","samples":4,"scope":"scrolls"},"deal":{"unit_price":199,"basis":"sold","samples":1,"scope":"near"}}],
+    "by_attack":[{"attack":2,"sold":{"sales":3,"units":10,"day_sales":1,"day_units":3,"avg_unit_price":205.2,"median_unit_price":200},"seen":{"listings":1,"sellers":1,"median_unit_price":206,"p25_unit_price":206,"p75_unit_price":206},"reference":{"unit_price":202,"basis":"sold","samples":4,"scope":"near"}}],
+    "typical_attack":2
+  },
+  {"item_id":9999999,"sold":null,"seen":null,"reference":null}
+]

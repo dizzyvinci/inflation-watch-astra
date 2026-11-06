@@ -25,7 +25,7 @@ function fixture(t){
 }
 test('curated health reads actual accepted producer SQLite without raw/private fields or R2 reads',async t=>{
  const f=fixture(t);await f.accept(receipt('nx-rate',26,summary()));await f.accept(receipt());const before=f.reads;const health=privateNxHealth(f.core,{API_PRIVATE_NX_JSON:JSON.stringify(flag)});
- assert.equal(health.status,'private_only');assert.equal(health.diagnosticVersion,1);assert.equal(health.latestCaptures.length,2);assert.equal(health.nativeSummary.reportedWindowHours,8);assert.equal(health.history.latestSourceHourSideRows,2);assert.equal(health.history.uniqueSourceHourLabels,1);assert.equal(health.history.changedRowRevisions,2);assert.equal(f.reads,before);
+ assert.equal(health.status,'private_only');assert.equal(health.diagnosticVersion,2);assert.equal(health.r2ProjectionAvailability,'not_checked');assert.equal(Object.hasOwn(health,'r2ProjectionAvailable'),false);assert.equal(health.latestCaptures.length,2);assert.equal(health.nativeSummary.reportedWindowHours,8);assert.equal(health.history.latestSourceHourSideRows,2);assert.equal(health.history.uniqueSourceHourLabels,1);assert.equal(health.history.changedRowRevisions,2);assert.equal(f.reads,before);
  for(const bad of ['receiptKey','receipt_key','body','steps','owner_name','rawBodyBase64'])assert(!JSON.stringify(health).includes('"'+bad+'"'));
 });
 test('unchanged repeated capture does not inflate row/revision counts; changed row adds one revision',async t=>{

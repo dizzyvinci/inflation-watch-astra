@@ -1,17 +1,19 @@
 // WORK-only producer implementing the future shared-owner private producer contract.
 // Never imports fetch, a provider key, native alarms, public routes or cash-price state.
 import {decodeNxReceipt} from './api-nx-offers.mjs';
+import {initializeNxPublication,recordNxPublicationCommit} from './api-private-nx-publisher.mjs';
 const RECEIPT=/^_private\/provider-api\/v1\/receipts\/([0-9]{12,16})-(nx-rate|nx-history)-([a-f0-9]{64})\.json$/;
 const LEASE=130000;
 class Disabled extends Error{}
 export class PrivateNxOffersProducer{
- constructor(ctx,bucket,{enabled=false,now=Date.now,isEnabled=()=>true}={}){this.ctx=ctx;this.sql=ctx.storage.sql;this.bucket=bucket;this.enabled=enabled===true;this.isEnabled=isEnabled;this.now=now;this.flight=null;if(!this.active)return;
+ constructor(ctx,bucket,{enabled=false,now=Date.now,isEnabled=()=>true,privatePublicationEnabled=false}={}){this.privatePublicationEnabled=privatePublicationEnabled===true;this.ctx=ctx;this.sql=ctx.storage.sql;this.bucket=bucket;this.enabled=enabled===true;this.isEnabled=isEnabled;this.now=now;this.flight=null;if(!this.active)return;
   this.sql.exec(`CREATE TABLE IF NOT EXISTS private_nx_captures(receipt_key TEXT PRIMARY KEY,operation TEXT NOT NULL,source_attempt INTEGER NOT NULL,state TEXT NOT NULL DEFAULT 'pending',available_at INTEGER NOT NULL,lease_until INTEGER,claim INTEGER NOT NULL DEFAULT 0,failures INTEGER NOT NULL DEFAULT 0,raw_sha TEXT,captured_at TEXT,last_result TEXT)`);
   // Cover health's latest-completed lookup and state counts without sorting raw rows.
   this.sql.exec('CREATE INDEX IF NOT EXISTS private_nx_capture_latest_v1 ON private_nx_captures(operation,state,captured_at DESC,source_attempt DESC,raw_sha)');
   this.sql.exec('CREATE INDEX IF NOT EXISTS private_nx_capture_state_v1 ON private_nx_captures(state)');
   this.sql.exec(`CREATE TABLE IF NOT EXISTS private_nx_latest(source_url TEXT NOT NULL,hour_label TEXT NOT NULL,side TEXT NOT NULL,captured_at TEXT NOT NULL,source_attempt INTEGER NOT NULL,receipt_key TEXT NOT NULL,body TEXT NOT NULL,PRIMARY KEY(source_url,hour_label,side))`);
   this.sql.exec(`CREATE TABLE IF NOT EXISTS private_nx_revisions(id INTEGER PRIMARY KEY AUTOINCREMENT,source_url TEXT NOT NULL,hour_label TEXT NOT NULL,side TEXT NOT NULL,captured_at TEXT NOT NULL,source_attempt INTEGER NOT NULL,receipt_key TEXT NOT NULL,body TEXT NOT NULL,UNIQUE(source_url,hour_label,side,receipt_key))`);
+  if(this.privatePublicationEnabled)initializeNxPublication(ctx);
  }
  get active(){return this.enabled&&this.isEnabled()===true;}
  guard(){if(!this.active)throw new Disabled();}
@@ -44,7 +46,9 @@ export class PrivateNxOffersProducer{
     if(!old||old.body!==body)this.sql.exec('INSERT OR IGNORE INTO private_nx_revisions(source_url,hour_label,side,captured_at,source_attempt,receipt_key,body) VALUES(?,?,?,?,?,?,?)',p.sourceUrl,e.hour_label,e.side,p.capturedAt,p.attemptId,job.receipt_key,body);
     if(!old||Date.parse(p.capturedAt)>Date.parse(old.captured_at)||p.capturedAt===old.captured_at&&p.attemptId>old.source_attempt)this.sql.exec(`INSERT INTO private_nx_latest(source_url,hour_label,side,captured_at,source_attempt,receipt_key,body) VALUES(?,?,?,?,?,?,?) ON CONFLICT(source_url,hour_label,side) DO UPDATE SET captured_at=excluded.captured_at,source_attempt=excluded.source_attempt,receipt_key=excluded.receipt_key,body=excluded.body`,p.sourceUrl,e.hour_label,e.side,p.capturedAt,p.attemptId,job.receipt_key,body);
    }
-   this.sql.exec("UPDATE private_nx_captures SET state='complete',raw_sha=?,captured_at=?,lease_until=NULL,last_result='private_offer_commit' WHERE receipt_key=? AND claim=?",p.rawSha256,p.capturedAt,job.receipt_key,job.claim);return{status:'private_offer_committed',operation:p.kind,records:entries.length,providerAttempted:false};
+   this.sql.exec("UPDATE private_nx_captures SET state='complete',raw_sha=?,captured_at=?,lease_until=NULL,last_result='private_offer_commit' WHERE receipt_key=? AND claim=?",p.rawSha256,p.capturedAt,job.receipt_key,job.claim);
+   if(this.privatePublicationEnabled)recordNxPublicationCommit(this.ctx,p,job.receipt_key);
+   return{status:'private_offer_committed',operation:p.kind,records:entries.length,providerAttempted:false};
   });
  }catch(error){return this.ctx.storage.transactionSync(()=>{
   const current=this.row('SELECT state,claim,failures FROM private_nx_captures WHERE receipt_key=?',job.receipt_key);if(current?.state!=='running'||current.claim!==job.claim)return{status:'stale_private_claim'};

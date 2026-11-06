@@ -3,6 +3,8 @@ import {PrivateCashMaterializer} from './api-private-cash-materializer.mjs';
 import bindings from './api-cash-bindings-v1.json' with {type:'json'};
 import {ApiPublicCashPublisher} from './api-public-cash-publisher.mjs';
 import {PrivateNxOffersProducer} from './api-private-nx-offers.mjs';
+import {PrivateNxPublisher} from './api-private-nx-publisher.mjs';
+import {privateNxR2Configuration,privateNxR2Health} from './api-private-nx-r2-health.mjs';
 import {scheduleConfig} from './api-alarm-scheduler.mjs';
 
 export function privateCashConfig(env){
@@ -25,7 +27,8 @@ export class ApiPrivateCashAlarm{
     if(this.hasMux)this.ensureProviderRecoveryControl();
     this.initialStatus=this.status();
     if(this.initialStatus==='ready')this.materializer=new PrivateCashMaterializer(ctx,env.API_RAW_RECEIPTS,bindings,{enabled:true,now:()=>core.clock()});
-    if(this.nxStatus()==='ready')this.nxProducer=new PrivateNxOffersProducer(ctx,env.API_RAW_RECEIPTS,{enabled:true,now:()=>core.clock(),isEnabled:()=>this.nxStatus()==='ready'});
+    if(this.nxStatus()==='ready')this.nxProducer=new PrivateNxOffersProducer(ctx,env.API_RAW_RECEIPTS,{enabled:true,now:()=>core.clock(),isEnabled:()=>this.nxStatus()==='ready',privatePublicationEnabled:this.nxR2Status()==='ready'});
+    if(this.nxProducer&&this.nxR2Status()==='ready')this.nxPublisher=new PrivateNxPublisher(ctx,env.API_RAW_RECEIPTS,{enabled:true,now:()=>core.clock(),isEnabled:()=>this.nxR2Status()==='ready'});
     if(!this.cashActive&&!this.nxActive)return;
     core.sql.exec(`CREATE TABLE IF NOT EXISTS api_cash_alarm_mux(id INTEGER PRIMARY KEY CHECK(id=1),
       provider_at INTEGER,private_at INTEGER,recovery_at INTEGER,last_kind TEXT,initialized INTEGER NOT NULL DEFAULT 0)`);
@@ -67,6 +70,8 @@ export class ApiPrivateCashAlarm{
       return this.core.config().enabled===true?'ready':'private_nx_requires_enabled_grant';
     }catch{return'invalid_private_nx_configuration';}
   }
+  nxR2Status(){return privateNxR2Configuration(this.env,this.core);}
+  get nxR2Active(){return this.nxPublisher!==undefined&&this.nxActive&&this.nxR2Status()==='ready';}
   get cashActive(){return this.materializer!==undefined&&this.status()==='ready';}
   get nxActive(){return this.nxProducer!==undefined&&this.nxStatus()==='ready';}
   get active(){return this.cashActive||this.nxActive;}
@@ -88,7 +93,7 @@ export class ApiPrivateCashAlarm{
   get providerControl(){return{setAlarm:at=>this.setProviderAlarm(at),deleteAlarm:()=>this.clearProviderAlarm()};}
   async arm(){
     const row=this.row(),now=this.core.clock();
-    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[])].filter(value=>value!==null);
+    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[]),...(this.nxR2Active?[this.nxPublisher.nextDue()]:[])].filter(value=>value!==null);
     if(!choices.length){await this.ctx.storage.deleteAlarm();return null;}
     const at=Math.max(now+1,Math.min(...choices));await this.ctx.storage.setAlarm(at);return at;
   }
@@ -139,6 +144,7 @@ export class ApiPrivateCashAlarm{
       const reconciled=this.cashActive?this.materializer.reconcileCompletedPrices(8):{queued:0};
       if(this.cashActive)this.publisher?.reconcile();
       if(this.nxActive)this.nxProducer.reconcile(8);
+      if(this.nxR2Active)this.nxPublisher.reconcileStored(); // SQL-only restart/adoption repair
       this.refreshPrivateDeadline();await this.arm();
       return{status:'private_projection_scheduled',queued:reconciled.queued};
     }catch{
@@ -159,11 +165,12 @@ export class ApiPrivateCashAlarm{
     const nxAt=this.nxActive?this.nxProducer.nextDue():null,nxDue=this.nxActive&&(nxAt!==null&&nxAt<=now||!this.cashActive&&recoveryDue);
     const providerDue=row.provider_at!==null&&row.provider_at<=now;
     const publicAt=this.cashActive?this.publisher?.nextDue()??null:null,publicDue=publicAt!==null&&publicAt<=now;
-    if(!privateDue&&!providerDue&&!publicDue&&!nxDue)return'early';
+    const nxR2At=this.nxR2Active?this.nxPublisher.nextDue():null,nxR2Due=nxR2At!==null&&nxR2At<=now;
+    if(!privateDue&&!providerDue&&!publicDue&&!nxDue&&!nxR2Due)return'early';
     // At most one heavy operation per event; alternate when both are overdue.
     let kind=privateDue&&(!providerDue||row.last_kind!=='private')?'private':'provider';
-    if(publicDue||nxDue){const order=['private','public','nx','provider'],start=(order.indexOf(row.last_kind)+1)%4;
-      kind=[...order.slice(start),...order.slice(0,start)].find(k=>({private:privateDue,public:publicDue,nx:nxDue,provider:providerDue})[k]);}
+    if(publicDue||nxDue||nxR2Due){const order=['private','public','nx','nx-r2','provider'],start=(order.indexOf(row.last_kind)+1)%order.length;
+      kind=[...order.slice(start),...order.slice(0,start)].find(k=>({private:privateDue,public:publicDue,nx:nxDue,'nx-r2':nxR2Due,provider:providerDue})[k]);}
     this.core.sql.exec(kind==='private'?'UPDATE api_cash_alarm_mux SET last_kind=?,private_at=NULL,recovery_at=NULL WHERE id=1':
       kind==='provider'?'UPDATE api_cash_alarm_mux SET last_kind=?,provider_at=NULL WHERE id=1':'UPDATE api_cash_alarm_mux SET last_kind=? WHERE id=1',kind);return kind;
   }
@@ -204,10 +211,31 @@ export class ApiPrivateCashAlarm{
       this.refreshPrivateDeadline();await this.arm();return{...result,eventKind:'private_nx_offers',providerAttempted:false};
     }catch{this.core.sql.exec('UPDATE api_cash_alarm_mux SET recovery_at=? WHERE id=1',this.core.clock()+30000);await this.arm();return{status:'private_nx_event_retry',eventKind:'private_nx_offers',providerAttempted:false};}
   }
+  async armNxR2Recovery(until){
+    // Persist the SAME owner recovery deadline before any publication I/O.
+    // The outbox lease also survives reset; no provider work is created here.
+    this.core.sql.exec('UPDATE api_cash_alarm_mux SET recovery_at=CASE WHEN recovery_at IS NULL THEN ? ELSE MIN(recovery_at,?) END WHERE id=1',until,until);
+    await this.arm();
+  }
+  async runNxR2Alarm(){
+    if(!this.nxR2Active)return{status:this.nxR2Status(),eventKind:'private_nx_r2',providerAttempted:false};
+    try{
+      await this.armNxR2Recovery(this.core.clock()+130000);
+      const result=await this.nxPublisher.drainOne(until=>this.armNxR2Recovery(until));
+      this.refreshPrivateDeadline();await this.arm();
+      return{...result,eventKind:'private_nx_r2',providerAttempted:false};
+    }catch{
+      // Keep a durable owner continuation even if claim/arming/SQL failed.
+      const at=this.core.clock()+30000;
+      this.core.sql.exec('UPDATE api_cash_alarm_mux SET recovery_at=? WHERE id=1',at);
+      await this.ctx.storage.setAlarm(at);
+      return{status:'private_nx_r2_event_retry',eventKind:'private_nx_r2',providerAttempted:false};
+    }
+  }
   health(){
     if(!this.active)return{status:this.status()};
     const row=this.row();return{status:'private_only_ready',methodVersion:1,publicationEligible:false,
-      privateAlarmAt:row.private_at,recoveryAlarmAt:row.recovery_at,
+      privateAlarmAt:row.private_at,recoveryAlarmAt:row.recovery_at,privateNxPublication:privateNxR2Health(this.core,this.env),
       jobs:this.cashActive?this.core.sql.exec('SELECT state,COUNT(*) AS count FROM private_cash_jobs GROUP BY state').toArray():[],
       ...(this.nxProducer?{nxOffers:this.nxActive?this.nxProducer.health():{status:this.nxStatus()}}:{})};
   }

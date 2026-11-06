@@ -9,7 +9,7 @@ function configuration(env,core){try{
  return core.config().enabled===true?'ready':'requires_enabled_grant';
 }catch{return'invalid_configuration';}}
 export function privateNxHealth(core,env){
- const cfg=configuration(env,core),base={diagnosticVersion:1,configuration:cfg,publicationEligible:false,sourceObservedAt:null,qualifiedIndividualTrades:0,clockKind:'producer_state_and_original_receipt_clocks_not_new_market_observation'};
+ const cfg=configuration(env,core),base={diagnosticVersion:2,r2ProjectionAvailability:'not_checked',configuration:cfg,publicationEligible:false,sourceObservedAt:null,qualifiedIndividualTrades:0,clockKind:'producer_state_and_original_receipt_clocks_not_new_market_observation'};
  if(cfg!=='ready')return{...base,status:'disabled_or_unavailable'};
  try{
   const tables=core.sql.exec("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('private_nx_captures','private_nx_latest','private_nx_revisions')").toArray();
@@ -29,6 +29,6 @@ export function privateNxHealth(core,env){
   let nativeSummary=null;if(s){if(!clock(s.captured_at)||!integer(s.source_attempt)||!Number.isSafeInteger(s.native_hours)||s.native_hours<1||s.native_hours>8784||s.heard!==null&&!clock(s.heard)||![0,1].includes(s.limited))throw TypeError('invalid_summary');nativeSummary={capturedAt:s.captured_at,attemptId:s.source_attempt,reportedWindowHours:s.native_hours,sourceLastHeardAt:s.heard,sourceLimited:s.limited===1,exactWindowBoundsKnown:false,meaning:'native_source_summary_not_derived_hourly_pool'};}
   return{...base,status:'private_only',latestCaptures,captures:counts,nativeSummary,
    history:{latestSourceHourSideRows:hourly.rows,uniqueSourceHourLabels:hourly.hours,firstRetainedSourceHourLabel:hourly.first_hour,lastRetainedSourceHourLabel:hourly.last_hour,changedRowRevisions:revisions.n,bucketCompletionKnown:false,countMeaning:'row_counts_not_summed_posters_people_trades_or_volume'},
-   nativeSummaryChangedRevisions:summaries.n,r2ProjectionAvailable:false};
+   nativeSummaryChangedRevisions:summaries.n};
  }catch{return{...base,status:'diagnostic_unavailable'};}
 }
