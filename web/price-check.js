@@ -110,7 +110,7 @@
     return bindClockText(make('small','price-check-api-evidence'),()=>value.available?`Separate API median ${number(value.saleMedianMesos,1)} mesos · ${number(value.recordedSalesCount,0)} reported sales / reported 3-day lookback (bounds unknown) · retrieved ${instant(window.AstraApiCash.getState().data.capturedAt)}; not individual sale time`:'Fixed29 API evidence unavailable; not zero',{rawApiCapturedAt:window.AstraApiCash.getState().data.capturedAt});
   }
   const columns=[['name','Item / evidence'],['price','Qualified daily price · mesos'],['publisherMedian','Source summary median'],['knownNxCost','Fixed NX cost'],['dailyRate','Daily mesos / NX'],['priceDay','Price day'],['action','History']];
-  const activeColumns=()=>{const active=currentReport?.apiCalculationView?columns.map(([key,title])=>[key,key==='price'?'Price reference · mesos':key==='priceDay'?'Price basis / date':title]):columns;return records.some(r=>r.rollingReference)?[...active.slice(0,-1),['rollingPrice','Separate rolling median · mesos'],active.at(-1)]:active;};
+  const activeColumns=()=>{const active=(currentReport?.apiCalculationView||currentReport?.apiItemEvidence)?columns.map(([key,title])=>[key,key==='price'?'Price reference · mesos':key==='priceDay'?'Price basis / date':title]):columns;return records.some(r=>r.rollingReference)?[...active.slice(0,-1),['rollingPrice','Separate rolling median · mesos'],active.at(-1)]:active;};
   const captureClock=value=>typeof value==='string'&&Number.isFinite(Date.parse(value))&&/(?:Z|[+-]\d\d:\d\d)$/.test(value);
   function exactTenths(lexeme){
     if(typeof lexeme!=='string'||lexeme.length>160||!/^\d+(?:\.\d+)?$/.test(lexeme))return 'Unknown';
@@ -126,10 +126,10 @@
     return text;
   }
   function applyCalculationEvidence(){
-    const data=currentReport,view=data?.apiCalculationView;if(!view||!Array.isArray(data.rows)||data.rows.length!==50)return;
+    const data=currentReport,independent=Object.hasOwn(data||{},'apiItemEvidence'),view=independent?data.apiItemEvidence:data?.apiCalculationView,sourceRows=independent?view?.rows:data?.rows;if(!view||independent&&view.kind!=='api_item_evidence_view'||!Array.isArray(sourceRows)||sourceRows.length!==50)return;
     const refs=new Map(),slugs=new Set(),ids=new Set();
-    for(const row of data.rows){const ref=row?.currentApiReference;if(!validSlug(row?.slug)||typeof row.name!=='string'||!ref||!validId(ref.itemId)||ref.slug!==row.slug||ref.name!==row.name||slugs.has(row.slug)||ids.has(ref.itemId))return;slugs.add(row.slug);ids.add(ref.itemId);refs.set(row.slug,{row,ref});}
-    const daily=new Map(),items=data.apiDailyItems;
+    for(const row of sourceRows){const ref=row?.currentApiReference;if(!validSlug(row?.slug)||typeof row.name!=='string'||!ref||!validId(ref.itemId)||ref.slug!==row.slug||ref.name!==row.name||slugs.has(row.slug)||ids.has(ref.itemId))return;slugs.add(row.slug);ids.add(ref.itemId);refs.set(row.slug,{row,ref});}
+    const daily=new Map(),items=independent?view.dailyItems:data.apiDailyItems;
     if(Array.isArray(items)&&items.length===79&&items.filter(r=>r?.role==='goods').length===50&&items.filter(r=>r?.role==='cash').length===29&&new Set(items.map(r=>r?.itemId)).size===79&&new Set(items.map(r=>r?.slug)).size===79){
       for(const item of items){if(!validId(item.itemId)||!validSlug(item.slug)||!Array.isArray(item.points)||item.points.length>31)continue;const days=new Set();let valid=true;const points=[];
         for(const p of item.points){if(!p||!validDay(p.day)||days.has(p.day)||!(p.medianUnitPriceLexeme===null&&p.qualified===false||typeof p.medianUnitPriceLexeme==='string'&&/^\d+(?:\.\d+)?$/.test(p.medianUnitPriceLexeme)&&Number.isFinite(Number(p.medianUnitPriceLexeme)))||!Number.isSafeInteger(p.recordedSalesCount)||p.recordedSalesCount<0||typeof p.qualified!=='boolean'||typeof p.partialCalendarDay!=='boolean'||!captureClock(p.source?.capturedAt)){valid=false;break;}days.add(p.day);points.push({...p,source:{...p.source}});}
@@ -142,7 +142,7 @@
       return {...existing,id:ref.itemId,price:available?Number(lexeme):null,priceDay:null,carried:false,dailyRate:null,type:'Fixed goods basket · API 3-day reference',calculationReference:{available,exactMedianLexeme:available?lexeme:null,recordedSalesCount:ref.recordedSalesCount,capturedAt:ref.capturedAt},apiDailyHistory:actual?.role==='goods'&&actual.itemId===ref.itemId?actual.points:[],legacyDailyEvidence:legacy};
     });
   }
-  function calculationCoverage(){if(!currentReport?.apiCalculationView)return '';const count=records.filter(r=>r.calculationReference?.available).length;return ` Fixed-basket API references: ${count}/50 raw sale medians over a reported 3-day lookback (bounds unknown), retrieved ${instant(currentReport.apiCalculationView.clocks?.currentPrices)}. Actual API daily histories and older source records retain their separate dates; other items are not refreshed by this clock.`;}
+  function calculationCoverage(){const view=currentReport?.apiItemEvidence||currentReport?.apiCalculationView;if(!view)return '';const count=records.filter(r=>r.calculationReference?.available).length;return ` Fixed-basket API references: ${count}/50 raw sale medians over a reported 3-day lookback (bounds unknown), retrieved ${instant(view.clocks?.currentPrices)}. Actual API daily histories and older source records retain their separate dates; other items are not refreshed by this clock.${currentReport.apiItemEvidence?' Item evidence is independent of any separately retained complete goods calculation.':''}`;}
   function collect(data){
     const rows=[],bySlug=new Map(),byId=new Map();
     function add(raw,type,fromCatalog=false){

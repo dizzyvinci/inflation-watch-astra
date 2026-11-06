@@ -17,7 +17,7 @@
     "build:nx-history": "node scripts/build-nx-history-browser.mjs",
     "build:api-calculations": "node scripts/build-api-calculations.mjs",
     "check:api-calculations": "node scripts/build-api-calculations.mjs --check",
-    "test:api-calculations": "node --test tests/api-calculation-view-model.test.mjs tests/api-calculation-client.test.mjs tests/api-calculation-runtime.test.mjs tests/api-calculation-source-contract.test.mjs tests/api-calculation-generated.test.mjs && node tests/api-calculation-browser.cjs"
+    "test:api-calculations": "node --test tests/api-partial-item-client.test.mjs tests/api-partial-item-browser.test.cjs tests/api-calculation-view-model.test.mjs tests/api-calculation-client.test.mjs tests/api-calculation-runtime.test.mjs tests/api-calculation-source-contract.test.mjs tests/api-calculation-generated.test.mjs && node tests/api-calculation-browser.cjs"
   },
   "devDependencies": {
     "jsdom": "^30.1.3",

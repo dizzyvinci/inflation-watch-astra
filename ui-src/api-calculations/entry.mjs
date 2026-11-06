@@ -7,8 +7,8 @@ const EXPECTED='865944dc992219e01b2aad45a6191174d112f3f1902e4ac86c79a6d23a481e17
 let timer=null,running=false;
 const runtime=createCalculationRuntime({origin:location.origin,available,definitionHash:EXPECTED,
  parse:bytes=>parseApiIndexSnapshot(bytes,{expectedDefinitionHash:EXPECTED,expectedRows:definition.goods,expectedCashRows:definition.cash}),
- unpackDaily:unpackApiDailyItemHistory,selection:()=>{const s=window.AstraRollingBenchmark?.getState();return {mode:s?.mode||'rolling',windowDays:s?.windowDays||7};},
- notify:state=>doc.dispatchEvent(new CustomEvent('astracalculationchange',{detail:{status:state.status,readerMode:state.readerMode,snapshotHash:state.snapshot?.snapshotHash??null}}))});
+ unpackDaily:unpackApiDailyItemHistory,itemDefinitions:definition,selection:()=>{const s=window.AstraRollingBenchmark?.getState();return {mode:s?.mode||'rolling',windowDays:s?.windowDays||7};},
+ notify:state=>doc.dispatchEvent(new CustomEvent('astracalculationchange',{detail:{status:state.status,readerMode:state.readerMode,snapshotHash:state.snapshot?.snapshotHash??null,evidenceSnapshotHash:state.evidenceSnapshot?.snapshotHash??null}}))});
 window.AstraApiCalculations=runtime;
 const visible=()=>!doc.hidden&&navigator.onLine!==false;
 async function poll(){if(!available||running||!visible())return;running=true;try{await runtime.refresh();}finally{running=false;clearTimeout(timer);if(!runtime.state().blocked&&visible())timer=setTimeout(poll,Math.max(1000,runtime.state().nextCheckAt-Date.now()));}}

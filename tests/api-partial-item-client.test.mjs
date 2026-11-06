@@ -1,0 +1,35 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+import {createApiCalculationClient} from '../ui-src/api-calculations/client.mjs';
+import {parseApiIndexSnapshot} from '../ops/api-index-public-contract.mjs';import {calculateApiIndexSnapshot} from '../ops/api-index-calculations.mjs';
+import {fullFixture,priceCapture,context,spec} from './api-index-test-helpers.mjs';
+const source=await fullFixture(),good=await calculateApiIndexSnapshot(source),thin=await calculateApiIndexSnapshot({...source,priceCapture:await priceCapture(source.definition,{omit:spec.goods[0].itemId,factor:1.7,ctx:context('prices','2026-11-06T12:05:00.000Z')})});
+const bytes=v=>new TextEncoder().encode(JSON.stringify(v)),tag=v=>'"api-calculations-'+createHash('sha256').update(bytes(v)).digest('hex')+'"';
+const parse=b=>parseApiIndexSnapshot(b,{expectedDefinitionHash:good.definitionHash,expectedRows:spec.goods,expectedCashRows:spec.cash});
+function response(v,{status=200,clockOverride,mode='accepted_cache'}={}){return new Response(status===304?null:bytes(v),{status,headers:{'Content-Type':'application/json','Cache-Control':'private, no-store, no-transform',ETag:tag(v),'X-Astra-Calculations-Mode':mode,'X-Astra-Calculations-Definition-Hash':v.definitionHash,'X-Astra-Calculations-Prices-Captured-At':clockOverride??v.sources.prices?.capturedAt??'none','X-Astra-Calculations-Overview-Captured-At':v.sources.overview?.capturedAt??'none'}});}
+function client(reply,options={}){let now=Date.parse('2026-11-06T12:10:00.000Z');const requests=[],changes=[];const c=createApiCalculationClient({origin:'https://inflation.gg',expectedDefinitionHash:good.definitionHash,parse,now:()=>now,onChange:s=>changes.push(s),fetcher:async(url,opts)=>{requests.push({url,opts});assert.equal(url,'https://inflation.gg/api-market-calculations.json');return reply(requests.length,opts);},...options});return{c,requests,changes,advance(){now+=60001;}};}
+test('cold49 retains independently validated latest evidence and304 ETag without inventing aggregate',async()=>{
+ const s=client((n,opts)=>{if(n===2)assert.equal(opts.headers['If-None-Match'],tag(thin));return response(thin,{status:n===2?304:200});});await s.c.refresh();assert.equal(s.c.state().snapshot,null);assert.equal(s.c.state().evidenceSnapshot.snapshotHash,thin.snapshotHash);assert.equal(s.changes[0].changed,false);assert.equal(s.changes[0].evidenceChanged,true);s.advance();await s.c.refresh();assert.equal(s.c.state().evidenceSnapshot.sources.prices.capturedAt,thin.sources.prices.capturedAt);assert.equal(s.requests.length,2);
+});
+test('complete→partial→304 keeps aggregate/clock old and uses partial body/header tuple for conditional request',async()=>{
+ const s=client((n,opts)=>{if(n===3)assert.equal(opts.headers['If-None-Match'],tag(thin));return response(n===1?good:thin,{status:n===3?304:200});});await s.c.refresh();s.advance();await s.c.refresh();assert.equal(s.c.state().snapshot.snapshotHash,good.snapshotHash);assert.equal(s.c.state().marketSourceAt,good.sources.prices.capturedAt);assert.equal(s.c.state().evidenceSnapshot.snapshotHash,thin.snapshotHash);assert.equal(s.c.state().readerMode,'retained_last_good');assert.equal(s.c.state().evidenceReaderMode,'accepted_cache');s.advance();await s.c.refresh();assert.equal(s.c.state().reason,'current_aggregate_unavailable_or_older');assert.equal(s.c.state().evidenceStatus,'current');assert.equal(s.requests.length,3);
+});
+test('older served graph cannot change evidence ETag or either source selection',async()=>{
+ const s=client((n,opts)=>{if(n>=3)assert.equal(opts.headers['If-None-Match'],tag(thin));return response(n===1||n===3?good:thin,{status:n===4?304:200});});await s.c.refresh();s.advance();await s.c.refresh();s.advance();await s.c.refresh();assert.equal(s.c.state().reason,'source_pair_rollback');assert.equal(s.c.state().snapshot.snapshotHash,good.snapshotHash);assert.equal(s.c.state().evidenceSnapshot.snapshotHash,thin.snapshotHash);s.advance();await s.c.refresh();assert.equal(s.c.state().evidenceSnapshot.snapshotHash,thin.snapshotHash);
+});
+test('wrong304 source context retains whole evidence with original clocks, no spliced fields',async()=>{
+ const s=client(n=>response(thin,n===1?{}:{status:304,clockOverride:'2026-11-06T12:06:00.000Z'}));await s.c.refresh();s.advance();await s.c.refresh();assert.equal(s.c.state().reason,'own_reader_failed');assert.equal(s.c.state().evidenceStatus,'retained');assert.equal(s.c.state().evidenceSnapshot.snapshotHash,thin.snapshotHash);assert.equal(s.c.state().evidenceSnapshot.sources.prices.capturedAt,thin.sources.prices.capturedAt);
+});
+for(const status of [401,403])test('authorization'+status+' stops requests and retains explicitly dated item evidence',async()=>{
+ const s=client(n=>n===1?response(thin):new Response(null,{status}));await s.c.refresh();s.advance();await s.c.refresh();s.advance();await s.c.refresh();assert.equal(s.requests.length,2);assert.equal(s.c.state().blocked,true);assert.equal(s.c.state().evidenceReason,'access_denied');assert.equal(s.c.state().evidenceStatus,'retained');assert.equal(s.c.state().evidenceSnapshot.sources.prices.capturedAt,thin.sources.prices.capturedAt);
+});
+test('503 retains independent evidence while complete aggregate remains separately retained',async()=>{
+ const s=client(n=>n===1?response(good):n===2?response(thin):new Response(null,{status:503}));await s.c.refresh();s.advance();await s.c.refresh();s.advance();await s.c.refresh();assert.equal(s.c.state().snapshot.snapshotHash,good.snapshotHash);assert.equal(s.c.state().evidenceSnapshot.snapshotHash,thin.snapshotHash);assert.equal(s.c.state().evidenceStatus,'retained');assert.equal(s.c.state().evidenceReason,'own_reader_failed');
+});
+test('overview-only partial snapshot accepts none price header and conditional daily evidence without fabricated price',async()=>{
+ const daily=await calculateApiIndexSnapshot({...source,priceCapture:null}),s=client(n=>response(daily,{status:n===2?304:200}));await s.c.refresh();s.advance();await s.c.refresh();assert.equal(s.c.state().snapshot,null);assert.equal(s.c.state().evidenceSnapshot.sources.prices,null);assert.equal(s.c.state().evidenceSnapshot.daily.itemHistory.rows.length,79);
+});
+test('timed-out late parse cannot paint either selection after a newer accepted request',async t=>{
+ t.mock.timers.enable({apis:['setTimeout']});let entered,release,parses=0;const inside=new Promise(r=>entered=r),gate=new Promise(r=>release=r);
+ const s=client(n=>response(n===1?thin:good),{parse:async b=>{if(++parses===1){entered();await gate;}return parse(b);}});
+ const pending=s.c.refresh();await inside;t.mock.timers.tick(8000);await pending;assert.equal(s.c.state().evidenceSnapshot,null);s.advance();await s.c.refresh();assert.equal(s.c.state().snapshot.snapshotHash,good.snapshotHash);release();await gate;await new Promise(r=>setImmediate(r));assert.equal(s.c.state().evidenceSnapshot.snapshotHash,good.snapshotHash);assert.equal(s.requests.length,2);
+});

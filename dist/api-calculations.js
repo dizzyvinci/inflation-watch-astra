@@ -1558,13 +1558,52 @@ function calculationView(legacy, snapshot, selection = {}) {
     dependencies: [...DEPENDENCIES]
   });
 }
+function calculationItemEvidenceView(legacy, snapshot, { definitions, dailyItems, status: status2 = "current", reason = null } = {}) {
+  need(definitions && Array.isArray(definitions.goods) && definitions.goods.length === 50 && Array.isArray(definitions.cash) && definitions.cash.length === 29);
+  const bound = calculationView(legacy, snapshot), base = new Map(legacy.rows.map((r) => [r.slug, r])), targets = new Map([...definitions.goods.map((r) => ({ ...r, role: "goods" })), ...definitions.cash.map((r) => ({ ...r, role: "cash" }))].map((r) => [r.itemId, r]));
+  need(targets.size === 79 && snapshot.current.rows.length === 50 && Array.isArray(dailyItems) && dailyItems.length === 79 && new Set(dailyItems.map((r) => r.itemId)).size === 79);
+  for (const expected of definitions.goods) {
+    const row = snapshot.current.rows.find((r) => r.itemId === expected.itemId), old = base.get(expected.slug);
+    need(row && old && row.slug === expected.slug && row.name === expected.name && old.name === expected.name && (old.canonicalId === void 0 || old.canonicalId === null || old.canonicalId === expected.itemId));
+  }
+  for (const row of dailyItems) {
+    const expected = targets.get(row.itemId);
+    need(expected && row.slug === expected.slug && row.name === expected.name && row.role === expected.role && (row.role !== "cash" || row.fixedNxCost === expected.fixedNxCost));
+  }
+  need(["current", "retained"].includes(status2));
+  return freeze({
+    kind: "api_item_evidence_view",
+    snapshotHash: snapshot.snapshotHash,
+    definitionHash: snapshot.definitionHash,
+    basketHash: snapshot.calibration.basketHash,
+    status: status2,
+    reason,
+    rows: bound.rows.map((row) => ({ ...row, indexContribution: null, changeContribution: null })),
+    dailyItems: structuredClone(dailyItems),
+    clocks: structuredClone(bound.clocks),
+    currentReference: { ...bound.currentReference },
+    sourceObservedAt: null,
+    qualifiedIndividualTrades: 0,
+    aggregateSelectionSeparate: true
+  });
+}
 function createCalculationSelection() {
-  let good = null, latestCheck = null, status2 = "unavailable";
+  let good = null, evidence = null, latestCheck = null, status2 = "unavailable", evidenceStatus = "unavailable", evidenceReason = null;
   return Object.freeze({
-    accept(validatedSnapshot, { checkedAt } = {}) {
-      need(clock2(checkedAt));
+    accept(validatedSnapshot, { checkedAt, readerMode = "accepted_cache" } = {}) {
+      need(clock2(checkedAt) && ["accepted_cache", "retained_last_good"].includes(readerMode));
       latestCheck = checkedAt;
       if (good) need(validatedSnapshot.definitionHash === good.definitionHash);
+      if (evidence) need(validatedSnapshot.definitionHash === evidence.definitionHash);
+      if (evidence && ["prices", "overview"].some((k) => evidence.sources[k] && (!validatedSnapshot.sources[k] || validatedSnapshot.sources[k].capturedAt < evidence.sources[k].capturedAt))) {
+        status2 = good ? "retained" : "unavailable";
+        evidenceStatus = "retained";
+        evidenceReason = "source_pair_rollback";
+        return false;
+      }
+      if (evidence?.snapshotHash !== validatedSnapshot.snapshotHash) evidence = freeze(structuredClone(validatedSnapshot));
+      evidenceStatus = readerMode === "retained_last_good" ? "retained" : "current";
+      evidenceReason = readerMode === "retained_last_good" ? "route_retained_last_good" : null;
       if (validatedSnapshot.current.available !== true) {
         status2 = good ? "retained" : "unavailable";
         return false;
@@ -1584,13 +1623,15 @@ function createCalculationSelection() {
       status2 = "current";
       return true;
     },
-    failed({ checkedAt } = {}) {
+    failed({ checkedAt, reason = "own_reader_failed" } = {}) {
       need(clock2(checkedAt));
       latestCheck = checkedAt;
       status2 = good ? "retained" : "unavailable";
+      evidenceStatus = evidence ? "retained" : "unavailable";
+      evidenceReason = reason;
     },
     state() {
-      return { snapshot: good, checkedAt: latestCheck, status: status2, marketSourceAt: good?.sources.prices.capturedAt ?? null };
+      return { snapshot: good, evidenceSnapshot: evidence, checkedAt: latestCheck, status: status2, evidenceStatus, evidenceReason, marketSourceAt: good?.sources.prices.capturedAt ?? null };
     }
   });
 }
@@ -1610,8 +1651,8 @@ function createApiCalculationClient({ origin, parse, expectedDefinitionHash, fet
   need2(allowed.has(origin) && typeof parse === "function" && /^[a-f0-9]{64}$/.test(expectedDefinitionHash), "invalid_own_reader_configuration");
   need2(Number.isFinite(timeoutMs) && timeoutMs > 0 && timeoutMs <= 8e3, "invalid_own_reader_deadline");
   const selection = createCalculationSelection();
-  let flight = null, etag = null, nextCheck = 0, failures = 0, blocked = false, readerMode = null, reason = null;
-  const state = () => ({ ...selection.state(), readerMode, reason, blocked, nextCheckAt: nextCheck });
+  let flight = null, etag = null, nextCheck = 0, failures = 0, blocked = false, readerMode = null, evidenceReaderMode = null, reason = null;
+  const state = () => ({ ...selection.state(), readerMode, evidenceReaderMode, reason, blocked, nextCheckAt: nextCheck });
   function context(response, snapshot) {
     need2(response.headers.get("X-Astra-Calculations-Definition-Hash") === expectedDefinitionHash && snapshot.definitionHash === expectedDefinitionHash, "definition_changed");
     need2(response.headers.get("X-Astra-Calculations-Prices-Captured-At") === (snapshot.sources.prices?.capturedAt ?? "none") && response.headers.get("X-Astra-Calculations-Overview-Captured-At") === (snapshot.sources.overview?.capturedAt ?? "none"), "source_clock_binding");
@@ -1646,11 +1687,12 @@ function createApiCalculationClient({ origin, parse, expectedDefinitionHash, fet
       need2(response.status === 200 || response.status === 304, response.status === 404 ? "not_published" : "own_reader_unavailable");
       need2(/(?:^|,)\s*private\s*(?:,|$)/i.test(response.headers.get("Cache-Control") || "") && /(?:^|,)\s*no-store\s*(?:,|$)/i.test(response.headers.get("Cache-Control") || ""), "private_policy");
       if (response.status === 304) {
-        const snapshot2 = selection.state().snapshot;
+        const snapshot2 = selection.state().evidenceSnapshot;
         need2(snapshot2 && response.headers.get("ETag") === etag, "invalid_not_modified");
-        readerMode = context(response, snapshot2);
-        selection.accept(snapshot2, { checkedAt: iso(now()) });
-        reason = null;
+        evidenceReaderMode = context(response, snapshot2);
+        selection.accept(snapshot2, { checkedAt: iso(now()), readerMode: evidenceReaderMode });
+        readerMode = selection.state().status === "retained" ? "retained_last_good" : evidenceReaderMode;
+        reason = selection.state().status === "retained" ? "current_aggregate_unavailable_or_older" : null;
         failures = 0;
         nextCheck = now() + 6e4;
         onChange(state());
@@ -1688,21 +1730,23 @@ function createApiCalculationClient({ origin, parse, expectedDefinitionHash, fet
       }
       const digest = await wait(sha(raw)), nextEtag = '"api-calculations-' + digest + '"';
       need2(response.headers.get("ETag") === nextEtag, "body_hash");
-      const snapshot = await wait(parse(raw, { expectedDefinitionHash }));
-      readerMode = context(response, snapshot);
-      const accepted = selection.accept(snapshot, { checkedAt: iso(now()) });
-      if (selection.state().snapshot?.snapshotHash === snapshot.snapshotHash) etag = nextEtag;
-      else readerMode = "retained_last_good";
-      reason = selection.state().status === "retained" ? "current_aggregate_unavailable_or_older" : null;
+      const snapshot = await wait(parse(raw, { expectedDefinitionHash })), previousEvidenceHash = selection.state().evidenceSnapshot?.snapshotHash;
+      const routeMode = context(response, snapshot);
+      const accepted = selection.accept(snapshot, { checkedAt: iso(now()), readerMode: routeMode }), evidenceAccepted = selection.state().evidenceSnapshot?.snapshotHash === snapshot.snapshotHash;
+      if (evidenceAccepted) etag = nextEtag;
+      evidenceReaderMode = evidenceAccepted ? routeMode : "retained_last_good";
+      readerMode = selection.state().status === "retained" ? "retained_last_good" : routeMode;
+      reason = !evidenceAccepted ? "source_pair_rollback" : selection.state().status === "retained" ? "current_aggregate_unavailable_or_older" : null;
       failures = 0;
       nextCheck = now() + 6e4;
-      onChange({ ...state(), changed: accepted });
+      onChange({ ...state(), changed: accepted, evidenceChanged: selection.state().evidenceSnapshot?.snapshotHash !== previousEvidenceHash });
       return state();
     } catch (error) {
       failures++;
-      selection.failed({ checkedAt: iso(now()) });
+      selection.failed({ checkedAt: iso(now()), reason: error.message === "access_denied" ? "access_denied" : error.message === "not_published" ? "not_published" : "own_reader_failed" });
       reason = ["access_denied", "not_published"].includes(error.message) ? error.message : "own_reader_failed";
       readerMode = selection.state().snapshot ? "retained_last_good" : null;
+      evidenceReaderMode = selection.state().evidenceSnapshot ? "retained_last_good" : null;
       nextCheck = blocked ? Infinity : now() + Math.min(6e5, 6e4 * 2 ** Math.min(failures - 1, 4));
       onChange(state());
       return state();
@@ -1721,16 +1765,19 @@ function createApiCalculationClient({ origin, parse, expectedDefinitionHash, fet
 }
 
 // ui-src/api-calculations/runtime.mjs
-function createCalculationRuntime({ origin, available: available2, parse, definitionHash, unpackDaily, fetcher = fetch, now = () => Date.now(), selection = () => ({ mode: "rolling", windowDays: 7 }), notify = () => {
+function createCalculationRuntime({ origin, available: available2, parse, definitionHash, unpackDaily, itemDefinitions = null, fetcher = fetch, now = () => Date.now(), selection = () => ({ mode: "rolling", windowDays: 7 }), notify = () => {
 } }) {
-  let legacy = null, view = null, cacheKey = null, bindingError = null, notificationKey = null;
+  let legacy = null, view = null, cacheKey = null, bindingError = null, notificationKey = null, itemView = null, itemKey = null, itemBindingError = null;
   const captured = [];
+  const definitions = available2 === true && itemDefinitions ? structuredClone(itemDefinitions) : null;
   const client = available2 === true ? createApiCalculationClient({ origin, parse, expectedDefinitionHash: definitionHash, fetcher, now, onChange: (state) => {
-    const key = [state.snapshot?.snapshotHash ?? null, state.status, state.readerMode, state.reason];
+    const key = [state.snapshot?.snapshotHash ?? null, state.status, state.readerMode, state.reason, state.evidenceSnapshot?.snapshotHash ?? null, state.evidenceStatus, state.evidenceReaderMode, state.evidenceReason];
     const changed = !notificationKey || key.some((value, i) => value !== notificationKey[i]);
     if (changed) {
       cacheKey = null;
       view = null;
+      itemKey = null;
+      itemView = null;
       notificationKey = key;
     }
     if (state.changed && state.snapshot) {
@@ -1756,6 +1803,22 @@ function createCalculationRuntime({ origin, available: available2, parse, defini
     }
     return view;
   }
+  function getItemEvidence() {
+    const state = client.state();
+    if (!legacy || !state.evidenceSnapshot || !definitions) return null;
+    const key = [state.evidenceSnapshot.snapshotHash, state.evidenceStatus, state.evidenceReason];
+    if (!itemKey || key.some((v, i) => v !== itemKey[i])) {
+      try {
+        itemView = calculationItemEvidenceView(legacy, state.evidenceSnapshot, { definitions, dailyItems: unpackDaily(state.evidenceSnapshot), status: state.evidenceStatus, reason: state.evidenceReason });
+        itemBindingError = null;
+      } catch {
+        itemView = null;
+        itemBindingError = "legacy_item_evidence_definition_mismatch";
+      }
+      itemKey = key;
+    }
+    return itemView;
+  }
   const api = {
     available: available2 === true,
     setLegacy(report) {
@@ -1764,15 +1827,18 @@ function createCalculationRuntime({ origin, available: available2, parse, defini
         legacy = report;
         cacheKey = null;
         view = null;
+        itemKey = null;
+        itemView = null;
       }
       return true;
     },
     getView,
+    getItemEvidence,
     headline() {
       return getView()?.headline ?? null;
     },
     state() {
-      return { ...client.state(), available: available2 === true, hasBoundLegacy: !!legacy, bindingError };
+      return { ...client.state(), available: available2 === true, hasBoundLegacy: !!legacy, bindingError, itemBindingError };
     },
     async refresh() {
       if (available2 !== true) return api.state();
@@ -1784,8 +1850,13 @@ function createCalculationRuntime({ origin, available: available2, parse, defini
       return dto ? unpackDaily(dto) : [];
     },
     overlayReport(report) {
-      const current = getView();
-      return current ? { ...report, rows: current.rows, categories: current.categories, apiCalculationView: current, apiDailyItems: api.dailyItems() } : report;
+      const current = getView(), items = getItemEvidence(), base = current ? { ...report, rows: current.rows, categories: current.categories, apiCalculationView: current, apiDailyItems: api.dailyItems() } : report;
+      if (items) return { ...base, apiItemEvidence: items };
+      if (Object.hasOwn(base, "apiItemEvidence")) {
+        const { apiItemEvidence: _old, ...without } = base;
+        return without;
+      }
+      return base;
     },
     capturePoints() {
       return captured.map((point) => ({ ...point }));
@@ -1818,11 +1889,12 @@ var runtime = createCalculationRuntime({
   definitionHash: EXPECTED,
   parse: (bytes) => parseApiIndexSnapshot(bytes, { expectedDefinitionHash: EXPECTED, expectedRows: api_index_definition_data_v1_default.goods, expectedCashRows: api_index_definition_data_v1_default.cash }),
   unpackDaily: unpackApiDailyItemHistory,
+  itemDefinitions: api_index_definition_data_v1_default,
   selection: () => {
     const s = window.AstraRollingBenchmark?.getState();
     return { mode: s?.mode || "rolling", windowDays: s?.windowDays || 7 };
   },
-  notify: (state) => doc.dispatchEvent(new CustomEvent("astracalculationchange", { detail: { status: state.status, readerMode: state.readerMode, snapshotHash: state.snapshot?.snapshotHash ?? null } }))
+  notify: (state) => doc.dispatchEvent(new CustomEvent("astracalculationchange", { detail: { status: state.status, readerMode: state.readerMode, snapshotHash: state.snapshot?.snapshotHash ?? null, evidenceSnapshotHash: state.evidenceSnapshot?.snapshotHash ?? null } }))
 });
 window.AstraApiCalculations = runtime;
 var visible = () => !doc.hidden && navigator.onLine !== false;

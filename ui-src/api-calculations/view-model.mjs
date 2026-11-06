@@ -50,19 +50,34 @@ export function calculationView(legacy,snapshot,selection={}){
    dailyPublisher:snapshot.sources.overview?.sourceGeneratedAt??null,legacyDaily:legacy.sourceUpdatedAt,sourceObservedAt:null},
   legacyDailyHistory:structuredClone(legacy.history),calibration:structuredClone(snapshot.calibration),dependencies:[...DEPENDENCIES]});
 }
+// A separately bound item view is not an accepted complete aggregate.
+export function calculationItemEvidenceView(legacy,snapshot,{definitions,dailyItems,status='current',reason=null}={}){
+ need(definitions&&Array.isArray(definitions.goods)&&definitions.goods.length===50&&Array.isArray(definitions.cash)&&definitions.cash.length===29);
+ const bound=calculationView(legacy,snapshot),base=new Map(legacy.rows.map(r=>[r.slug,r])),targets=new Map([...definitions.goods.map(r=>({...r,role:'goods'})),...definitions.cash.map(r=>({...r,role:'cash'}))].map(r=>[r.itemId,r]));
+ need(targets.size===79&&snapshot.current.rows.length===50&&Array.isArray(dailyItems)&&dailyItems.length===79&&new Set(dailyItems.map(r=>r.itemId)).size===79);
+ for(const expected of definitions.goods){const row=snapshot.current.rows.find(r=>r.itemId===expected.itemId),old=base.get(expected.slug);need(row&&old&&row.slug===expected.slug&&row.name===expected.name&&old.name===expected.name&&(old.canonicalId===undefined||old.canonicalId===null||old.canonicalId===expected.itemId));}
+ for(const row of dailyItems){const expected=targets.get(row.itemId);need(expected&&row.slug===expected.slug&&row.name===expected.name&&row.role===expected.role&&(row.role!=='cash'||row.fixedNxCost===expected.fixedNxCost));}
+ need(['current','retained'].includes(status));
+ return freeze({kind:'api_item_evidence_view',snapshotHash:snapshot.snapshotHash,definitionHash:snapshot.definitionHash,basketHash:snapshot.calibration.basketHash,status,reason,
+  rows:bound.rows.map(row=>({...row,indexContribution:null,changeContribution:null})),dailyItems:structuredClone(dailyItems),clocks:structuredClone(bound.clocks),
+  currentReference:{...bound.currentReference},sourceObservedAt:null,qualifiedIndividualTrades:0,aggregateSelectionSeparate:true});
+}
 export function createCalculationSelection(){
- let good=null,latestCheck=null,status='unavailable';
+ let good=null,evidence=null,latestCheck=null,status='unavailable',evidenceStatus='unavailable',evidenceReason=null;
  return Object.freeze({
-  accept(validatedSnapshot,{checkedAt}={}){
-   need(clock(checkedAt));latestCheck=checkedAt;
-   if(good)need(validatedSnapshot.definitionHash===good.definitionHash);
+  accept(validatedSnapshot,{checkedAt,readerMode='accepted_cache'}={}){
+   need(clock(checkedAt)&&['accepted_cache','retained_last_good'].includes(readerMode));latestCheck=checkedAt;
+   if(good)need(validatedSnapshot.definitionHash===good.definitionHash);if(evidence)need(validatedSnapshot.definitionHash===evidence.definitionHash);
+   if(evidence&&['prices','overview'].some(k=>evidence.sources[k]&&(!validatedSnapshot.sources[k]||validatedSnapshot.sources[k].capturedAt<evidence.sources[k].capturedAt))){status=good?'retained':'unavailable';evidenceStatus='retained';evidenceReason='source_pair_rollback';return false;}
+   if(evidence?.snapshotHash!==validatedSnapshot.snapshotHash)evidence=freeze(structuredClone(validatedSnapshot));
+   evidenceStatus=readerMode==='retained_last_good'?'retained':'current';evidenceReason=readerMode==='retained_last_good'?'route_retained_last_good':null;
    if(validatedSnapshot.current.available!==true){status=good?'retained':'unavailable';return false;}
    if(good){const before=good.sources,after=validatedSnapshot.sources;
     if(after.prices.capturedAt<before.prices.capturedAt||(before.overview?.capturedAt&&(after.overview?.capturedAt??'')<before.overview.capturedAt)){status='retained';return false;}}
    if(good?.snapshotHash===validatedSnapshot.snapshotHash){status='current';return false;}
    good=freeze(structuredClone(validatedSnapshot));status='current';return true;
   },
-  failed({checkedAt}={}){need(clock(checkedAt));latestCheck=checkedAt;status=good?'retained':'unavailable';},
-  state(){return {snapshot:good,checkedAt:latestCheck,status,marketSourceAt:good?.sources.prices.capturedAt??null};}
+  failed({checkedAt,reason='own_reader_failed'}={}){need(clock(checkedAt));latestCheck=checkedAt;status=good?'retained':'unavailable';evidenceStatus=evidence?'retained':'unavailable';evidenceReason=reason;},
+  state(){return {snapshot:good,evidenceSnapshot:evidence,checkedAt:latestCheck,status,evidenceStatus,evidenceReason,marketSourceAt:good?.sources.prices.capturedAt??null};}
  });
 }

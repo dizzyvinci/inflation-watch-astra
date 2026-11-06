@@ -20,24 +20,24 @@
     },
     {
       "path": "ui-src/api-calculations/client.mjs",
-      "sha256": "18155951349d3976bd3c744b4bbc3a133fd37b8311486cfbd3b085bc2e893e67"
+      "sha256": "3e73ad1d5efc3769b025a8adec8104822dd5e89cfff0491c41fa93b6b381fb11"
     },
     {
       "path": "ui-src/api-calculations/entry.mjs",
-      "sha256": "aaf4f063f62239feccf8819b4bb0365c88f62fefc6be7431712f03a53ff001fe"
+      "sha256": "3fe697d2a10be666dbab547849f83aa56134d1a14ccdee4b516fad3847b8b7cf"
     },
     {
       "path": "ui-src/api-calculations/runtime.mjs",
-      "sha256": "71f1eca41af25fb1ce10af134efa9f11012ea9f99df8aa1a7f03c5b231cb6917"
+      "sha256": "21952ca36b283bb8505162971ce5c67885e1e6a1f32cd42afc9cadc214413e6e"
     },
     {
       "path": "ui-src/api-calculations/view-model.mjs",
-      "sha256": "5af725d762c52a22eb54c84ca9caf042285aa9019ee72e1cb8d48e46256b5c7f"
+      "sha256": "5b72328fce8dd3268b2c395734b06d12914e7027348745397f77638b400f6ab4"
     }
   ],
   "output": {
     "path": "web/api-calculations.js",
-    "sha256": "17d3bbb0832d1eb3068b8a4785ff593e6e9c5ed610aa2fb16fc7977cb6af53c6",
-    "bytes": 74247
+    "sha256": "43a02b00e6738e034fb1caa6df2d7e566ed4237c254117e4cb31cd3ef4b6bff4",
+    "bytes": 79808
   }
 }
