@@ -62,7 +62,7 @@ export function mountItemPricingPanel(container,input,{timezone='UTC',spriteMap=
   }
   let selectedPool='';
   function fillPoolOptions(){const rows=pool==='scroll_state'?dto.variants.successfulScrolls:dto.variants.reportedStats;for(const [select,key]of [[slots,'slotsLeft'],[upgrades,'successfulUpgrades']]){select.replaceChildren();for(const value of ['',...[...new Set(rows.map(row=>row[key]))].sort((a,b)=>a-b)]){const option=el('option',value===''?'Any':String(value));option.value=String(value);select.append(option);}}selectedPool=pool;}
-  function buildFilters(){const options=filterOptions(dto);statInputs=[];fillPoolOptions();statBox.replaceChildren(legend);
+  function buildFilters(extraStats=[]){const options=structuredClone(filterOptions(dto));for(const code of extraStats)if(!options.stats.some(v=>v.code===code))options.stats.push({code,label:labels[code]||code});statInputs=[];fillPoolOptions();statBox.replaceChildren(legend);
     for(const {code,label}of options.stats){const pair=el('div',undefined,'api-item-stat-pair'),entry={code};for(const [key,suffix]of [['min','at least'],['max','at most']]){const l=el('label',label+' '+suffix),n=el('input');n.type='number';n.step='1';n.min='-1000000';n.max='1000000';n.dataset.stat=code;n.dataset.bound=key;l.append(n);pair.append(l);entry[key]=n;}statInputs.push(entry);statBox.append(pair);}
   }
   function renderRows(){if(destroyed)return;if(selectedPool!==pool)fillPoolOptions();for(const b of tabs.children)b.setAttribute('aria-pressed',String(b.dataset.pool===pool));statBox.hidden=pool!=='reported_stats';attackBox.hidden=pool!=='attack_pool';slots.parentElement.hidden=upgrades.parentElement.hidden=pool==='attack_pool';nearLabel.hidden=pool==='reported_stats';explanation.textContent=pool==='reported_stats'?'Filter the reported signature, slots and successful upgrades together. Unreported fields never match a numeric limit.':pool==='scroll_state'?'This pool matches successful upgrades and remaining slots; other stats are not held constant.':'This pool matches only Weapon ATT; other stats, slots and upgrades are not held constant.';
@@ -79,5 +79,18 @@ export function mountItemPricingPanel(container,input,{timezone='UTC',spriteMap=
     if(!total){const tr=el('tr'),td=el('td','No matching reported groups. Broader pools are available separately; they do not fill this result.');td.colSpan=headings.length;tr.append(td);tbody.append(tr);}tableWrap.replaceChildren(table);pageText.textContent=`Page ${displayInteger(page+1)} of ${displayInteger(pages)}`;previous.disabled=page===0;next.disabled=page+1===pages;
   }
   controls.addEventListener('input',()=>{page=0;renderRows();});controls.addEventListener('change',()=>{page=0;renderRows();});container.append(section);fillSummary();buildFilters();renderRows();
-  return Object.freeze({element:section,updateTimezone(value){zone=value;fillSummary();},updateDto(value){assertSafeItemDto(value);dto=structuredClone(value);page=0;controls.reset();fillSummary();buildFilters();renderRows();},destroy(){destroyed=true;section.remove();}});
+  function preserveControls(){
+    const fields=[...controls.querySelectorAll('[data-filter],[data-stat]')].map(n=>({key:n.dataset.filter||null,stat:n.dataset.stat||null,bound:n.dataset.bound||null,value:n.value,checked:n.checked,focused:doc.activeElement===n,start:n.selectionStart,end:n.selectionEnd}));
+    return{fields,page,scrollLeft:tableWrap.scrollLeft,scrollTop:tableWrap.scrollTop};
+  }
+  function restoreControls(saved){
+    for(const f of saved.fields){const n=f.key?controls.querySelector(`[data-filter="${f.key}"]`):controls.querySelector(`[data-stat="${f.stat}"][data-bound="${f.bound}"]`);if(!n)continue;
+      if(n.tagName==='SELECT'&&f.value!==''&&![...n.options].some(o=>o.value===f.value)){const o=el('option',f.value+' (not reported in this update)');o.value=f.value;n.append(o);}n.value=f.value;if(n.type==='checkbox')n.checked=f.checked;
+      if(f.focused){n.focus({preventScroll:true});if(f.start!==null&&f.start!==undefined)try{n.setSelectionRange(f.start,f.end);}catch{}}
+    }page=saved.page;
+  }
+  return Object.freeze({element:section,updateTimezone(value){zone=value;fillSummary();},updateDto(value,{preserveState=false}={}){
+    assertSafeItemDto(value);const saved=preserveState?preserveControls():null;dto=structuredClone(value);
+    if(!saved){page=0;controls.reset();}fillSummary();buildFilters(saved?saved.fields.filter(f=>f.stat&&f.value!=='').map(f=>f.stat):[]);if(saved)restoreControls(saved);renderRows();if(saved){tableWrap.scrollLeft=saved.scrollLeft;tableWrap.scrollTop=saved.scrollTop;}
+  },destroy(){destroyed=true;section.remove();}});
 }

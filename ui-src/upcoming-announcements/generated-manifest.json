@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "kind": "generated_upcoming_announcements_browser_bundle",
+  "buildTool": "esbuild",
+  "buildVersion": "0.28.2",
+  "inputHashMode": "utf8_lf",
+  "inputs": [
+    {
+      "path": "ui-src/upcoming-announcements/contract.mjs",
+      "sha256": "a3f4c291c87e2ccb19cc521ee69a41f7ba9a3c41d98fc54417db4cfc38652785"
+    },
+    {
+      "path": "ui-src/upcoming-announcements/entry.mjs",
+      "sha256": "1f61676289ca8837bf245ef01813d2b36f5917f99994582504f0f744b876944a"
+    },
+    {
+      "path": "ui-src/upcoming-announcements/feed.json",
+      "sha256": "0aabccee52e010e10f17c5aad97cc17c48cd853a8981137e5347761ab2b9df5d"
+    }
+  ],
+  "output": {
+    "path": "web/upcoming-announcements.js",
+    "sha256": "415cfafd02f93146e406e6ed6c6f63ba3e1f5958b6818cc3615a0f70df7ba178",
+    "bytes": 21535
+  }
+}

@@ -358,10 +358,11 @@ async function boundedBytes(response, limit) {
   if (b.length > limit) throw Error("Body bound");
   return b;
 }
+var failure = (code) => Object.assign(Error(code), { code });
 function createItemReferenceClient({ fetcher, enabled: enabled2 = false, isEnabled = () => true, now = Date.now, ttlMs = 3e4, timeoutMs = 1e4, maxItems = 32, maxBytes = 2097152, maxFlights = 4 } = {}) {
   if (!Number.isInteger(ttlMs) || ttlMs < 0 || ttlMs > 6e4 || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 12e3 || !Number.isSafeInteger(maxItems) || maxItems < 1 || maxItems > 64 || !Number.isSafeInteger(maxBytes) || maxBytes < 3e5 || maxBytes > 8388608 || !Number.isSafeInteger(maxFlights) || maxFlights < 1 || maxFlights > 8) throw Error("Bounded client settings required");
-  let bytes4 = 0;
-  const cache = /* @__PURE__ */ new Map(), flights = /* @__PURE__ */ new Map(), failures = /* @__PURE__ */ new Map();
+  let bytes4 = 0, blocked = false;
+  const cache = /* @__PURE__ */ new Map(), flights = /* @__PURE__ */ new Map(), controllers = /* @__PURE__ */ new Map(), failures = /* @__PURE__ */ new Map();
   const active = () => enabled2 === true && isEnabled() === true;
   const touch = (id2, value) => {
     if (cache.has(id2)) bytes4 -= cache.get(id2).bytes;
@@ -390,83 +391,139 @@ function createItemReferenceClient({ fetcher, enabled: enabled2 = false, isEnabl
     });
   });
   async function read(id2) {
-    const prior = cache.get(id2), controller = new AbortController();
+    const prior = cache.get(id2), control = { controller: new AbortController(), cancelled: false, timedOut: false };
+    controllers.set(id2, control);
     let timer;
     const expired = new Promise((_, reject) => {
       timer = setTimeout(() => {
-        controller.abort();
-        reject(Error("Read deadline"));
+        control.timedOut = true;
+        control.controller.abort();
+        reject(failure("timeout"));
       }, timeoutMs);
     });
     const deadline = (p) => Promise.race([p, expired]);
+    const fence = () => {
+      if (control.cancelled || !active()) throw abort();
+      if (control.timedOut) throw failure("timeout");
+      if (blocked) throw failure("access_denied");
+    };
     try {
       let response;
       for (let attempt = 0; attempt < 2; attempt++) {
         const generation2 = attempt === 0 ? prior?.data.projectionGeneration : null, url = "/api-item-prices/" + id2 + ".json" + (generation2 ? "?generation=" + generation2 : "");
-        response = await deadline(fetcher(url, { method: "GET", credentials: "same-origin", cache: "no-cache", redirect: "error", signal: controller.signal, headers: prior ? { "If-None-Match": prior.etag } : {} }));
+        response = await deadline(fetcher(url, { method: "GET", credentials: "same-origin", cache: "no-cache", redirect: "error", signal: control.controller.signal, headers: prior ? { "If-None-Match": prior.etag } : {} }));
+        fence();
+        if (response.status === 401 || response.status === 403) throw failure("access_denied");
+        if (response.status === 404) throw failure("not_found");
         if (response.status !== 409) break;
-        if (attempt === 1) throw Error("Generation retry bound");
+        if (attempt === 1) throw failure("generation_changed");
       }
-      if (!active()) throw Error("Disabled");
       const mode = response.headers.get("X-Astra-API-Item-Mode"), captured = response.headers.get("X-Astra-API-Item-Captured-At"), generation = response.headers.get("X-Astra-API-Item-Generation"), etag = response.headers.get("ETag");
-      if (!["validated_cache", "retained"].includes(mode) || !/^"api-item-[a-f0-9]{64}"$/.test(etag ?? "")) throw Error("Missing item context");
+      if (response.status !== 200 && response.status !== 304) throw failure("unavailable");
+      if (!["validated_cache", "retained"].includes(mode) || !/^"api-item-[a-f0-9]{64}"$/.test(etag ?? "")) throw failure("invalid");
       if (response.status === 304) {
-        if (!prior || prior.etag !== etag || prior.data.sourceCapturedAt !== captured || prior.data.projectionGeneration !== generation) throw Error("Mismatched304");
+        if (!prior || prior.etag !== etag || prior.data.sourceCapturedAt !== captured || prior.data.projectionGeneration !== generation) throw failure("invalid");
+        fence();
         const value2 = { ...prior, mode, expires: now() + ttlMs };
         touch(id2, value2);
         failures.delete(id2);
         return value2;
       }
-      if (response.status !== 200 || !/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? "")) throw Error("Item unavailable");
+      if (!/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? "")) throw failure("invalid");
       const body = await deadline(boundedBytes(response, 3e5));
-      if ('"api-item-' + await sha(body) + '"' !== etag) throw Error("Body hash mismatch");
-      const data = await validatePublicItemReference(parseStrictJson(body));
-      if (data.itemId !== id2 || data.sourceCapturedAt !== captured || data.projectionGeneration !== generation || prior && Date.parse(data.sourceCapturedAt) < Date.parse(prior.data.sourceCapturedAt)) throw Error("Wrong/older item context");
-      if (!active()) throw Error("Disabled");
+      fence();
+      if ('"api-item-' + await deadline(sha(body)) + '"' !== etag) throw failure("invalid");
+      fence();
+      let data;
+      try {
+        data = await deadline(validatePublicItemReference(parseStrictJson(body)));
+      } catch {
+        throw failure("invalid");
+      }
+      fence();
+      if (data.itemId !== id2 || data.sourceCapturedAt !== captured || data.projectionGeneration !== generation || prior && Date.parse(data.sourceCapturedAt) < Date.parse(prior.data.sourceCapturedAt)) throw failure("invalid");
       const value = { data, mode, etag, bytes: body.length, expires: now() + ttlMs };
       touch(id2, value);
       failures.delete(id2);
       return value;
     } catch (error) {
-      const old = failures.get(id2)?.count ?? 0;
-      failures.set(id2, { count: old + 1, retryAt: now() + Math.min(3e5, 3e4 * 2 ** Math.min(old, 4)) });
+      if (control.cancelled || !active() || error?.name === "AbortError" && !control.timedOut) throw abort();
+      const reason = control.timedOut ? "timeout" : ["timeout", "access_denied", "not_found", "generation_changed", "invalid", "unavailable"].includes(error?.code) ? error.code : "unavailable", old = failures.get(id2)?.count ?? 0;
+      failures.set(id2, { count: old + 1, reason, checkedAt: now(), retryAt: now() + Math.min(3e5, 3e4 * 2 ** Math.min(old, 4)) });
       while (failures.size > 64) failures.delete(failures.keys().next().value);
+      if (reason === "access_denied") {
+        blocked = true;
+        throw failure(reason);
+      }
       if (prior && active()) {
         const value = { ...prior, mode: "retained" };
         touch(id2, value);
         return value;
       }
-      throw error;
+      throw failure(reason);
     } finally {
       clearTimeout(timer);
+      if (controllers.get(id2) === control) controllers.delete(id2);
     }
   }
-  return Object.freeze({ async loadItem({ itemId, signal } = {}) {
-    if (!Number.isSafeInteger(itemId) || itemId < 1 || itemId > 999999999) throw Error("Exact numeric ID required");
-    if (!active() || typeof fetcher !== "function") throw Error("Not connected");
-    let value = cache.get(itemId);
-    if (value && now() < value.expires) return { data: structuredClone(value.data), mode: value.mode };
-    if ((failures.get(itemId)?.retryAt ?? 0) > now()) {
-      if (value) return { data: structuredClone(value.data), mode: "retained" };
-      throw Error("Read backoff");
-    }
-    if (!flights.has(itemId)) {
-      if (flights.size >= maxFlights) throw Error("Read capacity");
-      const p = read(itemId);
-      flights.set(itemId, p);
-      p.finally(() => flights.delete(itemId)).catch(() => {
+  return Object.freeze({
+    async loadItem({ itemId, signal } = {}) {
+      if (!Number.isSafeInteger(itemId) || itemId < 1 || itemId > 999999999) throw Error("Exact numeric ID required");
+      if (!active() || typeof fetcher !== "function") throw failure("disabled");
+      if (blocked) throw failure("access_denied");
+      let value = cache.get(itemId);
+      if (value && now() < value.expires) return { data: structuredClone(value.data), mode: value.mode };
+      if ((failures.get(itemId)?.retryAt ?? 0) > now()) {
+        if (value) return { data: structuredClone(value.data), mode: "retained" };
+        throw failure(failures.get(itemId).reason);
+      }
+      if (!flights.has(itemId)) {
+        if (flights.size >= maxFlights) throw failure("read_capacity");
+        const task = read(itemId);
+        flights.set(itemId, task);
+        task.finally(() => {
+          if (flights.get(itemId) === task) flights.delete(itemId);
+        }).catch(() => {
+        });
+      }
+      value = await wait(flights.get(itemId), signal);
+      return { data: structuredClone(value.data), mode: value.mode };
+    },
+    state(id2) {
+      const value = cache.get(id2);
+      return value ? { mode: value.mode, capturedAt: value.data.sourceCapturedAt, generation: value.data.projectionGeneration } : null;
+    },
+    diagnostic(id2) {
+      const f = failures.get(id2), value = cache.get(id2);
+      return { blocked, reason: blocked ? "access_denied" : f?.reason ?? null, retryAt: f?.retryAt ?? 0, partial: !!value && (value.data.item.aggregate.sold === null || value.data.item.aggregate.asking === null || value.data.item.aggregate.reference === null) };
+    },
+    cancelItem(id2) {
+      const c = controllers.get(id2);
+      if (c) {
+        c.cancelled = true;
+        c.controller.abort();
+      }
+      return (flights.get(id2) ?? Promise.resolve()).catch(() => {
       });
+    },
+    resetAccess() {
+      if (blocked) {
+        for (const [id2, value] of [...cache]) touch(id2, { ...value, expires: 0 });
+        failures.clear();
+      }
+      blocked = false;
+    },
+    clear() {
+      for (const c of controllers.values()) {
+        c.cancelled = true;
+        c.controller.abort();
+      }
+      cache.clear();
+      failures.clear();
+      bytes4 = 0;
+      blocked = false;
     }
-    value = await wait(flights.get(itemId), signal);
-    return { data: structuredClone(value.data), mode: value.mode };
-  }, state(id2) {
-    const value = cache.get(id2);
-    return value ? { mode: value.mode, capturedAt: value.data.sourceCapturedAt, generation: value.data.projectionGeneration } : null;
-  }, clear() {
-    cache.clear();
-    failures.clear();
-    bytes4 = 0;
-  } });
+  });
 }
 
 // ops/api-discovery-membership.mjs
@@ -746,47 +803,74 @@ function createSearchIdentityBridge(options = {}) {
 function createItemPanelLifecycle({ container, mountPanel, loader, getTimezone = () => "UTC", spriteMap = {}, onStatus = () => {
 } } = {}) {
   if (!container?.ownerDocument || typeof mountPanel !== "function") throw TypeError("Explicit item panel dependencies required");
-  let epoch = 0, controller = null, handle = null, currentId = null, timezone = null, lastCapture = null;
+  let epoch = 0, controller = null, handle = null, currentId = null, timezone = null, lastCapture = null, lastDtoSha = null, flight = null;
   const clear = () => {
     handle?.destroy();
     handle = null;
   };
-  return Object.freeze({
-    async show(itemId) {
-      if (!Number.isSafeInteger(itemId) || itemId < 1 || itemId > 999999999) throw TypeError("Exact numeric item ID required");
-      const token = ++epoch;
-      controller?.abort();
-      controller = new AbortController();
-      const ownController = controller;
-      if (currentId !== itemId) {
-        clear();
-        lastCapture = null;
-      }
-      currentId = itemId;
-      if (typeof loader !== "function") {
-        onStatus("not_connected");
-        return { status: "not_connected" };
-      }
-      onStatus("loading");
+  function load(itemId, preserveState) {
+    if (!Number.isSafeInteger(itemId) || itemId < 1 || itemId > 999999999) throw TypeError("Exact numeric item ID required");
+    if (flight?.itemId === itemId) return flight.promise;
+    const token = ++epoch;
+    controller?.abort();
+    controller = new AbortController();
+    const ownController = controller;
+    if (currentId !== itemId) {
+      clear();
+      lastCapture = null;
+      lastDtoSha = null;
+    }
+    currentId = itemId;
+    if (typeof loader !== "function") {
+      onStatus("not_connected");
+      return Promise.resolve({ status: "not_connected" });
+    }
+    onStatus("loading", { hasData: !!handle });
+    const task = { itemId };
+    task.promise = (async () => {
       try {
         const reply = await loader({ itemId, signal: ownController.signal });
         if (token !== epoch || ownController.signal.aborted) return { status: "stale" };
         const value = await validatePublicItemReference(reply);
         if (token !== epoch || ownController.signal.aborted) return { status: "stale" };
-        if (value.itemId !== itemId || lastCapture !== null && Date.parse(value.sourceCapturedAt) < Date.parse(lastCapture)) throw TypeError("Wrong or older item reference");
+        if (value.itemId !== itemId || lastCapture !== null && Date.parse(value.sourceCapturedAt) < Date.parse(lastCapture)) throw Object.assign(TypeError("Wrong or older item reference"), { code: "invalid" });
         const options = { timezone: timezone ?? getTimezone(), spriteMap };
         if (handle) {
-          handle.updateDto(value.item);
+          if (value.dtoSha256 !== lastDtoSha) handle.updateDto(value.item, { preserveState });
           handle.updateTimezone(options.timezone);
         } else handle = mountPanel(container, value.item, options);
         lastCapture = value.sourceCapturedAt;
-        onStatus("shown");
+        lastDtoSha = value.dtoSha256;
+        onStatus("shown", { hasData: true });
         return { status: "shown", itemId, sourceCapturedAt: value.sourceCapturedAt, generation: value.projectionGeneration };
-      } catch {
+      } catch (error) {
         if (token !== epoch || ownController.signal.aborted) return { status: "stale" };
-        onStatus(handle ? "retained" : "unavailable");
-        return { status: handle ? "retained" : "unavailable" };
+        if (error?.code === "access_denied") {
+          clear();
+          onStatus("access_denied", { hasData: false, reason: "access_denied" });
+          return { status: "access_denied" };
+        }
+        const status = handle ? "retained" : "unavailable";
+        onStatus(status, { hasData: !!handle, reason: error?.code ?? "unavailable" });
+        return { status };
+      } finally {
+        if (flight === task) flight = null;
       }
+    })();
+    flight = task;
+    return task.promise;
+  }
+  return Object.freeze({
+    show: (itemId) => load(itemId, false),
+    refresh() {
+      return currentId === null ? Promise.resolve({ status: "not_connected" }) : load(currentId, true);
+    },
+    pause() {
+      epoch++;
+      controller?.abort();
+      controller = null;
+      flight = null;
+      onStatus("paused", { hasData: !!handle });
     },
     timezoneChanged(value) {
       timezone = value;
@@ -796,8 +880,10 @@ function createItemPanelLifecycle({ container, mountPanel, loader, getTimezone =
       epoch++;
       controller?.abort();
       controller = null;
+      flight = null;
       currentId = null;
       lastCapture = null;
+      lastDtoSha = null;
       clear();
       onStatus("hidden");
     }
@@ -1036,8 +1122,9 @@ function mountItemPricingPanel(container, input, { timezone = "UTC", spriteMap =
     }
     selectedPool = pool;
   }
-  function buildFilters() {
-    const options = filterOptions(dto);
+  function buildFilters(extraStats = []) {
+    const options = structuredClone(filterOptions(dto));
+    for (const code of extraStats) if (!options.stats.some((v) => v.code === code)) options.stats.push({ code, label: labels[code] || code });
     statInputs = [];
     fillPoolOptions();
     statBox.replaceChildren(legend);
@@ -1145,17 +1232,50 @@ function mountItemPricingPanel(container, input, { timezone = "UTC", spriteMap =
   fillSummary();
   buildFilters();
   renderRows();
+  function preserveControls() {
+    const fields = [...controls.querySelectorAll("[data-filter],[data-stat]")].map((n) => ({ key: n.dataset.filter || null, stat: n.dataset.stat || null, bound: n.dataset.bound || null, value: n.value, checked: n.checked, focused: doc2.activeElement === n, start: n.selectionStart, end: n.selectionEnd }));
+    return { fields, page, scrollLeft: tableWrap.scrollLeft, scrollTop: tableWrap.scrollTop };
+  }
+  function restoreControls(saved) {
+    for (const f of saved.fields) {
+      const n = f.key ? controls.querySelector(`[data-filter="${f.key}"]`) : controls.querySelector(`[data-stat="${f.stat}"][data-bound="${f.bound}"]`);
+      if (!n) continue;
+      if (n.tagName === "SELECT" && f.value !== "" && ![...n.options].some((o) => o.value === f.value)) {
+        const o = el("option", f.value + " (not reported in this update)");
+        o.value = f.value;
+        n.append(o);
+      }
+      n.value = f.value;
+      if (n.type === "checkbox") n.checked = f.checked;
+      if (f.focused) {
+        n.focus({ preventScroll: true });
+        if (f.start !== null && f.start !== void 0) try {
+          n.setSelectionRange(f.start, f.end);
+        } catch {
+        }
+      }
+    }
+    page = saved.page;
+  }
   return Object.freeze({ element: section, updateTimezone(value) {
     zone2 = value;
     fillSummary();
-  }, updateDto(value) {
+  }, updateDto(value, { preserveState = false } = {}) {
     assertSafeItemDto(value);
+    const saved = preserveState ? preserveControls() : null;
     dto = structuredClone(value);
-    page = 0;
-    controls.reset();
+    if (!saved) {
+      page = 0;
+      controls.reset();
+    }
     fillSummary();
-    buildFilters();
+    buildFilters(saved ? saved.fields.filter((f) => f.stat && f.value !== "").map((f) => f.stat) : []);
+    if (saved) restoreControls(saved);
     renderRows();
+    if (saved) {
+      tableWrap.scrollLeft = saved.scrollLeft;
+      tableWrap.scrollTop = saved.scrollTop;
+    }
   }, destroy() {
     destroyed = true;
     section.remove();
@@ -1515,7 +1635,7 @@ function createItemHourClient({ origin = globalThis.location?.origin, fetcher = 
       const result = await get(manifestPath(id2), local.signal, LIMITS.manifestBytes), m = await validateManifest2(parseBody(result.raw, LIMITS.manifestBytes), id2);
       need(result.generation === m.generation && result.retrieved === (m.latestOriginalRetrievedAt ?? "none"), "history_response_clock_binding");
       const descriptors = m.pages.filter((d) => d.lastEpoch >= range.fromEpoch && d.firstEpoch < range.toEpoch), loaded = new Array(descriptors.length);
-      let cursor = 0, total = 0, retained = result.mode === "retained", failure = null;
+      let cursor = 0, total = 0, retained = result.mode === "retained", failure2 = null;
       async function worker() {
         try {
           for (; ; ) {
@@ -1530,12 +1650,12 @@ function createItemHourClient({ origin = globalThis.location?.origin, fetcher = 
             retained ||= p.mode === "retained";
           }
         } catch (error) {
-          failure ??= error;
+          failure2 ??= error;
           local.abort();
         }
       }
       await Promise.all(Array.from({ length: Math.min(4, descriptors.length) }, worker));
-      if (failure) throw failure;
+      if (failure2) throw failure2;
       const data = validateSelection(loaded, m, range);
       return { data, retained };
     } finally {
@@ -1558,10 +1678,10 @@ function createItemHourClient({ origin = globalThis.location?.origin, fetcher = 
     const mine = ++epoch;
     controller?.abort();
     controller = new AbortController();
-    const current = controller, signal = current.signal, key = `${id2}:${fromEpoch}:${toEpoch}`, previous = lastgood.get(key) ?? null;
+    const current2 = controller, signal = current2.signal, key = `${id2}:${fromEpoch}:${toEpoch}`, previous = lastgood.get(key) ?? null;
     if (!active) return emit({ status: "off", data: null });
     emit({ status: "loading", data: previous });
-    const timer = setTimeout(() => current.abort(), 15e3);
+    const timer = setTimeout(() => current2.abort(), 15e3);
     try {
       let value;
       for (let retry = 0; retry < 2; retry++) {
@@ -1578,12 +1698,12 @@ function createItemHourClient({ origin = globalThis.location?.origin, fetcher = 
       while (lastgood.size > maxSelections) lastgood.delete(lastgood.keys().next().value);
       return emit({ status: value.retained ? "retained" : "ready", data: value.data });
     } catch {
-      current.abort();
+      current2.abort();
       if (mine !== epoch || !active) return model;
       return emit({ status: previous ? "retained" : "unavailable", data: previous });
     } finally {
       clearTimeout(timer);
-      if (controller === current) controller = null;
+      if (controller === current2) controller = null;
     }
   }, stats() {
     return { cachedSelections: lastgood.size, inFlightRequests: flightCount, providerRequests: 0 };
@@ -1906,6 +2026,11 @@ var hourHistory = null;
 var lastId = null;
 var latest = null;
 var identityEpoch = 0;
+var refreshTimer = null;
+var refreshFlight = null;
+var refreshEpoch = 0;
+var started = false;
+var pausedRead = null;
 var zone = () => doc.getElementById("display-timezone")?.value || "UTC";
 var make = (tag, text) => {
   const n = doc.createElement(tag);
@@ -1915,6 +2040,66 @@ var make = (tag, text) => {
 var validId = (id2) => Number.isSafeInteger(id2) && id2 > 0 && id2 <= 999999999;
 var client = createItemReferenceClient({ fetcher: (...args) => fetch(...args), enabled: available, isEnabled: () => enabled });
 var discovery = createSearchIdentityBridge({ fetcher: (...args) => fetch(...args), enabled: available, isEnabled: () => enabled });
+var visibleOnline = () => !doc.hidden && navigator.onLine !== false;
+function sameItemRoute() {
+  try {
+    return location.hash.startsWith("#item/") && decodeURIComponent(location.hash.slice(6).split(/[?&]/)[0]) === latest?.slug;
+  } catch {
+    return false;
+  }
+}
+var current = () => available && enabled && host && life && validId(lastId) && sameItemRoute();
+function clearRefreshTimer() {
+  if (refreshTimer !== null) clearTimeout(refreshTimer);
+  refreshTimer = null;
+}
+function scheduleRefresh() {
+  if (!current() || !visibleOnline() || client.diagnostic(lastId).blocked) {
+    clearRefreshTimer();
+    return;
+  }
+  if (refreshTimer !== null) return;
+  const delay = Math.max(6e4, client.diagnostic(lastId).retryAt - Date.now());
+  const epoch = refreshEpoch, id2 = lastId, ownLife = life;
+  const timer = setTimeout(() => {
+    if (refreshTimer !== timer || epoch !== refreshEpoch || life !== ownLife || lastId !== id2) return;
+    refreshTimer = null;
+    void refreshCurrentItem();
+  }, delay);
+  refreshTimer = timer;
+}
+function pauseRefresh() {
+  clearRefreshTimer();
+  refreshEpoch++;
+  refreshFlight = null;
+  life?.pause();
+  if (validId(lastId)) pausedRead = { id: lastId, promise: client.cancelItem(lastId) };
+}
+function refreshCurrentItem() {
+  if (!current()) return Promise.resolve();
+  if (!visibleOnline()) {
+    pauseRefresh();
+    return Promise.resolve();
+  }
+  if (client.diagnostic(lastId).blocked) return Promise.resolve();
+  if (refreshFlight) return refreshFlight.promise;
+  const ownLife = life, id2 = lastId, epoch = refreshEpoch, task = {};
+  task.promise = (async () => {
+    try {
+      if (pausedRead?.id === id2) await pausedRead.promise;
+      if (epoch !== refreshEpoch || life !== ownLife || lastId !== id2 || !current() || !visibleOnline()) return;
+      if (!started) {
+        started = true;
+        await ownLife.show(id2);
+      } else await ownLife.refresh();
+    } finally {
+      if (refreshFlight === task) refreshFlight = null;
+      if (epoch === refreshEpoch && life === ownLife) scheduleRefresh();
+    }
+  })();
+  refreshFlight = task;
+  return task.promise;
+}
 var rows = () => identity?.rows ?? [];
 var byId = (id2) => rows().find((r) => r.itemId === id2) || null;
 function resolveId(record, slug) {
@@ -1925,6 +2110,8 @@ function resolveId(record, slug) {
   return matched.length === 1 ? matched[0].itemId : null;
 }
 function hide() {
+  pauseRefresh();
+  started = false;
   hourHistory?.destroy();
   hourHistory = null;
   life?.hide();
@@ -1978,6 +2165,7 @@ function showItem(args) {
     args.container.append(host);
     life.timezoneChanged(zone());
     hourHistory?.updateTimezone(zone());
+    scheduleRefresh();
     return;
   }
   hide();
@@ -1994,11 +2182,17 @@ function showItem(args) {
     const value = await client.loadItem(query);
     status.dataset.mode = value.mode;
     return value.data;
-  }, getTimezone: zone, spriteMap: { ...args.spriteMap, ...Object.fromEntries(rows().filter((r) => r.sprite).map((r) => [r.itemId, r.sprite])) }, onStatus: (value) => {
-    const state = client.state(id2);
-    status.textContent = (doc.body.dataset.itemApiSynthetic === "true" ? "SYNTHETIC OWN-SITE FIXTURE \xB7 " : "") + (value === "shown" ? state?.mode === "retained" ? "Retained item reference; original retrieval preserved." : "Separate item reference; retrieval is not trade time." : value === "retained" ? "Retained item reference; the new check failed." : value === "loading" ? "Reading this site\u2019s cached item reference\u2026" : value === "unavailable" ? "No validated item reference is connected. Daily and other-source evidence remain separate." : "");
+  }, getTimezone: zone, spriteMap: { ...args.spriteMap, ...Object.fromEntries(rows().filter((r) => r.sprite).map((r) => [r.itemId, r.sprite])) }, onStatus: (value, meta = {}) => {
+    const state = client.state(id2), d = client.diagnostic(id2), reason = meta.reason || d.reason, retained = value === "retained" || value === "shown" && state?.mode === "retained";
+    status.dataset.status = value;
+    status.dataset.reason = reason || "";
+    if (value === "access_denied" || value === "unavailable") status.dataset.mode = value;
+    else if (retained) status.dataset.mode = "retained";
+    const reasons = { not_found: "This item is not in the currently published collection.", generation_changed: "The item generation changed during the bounded check.", invalid: "The new item response failed validation.", timeout: "The own-site check timed out.", unavailable: "The own-site check failed.", read_capacity: "The bounded item reader is busy." };
+    let text = value === "access_denied" ? "Item access unavailable; prior panel withdrawn. After access is restored, turn Item API details Off and On to retry." : value === "paused" ? "Item checks paused while hidden or offline; original retrieval is unchanged." : value === "loading" ? meta.hasData ? "Checking this site\u2019s cached item reference; displayed values keep their original retrieval\u2026" : "Reading this site\u2019s cached item reference\u2026" : retained ? "Retained item reference; original retrieval preserved. " + (reasons[reason] || "The latest check did not supply a replacement.") : value === "shown" ? d.partial ? "Separate item reference; some source fields are unavailable. Retrieval is not trade time." : "Separate item reference; retrieval is not trade time." : value === "unavailable" ? "No validated item reference is connected. " + (reasons[reason] || "") + " Daily and other-source evidence remain separate." : "";
+    status.textContent = (doc.body.dataset.itemApiSynthetic === "true" ? "SYNTHETIC OWN-SITE FIXTURE \xB7 " : "") + text;
   } });
-  void life.show(id2);
+  void refreshCurrentItem();
   const ownHost = host;
   hourHistory = mountItemHistoryPreview(host, { itemId: id2, timezone: zone(), parentActive: () => available && enabled, isCurrent: () => {
     try {
@@ -2050,6 +2244,7 @@ var api = { available, get enabled() {
   if (!available) return;
   const next = value === true;
   if (next !== enabled) identityEpoch++;
+  if (next && !enabled) client.resetAccess();
   enabled = next;
   if (button) {
     button.textContent = "Item API details: " + (enabled ? "On" : "Off");
@@ -2103,8 +2298,18 @@ doc.getElementById("display-timezone")?.addEventListener("change", () => {
   hourHistory?.updateTimezone(zone());
 });
 window.addEventListener("hashchange", () => {
-  if (!location.hash.startsWith("#item/")) hide();
+  if (!location.hash.startsWith("#item/") || host && !sameItemRoute()) hide();
 });
+function resumeRefresh() {
+  if (current() && visibleOnline()) void refreshCurrentItem();
+}
+doc.addEventListener("visibilitychange", () => {
+  if (visibleOnline()) resumeRefresh();
+  else pauseRefresh();
+});
+window.addEventListener("online", resumeRefresh);
+window.addEventListener("offline", pauseRefresh);
+doc.getElementById("refresh")?.addEventListener("click", resumeRefresh);
 doc.addEventListener("astramarketsnapshot", () => {
   if (enabled) void loadIdentities().catch(() => {
   });

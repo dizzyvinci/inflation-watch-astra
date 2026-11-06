@@ -56,7 +56,7 @@
     },
     {
       "path": "ui-src/item-api/entry.mjs",
-      "sha256": "c2ce406913b80e0ff847d2aaa9b6f091bce55fea29fb7f10636ebadb8f9d19f9"
+      "sha256": "6e204bdd1587bb9cbb55feb1ef6ef205cc36c2db9059268e29ce8858626a379b"
     },
     {
       "path": "ui-src/item-api/history.mjs",
@@ -64,20 +64,20 @@
     },
     {
       "path": "ui-src/item-api/item-loader.mjs",
-      "sha256": "3e01a3e168e22f2afc072188558acbd85b819442ce0066d720c1e32cff5b390f"
+      "sha256": "b4ebf7653f6b94797c6c7815be3216c4882edb1c914a1c6ec81feff1f53bddc6"
     },
     {
       "path": "ui-src/item-api/lifecycle.mjs",
-      "sha256": "9e6aa9e247907e7435938d396adcfc6861d395b22c435401fad80b2b94edfb6d"
+      "sha256": "a4089f66c2eca583ca6503addd2130737aa22db4ee3191eda7ec5c928b347a45"
     },
     {
       "path": "ui-src/item-api/panel.mjs",
-      "sha256": "5f6266f7fe5fe40102e3ece443418764f93bc0b00b3f127f42733d50e8927728"
+      "sha256": "e2bb784373297f6228eb9e60f40a744b0446ad9a313bb4d364f9ba7c234dfa89"
     }
   ],
   "output": {
     "path": "web/item-api-preview.js",
-    "sha256": "14add956d30b8976055d49871a8bf86c6d38e776ec88530fb5987053057ada83",
-    "bytes": 114324
+    "sha256": "7a689313089e492cc388a2dbf33367bd36c14b0fb6fe23f86837a882fdcad6ed",
+    "bytes": 123533
   }
 }

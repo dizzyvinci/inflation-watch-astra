@@ -1,0 +1,25 @@
+#view-upcoming-announcements{max-width:1240px;margin-inline:auto;font-size:1rem;line-height:1.6}
+#view-upcoming-announcements h1,#view-upcoming-announcements h2{text-align:center}
+#view-upcoming-announcements h1{font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.2}
+#view-upcoming-announcements h2{font-size:1.5rem}
+#view-upcoming-announcements .eyebrow{text-transform:none;letter-spacing:.02em}
+#view-upcoming-announcements p,#view-upcoming-announcements td,#view-upcoming-announcements th{font-size:1rem}
+#view-upcoming-announcements small,.upcoming-options small{font-size:1rem;line-height:1.5}
+#view-upcoming-announcements .upcoming-clocks,#view-upcoming-announcements .upcoming-scope{padding:1rem;border:1px solid #546778;border-radius:8px}
+#view-upcoming-announcements .upcoming-filters{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;align-items:end}
+#view-upcoming-announcements label{display:flex;flex-direction:column;gap:6px;font-size:1rem}
+#view-upcoming-announcements input,#view-upcoming-announcements select{min-height:44px;font:inherit;padding:8px}
+#view-upcoming-announcements .upcoming-table{overflow-x:auto;border:1px solid #546778;border-radius:8px}
+#view-upcoming-announcements table{width:100%;min-width:720px;border-collapse:collapse}
+#view-upcoming-announcements th,#view-upcoming-announcements td{padding:14px;border-right:1px solid #546778;border-bottom:1px solid #546778;vertical-align:top}
+#view-upcoming-announcements th{text-align:center;font-weight:700}
+#view-upcoming-announcements th button{font:inherit;min-height:44px}
+#view-upcoming-announcements td:last-child,#view-upcoming-announcements th:last-child{border-right:0}
+#view-upcoming-announcements a{text-decoration:underline;text-underline-offset:3px}
+#view-upcoming-announcements .announcement-dot{font-size:1.1rem}
+#view-upcoming-announcements .announcement-dot.announced,#view-upcoming-announcements .announcement-dot.scheduled{color:#edc471}
+#view-upcoming-announcements .announcement-dot.released{color:#89c6b0}
+#view-upcoming-announcements .announcement-dot.cancelled{color:#ee919e}
+.upcoming-options{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px}
+.upcoming-options .upcoming-toggle{min-height:44px;border:2px solid #c26c7c;font:inherit;padding:8px 14px}
+@media(max-width:650px){#view-upcoming-announcements .upcoming-filters{align-items:stretch;flex-direction:column}#view-upcoming-announcements input,#view-upcoming-announcements select{width:100%}}

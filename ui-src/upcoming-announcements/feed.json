@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "kind": "reviewed_classic_world_announcements",
+  "scope": {
+    "game": "MapleStory Classic World",
+    "region": "Global",
+    "targetWorld": "Windia",
+    "worldNameExplicitInReviewedPosts": false
+  },
+  "reviewedAt": "2026-11-06T18:25:36.820292+00:00",
+  "coverage": {
+    "mode": "bounded_reviewed_primary_posts_not_exhaustive",
+    "automaticMonitoring": false,
+    "publicDiscordMessageContentsVerified": false,
+    "sourceIds": [
+      "launch-46506",
+      "cash-47031",
+      "faq-45385"
+    ]
+  },
+  "sources": [
+    {
+      "sourceId": "launch-46506",
+      "publisher": "Nexon",
+      "title": "Grand Launch Release Notes",
+      "url": "https://www.nexon.com/maplestory/news/general/46506/grand-launch-release-notes",
+      "cmsUrl": "https://g.nexonstatic.com/maplestory/cms/v1/news/46506",
+      "isMSCW": true,
+      "publishedAt": "2026-10-20T17:50:48Z",
+      "capturedAt": "2026-11-06T18:25:36.168774+00:00",
+      "bodySha256": "ba9a94b58f56515a7276339425bb5861f8f4ac3513c4f09020f5e7a71cb9798c"
+    },
+    {
+      "sourceId": "cash-47031",
+      "publisher": "Nexon",
+      "title": "Classic World Cash Shop Update: Nov. 4",
+      "url": "https://www.nexon.com/maplestory/news/general/47031/classic-world-cash-shop-update-nov-4",
+      "cmsUrl": "https://g.nexonstatic.com/maplestory/cms/v1/news/47031",
+      "isMSCW": true,
+      "publishedAt": "2026-11-03T16:00:00Z",
+      "capturedAt": "2026-11-06T18:25:35.765849+00:00",
+      "bodySha256": "027f2ced10bca9eae520cfc078cd7023314730b44c5ae89e4d3b9f012acaabe1"
+    },
+    {
+      "sourceId": "faq-45385",
+      "publisher": "Nexon",
+      "title": "MapleStory Classic World FAQ",
+      "url": "https://www.nexon.com/maplestory/news/general/45385/global-maple-story-classic-world-faq",
+      "cmsUrl": "https://g.nexonstatic.com/maplestory/cms/v1/news/45385",
+      "isMSCW": true,
+      "publishedAt": "2026-09-29T17:00:00Z",
+      "capturedAt": "2026-11-06T18:25:36.511094+00:00",
+      "bodySha256": "5ccc820a3c4bf3a9b675508ec853b4ce0b9d6b7875aa211cd55547abaf8dd3a2"
+    }
+  ],
+  "records": [
+    {
+      "announcementId": "forgotten-hollow-november-2026",
+      "title": "Forgotten Hollow",
+      "kind": "world_update",
+      "status": "announced",
+      "date": {
+        "precision": "month",
+        "value": "2026-11",
+        "timeZone": null
+      },
+      "summary": "The Grand Launch notes say this Classic World area is planned to open in November. The reviewed written notice gives no exact day, time or upcoming item lineup.",
+      "sourceIds": [
+        "launch-46506"
+      ],
+      "verifiedItems": [],
+      "nxPrice": null,
+      "rewardProbabilities": null,
+      "availabilityVerified": false,
+      "notes": "November 2026 follows the dated October 2026 notice. Exact roadmap days from community recaps are not independently verified primary evidence here."
+    }
+  ],
+  "referenceNotes": [
+    {
+      "sourceId": "cash-47031",
+      "text": "The Nov. 4 cash-shop notice describes its scheduled sale window, not the next fashion lineup. A listed end at the start of Nov. 18 maintenance does not announce its replacement. Live shop availability was not checked."
+    }
+  ],
+  "limitations": [
+    "No upcoming fashion or item reward lineup verified within this bounded primary review. This does not establish that no announcement exists.",
+    "Windia is the user target; these Classic World articles do not separately name the world. No GMS/KMS or unrelated Worlds content is admitted.",
+    "Unknown IDs, prices, probabilities and release times remain unknown. No future price, EV, stats or current-index effect is inferred."
+  ]
+}
