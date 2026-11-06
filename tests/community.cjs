@@ -250,7 +250,7 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 {
   const raw=fs.readFileSync(path.join(__dirname,'../web/index.html'),'utf8');
   const markup=raw.replace(/<footer\b[^>]*>[\s\S]*?<\/footer>/, '<footer class="shell footer-privacy-locked" data-footer-privacy-lock="on" data-preview-analytics-default="on"><article class="footer-review-note" aria-labelledby="footer-review-draft"><h2 class="footer-review-draft" id="footer-review-draft">{DRAFT}</h2><p>Author note and full credits will appear here after review.</p></article><div class="footer-links"><a href="#sources">Sources</a><a href="#privacy">Privacy policy</a></div></footer>');
-  const lockedMarkup=markup.replace('<body>','<body><aside class="shell review-demo-notice" id="review-demo-notice" role="note">{DRAFT} Demo values — not representative of the live market.</aside>');
+  const lockedMarkup=markup.replace(/<body\b[^>]*>/,'$&<aside class="shell review-demo-notice" id="review-demo-notice" role="note">{DRAFT} Demo values — not representative of the live market.</aside>');
   const dom=new JSDOM(lockedMarkup,{url:'https://inflation.gg/',runScripts:'outside-only',pretendToBeVisual:true}),w=dom.window,doc=w.document;let network=0;
   w.localStorage.setItem('inflation-optional-analytics-consent-v1','off');
   w.localStorage.setItem('inflation-footer-style','personal');
