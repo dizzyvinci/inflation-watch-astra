@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-06T08:08:30+00:00",
+  "exportedAt": "2026-11-06T08:26:30+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7583,7 +7583,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "2cfbad5a3e909d7aa72c9b5d1cc00bc8e232dc19eda35e9cc38edc307832ab8a"
+      "sha256": "502b086b1b5050a57f40df473fab0c4fb032214568fcd8efbf7640a9f7f13057"
     },
     {
       "path": "cache/market.json",
@@ -7668,7 +7668,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "772ef752f484b9a6fa973ad151fd9b69171b06fef2aae1767304b4d7c39a3310"
+      "sha256": "6d22c904804e07bf59e74de2c9c25dc307d3e73ff99387bbe94c8cc91dff8a04"
     },
     {
       "path": "dist/_headers",
@@ -16351,6 +16351,11 @@
       "sha256": "e7e31eb0bbae38f12ad70e83473111f44d692767f85e8d9c123e6dc679108b5c"
     },
     {
+      "path": "dist/data-ee34ff3cdd18f324.json",
+      "bytes": 992898,
+      "sha256": "ee34ff3cdd18f3244da9566a502f7005ee2f154b057c5b4a94b1e7d204cb8554"
+    },
+    {
       "path": "dist/data-eeebf04b6dfc455c.json",
       "bytes": 328649,
       "sha256": "eeebf04b6dfc455c438dbe6a2c105444ab2e24f058bcf14031254a3f1e70d125"
@@ -16403,7 +16408,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "2e8a209adee367a2049599b74e88f158bcf1fb182489076897cc4bca3cf42004"
+      "sha256": "ee34ff3cdd18f3244da9566a502f7005ee2f154b057c5b4a94b1e7d204cb8554"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16423,7 +16428,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "772ef752f484b9a6fa973ad151fd9b69171b06fef2aae1767304b4d7c39a3310"
+      "sha256": "6d22c904804e07bf59e74de2c9c25dc307d3e73ff99387bbe94c8cc91dff8a04"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16703,7 +16708,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "cf81f57205dc62bca40e83204a8c433798e6db73a402b99a4f31d5428ad06419"
+      "sha256": "9c47c45b72fe66b04976cfb4d1677ca0fb202538a3fc2c89aaffdd3fbdb52c9e"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16896,6 +16901,11 @@
       "sha256": "4d9099fef24ad567ee1c7044d7ae80ed72726603a9872eb87974f519abb497dd"
     },
     {
+      "path": "ops/api-item-hour-export-health.mjs",
+      "bytes": 9412,
+      "sha256": "08d56dfb4756de80203f249cd3a44e0687a890e68dfd74385078d00a55695803"
+    },
+    {
       "path": "ops/api-item-hour-export-pilot.mjs",
       "bytes": 18530,
       "sha256": "dd3e04df499bae81b6c7fb6f88c233b257d334ddb3a221412cb0401578bf4ca4"
@@ -16977,8 +16987,8 @@
     },
     {
       "path": "ops/api-private-health.mjs",
-      "bytes": 12215,
-      "sha256": "3b0c8265803a90d2597d70a42cc8fbada89ee41a20ba9322c07fda855792c856"
+      "bytes": 12460,
+      "sha256": "1e3a9e8148f62d24e389a4e37c9a2a30023d19d60b0e1710a3099d70c55ace9e"
     },
     {
       "path": "ops/api-private-item-discovery-health.mjs",
@@ -17237,8 +17247,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 12018,
-      "sha256": "a99fb7ae68ceb7500f746193ae360ce15af3a12935a8f8f796fc22e2f4f59bf3"
+      "bytes": 12113,
+      "sha256": "af5dc2c9f16f9d663170d6d19210690ff24f47191212aef76070d6dfbd6daac5"
     },
     {
       "path": "portable_hash.py",
@@ -17369,6 +17379,11 @@
       "path": "tests/api-item-generation-refs.test.mjs",
       "bytes": 3465,
       "sha256": "998df7ff45f9c835b2a2ca472f875ed6aff9806db1b59ce9f1d7b3c214cdcf24"
+    },
+    {
+      "path": "tests/api-item-hour-export-health.test.mjs",
+      "bytes": 11007,
+      "sha256": "bd21857141fd1cda9e1c09edb1a8a491bddafd53b78eda585fde8b6299e9ef1e"
     },
     {
       "path": "tests/api-item-hour-export-pilot.test.mjs",

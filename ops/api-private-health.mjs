@@ -1,3 +1,4 @@
+import {privateItemHourExportHealth} from './api-item-hour-export-health.mjs';
 import {privateItemRefreshHealth} from './api-item-recurring-health.mjs';
 import {nxHistoryArchiveHealth} from './nx-history-health.mjs';
 import {privateItemDiscoveryHealth} from './api-private-item-discovery-health.mjs';
@@ -105,6 +106,7 @@ export class ApiPrivateHealth{
     if(!this.enabled()||result?.status==='disabled')return{status:'skipped_off'};
     const checkedAt=new Date(this.core.clock()).toISOString();const source=this.core.health();
     const config=this.core.config();
+    const itemHourExport=await privateItemHourExportHealth(this.core,this.env,checkedAt);
     const caps=[config.grantedPerDay,config.operatorDailyRequestCap].filter(value=>integer(value)&&value>0);
     const safe={schemaVersion:1,kind:'private_api_collector_health',providerAlarmRecoveryVersion:1,checkedAt,
       checkedAtMeaning:'owner_check_completion_not_market_observation',
@@ -123,6 +125,7 @@ export class ApiPrivateHealth{
       privateNxOffers:privateNxHealth(this.core,this.env),
       privateNxPublication:privateNxR2Health(this.core,this.env),
       privateItems:privateItemHealth(this.core,this.env),privateItemRefresh:privateItemRefreshHealth(this.core,this.env),
+      ...(itemHourExport===null?{}:{privateItemHourExport:itemHourExport}),
       privateItemHistory:privateItemHistoryHealth(this.core,this.env),privateItemDiscovery:privateItemDiscoveryHealth(this.core,this.env),privateNxHistoryArchive:nxHistoryArchiveHealth(this.core,this.env),
       ...(this.core.observed?{observedFirstPass:this.observedFirstPassProgress(config)}:{}),
       ...(config.nxSchemaProbesEnabled===true?{nxSchemaProbes:this.nxSchemaProbeProgress(config),completedNxProbeReceipts:this.completedNxProbeReceipts(config)}:{}),
