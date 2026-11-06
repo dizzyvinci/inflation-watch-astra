@@ -11,6 +11,8 @@ import { createCatalogRoutes } from './catalog-routes.mjs';
 import {writeCatalogIndexArtifact,validateCatalogIndexDescriptor} from './catalog-index-artifact.mjs';
 import {createPublicCashRoute} from './api-public-cash-routes.mjs';
 const publicCashFetch=createPublicCashRoute();
+import {createPublicNxRoute} from './api-public-nx-routes.mjs';
+const publicNxFetch=createPublicNxRoute();
 
 const catalogProject = createCachedProjectionFactory(catalogIdentities);
 export const catalogIdentityVersion = catalogProject.identityVersion;
@@ -647,6 +649,7 @@ async function handleFetch(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname;
   if(path==='/api-cash-items.json')return publicCashFetch(request,env);
+  if(path==='/api-nx-offers.json')return publicNxFetch(request,env);
   if (path === '/market-index.json' || path.startsWith('/market-item/')) return catalogFetch(request, env, ctx);
   if (!['GET', 'HEAD'].includes(request.method)) return new Response('Method not allowed', { status: 405, headers: { Allow: 'GET, HEAD' } });
   const dynamic = ['/version.json', '/data.json', '/health.json'].includes(path);

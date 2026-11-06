@@ -8,9 +8,10 @@ function setup(initial={status:'ready',serverMode:'accepted_cache',data:valid()}
  const w=dom.window,d=w.document;w.Date.now=()=>NOW;w.fetch=()=>{fetches++;throw Error('Status must not fetch')};w.__report=JSON.parse(JSON.stringify(report));
  w.$=id=>d.getElementById(id);w.utc=v=>String(v);w.esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  w.AstraApiCash={getState:()=>state,client:{freshness:()=>state.data?'recent_retrieval':'unavailable'},model:()=>({rows:[],eligibleCount:state.data?.coverage.available||0}),getChoice:()=> 'auto',rowFor:()=>null,setChoice(){},refresh(){throw Error('No status refresh transport')}};
+ const offerHelpers=app.slice(app.indexOf('function smegaReport()'),app.indexOf('function smegaWindow('));
  const health=app.slice(app.indexOf('function sourceHealth('),app.indexOf('function renderOverviewFreshness(')),sources=app.slice(app.indexOf('function renderSources('),app.indexOf('\nfunction conversionValue('));
  const listener="for(const event of ['astraapicashchange','astraapicashstatusready'])document.addEventListener(event,()=>{if(snapshot)renderSources();});";
- assert(app.includes(listener));w.eval('let snapshot=window.__report;'+health+sources+listener+'window.renderSources=renderSources;window.getTestSnapshot=()=>snapshot;');w.renderSources();const before=[...d.querySelectorAll('[data-status-key]')].filter(n=>n.dataset.statusKey!=='api').map(n=>n.outerHTML);w.eval(script);
+ assert(app.includes(listener));w.eval('let snapshot=window.__report;'+offerHelpers+health+sources+listener+'window.renderSources=renderSources;window.getTestSnapshot=()=>snapshot;');w.renderSources();const before=[...d.querySelectorAll('[data-status-key]')].filter(n=>n.dataset.statusKey!=='api').map(n=>n.outerHTML);w.eval(script);
  return{w,d,errors,before,get fetches(){return fetches},set(value){state=value;d.dispatchEvent(new w.Event('astraapicashchange'))},api:()=>d.querySelector('[data-status-key=api]'),close:()=>w.close()};
 }
 

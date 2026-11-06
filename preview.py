@@ -14,12 +14,14 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from catalog_local import LocalCatalog
 from local_cash_reader import LocalCashReader
+from local_nx_reader import LocalNxReader
 
 ROOT = Path(__file__).resolve().parent
 BUILD_TIMEOUT_SECONDS = 120
 _build_guard = threading.Lock()
 _catalog = LocalCatalog(ROOT)
 _cash = LocalCashReader(ROOT)
+_nx = LocalNxReader()
 
 
 class PreviewBuildError(RuntimeError):
@@ -189,6 +191,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self._catalog_response = False
         response = _cash.handle(self.command, self.path, self.headers,
                                bind_host=self.server.server_address[0],client_host=self.client_address[0])
+        if response is None:response = _nx.handle(self.command, self.path, self.headers,
+                                                bind_host=self.server.server_address[0],client_host=self.client_address[0])
         if response is None:response = _catalog.handle(self.command, self.path, self.headers)
         if response is None:return False
         self._catalog_response = True

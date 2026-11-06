@@ -6,6 +6,8 @@ import {PrivateNxOffersProducer} from './api-private-nx-offers.mjs';
 import {PrivateNxPublisher} from './api-private-nx-publisher.mjs';
 import {privateNxR2Configuration,privateNxR2Health} from './api-private-nx-r2-health.mjs';
 import {scheduleConfig} from './api-alarm-scheduler.mjs';
+import {PrivateItemWork} from './api-private-item-work.mjs';
+import {privateItemConfiguration,privateItemHealth} from './api-private-item-health.mjs';
 
 export function privateCashConfig(env){
   if(!env.API_PRIVATE_CASH_JSON)return{enabled:false};
@@ -29,7 +31,8 @@ export class ApiPrivateCashAlarm{
     if(this.initialStatus==='ready')this.materializer=new PrivateCashMaterializer(ctx,env.API_RAW_RECEIPTS,bindings,{enabled:true,now:()=>core.clock()});
     if(this.nxStatus()==='ready')this.nxProducer=new PrivateNxOffersProducer(ctx,env.API_RAW_RECEIPTS,{enabled:true,now:()=>core.clock(),isEnabled:()=>this.nxStatus()==='ready',privatePublicationEnabled:this.nxR2Status()==='ready'});
     if(this.nxProducer&&this.nxR2Status()==='ready')this.nxPublisher=new PrivateNxPublisher(ctx,env.API_RAW_RECEIPTS,{enabled:true,now:()=>core.clock(),isEnabled:()=>this.nxR2Status()==='ready'});
-    if(!this.cashActive&&!this.nxActive)return;
+    if(this.itemsStatus()==='ready')this.itemWork=new PrivateItemWork(ctx,env,core);
+    if(!this.cashActive&&!this.nxActive&&!this.itemsActive)return;
     core.sql.exec(`CREATE TABLE IF NOT EXISTS api_cash_alarm_mux(id INTEGER PRIMARY KEY CHECK(id=1),
       provider_at INTEGER,private_at INTEGER,recovery_at INTEGER,last_kind TEXT,initialized INTEGER NOT NULL DEFAULT 0)`);
     core.sql.exec('INSERT OR IGNORE INTO api_cash_alarm_mux(id) VALUES(1)');
@@ -71,10 +74,12 @@ export class ApiPrivateCashAlarm{
     }catch{return'invalid_private_nx_configuration';}
   }
   nxR2Status(){return privateNxR2Configuration(this.env,this.core);}
+  itemsStatus(){return privateItemConfiguration(this.env,this.core);}
+  get itemsActive(){return this.itemWork!==undefined&&this.itemsStatus()==='ready';}
   get nxR2Active(){return this.nxPublisher!==undefined&&this.nxActive&&this.nxR2Status()==='ready';}
   get cashActive(){return this.materializer!==undefined&&this.status()==='ready';}
   get nxActive(){return this.nxProducer!==undefined&&this.nxStatus()==='ready';}
-  get active(){return this.cashActive||this.nxActive;}
+  get active(){return this.cashActive||this.nxActive||this.itemsActive;}
   row(){return this.core.row('SELECT * FROM api_cash_alarm_mux WHERE id=1');}
   async setProviderAlarm(at){
     this.ctx.storage.transactionSync(()=>{
@@ -93,7 +98,7 @@ export class ApiPrivateCashAlarm{
   get providerControl(){return{setAlarm:at=>this.setProviderAlarm(at),deleteAlarm:()=>this.clearProviderAlarm()};}
   async arm(){
     const row=this.row(),now=this.core.clock();
-    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[]),...(this.nxR2Active?[this.nxPublisher.nextDue()]:[])].filter(value=>value!==null);
+    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[]),...(this.nxR2Active?[this.nxPublisher.nextDue()]:[]),...(this.itemsActive?[this.itemWork.nextDue()]:[])].filter(value=>value!==null);
     if(!choices.length){await this.ctx.storage.deleteAlarm();return null;}
     const at=Math.max(now+1,Math.min(...choices));await this.ctx.storage.setAlarm(at);return at;
   }
@@ -145,6 +150,7 @@ export class ApiPrivateCashAlarm{
       if(this.cashActive)this.publisher?.reconcile();
       if(this.nxActive)this.nxProducer.reconcile(8);
       if(this.nxR2Active)this.nxPublisher.reconcileStored(); // SQL-only restart/adoption repair
+      if(this.itemsActive)this.itemWork.reconcile();
       this.refreshPrivateDeadline();await this.arm();
       return{status:'private_projection_scheduled',queued:reconciled.queued};
     }catch{
@@ -153,6 +159,7 @@ export class ApiPrivateCashAlarm{
       // NX-only mode must arm an active durable slot; private_at is ignored
       // while cash is off. Preserve any earlier shared recovery deadline.
       if(this.nxActive)this.core.sql.exec('UPDATE api_cash_alarm_mux SET recovery_at=CASE WHEN recovery_at IS NULL THEN ? ELSE MIN(recovery_at,?) END WHERE id=1',retryAt,retryAt);
+      if(this.itemsActive)this.itemWork.defer();
       await this.arm();return{status:'private_projection_schedule_retry'};
     }
   }
@@ -166,11 +173,12 @@ export class ApiPrivateCashAlarm{
     const providerDue=row.provider_at!==null&&row.provider_at<=now;
     const publicAt=this.cashActive?this.publisher?.nextDue()??null:null,publicDue=publicAt!==null&&publicAt<=now;
     const nxR2At=this.nxR2Active?this.nxPublisher.nextDue():null,nxR2Due=nxR2At!==null&&nxR2At<=now;
-    if(!privateDue&&!providerDue&&!publicDue&&!nxDue&&!nxR2Due)return'early';
+    const itemsAt=this.itemsActive?this.itemWork.nextDue():null,itemsDue=itemsAt!==null&&itemsAt<=now;
+    if(!privateDue&&!providerDue&&!publicDue&&!nxDue&&!nxR2Due&&!itemsDue)return'early';
     // At most one heavy operation per event; alternate when both are overdue.
     let kind=privateDue&&(!providerDue||row.last_kind!=='private')?'private':'provider';
-    if(publicDue||nxDue||nxR2Due){const order=['private','public','nx','nx-r2','provider'],start=(order.indexOf(row.last_kind)+1)%order.length;
-      kind=[...order.slice(start),...order.slice(0,start)].find(k=>({private:privateDue,public:publicDue,nx:nxDue,'nx-r2':nxR2Due,provider:providerDue})[k]);}
+    if(publicDue||nxDue||nxR2Due||itemsDue){const order=['private','public','nx','nx-r2','items','provider'],start=(order.indexOf(row.last_kind)+1)%order.length;
+      kind=[...order.slice(start),...order.slice(0,start)].find(k=>({private:privateDue,public:publicDue,nx:nxDue,'nx-r2':nxR2Due,items:itemsDue,provider:providerDue})[k]);}
     this.core.sql.exec(kind==='private'?'UPDATE api_cash_alarm_mux SET last_kind=?,private_at=NULL,recovery_at=NULL WHERE id=1':
       kind==='provider'?'UPDATE api_cash_alarm_mux SET last_kind=?,provider_at=NULL WHERE id=1':'UPDATE api_cash_alarm_mux SET last_kind=? WHERE id=1',kind);return kind;
   }
@@ -232,10 +240,29 @@ export class ApiPrivateCashAlarm{
       return{status:'private_nx_r2_event_retry',eventKind:'private_nx_r2',providerAttempted:false};
     }
   }
+  async armItemsRecovery(until){
+    this.core.sql.exec('UPDATE api_cash_alarm_mux SET recovery_at=CASE WHEN recovery_at IS NULL THEN ? ELSE MIN(recovery_at,?) END WHERE id=1',until,until);
+    await this.arm();
+  }
+  async runItemsAlarm(){
+    if(!this.itemsActive)return{status:this.itemsStatus(),eventKind:'private_items',providerAttempted:false};
+    try{
+      await this.armItemsRecovery(this.core.clock()+130000);
+      this.itemWork.reconcile();
+      const result=await this.itemWork.drainOne(until=>this.armItemsRecovery(until));
+      this.itemWork.reconcile();
+      this.refreshPrivateDeadline();await this.arm();
+      return{...result,eventKind:'private_items',providerAttempted:false};
+    }catch{
+      const at=this.itemWork.defer();
+      try{await this.arm();}catch{const prior=await this.ctx.storage.getAlarm();await this.ctx.storage.setAlarm(prior===null?at:Math.min(prior,at));}
+      return{status:'private_items_event_retry',eventKind:'private_items',providerAttempted:false};
+    }
+  }
   health(){
     if(!this.active)return{status:this.status()};
     const row=this.row();return{status:'private_only_ready',methodVersion:1,publicationEligible:false,
-      privateAlarmAt:row.private_at,recoveryAlarmAt:row.recovery_at,privateNxPublication:privateNxR2Health(this.core,this.env),
+      privateAlarmAt:row.private_at,recoveryAlarmAt:row.recovery_at,privateNxPublication:privateNxR2Health(this.core,this.env),privateItems:privateItemHealth(this.core,this.env),
       jobs:this.cashActive?this.core.sql.exec('SELECT state,COUNT(*) AS count FROM private_cash_jobs GROUP BY state').toArray():[],
       ...(this.nxProducer?{nxOffers:this.nxActive?this.nxProducer.health():{status:this.nxStatus()}}:{})};
   }

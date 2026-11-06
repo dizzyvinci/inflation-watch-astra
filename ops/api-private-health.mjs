@@ -1,5 +1,6 @@
 import {privateNxHealth} from './api-private-nx-health.mjs';
 import {privateNxR2Health} from './api-private-nx-r2-health.mjs';
+import {privateItemHealth} from './api-private-item-health.mjs';
 import {publicCashStatus} from './api-public-cash-contract.mjs';
 // Optional private diagnostics only. Never a provider request or public health replacement.
 const KEY='_private/provider-api/v1/health.json';
@@ -117,6 +118,7 @@ export class ApiPrivateHealth{
       publicCashPublication:this.publicCashProgress(),
       privateNxOffers:privateNxHealth(this.core,this.env),
       privateNxPublication:privateNxR2Health(this.core,this.env),
+      privateItems:privateItemHealth(this.core,this.env),
       ...(this.core.observed?{observedFirstPass:this.observedFirstPassProgress(config)}:{}),
       ...(config.nxSchemaProbesEnabled===true?{nxSchemaProbes:this.nxSchemaProbeProgress(config),completedNxProbeReceipts:this.completedNxProbeReceipts(config)}:{}),
       dailyCeilingMeaning:'configured_restriction_not_an_inferred_provider_daily_grant'};

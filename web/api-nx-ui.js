@@ -1,0 +1,23 @@
+(()=>{'use strict';if(window.AstraApiNxUi)return;
+let report=null;const formatters=new Map();
+const rate=value=>Number.isFinite(value)?value.toLocaleString('en-US',{maximumFractionDigits:2})+' mesos / NX':'Unavailable';
+function instant(value){if(!value||!Number.isFinite(Date.parse(value)))return'Unknown';let zone=document.getElementById('display-timezone')?.value||'UTC';try{if(!formatters.has(zone))formatters.set(zone,new Intl.DateTimeFormat('en-US',{timeZone:zone,month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',timeZoneName:'short'}));return formatters.get(zone).format(new Date(value));}catch{zone='UTC';if(!formatters.has(zone))formatters.set(zone,new Intl.DateTimeFormat('en-US',{timeZone:zone,month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',timeZoneName:'short'}));return formatters.get(zone).format(new Date(value));}}
+function paragraph(parent,text,klass){const p=document.createElement('p');p.textContent=text;if(klass)p.className=klass;parent.append(p);return p;}
+function render(){
+ const api=window.AstraApiNxOffers;if(!api||!report)return;const host=document.getElementById('smega-section');if(!host)return;
+ let panel=document.getElementById('api-nx-evidence');if(!panel){panel=document.createElement('section');panel.id='api-nx-evidence';panel.className='api-nx-evidence';panel.setAttribute('aria-label','API offer source evidence');host.append(panel);}
+ panel.replaceChildren();const state=api.getState(),data=state.data,description=api.sourceDescriptor(),status=paragraph(panel,description.state,'api-nx-status');status.setAttribute('role','status');status.dataset.tone=description.tone;panel.dataset.status=state.status;
+ paragraph(panel,'Green: verified recent receipt · Amber: dated, paused or unpublished · Red: read failed without accepted API data.','api-nx-legend small');
+ if(!data){paragraph(panel,description.detail,'small');return;}
+ const grid=document.createElement('div');grid.className='api-nx-evidence-grid';panel.append(grid);
+ const native=document.createElement('section'),derived=document.createElement('section');grid.append(native,derived);const n=data.nativeSummary,d=data.derived24;
+ paragraph(native,n?'Source-native '+n.reportedWindowHours+'-hour summary':'Source-native summary unavailable','eyebrow');native.dataset.nativeHours=String(n?.reportedWindowHours??'');
+ if(n){paragraph(native,'Sellers ask: '+rate(n.sell?.median)+' · Buyers bid: '+rate(n.buy?.median));const captured=paragraph(native,'Retrieved ('+instant(n.capturedAt)+')','small');captured.dataset.rawCapturedAt=n.capturedAt;const heard=paragraph(native,'Source last-heard label: ('+instant(n.sourceLastHeardAt)+')','small');heard.dataset.rawSourceLastHeardAt=n.sourceLastHeardAt||'';paragraph(native,'Poster counts: seller '+(n.sell?.reportedPosterCount??'unknown')+', buyer '+(n.buy?.reportedPosterCount??'unknown')+'. Exact window bounds are unavailable.','small');}
+ paragraph(derived,'Derived 24 source-hour histogram pool','eyebrow');derived.dataset.derivedHours='24';paragraph(derived,'Sellers ask: '+rate(d.sides.sell.median)+' · Buyers bid: '+rate(d.sides.buy.median));paragraph(derived,'Available source buckets: buyer '+d.sides.buy.availableHourBuckets+'/24, seller '+d.sides.sell.availableHourBuckets+'/24. Missing buckets remain missing.','small');
+ const anchor=paragraph(derived,'Source hours end ('+instant(d.anchorSourceHourLabel)+')','small');anchor.dataset.rawSourceHour=d.anchorSourceHourLabel||'';
+ paragraph(panel,'Native summary and derived pool use different windows. Poster-hour appearances can repeat people; these are offers, not trades. Retrieval times do not renew source hours.','small');
+ const view=report.offerEvidence?report:api.view(report),detail=view.offerEvidence;paragraph(panel,detail.mergedSourceHourSideRows+' retained source/hour/side rows after overlap resolution; older browser history stays available. '+(detail.conflictingHourSideKeys.length?detail.conflictingHourSideKeys.length+' equal-capture conflicts are excluded from calculations.':''),'small');
+ const credit=document.createElement('a');credit.href=data.attribution.url;credit.target='_blank';credit.rel='noreferrer';credit.textContent=data.attribution.label+' ↗';credit.className='small';panel.append(credit);
+}
+window.AstraApiNxUi=Object.freeze({render,instant});document.addEventListener('astramarketsnapshot',event=>{report=event.detail;render();});document.addEventListener('astraapinxchange',render);document.getElementById('display-timezone')?.addEventListener('change',render);document.dispatchEvent(new CustomEvent('astramarkethighlightsready'));
+})();

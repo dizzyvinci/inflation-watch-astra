@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-06T01:51:25+00:00",
+  "exportedAt": "2026-11-06T02:31:22+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7543,7 +7543,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "27768749eb115479e8371522038793e6e75b27b8ceffbbbaa391b6a9bec98579"
+      "sha256": "54a4257ca2fbf3679887e8579877eed4b6dda4e69d05906f02ca0bd5ffbfe969"
     },
     {
       "path": "cache/market.json",
@@ -7628,7 +7628,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "ffb008f081f147655486a930d69e56ea2b19ef46c722e4b774d163272e5bd00b"
+      "sha256": "44728457b452dbb53ebfaa16dd1db2328d72102f99a46f0cfd80ee8b0868215c"
     },
     {
       "path": "dist/_headers",
@@ -7661,9 +7661,29 @@
       "sha256": "546ed4159c5a28a281be9d9461790c5bfcb0563541e22b8a42f7e723c47fe835"
     },
     {
+      "path": "dist/api-nx-client.js",
+      "bytes": 12300,
+      "sha256": "4e8091ecb984b620d18c886cecf05860420220ec71c44c15f0718430bd57cf27"
+    },
+    {
+      "path": "dist/api-nx-protocol.js",
+      "bytes": 8119,
+      "sha256": "ff22d36c01a038beeca5df6db61d23b80be3db562cfc71dc0259d4c2f171d753"
+    },
+    {
+      "path": "dist/api-nx-ui.css",
+      "bytes": 991,
+      "sha256": "4b0b5708dd6e9fe1e8eb65372361dd10c918f228a62b50e86acee39d49623e05"
+    },
+    {
+      "path": "dist/api-nx-ui.js",
+      "bytes": 4675,
+      "sha256": "57a2e8ac8840bac34cbf7dec08793a4875dd5cf426dfdb14a8a104506c5f2044"
+    },
+    {
       "path": "dist/app.js",
-      "bytes": 147189,
-      "sha256": "2b32a7ca9c698dd601476f2a54947820a9407049f5dd55e979a6349ab1806b6b"
+      "bytes": 148035,
+      "sha256": "a3f492e743c2b4f75837a56a8c358a60e320453c56611cef4863a29a39f959ee"
     },
     {
       "path": "dist/assets/PixelifySans-9ba86cd010a4de30.ttf",
@@ -15696,6 +15716,11 @@
       "sha256": "8d793181963c85ffdb47867fe09066367b12e5cd16ac9d19c8c7b6c26e1ab091"
     },
     {
+      "path": "dist/astra-app-a3f492e743c2b4f7.js",
+      "bytes": 148035,
+      "sha256": "a3f492e743c2b4f75837a56a8c358a60e320453c56611cef4863a29a39f959ee"
+    },
+    {
       "path": "dist/astra-app-c8a27f1a91c40e49.js",
       "bytes": 147044,
       "sha256": "c8a27f1a91c40e4940bbee956c995a74af4cc57bf8f428ca813d494462439b90"
@@ -15741,6 +15766,11 @@
       "sha256": "1c1e845b49120c1623ef47b0eda41dfbe0492199ebd5207eb5c832b84dae81fa"
     },
     {
+      "path": "dist/astra-ui-1cb93e8a6d10d3a1.css",
+      "bytes": 190489,
+      "sha256": "1cb93e8a6d10d3a1ed0e0ff1b468b36353011011ef6827a2dab3974c7136442b"
+    },
+    {
       "path": "dist/astra-ui-26898d75a38d6f6c.css",
       "bytes": 182636,
       "sha256": "26898d75a38d6f6ce9dcda765e644afc2263eb2a1631e6480e2800f545725665"
@@ -15784,6 +15814,11 @@
       "path": "dist/astra-ui-85b41362aa500592.js",
       "bytes": 50850,
       "sha256": "85b41362aa500592299f0fc3e988a87e675db3f54cb7258a71635283172af507"
+    },
+    {
+      "path": "dist/astra-ui-86c08604464f9b1c.js",
+      "bytes": 111828,
+      "sha256": "86c08604464f9b1c548f3c1ed5e05a4ad666b24af9f31364dd2b21e81607a258"
     },
     {
       "path": "dist/astra-ui-8c661a8719b1da7d.js",
@@ -15844,6 +15879,11 @@
       "path": "dist/astra-ui-f326702ab9d34ecd.js",
       "bytes": 391092,
       "sha256": "f326702ab9d34ecdb58b4b598846db8077d93120a4ddfaeb2662b2cd25496fc1"
+    },
+    {
+      "path": "dist/astra-ui-f48a891050137c11.js",
+      "bytes": 395975,
+      "sha256": "f48a891050137c114c61961ef4f46d6715fe57673575dab5331f4cd64353bfc2"
     },
     {
       "path": "dist/astra-ui-f6353d368b8a4d4c.css",
@@ -16096,6 +16136,11 @@
       "sha256": "a1e4e89de7de8f9743bbbdb5646c268336cc8461be2901f5c72e5e0a5879e205"
     },
     {
+      "path": "dist/data-a4bd5d38bcc56487.json",
+      "bytes": 992898,
+      "sha256": "a4bd5d38bcc56487c2a2173ef4309e2cd802e4d20a6a7f0c72fdcba37d6e0e52"
+    },
+    {
       "path": "dist/data-a661413653e1d2e2.json",
       "bytes": 992513,
       "sha256": "a661413653e1d2e2e47b2549402a2f8128f9d4c1ab8b7ecc574e619bb0c87132"
@@ -16198,7 +16243,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "8306bfc1299e4c68899e43131ff30f71855ec76c3b6289f4b7b9932421225fa1"
+      "sha256": "a4bd5d38bcc56487c2a2173ef4309e2cd802e4d20a6a7f0c72fdcba37d6e0e52"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16218,7 +16263,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "ffb008f081f147655486a930d69e56ea2b19ef46c722e4b774d163272e5bd00b"
+      "sha256": "44728457b452dbb53ebfaa16dd1db2328d72102f99a46f0cfd80ee8b0868215c"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16253,7 +16298,7 @@
     {
       "path": "dist/index.html",
       "bytes": 50498,
-      "sha256": "6436b56487249cf3650c0196780fe32c0822e012b8122deb836f5c42510d0797"
+      "sha256": "e8631f487a6be407329aec2028b4235a0e935c650c93708ab802a369e7000eec"
     },
     {
       "path": "dist/layout-preview.css",
@@ -16472,13 +16517,13 @@
     },
     {
       "path": "dist/ui-bundles.json",
-      "bytes": 10239,
-      "sha256": "27340eb063f18374e65ca59b1b2baccc6914a5c043eeed9e43fb0dbe39ef04df"
+      "bytes": 10703,
+      "sha256": "b60fa5929f23740c62563a49ca9feb91ecc548a53b48b4206745260a3a85a2cb"
     },
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "b19125ffa95bf26b40c096a3c3b8862949cd5af4a12e1b1d8d18ec8726b0b6f7"
+      "sha256": "590c1632c8f4d275b307221b637e97ddf9af9ad07e1b119c51b6d1594dc9c0bc"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16502,8 +16547,8 @@
     },
     {
       "path": "engine.py",
-      "bytes": 57522,
-      "sha256": "60c327ad05407be1043c45e1ef10362e9ed47c86eec0b58bbabd18da141c2988"
+      "bytes": 57597,
+      "sha256": "9b387f2e00165afd5bde5074b9c42497bfc359072fdbb82145337a5a3cee3c6e"
     },
     {
       "path": "historical_backfill.py",
@@ -16534,6 +16579,11 @@
       "path": "local_cash_reader.py",
       "bytes": 15696,
       "sha256": "c02a9ea56688d73d8601c65c52cb19a6d4a2429cfe3996d63549f5ea78500268"
+    },
+    {
+      "path": "local_nx_reader.py",
+      "bytes": 19593,
+      "sha256": "cd1e37990997b5a66c3711b932b0ae6b214f1630cc41e4c2d69f6e227fa02188"
     },
     {
       "path": "market_catalog.py",
@@ -16587,8 +16637,23 @@
     },
     {
       "path": "ops/api-grant-collector.mjs",
-      "bytes": 4062,
-      "sha256": "0e5f6b62625dadc1f21743722c90d154a2eba124ede8e12d0b452a04119147d2"
+      "bytes": 4125,
+      "sha256": "b391e240fa1d89b88fc515c4b081a129d20e9a079a85a96b107e2aea69976975"
+    },
+    {
+      "path": "ops/api-item-metadata-loader.mjs",
+      "bytes": 3142,
+      "sha256": "9a2e9ac2773f91b15af165c068956d1fa8cbda1826f4f3a7e173c1dcf45173fa"
+    },
+    {
+      "path": "ops/api-item-retention-plan.mjs",
+      "bytes": 14169,
+      "sha256": "fabadf8bc4a1199387d32ae2f907bcefdde3d907230f718bc00751e8f6faf89c"
+    },
+    {
+      "path": "ops/api-item-static-metadata.mjs",
+      "bytes": 186868,
+      "sha256": "09866baad456f990a5f240e51e8586d5fcd4782e03f89b3db7536eaa63753c9a"
     },
     {
       "path": "ops/api-nx-offers.mjs",
@@ -16607,8 +16672,8 @@
     },
     {
       "path": "ops/api-private-cash-alarm.mjs",
-      "bytes": 17074,
-      "sha256": "ce98c499636392c5c80f600e20884e0579cf33b7aee12ae17e8d99ec595ab108"
+      "bytes": 18865,
+      "sha256": "86aaae034e0850e03680679acd26f6a05ee23c63289fec42cbfab2ca9dc05ae5"
     },
     {
       "path": "ops/api-private-cash-materializer.mjs",
@@ -16617,13 +16682,23 @@
     },
     {
       "path": "ops/api-private-health.mjs",
-      "bytes": 11489,
-      "sha256": "b7eff03ba7f71216fe3f63b2db4d2fd20bee55d5b9bc5a013f584797049d1377"
+      "bytes": 11612,
+      "sha256": "59e8f79daf9f343a77930b3902258b71ca6816adae905d390d74c28be2ed03ba"
+    },
+    {
+      "path": "ops/api-private-item-health.mjs",
+      "bytes": 3273,
+      "sha256": "9b10126be9bfa7a132a89a8a86fe56330135ea88101387a67782163d9cb12bce"
     },
     {
       "path": "ops/api-private-item-producer.mjs",
       "bytes": 26159,
       "sha256": "c98e3c5ab4a85a22406339ef13583dadbe197147cffed6ce3348ec4b38cc7612"
+    },
+    {
+      "path": "ops/api-private-item-work.mjs",
+      "bytes": 5053,
+      "sha256": "330cf996726182ad6f597705c101611b9d3392cacd0075482f1c117a36800f24"
     },
     {
       "path": "ops/api-private-nx-health.mjs",
@@ -16669,6 +16744,16 @@
       "path": "ops/api-public-cash-subset.mjs",
       "bytes": 5896,
       "sha256": "a7ae78365ea4aeb1219cb4fe42ea21bea23234d8e3a0d5574d585c3f044e7255"
+    },
+    {
+      "path": "ops/api-public-nx-contract.mjs",
+      "bytes": 8240,
+      "sha256": "2738374324ffc64d2000dce35396e33478b416dbf84db88d083b8a20d715f473"
+    },
+    {
+      "path": "ops/api-public-nx-routes.mjs",
+      "bytes": 3815,
+      "sha256": "819d65b0c31ef59385c5f434f2ebf7a030759ee8acb896a49e7f01400f0925c7"
     },
     {
       "path": "ops/api-raw-prices-decoder.mjs",
@@ -16727,8 +16812,8 @@
     },
     {
       "path": "ops/worker.mjs",
-      "bytes": 39821,
-      "sha256": "6f9b364a435a93b82e8cefc011912b983f7f9418a85b86f6c3698bfe5eac6660"
+      "bytes": 39997,
+      "sha256": "63b62a4dde8030752454c3a978def823fd4d10a6e4a5f59489027ad2f0382742"
     },
     {
       "path": "ops/wrangler.jsonc",
@@ -16742,8 +16827,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 6899,
-      "sha256": "867cb04f9cef01174f0a9e02a770cba3b29f8f69953a5d9f5de5eeef2c8df3ea"
+      "bytes": 7426,
+      "sha256": "4e81e74ccae86940f10698de156868d44ea61e39788f734db838911b81b40504"
     },
     {
       "path": "portable_hash.py",
@@ -16752,8 +16837,8 @@
     },
     {
       "path": "preview.py",
-      "bytes": 11971,
-      "sha256": "42c815256d5ba040831dd2bc5ae281f3e6c343e2d7e76f63d750f6d9a0c68add"
+      "bytes": 12248,
+      "sha256": "8afe7f2b2ce352a49318aa3b4bfd1732ee7164f7a9f458e2ad9bcc2761f817a1"
     },
     {
       "path": "public_api.py",
@@ -16811,6 +16896,21 @@
       "sha256": "30c0b46db869df47657f8089292caf3f1ed16d1e8dca990e1fdc4a4c418b70aa"
     },
     {
+      "path": "tests/api-item-metadata-loader.test.mjs",
+      "bytes": 2613,
+      "sha256": "674fbbf14b496d01ec218569f90747bdb5206d1c54882cb0feb7e29e9a7e53de"
+    },
+    {
+      "path": "tests/api-item-retention-plan.test.mjs",
+      "bytes": 7054,
+      "sha256": "c8bec974cb7e2dab8b9f625a20f4644d074f5b24b14d2db6dba1ba6df78f2446"
+    },
+    {
+      "path": "tests/api-item-support-fixture.mjs",
+      "bytes": 6503,
+      "sha256": "ed55c86cef380dc013546fcff8fe606e7bd0cae1fe0513db9beeccb9c9b69bbc"
+    },
+    {
       "path": "tests/api-nx-offers.test.mjs",
       "bytes": 3125,
       "sha256": "bf21ec25d4f32363e676c7dd5b15d3b8b1427329c1ffb4431e7fc652bc9b4e46"
@@ -16834,6 +16934,11 @@
       "path": "tests/api-nx-schema-probes.test.mjs",
       "bytes": 11910,
       "sha256": "fd2ac314bf63501c64c36a9dee895d19f871efb28ab138973e7d3553199ca803"
+    },
+    {
+      "path": "tests/api-nx.cjs",
+      "bytes": 16889,
+      "sha256": "84c134c46d21794564d438c626649b13293218865daf614d268b5ec9ab25b432"
     },
     {
       "path": "tests/api-observed-firstpass.test.mjs",
@@ -16869,6 +16974,16 @@
       "path": "tests/api-private-item-fixture.mjs",
       "bytes": 6503,
       "sha256": "ed55c86cef380dc013546fcff8fe606e7bd0cae1fe0513db9beeccb9c9b69bbc"
+    },
+    {
+      "path": "tests/api-private-item-owner-fixture.mjs",
+      "bytes": 1732,
+      "sha256": "cc13265947653ecc4a11a86f1f54cad41ee08efd56d5f19ae519c925ecbdde1f"
+    },
+    {
+      "path": "tests/api-private-item-owner.test.mjs",
+      "bytes": 10417,
+      "sha256": "85e783e1ada41bfdd17328870bd3c7ae6eff8a046b0425535faf9a6540c19c69"
     },
     {
       "path": "tests/api-private-item-producer.test.mjs",
@@ -16941,14 +17056,19 @@
       "sha256": "ae4a1eee2d7ae4f79890a25c7d2894b054974095164577e06f4d29a944be9e5b"
     },
     {
+      "path": "tests/api-public-nx-routes.test.mjs",
+      "bytes": 15159,
+      "sha256": "3cb17c7ad7add63f1af002de28e79f9f54a24d146614e7c8fef845be12929e37"
+    },
+    {
       "path": "tests/api-source-status.cjs",
-      "bytes": 8782,
-      "sha256": "27ff3359517fd02f85d582738bbaa30ddc4830d8fc638242030d42f4631c8616"
+      "bytes": 8902,
+      "sha256": "e88e98d1f43d2926c43efcd848955b2b914da1c9f024685f1f5948046575d3d8"
     },
     {
       "path": "tests/asset-bundles.cjs",
-      "bytes": 13705,
-      "sha256": "a19359bbe5da2ea0dbf99bdf4e74d244b30e6124453f0fd8680f370571a15603"
+      "bytes": 13802,
+      "sha256": "ab6c5056a5c32b0b841990c7c295bcbddc6adee25a820109c05338b1cab0b56a"
     },
     {
       "path": "tests/author-portrait.cjs",
@@ -17096,6 +17216,11 @@
       "sha256": "fc1f8d21b1937787c457660ca6afbbcb28b4bf1d1f13fb729cdd3b1d0e83c3e2"
     },
     {
+      "path": "tests/local-nx-protocol-parity.cjs",
+      "bytes": 484,
+      "sha256": "2d17123f015e762d4b7bf8b52f1ecb6fe98989fdaaca8136d164f848ba5af346"
+    },
+    {
       "path": "tests/local-preview-refresh.cjs",
       "bytes": 7338,
       "sha256": "9ce89804b9e26a24c46f2be2c17d90c59efee92ac081d5158f236a7669d61db7"
@@ -17222,8 +17347,8 @@
     },
     {
       "path": "tests/source-display.cjs",
-      "bytes": 6548,
-      "sha256": "8546680853bacc22e3b46bb5eb6b36c38ee586cca3505881e42c8b145d04f067"
+      "bytes": 6668,
+      "sha256": "c98b0393a4b262c12e96dc7b85481335e27ab284b1f5633c2f0974f0a19e03f1"
     },
     {
       "path": "tests/speculation.cjs",
@@ -17252,8 +17377,8 @@
     },
     {
       "path": "tests/test_basket_v2.py",
-      "bytes": 11216,
-      "sha256": "53baa272866f3489c0bc24f223249ab751030d86c16abe20eab947ea95439f3f"
+      "bytes": 11291,
+      "sha256": "79257d11ea8249092190cffbe8774d24a50925afed6e5f9a08f7dc353cb7f350"
     },
     {
       "path": "tests/test_cash_basket.py",
@@ -17301,6 +17426,11 @@
       "sha256": "39ea2e2342225fe31584b3cb30b23649904653ed1555ae47e1f0eec6c16e07fa"
     },
     {
+      "path": "tests/test_local_nx_reader.py",
+      "bytes": 13463,
+      "sha256": "281d509bb7e15cd42ee5c3c0d00f16c7b085bdd2776ead5518ef13472ac29cdf"
+    },
+    {
       "path": "tests/test_local_preview_ui.py",
       "bytes": 8543,
       "sha256": "e4294a89febcd119dc70c2285d4ea1335bc5fe9838ee846bbdd7dca3cb2327cd"
@@ -17324,6 +17454,11 @@
       "path": "tests/test_preview_cash_reader.py",
       "bytes": 2499,
       "sha256": "93aba0acd805f47d9c5cc3b4ea611b3b1e90bfced5320d1a1237a1d840dd5b34"
+    },
+    {
+      "path": "tests/test_preview_nx.py",
+      "bytes": 2669,
+      "sha256": "c5f5ffbbb92a6b097ddc974078e90c27ba4830ca5e742f87a79070bcb5381b52"
     },
     {
       "path": "tests/test_preview_subprocess.py",
@@ -17436,9 +17571,29 @@
       "sha256": "546ed4159c5a28a281be9d9461790c5bfcb0563541e22b8a42f7e723c47fe835"
     },
     {
+      "path": "web/api-nx-client.js",
+      "bytes": 12300,
+      "sha256": "4e8091ecb984b620d18c886cecf05860420220ec71c44c15f0718430bd57cf27"
+    },
+    {
+      "path": "web/api-nx-protocol.js",
+      "bytes": 8119,
+      "sha256": "ff22d36c01a038beeca5df6db61d23b80be3db562cfc71dc0259d4c2f171d753"
+    },
+    {
+      "path": "web/api-nx-ui.css",
+      "bytes": 991,
+      "sha256": "4b0b5708dd6e9fe1e8eb65372361dd10c918f228a62b50e86acee39d49623e05"
+    },
+    {
+      "path": "web/api-nx-ui.js",
+      "bytes": 4675,
+      "sha256": "57a2e8ac8840bac34cbf7dec08793a4875dd5cf426dfdb14a8a104506c5f2044"
+    },
+    {
       "path": "web/app.js",
-      "bytes": 147189,
-      "sha256": "2b32a7ca9c698dd601476f2a54947820a9407049f5dd55e979a6349ab1806b6b"
+      "bytes": 148035,
+      "sha256": "a3f492e743c2b4f75837a56a8c358a60e320453c56611cef4863a29a39f959ee"
     },
     {
       "path": "web/author-portrait.css",
@@ -17592,8 +17747,8 @@
     },
     {
       "path": "web/index.html",
-      "bytes": 55687,
-      "sha256": "571895287f1c7db810ef2c010c5647ffb78f1ba121b953d70a756a06c2508c2f"
+      "bytes": 55879,
+      "sha256": "89d34c6a67b71d4ab50851f4cf47e149ce2744a5944285bfccc066eaa0cb9201"
     },
     {
       "path": "web/layout-preview.css",
