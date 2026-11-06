@@ -8,6 +8,7 @@ const own=(value,key)=>Object.prototype.hasOwnProperty.call(value,key);
 class JsonNumber{
   constructor(token){this.token=token;Object.freeze(this);}
 }
+export function isOriginalJsonNumber(value){return value instanceof JsonNumber;}
 function decimalParts(value){
   fail(value instanceof JsonNumber,'Expected original numeric token');
   const negative=value.token.startsWith('-'),unsigned=negative?value.token.slice(1):value.token;

@@ -127,12 +127,12 @@ test('permanentNX failure pauses remainingNXonly for review; featuretoggle canno
  assert.equal(f.row('SELECT state FROM api_jobs WHERE operation=?','nx-history').state,'pending');
 });
 
-test('flagdisable retains queuedNXwithout running; recurrenceandmanualscheduledNX remain forbidden',async t=>{
+test('flagdisable retains queuedNXwithout running; requested NXrecurrence allowed after accepted capabilities',async t=>{
  const f=fixture(t);await initial(f);enable(f);await f.scheduler.kick();enable(f,{nxSchemaProbesEnabled:false});await f.scheduler.kick();
  assert.equal(await f.alarmAt(),null);assert.equal(f.calls.length,6);assert.equal(f.row('SELECT COUNT(*) AS n FROM api_jobs').n,8);
  f.restart();enable(f);await f.scheduler.kick();await f.fire();await f.fire();assert.equal(f.calls.length,8);
- assert.throws(()=>scheduleConfig({API_SCHEDULE_JSON:JSON.stringify({...SCHEDULE,recurring:[{operation:'nx-rate',intervalSeconds:300,priority:1}]})}));
- assert.throws(()=>f.core.enqueueScheduledOperation({jobKey:'synthetic-r1:r:nx-rate',operation:'nx-rate',availableAt:f.now[0]}));
+ assert.doesNotThrow(()=>scheduleConfig({API_SCHEDULE_JSON:JSON.stringify({...SCHEDULE,recurring:[{operation:'nx-rate',intervalSeconds:300,priority:1}]})}));
+ assert.doesNotThrow(()=>f.core.enqueueScheduledOperation({jobKey:'synthetic-r1:r:nx-rate',operation:'nx-rate',availableAt:f.now[0]}));
 });
 
 test('privatehealth adds separateexacttwoNXreceiptindex, retains initialsix index and never mirrorsrawdata',async t=>{

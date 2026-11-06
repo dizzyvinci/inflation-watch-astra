@@ -169,7 +169,8 @@ export class ApiCollectorCore {
   enqueueScheduledOperation({jobKey,operation,availableAt}) {
     if(this.authorizationStatus()!=='ready')throw new TypeError('Not authorized');
     const config=this.config();this.validateScheduleReferences(jobKey);
-    if(!REF.test(jobKey)||!INITIAL_OPERATIONS.includes(operation)||!config.allowedOperations.includes(operation)||!finiteTime(availableAt))throw new TypeError('Invalid scheduled job');
+    const nxRecurring=NX_PROBES.includes(operation)&&this.nxSchemaProbeState(config).status==='complete';
+    if(!REF.test(jobKey)||!(INITIAL_OPERATIONS.includes(operation)||nxRecurring)||!config.allowedOperations.includes(operation)||!finiteTime(availableAt))throw new TypeError('Invalid scheduled job');
     this.sql.exec('INSERT OR IGNORE INTO api_jobs(job_key,operation,round_ref,available_at) VALUES(?,?,?,?)',
       jobKey,operation,config.probeRound,availableAt);
   }

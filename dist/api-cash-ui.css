@@ -3,3 +3,5 @@
 .price-check-api-evidence{display:block;margin-top:8px;font-size:14px;line-height:1.5;color:var(--muted,#bbd0bf);max-width:440px}.cash-highlights-api-credit{text-align:center;font-size:16px;margin:15px auto}
 
 .api-cash-converter-note{text-align:center;font-size:16px;line-height:1.6;max-width:900px;margin:18px auto;padding:12px;border:1px solid #759d8b;border-radius:10px}
+
+.api-source-legend{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:9px 18px;width:100%;padding:16px;margin:12px auto 0;border:1px solid #759d8b;border-radius:12px;font-size:15px;line-height:1.6}.api-source-legend>strong,.api-source-legend>small{flex-basis:100%;font-size:15px}.api-source-legend .source-status-dot{width:9px;height:9px;min-width:9px}#sources-cards [data-status-key=api] .source-clock{font-size:24px}#sources-cards [data-status-key=api] .source-clock small{font-size:15px;line-height:1.6}#sources-cards [data-status-key=api]>p:last-child{font-size:16px;line-height:1.7;text-align:center}

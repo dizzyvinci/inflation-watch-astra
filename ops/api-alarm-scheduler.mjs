@@ -1,5 +1,7 @@
 // Optional, explicitly configured alarms. Transport/budgets remain in the SAME core/owner.
 const INITIAL=['status','prices','catalogue','overview','apple-detail','apple-history'];
+const NX_RECURRING=['nx-rate','nx-history'];
+const RECURRING=[...INITIAL,...NX_RECURRING];
 const REF=/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,63}$/;
 
 export function scheduleConfig(env){
@@ -11,10 +13,10 @@ export function scheduleConfig(env){
   if(!REF.test(input.scheduleReference??''))throw new TypeError('Nonsecret schedule reference required');
   if(!Number.isSafeInteger(input.requestIntervalMilliseconds)||input.requestIntervalMilliseconds<2500||input.requestIntervalMilliseconds>86_400_000)throw new TypeError('Pacing minimum is2500ms');
   if(!Number.isSafeInteger(input.startupTargetSeconds)||input.startupTargetSeconds<1||input.startupTargetSeconds>86_400)throw new TypeError('Explicit startup target required');
-  if(!Array.isArray(input.recurring)||input.recurring.length>INITIAL.length)throw new TypeError('Bounded recurring plan required');
+  if(!Array.isArray(input.recurring)||input.recurring.length>RECURRING.length)throw new TypeError('Bounded recurring plan required');
   const seen=new Set();
   const recurring=input.recurring.map(row=>{
-    if(!row||Object.keys(row).sort().join(',')!=='intervalSeconds,operation,priority'||!INITIAL.includes(row.operation)||seen.has(row.operation))throw new TypeError('Unreviewed recurring operation');
+    if(!row||Object.keys(row).sort().join(',')!=='intervalSeconds,operation,priority'||!RECURRING.includes(row.operation)||seen.has(row.operation))throw new TypeError('Unreviewed recurring operation');
     seen.add(row.operation);
     if(!Number.isSafeInteger(row.intervalSeconds)||row.intervalSeconds*1000<input.requestIntervalMilliseconds||row.intervalSeconds>86400||!Number.isSafeInteger(row.priority)||row.priority<0||row.priority>999)throw new TypeError('Invalid recurring cadence');
     return{operation:row.operation,intervalSeconds:row.intervalSeconds,priority:row.priority};
@@ -45,6 +47,7 @@ export class ApiAlarmScheduler{
     if(grant.minimumRequestIntervalSeconds*1000<schedule.requestIntervalMilliseconds)return{status:'schedule_pacing_not_enforced_by_core'};
     try{this.core.validateScheduleReferences(schedule.scheduleReference);}catch{return{status:'invalid_schedule_configuration'};}
     if(INITIAL.some(op=>!grant.allowedOperations.includes(op)))return{status:'schedule_scope_not_granted'};
+    if(schedule.recurring.some(row=>NX_RECURRING.includes(row.operation))&&(grant.nxSchemaProbesEnabled!==true||NX_RECURRING.some(op=>!grant.allowedOperations.includes(op))))return{status:'nx_recurring_scope_not_granted'};
     if(`${grant.probeRound}:r:999:${schedule.scheduleReference}:8640000000000000:apple-history`.length>160)return{status:'schedule_job_key_too_long'};
     if(this.core.dailyCap(grant)<INITIAL.length)return{status:'operator_budget_too_small_for_initial_round'};
     return{status:'ready',schedule,grant};
@@ -75,12 +78,16 @@ export class ApiAlarmScheduler{
       if(plan.initial_complete_at===null&&rows.every(row=>row?.state==='complete')){
         const phase=schedule.recurring.length?'recurring_raw_only':'raw_probe_round_complete';
         this.core.sql.exec('UPDATE api_alarm_plans SET initial_complete_at=?,phase=? WHERE schedule_ref=?',now,phase,schedule.scheduleReference);
-        for(const event of schedule.recurring)this.core.sql.exec(`INSERT OR IGNORE INTO api_alarm_events
+        for(const event of schedule.recurring.filter(row=>!NX_RECURRING.includes(row.operation)))this.core.sql.exec(`INSERT OR IGNORE INTO api_alarm_events
           (schedule_ref,operation,interval_ms,priority,next_due) VALUES(?,?,?,?,?)`,
           schedule.scheduleReference,event.operation,event.intervalSeconds*1000,event.priority,now+event.intervalSeconds*1000);
         plan={...plan,initial_complete_at:now,phase};
       }
       if(plan.initial_complete_at!==null){
+        // Capability identities6/7 must BOTH complete before NX recurring events exist.
+        if(this.core.nxSchemaProbeState(grant).status==='complete')for(const event of schedule.recurring.filter(row=>NX_RECURRING.includes(row.operation)))this.core.sql.exec(`INSERT OR IGNORE INTO api_alarm_events
+          (schedule_ref,operation,interval_ms,priority,next_due) VALUES(?,?,?,?,?)`,
+          schedule.scheduleReference,event.operation,event.intervalSeconds*1000,event.priority,now+event.intervalSeconds*1000);
         const events=this.core.sql.exec('SELECT * FROM api_alarm_events WHERE schedule_ref=?',schedule.scheduleReference).toArray();
         for(const event of events){
           if(event.active_job_key){

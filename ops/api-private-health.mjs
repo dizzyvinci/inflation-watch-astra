@@ -99,7 +99,7 @@ export class ApiPrivateHealth{
     const checkedAt=new Date(this.core.clock()).toISOString();const source=this.core.health();
     const config=this.core.config();
     const caps=[config.grantedPerDay,config.operatorDailyRequestCap].filter(value=>integer(value)&&value>0);
-    const safe={schemaVersion:1,kind:'private_api_collector_health',checkedAt,
+    const safe={schemaVersion:1,kind:'private_api_collector_health',providerAlarmRecoveryVersion:1,checkedAt,
       checkedAtMeaning:'owner_check_completion_not_market_observation',
       result:RESULTS.has(result?.status)?result.status:'unrecognized_result',
       authenticationStopped:source.authenticationStopped===true,

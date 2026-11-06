@@ -196,7 +196,7 @@ class LocalCatalogTests(unittest.TestCase):
         with patch.object(preview,'_catalog',self.local),patch.object(preview,'build',side_effect=AssertionError('No visitor build')),patch('urllib.request.urlopen',side_effect=AssertionError('No provider request')):
             for method in ['GET','HEAD','POST']:
                 socket=Socket((method+' /market-index.json HTTP/1.0\r\nHost: localhost\r\n\r\n').encode())
-                Quiet(socket,('127.0.0.1',1),types.SimpleNamespace())
+                Quiet(socket,('127.0.0.1',1),types.SimpleNamespace(server_address=('127.0.0.1',8765)))
                 raw=socket.output.getvalue();headers,body=raw.split(b'\r\n\r\n',1)
                 self.assertIn(b'200' if method!='POST' else b'405',headers.split(b'\r\n')[0])
                 self.assertEqual(headers.lower().count(b'cache-control:'),3,'One browser and two distinct CDN cache headers')

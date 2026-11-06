@@ -558,6 +558,7 @@ function renderSourceComparisons(){
  updateSmegaComparisonControls();
 }
 function renderSources(){
+ const apiSource=window.AstraApiCashUi?.sourceDescriptor?.()||{label:'APPROVED API / CASH-ITEM CACHE',value:'Publication not yet verified',detail:'API access was approved. This tab has not yet verified the separately published 29-item subset; daily-source and capture clocks remain unchanged.',state:{tone:'amber',state:'Awaiting own-site cache verification'}};
  const r=snapshot.rollingReference,health=sourceHealth(snapshot),count=snapshot.intraday.filter(p=>Number.isFinite(p.cpi)||Number.isFinite(p.nxRate)).length;
  const cards=[['daily','DEVELOPER MARKET FEED',utc(snapshot.sourceUpdatedAt),`${snapshot.itemsAvailable} priced items · daily source${snapshot.latest.partial?' · latest source day partial':''}. A ten-minute check does not make this an intraday feed.`,health.daily],
  ['collector','COLLECTOR CHECK',utc(snapshot.sourceStatus.checkedAt),'10-minute scheduled checks · conditional requests · last good cache. '+(snapshot.sourceStatus.status==='degraded'?(snapshot.sourceStatus.detail||'Check failed; retained source clocks do not advance.'):'A successful unchanged response does not renew the market timestamp.'),health.collector],
@@ -566,7 +567,7 @@ function renderSources(){
  ['build','PAGE GENERATED',utc(snapshot.builtAt),'Build time records calculation/publication, and does not reset the age of market prices.',{tone:'amber',state:'Build metadata · not a market observation'}],
  ['offers','SMEGA SERIES',snapshot.smega.length?`${snapshot.smega.length} hourly side observations`:'Awaiting data',snapshot.smegaSource?'Published buyer/seller hourly offer medians. Captured '+utc(snapshot.smegaSource.capturedAt)+'. Poster counts are per published window, not a cross-hour unique total.':'No timestamped hourly source capture is connected.',health.offers],
  ['publication','PUBLICATION',location.hostname==='127.0.0.1'?'Local Astra preview':'Hosted Astra preview',location.hostname==='inflation.gg'?'Unadvertised public test on inflation.gg.':'Unadvertised public test. The selected inflation.gg domain is activating.',{tone:'green',state:'Test publication · not a source clock'}],
- ['api','AUTHENTICATED API',snapshot.publicApiStatus?.status||'requires_api_key','The authenticated intraday source is not connected. The public daily feed and separately dated reference captures remain available.',{tone:'amber',state:'Not connected'}],
+ ['api',apiSource.label,apiSource.value,apiSource.detail,apiSource.state],
  ['additional','ADDITIONAL SMEGA SOURCE','Free Market Classic','Published terms prohibit website automation. No unattended collector is enabled for this source.',{tone:'amber',state:'Not connected'}]];
  $('sources-cards').innerHTML=cards.map(([key,label,value,detail,state])=>`<article class="panel" data-status-key="${key}" data-status-tone="${state.tone}"><p class="eyebrow">${statusDot(state.tone)}${esc(label)}</p><div class="source-clock">${esc(value)}<small>${esc(state.state)}</small></div><p>${esc(detail)}</p></article>`).join('');
 }
@@ -713,6 +714,7 @@ let volumeResizeTimer;window.addEventListener('resize',()=>{clearTimeout(volumeR
 function publishMarketHighlights(){if(snapshot)document.dispatchEvent(new CustomEvent('astramarketsnapshot',{detail:snapshot}));}
 document.addEventListener('astramarkethighlightsready',publishMarketHighlights);
 document.addEventListener('astrafeeschange',()=>{cashSortKey=cashBestKey();cashSortAsc=cashSide==='buy';if(snapshot)renderCash();});
+for(const event of ['astraapicashchange','astraapicashstatusready'])document.addEventListener(event,()=>{if(snapshot)renderSources();});
 window.addEventListener('hashchange',()=>{route();if(!focusRouteAnchor())window.scrollTo({top:0,behavior:'instant'});});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkSnapshot();});
 $('launch-period').addEventListener('change',e=>{selectedLaunchPeriod=e.target.value;if(snapshot)render();});

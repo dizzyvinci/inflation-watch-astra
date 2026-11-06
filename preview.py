@@ -13,11 +13,13 @@ import time
 from pathlib import Path
 from urllib.parse import urlsplit
 from catalog_local import LocalCatalog
+from local_cash_reader import LocalCashReader
 
 ROOT = Path(__file__).resolve().parent
 BUILD_TIMEOUT_SECONDS = 120
 _build_guard = threading.Lock()
 _catalog = LocalCatalog(ROOT)
+_cash = LocalCashReader(ROOT)
 
 
 class PreviewBuildError(RuntimeError):
@@ -185,7 +187,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         super().do_HEAD()
     def _serve_catalog(self):
         self._catalog_response = False
-        response = _catalog.handle(self.command, self.path, self.headers)
+        response = _cash.handle(self.command, self.path, self.headers,
+                               bind_host=self.server.server_address[0],client_host=self.client_address[0])
+        if response is None:response = _catalog.handle(self.command, self.path, self.headers)
         if response is None:return False
         self._catalog_response = True
         self.send_response(response.status)

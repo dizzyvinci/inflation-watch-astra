@@ -17,7 +17,7 @@ export function rawReceipt(attempt=1,scale=10){const body=rawBody(scale),sha=cre
  publicationEligible:false,sourceObservedAt:null,observationTimestampKnown:false,captureTimeKind:'http_response_completed',
  requestStartedAt:new Date(START+attempt*1000).toISOString(),capturedAt:new Date(START+attempt*1000+50).toISOString(),attemptId:attempt,
  rawBodyEncoding:'base64',rawBodyBase64:Buffer.from(body).toString('base64'),responseBytes:Buffer.byteLength(body),responseSha256:sha,payload:{}})};}
-export async function fixture(t,{publicFlag=PUBLIC_FLAG,privateFlag=PRIVATE_FLAG}={}){
+export async function fixture(t,{publicFlag=PUBLIC_FLAG,privateFlag=PRIVATE_FLAG,nxFlag={enabled:false},grantOverride=null,schedule={enabled:false}}={}){
  const directory=mkdtempSync(path.join(tmpdir(),'astra-public29-')),file=path.join(directory,'db.sqlite');
  let db,owner,storage,etag=0,failure=null;const now=[START+10000],objects=new Map(),reads=[],puts=[],calls=[];
  const bucket={async get(key){reads.push(key);if(failure==='get_public'&&key===PUBLIC_POINTER)throw new Error('Synthetic storage');
@@ -28,7 +28,7 @@ export async function fixture(t,{publicFlag=PUBLIC_FLAG,privateFlag=PRIVATE_FLAG
  const grant={enabled:true,approvalRecorded:true,exclusiveAccountOwnerConfirmed:true,grantReference:'synthetic-grant',grantedPerMinute:30,
    grantedPerDay:null,operatorDailyRequestCap:1000,minimumRequestIntervalSeconds:2.5,higherFrequencyExplicitlyGranted:true,
    allowedOperations:['prices'],probeRound:'synthetic-r1',publicationEnabled:false};
- const env={API_GRANT_JSON:JSON.stringify(grant),API_SCHEDULE_JSON:'{"enabled":false}',API_PRIVATE_CASH_JSON:JSON.stringify(privateFlag),
+ const env={API_GRANT_JSON:JSON.stringify(grantOverride??grant),API_SCHEDULE_JSON:JSON.stringify(schedule),API_PRIVATE_CASH_JSON:JSON.stringify(privateFlag),API_PRIVATE_NX_JSON:JSON.stringify(nxFlag),
    API_RAW_RECEIPTS:bucket,SNAPSHOTS:bucket,MAPLESTORY_MARKET_APPROVED_API_KEY:'SYNTHETIC-ONLY'};
  if(publicFlag!==null)env.API_PUBLIC_CASH_JSON=JSON.stringify(publicFlag);
  async function open(){

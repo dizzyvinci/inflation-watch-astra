@@ -53,6 +53,7 @@ export class ApiGrantCollector extends DurableObject {
     const kind=this.privateCash.chooseAlarm();
     if(kind==='private')return this.privateCash.runPrivateAlarm();
     if(kind==='public')return this.privateCash.runPublicAlarm();
+    if(kind==='nx')return this.privateCash.runNxAlarm();
     if(kind==='early'){await this.privateCash.arm();return{status:'early_owner_alarm'};}
     await this.privateCash.beforeProviderEvent();
     let result;

@@ -29,6 +29,34 @@ function image(row){const img=make('img','api-cash-sprite');const path=safeSprit
  img.addEventListener('error',()=>{img.hidden=true;},{once:true});return img;}
 function feesModel(model){const fees=window.AstraTradeFees,state=fees?.getState(),active=!!fees&&state.mode!=='gross',unset=active&&state.rules?.[state.mode]?.enabled!==true;
  const rows=fees?fees.decorate(model.rows,side):model.rows;return{rows,fees,state,active,unset,net:active&&!unset};}
+// Public status uses only the already-validated own-site client, never private collector health.
+function sourceDescriptor(state=api.getState(),now=Date.now()){
+ const data=state?.data,stamp=typeof data?.capturedAt==='string'?Date.parse(data.capturedAt):NaN;
+ const valid=Number.isFinite(stamp)&&data.schemaVersion===1&&data.kind==='fixed_nx_item_api_display_subset'&&data.sourceObservedAt===null&&
+  data.window?.reportedLookbackDays===3&&data.window.start===null&&data.window.end===null&&data.window.boundsKnown===false&&
+  data.coverage?.expected===29&&Number.isSafeInteger(data.coverage.available)&&data.coverage.available>=0&&data.coverage.available<=29;
+ const label='APPROVED API / CASH-ITEM CACHE';
+ if(valid){
+  const age=now-stamp,retained=['retained','loading'].includes(state.status)||state.serverMode==='retained_last_good'||!!state.error;
+  const phase=retained?'retained':age<0?'clock_uncertain':age<=600000?'recent':'aged';
+  const tone=phase==='recent'?'green':'amber';
+  const message={recent:'Recent API retrieval · not verified fresh trades',aged:'Older API retrieval · original clock retained',retained:'Retained API reference · original clock retained',clock_uncertain:'API capture clock ahead · age uncertain'}[phase];
+  return{label,value:`${data.coverage.available} / 29 eligible item medians`,phase,capturedAt:data.capturedAt,state:{tone,state:message},
+   detail:`API retrieved ${clock(data.capturedAt)}. Reported 3-day sale-median lookback; exact bounds and individual sale/scan times are unknown. Counts are reported sales, not physical units or unique players; qualities can mix. This separately cached subset changes no daily-source clock, headline, MPI or Cash Basket.`};
+ }
+ const status=state?.status||'idle',absent=status==='not_published',access=status==='site_access';
+ const failed=!absent&&(['unavailable','site_access'].includes(status)||!!state?.error);
+ return{label,value:absent?'Subset not published here':access?'Site access required':failed?'API cache unavailable':'Publication not yet verified',
+  phase:absent?'not_published':access?'site_access':failed?'unavailable':'unverified',capturedAt:null,
+  state:{tone:failed?'red':'amber',state:absent?'API approved · own-site subset absent':access?'Own-site access check failed':failed?'No verified API reference available':'Awaiting this tab’s own-site cache check'},
+  detail:'API access was approved; approval and this site’s published-data availability are separate. '+(absent?'The own-site subset returned not published. ':access?'This tab cannot read the own-site subset. ':'No validated API subset is currently available in this tab. ')+'The daily feed and dated captures keep their original clocks. No fresh trade, zero price or API-key failure is inferred.'};
+}
+const statusLegendHost=document.getElementById('source-status-legend');
+if(statusLegendHost&&!document.getElementById('api-cash-source-legend')){
+ const legend=make('span','api-source-legend');legend.id='api-cash-source-legend';legend.setAttribute('role','note');
+ legend.innerHTML='<strong>API cache retrieval</strong><span><i class="source-status-dot status-green" aria-hidden="true"></i>Green: retrieved within 10 minutes.</span><span><i class="source-status-dot status-amber" aria-hidden="true"></i>Amber: older, retained or not yet verified.</span><span><i class="source-status-dot status-red" aria-hidden="true"></i>Red: this tab cannot verify an available cache.</span><small>These are display bands, not provider guarantees. The clock is the original API retrieval; individual sale/scan times remain unknown. A newer API retrieval does not refresh the older daily source or establish qualified intraday trades.</small>';
+ statusLegendHost.append(legend);
+}
 function statusText(){const s=api.getState(),m=api.model();if(!s.data)return s.status==='not_published'?'The API subset is not published here. Other dated source views remain separate.':s.status==='site_access'?'Site access is required to read this cached API reference.':'API reference unavailable or loading. Missing values are not zero; no provider request is made by this page.';
  return`${m.retained?'Retained API reference':'API reference'} · ${m.eligibleCount} / 29 items with eligible sale medians. API retrieved ${clock(m.capturedAt)}. Underlying sale/scan times unknown. ${api.client.freshness()==='recent_retrieval'?'Recent retrieval only; not verified fresh trades.':api.client.freshness()==='clock_uncertain'?'Clock age uncertain; no freshness claim.':'This is an older retrieval; original clocks are retained.'}`;}
 function draw(){
@@ -80,8 +108,8 @@ function appendItemEvidence(container,item){
  const a=make('a','','Prices from maplestory.market ↗');a.href=row.sourceCreditUrl;a.target='_blank';a.rel='noopener noreferrer';box.append(a);container.append(box);
 }
 function focusList(value='sell'){if(['buy','sell'].includes(value))side=value;location.hash='#nx';draw();document.getElementById('api-cash-title').focus();section.scrollIntoView?.({block:'start'});}
-window.AstraApiCashUi=Object.freeze({clock,appendItemEvidence,focusList});
+window.AstraApiCashUi=Object.freeze({clock,sourceDescriptor,appendItemEvidence,focusList});
 document.addEventListener('astramarketsnapshot',e=>{report=e.detail;draw();});
 for(const event of ['astraapicashchange','astraapicashchoice','astrafeeschange'])document.addEventListener(event,draw);
-document.getElementById('display-timezone')?.addEventListener('change',draw);draw();document.dispatchEvent(new Event('astramarkethighlightsready'));
+document.getElementById('display-timezone')?.addEventListener('change',draw);draw();document.dispatchEvent(new Event('astraapicashstatusready'));document.dispatchEvent(new Event('astramarkethighlightsready'));
 })();
