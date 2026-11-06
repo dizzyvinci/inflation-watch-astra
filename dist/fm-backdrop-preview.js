@@ -3,7 +3,7 @@
   const options = document.getElementById('display-options');
   if (!options || document.getElementById('fm-backdrop-options')) return;
   const key = 'astra-fm-backdrop-v1';
-  const modes = new Map([['original', 'Original'], ['wide', 'Wide scene'], ['soft', 'Soft gradient'], ['glow', 'Stronger glow']]);
+  const modes = new Map([['original', 'Original'], ['wide', 'Wide scene'], ['soft', 'Soft gradient'], ['glow', 'Stronger glow'], ['daylight', 'Sunlit market'], ['portal-night', 'Portal blue'], ['golden-hour', 'Golden hour'], ['forest-room', 'Mushroom room · FM 1'], ['stone-room', 'Stone room · FM 7']]);
   let storageAvailable = true, selected = 'original';
   try { const saved = localStorage.getItem(key); if (modes.has(saved)) selected = saved; } catch { storageAvailable = false; }
   const group = document.createElement('fieldset'); group.id = 'fm-backdrop-options'; group.className = 'fm-backdrop-options'; group.dataset.previewControls = 'fm-backdrop';
@@ -14,7 +14,8 @@
     const isFM = ['classic', 'banner'].includes(document.body.dataset.sceneryMode);
     const applies = document.body.classList.contains('scenery-on') && isFM;
     group.dataset.applies = String(applies);
-    const text = applies ? 'Applies to the Free Market page backdrop. The original 2311 × 1137 map is reused; the banner is unchanged.'
+    const source = selected === 'forest-room' ? 'Original MCW Free Market <1> room, map 80002001.' : selected === 'stone-room' ? 'Original MCW Free Market <7> room, map 80002007.' : 'The original 2311 × 1137 entrance map is reused.';
+    const text = applies ? 'Applies to the Free Market page backdrop. ' + source + ' The banner is unchanged.'
       : 'Choose Current pairing or Different banner with Scenery on to see this backdrop choice. Other scenery and banner artwork are unchanged.';
     const value = text + (storageAvailable ? ' Saved in this browser only.' : ' Storage is blocked; this choice still works in this tab.');
     if (note.textContent !== value) note.textContent = value;

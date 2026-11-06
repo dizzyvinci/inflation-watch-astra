@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "kind": "original_free_market_room_art",
+  "copyright": "Original MapleStory game art © Nexon; resource renderer maplestory.io. No AI generation or raster transformations.",
+  "assets": [
+    {
+      "mapId": 80002001,
+      "listedName": "Free Market <1>",
+      "region": "MCW",
+      "clientVersion": "1",
+      "url": "https://maplestory.io/api/MCW/1/map/80002001/render/0",
+      "requestStartedAt": "2026-11-06T02:58:04.849393+00:00",
+      "capturedAt": "2026-11-06T02:58:07.783271+00:00",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 558602,
+      "sha256": "a3fbac4945c9905377c5c0fe9eca9a35203fc1e591dbc2948ffcc0574649b9bc",
+      "width": 1681,
+      "height": 828,
+      "mode": "RGBA",
+      "copyright": "Nexon",
+      "provider": "maplestory.io",
+      "transformations": "None; original bytes",
+      "assetPath": "assets/fm-mcw1-80002001-a3fbac4945c99053.png"
+    },
+    {
+      "mapId": 80002007,
+      "listedName": "Free Market <7>",
+      "region": "MCW",
+      "clientVersion": "1",
+      "url": "https://maplestory.io/api/MCW/1/map/80002007/render/0",
+      "requestStartedAt": "2026-11-06T02:58:10.037570+00:00",
+      "capturedAt": "2026-11-06T02:58:11.720656+00:00",
+      "status": 200,
+      "mime": "image/png",
+      "bytes": 208879,
+      "sha256": "4a061d1ab3c4fb41455662306f7c59e2ab1f8bff89696bee2f68244304469a5c",
+      "width": 1652,
+      "height": 917,
+      "mode": "RGBA",
+      "copyright": "Nexon",
+      "provider": "maplestory.io",
+      "transformations": "None; original bytes",
+      "assetPath": "assets/fm-mcw1-80002007-4a061d1ab3c4fb41.png"
+    }
+  ],
+  "selectionEvidence": {
+    "retainedListingSha256": "3bc42f92d7fe17b2f2a59ce641284f71202fb028b4274d1a44b23dabbe5c2443",
+    "retainedSwaggerSha256": "69edaee0328cfff34802f2e9bb625645ec7017887708293ce6f91b5c1cbf4f07",
+    "documentedPaths": [
+      "/api/{region}/{version}/map",
+      "/api/{region}/{version}/map/{mapId}",
+      "/api/{region}/{version}/map/{mapId}/render/{frame}"
+    ],
+    "retainedListingCaptureTimeKnown": false
+  },
+  "notIncluded": "Room 13 repeats room 1 composition; original bytes retained privately in WORK only."
+}
