@@ -1,0 +1,7 @@
+import fs from'node:fs';import{createApiIndexDefinition}from'../ops/api-index-calculations.mjs';import{sha256}from'../ops/api-price-item-dto.mjs';
+export const spec=JSON.parse(fs.readFileSync(new URL('../ops/api-index-definition-data-v1.json',import.meta.url),'utf8')),definition=await createApiIndexDefinition(spec),epoch=day=>Date.parse(day+'T00:00:00Z')/1000;
+export const context=()=>({operation:'overview',sourceUrl:'https://maplestory.market/api/market/overview',capturedAt:'2026-11-06T12:00:00.000Z',sourceObservedAt:null,captureTimeKind:'http_response_completed'});
+export function row(id,days=['2026-11-04','2026-11-05']){return{item_id:id,cash:false,sales:10,units:1000,mesos:'1000.00',median_unit_price:'100.25',previous_sales:7,previous_median_unit_price:'99.75',daily:days.map(day=>({day:epoch(day),sales:5,units:500,median_unit_price:'100.25'}))};}
+export function document(rows=[row(spec.goods[0].itemId)]){return{generated_at:Date.parse('2026-11-06T11:59:00.000Z')/1000,window_hours:24,scanned_hours:23,previous_scanned_hours:24,comparable:true,totals:{},items:rows,movers:[],most_sales:[],best_sellers:[],top_turnover:[],most_listed:[],activity:[],maintenance:[],top_sellers:[]};}
+export const bytes=v=>new TextEncoder().encode(JSON.stringify(v).replace(/"(mesos|median_unit_price|previous_median_unit_price)":"(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)"/g,'"$1":$2'));
+export async function input(value=document()){const raw=value instanceof Uint8Array?value:bytes(value);return{raw,options:{definition,context:context(),expectedSha256:await sha256(raw)}};}

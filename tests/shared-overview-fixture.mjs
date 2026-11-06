@@ -1,0 +1,22 @@
+import assert from'node:assert/strict';import{fixture as base,sources,grant as oldGrant,sha}from'./api-private-item-fixture.mjs';
+import{RecurringItemRegistry}from'../ops/item-recurring-registry.mjs';
+import{ApiIndexOwnerBridge,INDEX_POINTER}from'../ops/api-index-owner-bridge.mjs';
+import{loadApiIndexDefinition}from'../ops/api-index-definition.mjs';import*as api from'../ops/api-index-calculations.mjs';
+export{overview,prices,spec}from'./index-owner-fixture.mjs';
+export const ON=JSON.stringify({schemaVersion:1,enabled:true,profileVersion:'overview-membership-and-derived-v1'}),OFF='{"enabled":false}';
+export async function fixture(t,{shared=true,Registry=RecurringItemRegistry,Bridge=ApiIndexOwnerBridge,sink=true}={}){
+ const f=await base(t),definition=await loadApiIndexDefinition();f.now[0]=Date.parse('2026-11-06T12:10:00.000Z');
+ const grant={...oldGrant,allowedOperations:['prices','overview','catalogue']};f.env.API_GRANT_JSON=JSON.stringify(grant);if(shared)f.env.API_SHARED_OVERVIEW_PROFILE_JSON=ON;
+ f.env.API_PRIVATE_INDEX_JSON=JSON.stringify({schemaVersion:1,enabled:true,methodVersion:1,publicationEnabled:false,definitionHash:definition.definitionHash});let registry,bridge;
+ function open(){registry=new Registry(f.ctx,f.core,{enabled:true,isEnabled:()=>f.on[0],loaderFactory:()=>({load:async()=>({status:'ready',sources:sources()})})});bridge=new Bridge(f.ctx,f.env,f.core,{definition,api,registry});if(sink)registry.setCalculationSink(bridge);}
+ open();
+ async function ready(){assert.equal((await registry.drainOne(async()=>{})).status,'registry_metadata_ready');}
+ function seed(operation,body,{capturedAt='2026-11-06T12:00:00.000Z'}={}){
+  const id=f.row('SELECT COALESCE(MAX(id),0)+1 id FROM api_attempts').id,jobKey='shared-synthetic-'+operation+'-'+id,requestAt=Date.parse(capturedAt)-1000,rawHash=sha(body),receiptKey=`_private/provider-api/v1/receipts/${String(id).padStart(12,'0')}-${operation}-${rawHash}.json`,sourceUrl={overview:'https://maplestory.market/api/market/overview',prices:'https://maplestory.market/api/prices',catalogue:'https://maplestory.market/api/items'}[operation];
+  const e={kind:'unverified_provider_api_receipt',operation,httpStatus:200,sourceUrl,schemaVerified:false,publicationEligible:false,sourceObservedAt:null,observationTimestampKnown:false,captureTimeKind:'http_response_completed',requestStartedAt:new Date(requestAt).toISOString(),capturedAt,attemptId:id,grantReference:grant.grantReference,roundReference:grant.probeRound,rawBodyEncoding:'base64',rawBodyBase64:Buffer.from(body).toString('base64'),responseBytes:Buffer.byteLength(body),responseSha256:rawHash};
+  f.objects.set(receiptKey,{body:JSON.stringify(e),etag:'source-'+id});f.exec("INSERT INTO api_jobs(job_key,operation,round_ref,state,available_at,attempt_id,attempts)VALUES(?,?,?,'running',?,?,1)",jobKey,operation,grant.probeRound,requestAt,id);f.exec('INSERT INTO api_attempts(id,job_key,at,grant_ref)VALUES(?,?,?,?)',id,jobKey,requestAt,grant.grantReference);assert.equal(f.core.finish({job_key:jobKey,operation,attempt_id:id,attempts:1},f.core.config(),{kind:'success',receiptKey,capturedAt}).status,'success');assert.equal(f.row('SELECT attempt_id FROM api_jobs WHERE job_key=?',jobKey).attempt_id,null);return{id,receiptKey,jobKey,e,raw:new TextEncoder().encode(body),job:{job_key:jobKey,operation,receipt_key:receiptKey}};
+ }
+ async function accept(){registry.reconcile();return registry.drainOne(async()=>{});}
+ async function publish(){for(let i=0;i<16;i++){const r=await bridge.drainOne(async()=>{});if(['index_model_published_private','index_pointer_ack_recovered','index_contract_review','index_capacity_hold','index_paused','index_storage_retry','idle'].includes(r.status))return r;}throw Error('bounded model completion');}
+ return{...f,get core(){return f.core;},get ctx(){return f.ctx;},definition,grant,api,get registry(){return registry;},get bridge(){return bridge;},ready,seed,accept,publish,async restart(){f.restart();open();await ready();},pointer:()=>f.objects.has(INDEX_POINTER)?JSON.parse(f.objects.get(INDEX_POINTER).body):null};
+}

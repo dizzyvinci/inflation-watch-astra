@@ -2,6 +2,10 @@
 // visitor handler, public route or reconfiguration of the existing raw schedule.
 import {historyEnvelopeText,parseHistoryEnvelope} from './api-private-item-history-receipt.mjs';
 import {validateIndexPointer} from './api-index-publication-contract.mjs';
+import {prepareOverviewAdaptation,overviewIndex79FromAdaptation,isOverviewAdaptation} from './api-overview-adapter.mjs';
+import {sharedOverviewConfiguration} from './api-shared-overview-guard.mjs';
+import {isOwnedRecurringRegistry} from './item-recurring-registry.mjs';
+import {OverviewProfileError} from './api-overview-snapshot.mjs';
 const HASH=/^[a-f0-9]{64}$/,KEY=/^_private\/provider-api\/v1\/receipts\/(\d{12,16})-(prices|overview)-([a-f0-9]{64})\.json$/;
 const URLS={prices:'https://maplestory.market/api/prices',overview:'https://maplestory.market/api/market/overview'},PREFIX='_private/provider-api/v1/api-index/v1/',LEASE=130000;
 export const INDEX_POINTER=PREFIX+'current.json',ACTIVE_DAYS=64,MAX_PUBLIC_BYTES=600000;
@@ -70,38 +74,42 @@ export class ApiIndexOwnerBridge{
    let queued=0;for(const r of rows){const s=ownedCalculationSource(this.core,{receiptKey:r.receipt_key,jobKey:r.job_key});this.insert(s);queued++;}return{status:'owned_index_reconciled',queued};
   });
  }
+ reserveSharedOverview(job){if(!this.active)return{status:'unavailable'};check(sharedOverviewConfiguration(this.env).status==='ready'&&isOwnedRecurringRegistry(this.registry,this.ctx),'shared_overview_registry_authority');const s=ownedCalculationSource(this.core,{receiptKey:job.receipt_key,jobKey:job.job_key});check(s.operation==='overview','shared_overview_operation');return this.ctx.storage.transactionSync(()=>{const old=this.row('SELECT id FROM api_index_inputs WHERE receipt_key=?',s.receiptKey);if(!old&&this.row("SELECT COUNT(*)n FROM api_index_inputs WHERE state IN ('pending','running')").n>=64)return{status:'backpressure'};this.insert(s);return{status:'reserved'};});}
  insert(s){this.core.sql.exec('INSERT OR IGNORE INTO api_index_inputs(receipt_key,job_key,operation,source_attempt,request_at,raw_sha,definition_hash,available_at)VALUES(?,?,?,?,?,?,?,?)',s.receiptKey,s.jobKey,s.operation,s.sourceAttemptId,s.requestAt,s.rawSha256,this.definitionHash,this.core.clock());}
  validateEnvelope(e,s){
   check(e&&e.kind==='unverified_provider_api_receipt'&&e.operation===s.operation&&e.sourceUrl===s.sourceUrl&&e.httpStatus===200&&e.attemptId===s.sourceAttemptId&&e.grantReference===s.grantReference&&e.roundReference===s.roundReference&&clock(e.requestStartedAt)&&Date.parse(e.requestStartedAt)===s.requestAt&&clock(e.capturedAt)&&Date.parse(e.capturedAt)>=s.requestAt&&Date.parse(e.capturedAt)<=this.core.clock()&&e.sourceObservedAt===null&&e.observationTimestampKnown===false&&e.schemaVerified===false&&e.publicationEligible===false&&e.captureTimeKind==='http_response_completed'&&e.responseSha256===s.rawSha256&&integer(e.responseBytes,1,5000000),'owned_normalization_context');
  }
- async normalize(s,envelope,raw,priceSnapshot=null){
+ async normalize(s,envelope,raw,priceSnapshot=null,overviewAdaptation=null){
   this.validateEnvelope(envelope,s);const context={operation:s.operation,sourceUrl:s.sourceUrl,capturedAt:envelope.capturedAt,sourceObservedAt:null,captureTimeKind:'http_response_completed'};
   let capture;if(s.operation==='prices'){
    const snapshot=priceSnapshot??await this.registry.createCalculationSnapshot(raw,{...context,rawBodySha256:s.rawSha256});
    const dtos=this.definition.targetItemIds.map(id=>snapshot.getItem(id)).filter(Boolean);
    capture=await this.api.normalizeApiPriceSubset(dtos,{context:{...context,rawBodySha256:s.rawSha256},definition:this.definition});
-  }else capture=await this.api.normalizeOverviewDailySubset(raw,{expectedSha256:s.rawSha256,context,definition:this.definition});
+  }else{const shared=sharedOverviewConfiguration(this.env).status==='ready';if(overviewAdaptation&&!shared)throw new Paused();if(shared){check(isOwnedRecurringRegistry(this.registry,this.ctx),'shared_overview_registry_authority');const adaptation=overviewAdaptation??await prepareOverviewAdaptation(raw,{expectedSha256:s.rawSha256,context,definition:this.definition});if(sharedOverviewConfiguration(this.env).status!=='ready')throw new Paused();check(isOverviewAdaptation(adaptation)&&adaptation.source.rawBodySha256===s.rawSha256&&adaptation.source.capturedAt===envelope.capturedAt&&adaptation.source.sourceUrl===s.sourceUrl,'shared_overview_source_binding');const result=overviewIndex79FromAdaptation(adaptation,{definition:this.definition});if(result.status!=='ready')throw new this.api.InvalidCalculation(result.status==='derived_capacity_hold'?'shared_overview_capacity_hold':'shared_overview_profile_review');capture=result.capture;}else capture=await this.api.normalizeOverviewDailySubset(raw,{expectedSha256:s.rawSha256,context,definition:this.definition});}
   capture=await this.api.validateIndexCapture(capture,{definition:this.definition});check(capture.source.operation===s.operation&&capture.source.rawBodySha256===s.rawSha256&&capture.source.capturedAt===envelope.capturedAt,'normalized_capture_binding');return capture;
  }
- async prepareRegistryCapture({job,envelope,raw,priceSnapshot=null}){
+ async prepareRegistryCapture({job,envelope,raw,priceSnapshot=null,overviewAdaptation=null}){
   if(!this.active||!['prices','overview'].includes(job.operation))return null;
   const s=ownedCalculationSource(this.core,{receiptKey:job.receipt_key,jobKey:job.job_key});
   // The normal path reuses the registry's already normalized prices snapshot.
   // Failures are confined to this optional model; ID admission is never quarantined by it.
-  let capture=null,error=false;try{capture=await this.normalize(s,envelope,raw,priceSnapshot);}catch{error=true;}
-  if(!this.active)return null;const ticket=Object.freeze({});this.#tickets.set(ticket,{s,capture,error});return ticket;
+  let capture=null,error=false,sharedHold=null;try{capture=await this.normalize(s,envelope,raw,priceSnapshot,overviewAdaptation);}catch(reason){error=true;if(overviewAdaptation&&isOverviewAdaptation(overviewAdaptation)&&sharedOverviewConfiguration(this.env).status==='ready'&&['shared_overview_capacity_hold','shared_overview_profile_review'].includes(reason?.message))sharedHold=reason.message==='shared_overview_capacity_hold'?'capacity_hold':'quarantined';}
+  if(!this.active)return null;const ticket=Object.freeze({});this.#tickets.set(ticket,{s,capture,error,sharedHold,sharedCommit:overviewAdaptation!==null&&isOverviewAdaptation(overviewAdaptation)&&sharedOverviewConfiguration(this.env).status==='ready'});return ticket;
  }
  commitRegistryCapture(ticket){
-  if(ticket===null||!this.active)return;const prepared=this.#tickets.get(ticket);check(prepared,'owned_normalization_ticket');this.#tickets.delete(ticket);const {s,capture,error}=prepared;
+  if(ticket===null||!this.active)return;const prepared=this.#tickets.get(ticket);check(prepared,'owned_normalization_ticket');this.#tickets.delete(ticket);const {s,capture,error,sharedHold,sharedCommit}=prepared;
   const current=ownedCalculationSource(this.core,{receiptKey:s.receiptKey,jobKey:s.jobKey});check(Object.keys(s).every(k=>s[k]===current[k]),'prepared_source_rebound');
   // A full optional queue never blocks existing registry admission. The raw
   // completed source remains in api_jobs and is reconciled after the backlog.
   const old=this.row('SELECT id FROM api_index_inputs WHERE receipt_key=?',s.receiptKey);
   if(!old&&this.row("SELECT COUNT(*)n FROM api_index_inputs WHERE state IN ('pending','running')").n>=64)return;
   this.insert(s);
+  // A concurrent normalize claim must not discard the already prepared shared result.
+  // Cancel ONLY that raw-normalization lease inside the registry commit transaction.
+  if(sharedCommit){const r=this.row('SELECT state,phase,claim FROM api_index_inputs WHERE receipt_key=?',s.receiptKey);if(r?.state==='running'&&r.phase==='normalize'){check(integer(r.claim,0,Number.MAX_SAFE_INTEGER-1),'shared_normalization_claim_capacity');this.core.sql.exec("UPDATE api_index_inputs SET state='pending',lease_until=NULL,claim=claim+1 WHERE receipt_key=? AND state='running' AND phase='normalize' AND claim=?",s.receiptKey,r.claim);}}
   // A retry/strict failure leaves durable own-source metadata for a separate
   // recovery event, without rolling back the already verified ID registry.
-  if(error)return;
+  if(error){if(sharedHold)this.core.sql.exec("UPDATE api_index_inputs SET state=?,last_result='shared_overview_derived_review' WHERE receipt_key=? AND state='pending' AND phase='normalize'",sharedHold,s.receiptKey);return;}
   const body=JSON.stringify(capture);check(bytes(body)<=1048576,'normalized_capture_capacity');
   this.core.sql.exec("UPDATE api_index_inputs SET capture_hash=?,capture_body=?,captured_at=?,phase='archive',last_result='registry_normalization_reused' WHERE receipt_key=? AND state='pending' AND phase='normalize'",capture.captureHash,body,capture.source.capturedAt,s.receiptKey);
  }
@@ -131,6 +139,7 @@ export class ApiIndexOwnerBridge{
   await beforeIO(this.core.clock()+LEASE);this.fence(job);
   const source=ownedCalculationSource(this.core,{receiptKey:job.receipt_key,jobKey:job.job_key});
   if(job.phase==='normalize'){
+   if(job.operation==='overview'&&sharedOverviewConfiguration(this.env).status==='ready'){check(isOwnedRecurringRegistry(this.registry,this.ctx),'shared_overview_registry_authority');const r=this.row('SELECT state FROM recurring_registry_jobs WHERE receipt_key=?',job.receipt_key);if(!r||r.state==='pending'||r.state==='running')throw new Waiting();check(r.state==='complete','shared_overview_registry_review');const c=this.row('SELECT * FROM recurring_registry_captures WHERE receipt_key=?',job.receipt_key);check(c&&c.operation==='overview'&&c.source_attempt===job.source_attempt&&c.raw_sha===job.raw_sha&&Date.parse(c.request_started_at)===job.request_at,'shared_overview_registry_capture_binding');}
    const o=await io(()=>this.core.env.API_RAW_RECEIPTS.get(job.receipt_key));this.fence(job);check(o&&integer(o.size,1,7500000),'owned_receipt_size');
    let text;try{text=await historyEnvelopeText(o);}catch(e){if(e?.name==='ItemHistoryContractError')throw new ContractFailure('owned_envelope_contract');throw new StorageFailure('owned_envelope_read');}
    let e;try{e=parseHistoryEnvelope(text);}catch{throw new ContractFailure('owned_envelope_contract');}this.validateEnvelope(e,source);check(e.rawBodyEncoding==='base64'&&typeof e.rawBodyBase64==='string'&&e.rawBodyBase64.length<=6666668&&/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(e.rawBodyBase64),'owned_raw_encoding');const binary=atob(e.rawBodyBase64);check(btoa(binary)===e.rawBodyBase64&&binary.length===e.responseBytes,'owned_raw_bytes');const raw=Uint8Array.from(binary,c=>c.charCodeAt(0));const capture=await this.normalize(source,e,raw);this.fence(job);const body=JSON.stringify(capture);check(bytes(body)<=1048576,'normalized_capture_capacity');this.core.sql.exec("UPDATE api_index_inputs SET capture_body=?,capture_hash=?,captured_at=?,phase='archive',state='pending',lease_until=NULL,available_at=? WHERE id=? AND claim=?",body,capture.captureHash,capture.source.capturedAt,this.core.clock(),job.id,job.claim);return{status:'index_capture_normalized',providerAttempted:false};
@@ -180,7 +189,8 @@ export class ApiIndexOwnerBridge{
   const written=await io(()=>this.core.env.API_RAW_RECEIPTS.put(pointerKey,JSON.stringify(intended),{onlyIf:old?{etagMatches:old.etag}:{etagDoesNotMatch:'*'},httpMetadata:{contentType:'application/json'}}));this.fence(job);if(!written)throw new StorageFailure('index_pointer_cas');this.complete(job);return{status:'index_model_published_private',providerAttempted:false};
  }catch(error){
   const r=this.row('SELECT state,claim FROM api_index_inputs WHERE id=?',job.id);if(r?.state!=='running'||r.claim!==job.claim)return{status:'stale_index_claim',providerAttempted:false};
-  const paused=error instanceof Paused||error instanceof Stale||!this.active,capacity=!paused&&/capacity|_size$/.test(error?.message??''),bad=error instanceof ContractFailure||error?.name==='InvalidCalculation'||error?.name==='InvalidProfile';const retryAt=this.core.clock()+(paused?30000:Math.min(300000,30000*2**Math.min(job.failures,4)));
+  if(error instanceof Waiting){const retryAt=this.core.clock()+30000;this.core.sql.exec("UPDATE api_index_inputs SET state='pending',lease_until=NULL,available_at=?,last_result='shared_registry_wait' WHERE id=? AND claim=?",retryAt,job.id,job.claim);return{status:'index_shared_registry_wait',retryAt,providerAttempted:false};}
+  const paused=error instanceof Paused||error instanceof Stale||!this.active,capacity=!paused&&/capacity|_size$/.test(error?.message??''),bad=error instanceof ContractFailure||error instanceof OverviewProfileError||error?.name==='InvalidCalculation'||error?.name==='InvalidProfile';const retryAt=this.core.clock()+(paused?30000:Math.min(300000,30000*2**Math.min(job.failures,4)));
   this.core.sql.exec('UPDATE api_index_inputs SET state=?,lease_until=NULL,failures=failures+1,available_at=?,last_result=? WHERE id=? AND claim=?',paused?'pending':capacity?'capacity_hold':bad?'quarantined':'pending',retryAt,paused?'paused':capacity?'calculation_capacity_review':bad?'calculation_contract_review':'owned_storage_retry',job.id,job.claim);
   return{status:paused?'index_paused':capacity?'index_capacity_hold':bad?'index_contract_review':'index_storage_retry',retryAt,providerAttempted:false};
  }}

@@ -46,6 +46,15 @@
   }
   zoneSelect?.addEventListener('change', () => { if (mode === 'current-source') tick(); });
   document.addEventListener('visibilitychange', syncTimer);
+  function renderCadence() {
+    const api = document.body?.dataset.apiCalculationsAvailable === 'true';
+    cadence.textContent = api ? ' · prices ~5 min · overview ~15 min · visible cache ~60 s' : ' · collector checks ~10 min';
+    cadence.title = api ? 'Scheduled API retrieval targets: prices every 5 minutes and daily overview every 15 minutes. A visible tab checks only this site’s cache about every 60 seconds while healthy; failures and backoff can delay checks. Retrieval is not an individual trade time. The source timestamps remain unchanged by this viewing clock.' : 'Approximate collector check cadence, not a promise of new market observations. The source timestamp above remains the data clock.';
+    cadence.dataset.cadenceKind = api ? 'api_retrieval_and_own_cache' : 'legacy_collector';
+  }
+  document.addEventListener('astracalculationchange', renderCadence);
+  document.addEventListener('astramarketsnapshot', renderCadence);
+  renderCadence();
   // No market render, value update, source-clock edit or data request occurs on a timer tick.
   apply();
 })();
