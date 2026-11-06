@@ -19,6 +19,8 @@ from local_item_reader import LocalItemReader
 from local_nx_history_reader import LocalNxHistoryReader
 from local_item_hour_reader import LocalItemHourReader
 from local_calculations_reader import LocalCalculationsReader, inject_local_availability
+from local_own_site_session import (OwnSiteSession, AuthenticationUnavailable, attach_readers, control_response,
+                                   local_request_allowed, read_password)
 
 ROOT = Path(__file__).resolve().parent
 BUILD_TIMEOUT_SECONDS = 120
@@ -30,6 +32,13 @@ _items = LocalItemReader(ROOT)
 _nx_history = LocalNxHistoryReader(ROOT)
 _item_hours = LocalItemHourReader(ROOT)
 _calculations = LocalCalculationsReader(ROOT, enabled=lambda: os.environ.get("LOCAL_API_CALCULATIONS") == "1")
+_own_session = OwnSiteSession()
+
+def enable_private_own_site(password):
+    _own_session.configure(password)
+    attach_readers(_own_session, cash=_cash, nx=_nx, items=_items, nx_history=_nx_history,
+                   item_hours=_item_hours, calculations=_calculations)
+
 
 
 class PreviewBuildError(RuntimeError):
@@ -166,6 +175,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,directory=str(ROOT/'dist'),**kwargs)
     def do_GET(self):
+        if self._serve_private_control():return
         if self._serve_catalog():return
         if self._serve_calculation_index():return
         if urlsplit(self.path).path == '/__ui_version':
@@ -192,11 +202,23 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._etag=tag
         super().do_GET()
     def do_HEAD(self):
+        if self._serve_private_control():return
         if self._serve_catalog():return
         if self._serve_calculation_index():return
         if urlsplit(self.path).path == '/__ui_version':
             self.send_response(405);self.send_header('Allow','GET');self.send_header('Content-Length','0');self.end_headers();return
         super().do_HEAD()
+    def _serve_private_control(self):
+        response = control_response(_own_session, self.command, self.path, self.headers,
+                                    bind_host=self.server.server_address[0], client_host=self.client_address[0],
+                                    port=self.server.server_address[1])
+        if response is None:return False
+        self._catalog_response = True
+        self.send_response(response.status)
+        for name, value in response.headers.items():self.send_header(name, value)
+        self.end_headers()
+        if response.body and self.command != 'HEAD':self.wfile.write(response.body)
+        return True
     def _serve_calculation_index(self):
         # Only add the explicit local availability gate; preserve other HTML,
         # controls password/review footer and completed-build inputs unchanged.
@@ -237,12 +259,34 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if response.body:self.wfile.write(response.body)
         return True
     def _catalog_or_unsupported(self):
+        if self._serve_private_control():return
         if not self._serve_catalog():self.send_error(501, 'Unsupported method')
     do_POST = do_PUT = do_DELETE = do_PATCH = do_OPTIONS = _catalog_or_unsupported
+    def send_response(self, code, message=None):
+        self._private_response_status = code
+        super().send_response(code, message)
+    def _private_json_eligible(self):
+        if not _own_session.enabled or self.command != 'GET' or getattr(self, '_private_response_status', None) != 200:return False
+        path = self.path
+        if not (path in ('/version.json', '/data.json') or re.fullmatch(r'/data-[a-f0-9]{16}\.json', path)):return False
+        if not local_request_allowed(self.headers, self.server.server_address[0], self.client_address[0], self.server.server_address[1], origin_proof=False):return False
+        return True
+    def _private_json_candidate(self):
+        if not self._private_json_eligible():return False
+        try:return _own_session.verified_profile()['unlocked'] is True
+        except AuthenticationUnavailable:return False
     def end_headers(self):
         if getattr(self,'_etag',None):self.send_header('ETag',self._etag);self._etag=None
         if not getattr(self, '_catalog_response', False):
-            self.send_header('Cache-Control','no-store' if urlsplit(self.path).path == '/__ui_version' else 'no-cache' if not self.path.startswith('/data-') else 'public, max-age=31536000, immutable')
+            private_candidate = self._private_json_candidate()
+            if private_candidate:
+                self.send_header('X-Astra-Preview', 'password')
+                self.send_header('Cache-Control', 'private, no-store, no-transform')
+                self.send_header('CDN-Cache-Control', 'no-store')
+                self.send_header('Cloudflare-CDN-Cache-Control', 'no-store')
+            else:
+                if self._private_json_eligible() and _own_session.observed_review():self.send_header('X-Astra-Preview', 'review')
+                self.send_header('Cache-Control','no-store' if urlsplit(self.path).path == '/__ui_version' else 'no-cache' if not self.path.startswith('/data-') else 'public, max-age=31536000, immutable')
             self.send_header('X-Content-Type-Options','nosniff')
         self.send_header('Referrer-Policy','strict-origin-when-cross-origin')
         super().end_headers()
@@ -260,7 +304,11 @@ def collector():
             print(json.dumps({'refresh':'failed','reason':str(error),'retainedNamedSnapshots':True}),flush=True)
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8765);parser.add_argument('--offline',action='store_true');parser.add_argument('--no-collector',action='store_true');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8765);parser.add_argument('--offline',action='store_true');parser.add_argument('--no-collector',action='store_true');parser.add_argument('--private-own-site',action='store_true');parser.add_argument('--private-password-stdin',action='store_true');args=parser.parse_args()
+    if args.private_password_stdin and not args.private_own_site:raise SystemExit('Private password input requires explicit private own-site mode')
+    if args.private_own_site:
+        try:enable_private_own_site(read_password(stdin=sys.stdin.buffer if args.private_password_stdin else None))
+        except Exception:raise SystemExit('Private own-site credentials unavailable') from None
     try:
         report,version=build(args.offline)
     except PreviewBuildError as error:

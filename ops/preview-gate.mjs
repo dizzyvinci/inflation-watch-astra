@@ -56,18 +56,19 @@ function gateResponse(request, status, message = 'Enter the preview password to 
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Private preview</title><style>${PREVIEW_CSS}</style></head><body><main aria-labelledby="preview-title"><h1 id="preview-title">Private preview</h1><p id="preview-message" role="status">${escape(message)}</p><form method="post" action="/__preview_login"><input type="hidden" name="returnTo" value="${escape(safeReturnTo(url.pathname + url.search))}"><label>Preview password <input type="password" name="password" required maxlength="256" autocomplete="current-password" aria-describedby="preview-message" autofocus></label><button type="submit">Unlock preview</button></form><small>Access lasts eight hours in this browser.</small></main></body></html>`;
   return new Response(request.method === 'HEAD' ? null : html, { status, headers: privateHeaders(mode) });
 }
-async function validSession(request, secret, now) {
+async function sessionExpiry(request, secret, now) {
   const header = request.headers.get('Cookie') ?? '';
-  if (header.length > 8192) return false;
+  if (header.length > 8192) return null;
   const matches = header.split(';').map(part => part.trim()).filter(part => part.startsWith(COOKIE + '='));
-  if (matches.length !== 1) return false;
+  if (matches.length !== 1) return null;
   const match = matches[0].slice(COOKIE.length + 1).match(/^(\d{10,11})\.([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{43})$/);
-  if (!match) return false;
+  if (!match) return null;
   const expires = Number(match[1]), seconds = Math.floor(now / 1000);
-  if (expires <= seconds || expires > seconds + SESSION_SECONDS) return false;
+  if (expires <= seconds || expires > seconds + SESSION_SECONDS) return null;
   const payload = `${match[1]}.${match[2]}`;
-  return equal(unb64(match[3]), await signature(payload, secret));
+  return equal(unb64(match[3]), await signature(payload, secret)) ? expires * 1000 : null;
 }
+async function validSession(request, secret, now) { return await sessionExpiry(request, secret, now) !== null; }
 async function formBody(request) {
   if (request.headers.get('Content-Type')?.split(';')[0].trim().toLowerCase() !== 'application/x-www-form-urlencoded') throw new Error('Invalid form');
   const length = request.headers.get('Content-Length');
@@ -106,6 +107,18 @@ function controlsResponse(status, unlocked = false, mode = 'password') {
   if (status === 405) headers.Allow = 'POST';
   return new Response(JSON.stringify({ unlocked }), { status, headers });
 }
+function statusOrigin(request, url) {
+  const origin = request.headers.get('Origin'), site = request.headers.get('Sec-Fetch-Site');
+  return url.protocol === 'https:' && !url.search && !url.hash && !url.href.includes('?') &&
+    (origin === url.origin || origin === null && site === 'same-origin') &&
+    (site === null || site === 'same-origin');
+}
+function workspaceResponse(expiresAt) {
+  const headers = privateHeaders('password');
+  headers['Content-Type'] = 'application/json; charset=utf-8';
+  headers['X-Astra-Workspace'] = 'private_workspace';
+  return new Response(JSON.stringify({ unlocked: true, mode: 'private_workspace', expiresAt }), { headers });
+}
 export function withPreviewGate(next, { now = Date.now } = {}) {
   return async function previewFetch(request, env, ctx) {
     const url = new URL(request.url), controls = url.pathname === '/__preview_controls';
@@ -114,6 +127,11 @@ export function withPreviewGate(next, { now = Date.now } = {}) {
     if (!['password', 'review'].includes(env.PREVIEW_ACCESS) || !bindingsReady(env)) return controls ? controlsResponse(503, false, mode) : gateResponse(request, 503, 'Preview access is temporarily unavailable.', mode);
     const time = now();
     if (controls) {
+      if (request.method === 'GET' && mode === 'password' && request.headers.get('X-Astra-Controls-Status') === '1') {
+        if (!statusOrigin(request, url)) return controlsResponse(403, false, mode);
+        const expiresAt = await sessionExpiry(request, env.PREVIEW_SESSION_SECRET, time);
+        return expiresAt === null ? controlsResponse(401, false, mode) : workspaceResponse(expiresAt);
+      }
       if (request.method !== 'POST') {
         const response = controlsResponse(405, false, mode);
         return request.method === 'HEAD' ? new Response(null, response) : response;
@@ -156,7 +174,7 @@ export function withPreviewGate(next, { now = Date.now } = {}) {
       return new Response(null, { status: 303, headers });
     }
     // Review pages are public; only password mode requires the whole-site session.
-    // Neither mode grants access to the controls endpoint without the password.
+    // Password mode may verify its existing session for the single-login workspace.
     if (mode === 'password' && !await validSession(request, env.PREVIEW_SESSION_SECRET, time)) return gateResponse(request, 401);
     const response = await next(request, env, ctx);
     const headers = new Headers(response.headers);

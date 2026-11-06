@@ -4,7 +4,12 @@
   const footer = document.querySelector('footer');
   const root = new URL('./', location.href);
   const workerUrl = new URL('sw.js', root).href;
-  let form;
+  let form,workspaceCandidate=false;
+  const notifyWorkspaceCandidate=()=>document.dispatchEvent(new document.defaultView.CustomEvent('astraprivateworkspacecandidate'));
+  function ownedWorkspaceResponse(response) {
+    if(response?.status!==200||response.ok!==true||response.redirected===true||typeof response.url!=='string'||!/^application\/json(?:;|$)/i.test(response.headers?.get?.('Content-Type')||''))return false;
+    try{const url=new URL(response.url);if(url.origin!==root.origin||url.search||url.hash||!url.pathname.startsWith(root.pathname))return false;const file=url.pathname.slice(root.pathname.length);return file==='version.json'||file==='data.json'||/^data-[a-f0-9]{16}\.json$/.test(file);}catch{return false;}
+  }
   function showLock() {
     if (!footer || form) return;
     form = document.createElement('form');
@@ -20,15 +25,25 @@
     footer.append(form);
   }
   function lockDocument() {
+    workspaceCandidate=false;notifyWorkspaceCandidate();
     document.documentElement.dataset.previewLocked = 'true';
     document.body.hidden = true;
     location.reload();
   }
   window.astraPreviewSession = {
+    privateWorkspaceCandidate:()=>workspaceCandidate,
     onResponse(response) {
-      if (response?.headers?.get?.('X-Astra-Preview') !== 'password') return true;
+      const accessMode=response?.headers?.get?.('X-Astra-Preview');
+      if (accessMode !== 'password') {
+        if(workspaceCandidate&&accessMode==='review'&&ownedWorkspaceResponse(response)){
+          workspaceCandidate=false;form?.remove();form=undefined;notifyWorkspaceCandidate();
+        }
+        return true;
+      }
       if (response.status === 401) { lockDocument(); return false; }
       if (response.ok) showLock();
+      // Candidate only: the controls status endpoint remains the authority.
+      if(!workspaceCandidate&&ownedWorkspaceResponse(response)){workspaceCandidate=true;notifyWorkspaceCandidate();}
       return true;
     },
   };

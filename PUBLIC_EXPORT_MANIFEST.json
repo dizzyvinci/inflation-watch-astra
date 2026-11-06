@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-06T19:32:39+00:00",
+  "exportedAt": "2026-11-06T20:36:32+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7583,7 +7583,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "b7093c3f836fa43e8e6cb6a8dc5a7f393c9ccfe80c3fbca1887a489eacf48294"
+      "sha256": "18a6bc5746aaff52cccbd9452f517de78b2b27ffa31a967cdc8e80853628fb47"
     },
     {
       "path": "cache/market.json",
@@ -7668,7 +7668,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "29e1320564510422dca2360ca877e17d54119a540608e1496788766af52a3a2c"
+      "sha256": "f67b44a952d424ae7dad2ef9d320986ffcec22d4d9153a3e99b68adc7f359f10"
     },
     {
       "path": "dist/_headers",
@@ -15871,6 +15871,11 @@
       "sha256": "0d0f2f9cf9c6a155dec1631214b75d44f8cf0dc5ab7868d286a1ca89f0286f9b"
     },
     {
+      "path": "dist/astra-ui-0f9537321da05489.js",
+      "bytes": 493544,
+      "sha256": "0f9537321da05489327d16d8a6a9884334e9e6ca91fff83f6ec4c95054d3b2bc"
+    },
+    {
       "path": "dist/astra-ui-115fb2908c0af74b.js",
       "bytes": 357163,
       "sha256": "115fb2908c0af74b72805542857a0f976cec1182af53506017284a0f38f3495c"
@@ -15959,6 +15964,11 @@
       "path": "dist/astra-ui-6eb3cd0250cef79f.js",
       "bytes": 51691,
       "sha256": "6eb3cd0250cef79f7648c130e89d5e86e611f3acfe2c0db6ccd9759f7f84a546"
+    },
+    {
+      "path": "dist/astra-ui-717e0a7dd8408913.js",
+      "bytes": 345831,
+      "sha256": "717e0a7dd8408913db24aa4017654b7b529a85d593d9fce5d4b268b0a84017af"
     },
     {
       "path": "dist/astra-ui-7421498d215a30d7.js",
@@ -16311,6 +16321,11 @@
       "sha256": "59cde1eaa67472993b5da312c07d587252b57629b0ea845f07fcabe0e7c2ba2d"
     },
     {
+      "path": "dist/data-5d5283320509ccd2.json",
+      "bytes": 992898,
+      "sha256": "5d5283320509ccd20a827c9ffd53be67e4fcaded2a63081e21db5d9ab4415305"
+    },
+    {
       "path": "dist/data-614121ecf29587d1.json",
       "bytes": 848579,
       "sha256": "614121ecf29587d13dff138989fefba884368ac08e38eda3197863333768e14a"
@@ -16548,7 +16563,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "a936224e56790af29cb2063752a9d76657430b86f61a61962adc68d54bcb14eb"
+      "sha256": "5d5283320509ccd20a827c9ffd53be67e4fcaded2a63081e21db5d9ab4415305"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16568,7 +16583,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "29e1320564510422dca2360ca877e17d54119a540608e1496788766af52a3a2c"
+      "sha256": "f67b44a952d424ae7dad2ef9d320986ffcec22d4d9153a3e99b68adc7f359f10"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16603,7 +16618,7 @@
     {
       "path": "dist/index.html",
       "bytes": 50532,
-      "sha256": "a58715741be464a301202f944b76645a26c6e7a7f0569be4d154166470a4060d"
+      "sha256": "9c92ce4dc25db1c0170dff7a6c7595fe50f9216c09973908e1ada2d799b94049"
     },
     {
       "path": "dist/item-api-preview.css",
@@ -16722,8 +16737,8 @@
     },
     {
       "path": "dist/preview-runtime.js",
-      "bytes": 2039,
-      "sha256": "5de6a6c7fd8b61c804e9138258ad376ab978034ca74f09e4358c19a7121155f6"
+      "bytes": 3309,
+      "sha256": "1227e11221b7a58e6e30973614055164f001faeb6f81d9eab243b63bda214787"
     },
     {
       "path": "dist/price-check.css",
@@ -16777,8 +16792,8 @@
     },
     {
       "path": "dist/review-section-covers.js",
-      "bytes": 2374,
-      "sha256": "0a6283ff4f68a31312091f137a9362acf14e039e8bda1fca05d6e935fd0554c8"
+      "bytes": 4185,
+      "sha256": "7120ca074b086b8adacfdd2b70b5df731d2e910fda72287ef4a56b3bca27bbd9"
     },
     {
       "path": "dist/rolling-benchmark-preview.css",
@@ -16842,8 +16857,8 @@
     },
     {
       "path": "dist/ui-bundles.json",
-      "bytes": 11815,
-      "sha256": "7af36ce5649725a3cfe6004446d65edd07dda9f4d6c56604ac597b1cd1a136f0"
+      "bytes": 11816,
+      "sha256": "defaf730e167ed5e25dc3847d86093f7dd28107d604275600cffaeb1cb3242db"
     },
     {
       "path": "dist/upcoming-announcements.css",
@@ -16858,7 +16873,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "20af8eaf2e817737394715399e007f9ac19219574572842355711fd0f98ae603"
+      "sha256": "6cdd47f35092d1dd60be2a20557c85fcd4719577eafb83cc6faab7a5ca6a613e"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16867,8 +16882,8 @@
     },
     {
       "path": "dist/viewer-preview.js",
-      "bytes": 8653,
-      "sha256": "50fdfbfc7353d827c12451cbd578590f5bcaa4de772c36e7a89db54affb0d2dc"
+      "bytes": 16292,
+      "sha256": "d768f9eafb40abe549bde93bd633b53df4baa0043ded8926747badad678f0c2b"
     },
     {
       "path": "dist/volatility-preview.css",
@@ -16959,6 +16974,11 @@
       "path": "local_nx_reader.py",
       "bytes": 19593,
       "sha256": "cd1e37990997b5a66c3711b932b0ae6b214f1630cc41e4c2d69f6e227fa02188"
+    },
+    {
+      "path": "local_own_site_session.py",
+      "bytes": 20116,
+      "sha256": "de7e0d9314df0402e34e6ee963f2ac58fe48e7771b28136dbf7fc73a67b6f558"
     },
     {
       "path": "market_catalog.py",
@@ -17457,8 +17477,8 @@
     },
     {
       "path": "ops/preview-gate.mjs",
-      "bytes": 12670,
-      "sha256": "1310b3da0dd950b4d38751deaf004d51ef17870a196c9e11757958de25398a43"
+      "bytes": 13877,
+      "sha256": "9c1bfa8963da67e0edca3c71dc2c3249a90ae6e81a68ced5a9fc0c3ad77a4071"
     },
     {
       "path": "ops/worker-core.mjs",
@@ -17487,8 +17507,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 15343,
-      "sha256": "be90689206ccaa739fb14054c688450aea7b6c5372c75300d41126c58085a49c"
+      "bytes": 15473,
+      "sha256": "f0f3401c8a878379faa6d18f34aa9628e8edb355d6d7b145a3e3b9787e75819b"
     },
     {
       "path": "portable_hash.py",
@@ -17497,8 +17517,8 @@
     },
     {
       "path": "preview.py",
-      "bytes": 14566,
-      "sha256": "36943fa195f1e63b84ff6b44234997067f72cb2dbf57c717763556b7603bce19"
+      "bytes": 17744,
+      "sha256": "a49a24f7020a7211dcc2d8d6f617e904f440e470732ca88c6af30afac5764a07"
     },
     {
       "path": "public_api.py",
@@ -18576,6 +18596,21 @@
       "sha256": "b17a9c88be7563e80f59d2e3d5953796d99e4bf61c2866960ad65d5a2261f32f"
     },
     {
+      "path": "tests/private-workspace-gate.test.mjs",
+      "bytes": 5597,
+      "sha256": "5e1584c4444fdb32cb52c2c576876e9f02eb84dc50cf836e59d99ee668e38ae6"
+    },
+    {
+      "path": "tests/private-workspace-presentation.cjs",
+      "bytes": 9109,
+      "sha256": "f6d0804f42410c54bd3562b8efe76fd11b7af6dbc5f2bf56b1c7b603b5f9715c"
+    },
+    {
+      "path": "tests/private-workspace-viewer.cjs",
+      "bytes": 17999,
+      "sha256": "a3c513c6717483d7322728c6ac3927316e8c2a7d7496a557120ac289fd971c3b"
+    },
+    {
       "path": "tests/rate-arrival.cjs",
       "bytes": 12775,
       "sha256": "40fe3ab1ffc27cf0932b34b7f3c6ebac7782bba572fd6f255066f3ddd0b3cb33"
@@ -18754,6 +18789,21 @@
       "path": "tests/test_local_nx_reader.py",
       "bytes": 13463,
       "sha256": "281d509bb7e15cd42ee5c3c0d00f16c7b085bdd2776ead5518ef13472ac29cdf"
+    },
+    {
+      "path": "tests/test_local_own_site_session.py",
+      "bytes": 11731,
+      "sha256": "7d31959ce00a631adda0276032f3ef2d59f38e229838eb92e0953916beab08eb"
+    },
+    {
+      "path": "tests/test_local_own_site_session_http.py",
+      "bytes": 3796,
+      "sha256": "5ecfdfea9ae630b1a8177855a6e0886817b062936f516c2b13231981e0f32e35"
+    },
+    {
+      "path": "tests/test_local_own_site_session_integration.py",
+      "bytes": 5960,
+      "sha256": "bf387d246859b1103637e35c57d48f153a729b69b4b6cf9d0fc29e11836c5d1f"
     },
     {
       "path": "tests/test_local_preview_ui.py",
@@ -19302,8 +19352,8 @@
     },
     {
       "path": "web/preview-runtime.js",
-      "bytes": 2039,
-      "sha256": "5de6a6c7fd8b61c804e9138258ad376ab978034ca74f09e4358c19a7121155f6"
+      "bytes": 3309,
+      "sha256": "1227e11221b7a58e6e30973614055164f001faeb6f81d9eab243b63bda214787"
     },
     {
       "path": "web/price-check.css",
@@ -19357,8 +19407,8 @@
     },
     {
       "path": "web/review-section-covers.js",
-      "bytes": 2374,
-      "sha256": "0a6283ff4f68a31312091f137a9362acf14e039e8bda1fca05d6e935fd0554c8"
+      "bytes": 4185,
+      "sha256": "7120ca074b086b8adacfdd2b70b5df731d2e910fda72287ef4a56b3bca27bbd9"
     },
     {
       "path": "web/rolling-benchmark-preview.css",
@@ -19437,8 +19487,8 @@
     },
     {
       "path": "web/viewer-preview.js",
-      "bytes": 8653,
-      "sha256": "50fdfbfc7353d827c12451cbd578590f5bcaa4de772c36e7a89db54affb0d2dc"
+      "bytes": 16292,
+      "sha256": "d768f9eafb40abe549bde93bd633b53df4baa0043ded8926747badad678f0c2b"
     },
     {
       "path": "web/volatility-preview.css",

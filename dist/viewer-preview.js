@@ -4,6 +4,10 @@
   if (!options || document.getElementById('viewer-preview-enter')) return;
   const footer=document.querySelector('footer'),passwordMode=footer?.dataset.footerPrivacyLock==='on';
   let controlsUnlocked=!passwordMode;
+  let workspaceExpiresAt=null,workspaceMode='unknown';
+  const workspaceCurrent=()=>{const verified=Number.isSafeInteger(workspaceExpiresAt)&&workspaceExpiresAt>Date.now();return Object.freeze({mode:verified?'private_workspace':workspaceMode==='review'?'review':'unknown',verified,expiresAt:verified?workspaceExpiresAt:null});};
+  Object.defineProperty(window,'AstraPrivateWorkspace',{value:Object.freeze({current:workspaceCurrent}),writable:false,configurable:false});
+  const publishWorkspace=()=>{const state=workspaceCurrent();if(state.verified)document.body.dataset.privateWorkspace='verified';else delete document.body.dataset.privateWorkspace;document.dispatchEvent(new CustomEvent('astraprivateworkspace',{detail:state}));};
 
   const entry = document.createElement('div'); entry.className = 'viewer-preview-entry';
   const enter = document.createElement('button'); enter.type = 'button'; enter.id = 'viewer-preview-enter';
@@ -56,11 +60,51 @@
     form.append(label,input,actions,feedback);dialog.append(title,note,form);document.body.append(dialog);
     let attempt=0,controller=null,timeout=null;
     const cancelAttempt=()=>{attempt++;controller?.abort();controller=null;clearTimeout(timeout);timeout=null;input.value='';submit.disabled=false;form.removeAttribute('aria-busy');};
-    const closeDialog=()=>{cancelAttempt();if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}gate.focus({preventScroll:true});};
-    const lock=()=>{controlsUnlocked=false;cancelAttempt();document.body.dataset.previewControlsLocked='true';setViewer(true,false);entry.hidden=true;exit.hidden=true;gate.textContent='Preview controls';gate.setAttribute('aria-expanded','false');if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}};
-    gate.addEventListener('click',()=>{if(controlsUnlocked){lock();gate.focus({preventScroll:true});return;}feedback.textContent='';input.value='';if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');gate.setAttribute('aria-expanded','true');input.focus();});
-    cancel.addEventListener('click',closeDialog);
-    dialog.addEventListener('cancel',event=>{event.preventDefault();closeDialog();});
+    const closeDialog=(focus=true)=>{cancelAttempt();if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}if(focus)gate.focus({preventScroll:true});};
+    const lock=(manual=true)=>{if(manual){workspaceManualLock=true;cancelWorkspaceProbe();}controlsUnlocked=false;cancelAttempt();document.body.dataset.previewControlsLocked='true';setViewer(true,false);entry.hidden=true;exit.hidden=true;gate.textContent='Preview controls';gate.setAttribute('aria-expanded','false');if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}};
+    const workspaceCandidate=()=>window.astraPreviewSession?.privateWorkspaceCandidate?.()===true;
+    let workspaceManualLock=false,workspaceEpoch=0,workspaceController=null,workspaceDeadline=null,workspaceExpiry=null,workspaceUnderlying=null,workspaceWorking=false,workspaceRetryWanted=false;
+    const workspaceNote=document.createElement('small');workspaceNote.setAttribute('role','status');if(workspaceCandidate())access.append(workspaceNote);
+    const canProbe=()=>workspaceCandidate()&&!workspaceManualLock&&!document.hidden&&navigator.onLine!==false;
+    const cancelWorkspaceProbe=()=>{workspaceEpoch++;workspaceRetryWanted=false;workspaceController?.abort();workspaceController=null;clearTimeout(workspaceDeadline);workspaceDeadline=null;};
+    const unlockControls=(automatic=false)=>{controlsUnlocked=true;delete document.body.dataset.previewControlsLocked;closeDialog(!automatic);setViewer(false,false);exit.textContent='Exit viewer preview';exit.title='Return to unlocked editing. Escape relocks preview controls.';gate.textContent='Lock preview controls';if(!automatic){options.open=true;options.querySelector('summary')?.focus({preventScroll:true});}};
+    const revokeWorkspace=(mode='unknown')=>{workspaceExpiresAt=null;workspaceMode=mode;clearTimeout(workspaceExpiry);workspaceExpiry=null;lock(false);publishWorkspace();};
+    function retryWorkspaceWhenSettled(){if(workspaceRetryWanted&&!workspaceUnderlying&&!workspaceWorking&&canProbe()){workspaceRetryWanted=false;void probeWorkspace();}}
+    async function readWorkspaceStatus(response,abort){
+      const rejected=async()=>{abort.abort();try{await response.body?.cancel();}catch{}return null;};
+      if(response.status!==200||response.headers.get('X-Astra-Preview')!=='password'||response.headers.get('X-Astra-Workspace')!=='private_workspace'||!/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type')||'')||response.headers.has('Set-Cookie'))return rejected();
+      const policy=new Set((response.headers.get('Cache-Control')||'').toLowerCase().split(',').map(x=>x.trim()));
+      if(policy.size!==3||!['private','no-store','no-transform'].every(x=>policy.has(x))||response.headers.get('CDN-Cache-Control')!=='no-store'||response.headers.get('Cloudflare-CDN-Cache-Control')!=='no-store')return rejected();
+      const reader=response.body?.getReader();if(!reader)return null;let size=0;const chunks=[];let reads=0;
+      try{while(true){if(++reads>1024)throw Error('status_chunk_bound');const{value,done}=await reader.read();if(done)break;size+=value.byteLength;if(size>512)throw Error('status_body_bound');chunks.push(value);}}
+      catch(error){abort.abort();try{await reader.cancel();}catch{}throw error;}
+      const bytes=new Uint8Array(size);let offset=0;for(const chunk of chunks){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+      const text=new TextDecoder('utf-8',{fatal:true}).decode(bytes),keys=[...text.matchAll(/"((?:\\.|[^"\\])*)"\s*:/g)].map(m=>JSON.parse('"'+m[1]+'"'));
+      if(keys.length!==3||new Set(keys).size!==3)return null;
+      const value=JSON.parse(text);
+      if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join('|')!=='expiresAt|mode|unlocked'||value.unlocked!==true||value.mode!=='private_workspace'||!Number.isSafeInteger(value.expiresAt)||value.expiresAt<=Date.now()||value.expiresAt>Date.now()+8*60*60*1000)return null;
+      return value.expiresAt;
+    }
+    async function probeWorkspace(){
+      if(!canProbe())return;
+      if(workspaceUnderlying||workspaceWorking){workspaceRetryWanted=true;return;}
+      if(!(location.protocol==='https:'||location.protocol==='http:'&&['localhost','127.0.0.1'].includes(location.hostname)))return;
+      workspaceRetryWanted=false;workspaceWorking=true;const ticket=++workspaceEpoch,abort=new AbortController();workspaceController=abort;
+      const physical=(async()=>{const response=await fetch('/__preview_controls',{method:'GET',credentials:'same-origin',cache:'no-store',redirect:'error',headers:{Accept:'application/json','X-Astra-Controls-Status':'1'},signal:abort.signal});return {expiresAt:await readWorkspaceStatus(response,abort),review:response.headers.get('X-Astra-Preview')==='review'};})();workspaceUnderlying=physical;
+      physical.then(()=>{if(workspaceUnderlying===physical)workspaceUnderlying=null;retryWorkspaceWhenSettled();},()=>{if(workspaceUnderlying===physical)workspaceUnderlying=null;retryWorkspaceWhenSettled();});
+      try{
+        const deadline=new Promise((_,reject)=>{workspaceDeadline=setTimeout(()=>{abort.abort();reject(Error('status_timeout'));},15000);});
+        const value=await Promise.race([physical,deadline]);if(ticket!==workspaceEpoch||!canProbe())return;
+        if(value.expiresAt===null||value.expiresAt<=Date.now()){revokeWorkspace(value.review?'review':'unknown');workspaceNote.textContent='Private session could not be verified. Reload to sign in again if needed.';return;}
+        workspaceExpiresAt=value.expiresAt;workspaceMode='private_workspace';clearTimeout(workspaceExpiry);workspaceExpiry=setTimeout(()=>{cancelWorkspaceProbe();revokeWorkspace();workspaceNote.textContent='Private session expired. Reload to sign in again.';},Math.max(0,value.expiresAt-Date.now()));
+        workspaceNote.textContent='Existing private session verified; no second password is needed.';unlockControls(true);publishWorkspace();
+      }catch{if(ticket===workspaceEpoch){revokeWorkspace();workspaceNote.textContent='Private session verification is unavailable. Controls remain locked.';}}
+      finally{if(ticket===workspaceEpoch){clearTimeout(workspaceDeadline);workspaceDeadline=null;workspaceController=null;}workspaceWorking=false;retryWorkspaceWhenSettled();}
+    }
+    gate.addEventListener('click',()=>{if(workspaceExpiresAt!==null&&workspaceExpiresAt<=Date.now())revokeWorkspace();if(controlsUnlocked){lock();gate.focus({preventScroll:true});return;}if(workspaceCandidate()&&workspaceMode!=='review'){workspaceManualLock=false;void probeWorkspace();return;}feedback.textContent='';input.value='';if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');gate.setAttribute('aria-expanded','true');input.focus();});
+    const cancelDialog=()=>{workspaceManualLock=true;cancelWorkspaceProbe();closeDialog();};
+    cancel.addEventListener('click',cancelDialog);
+    dialog.addEventListener('cancel',event=>{event.preventDefault();cancelDialog();});
     dialog.addEventListener('close',()=>{cancelAttempt();gate.setAttribute('aria-expanded','false');});
     form.addEventListener('submit',async event=>{
       event.preventDefault();if(submit.disabled)return;let password=input.value;input.value='';feedback.textContent='';
@@ -83,12 +127,18 @@
         }
         if(ticket!==attempt)return;
         if(!accepted){feedback.textContent='Password not accepted, or the site preview session has expired.';input.focus();return;}
-        controlsUnlocked=true;delete document.body.dataset.previewControlsLocked;closeDialog();setViewer(false,false);exit.textContent='Exit viewer preview';exit.title='Return to unlocked editing. Escape relocks preview controls.';gate.textContent='Lock preview controls';options.open=true;options.querySelector('summary')?.focus({preventScroll:true});
+        unlockControls();
       }catch{if(ticket===attempt){feedback.textContent='Controls remain locked. Verification could not complete; try again after checking the site preview session.';input.focus();}}
       finally{password='';if(ticket===attempt){clearTimeout(timeout);timeout=null;controller=null;submit.disabled=false;form.removeAttribute('aria-busy');}}
     });
-    document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(dialog.open){event.preventDefault();closeDialog();return;}if(controlsUnlocked){event.preventDefault();lock();gate.focus({preventScroll:true});}});
-    window.addEventListener('pageshow',event=>{if(event.persisted)lock();});
-    lock();
+    document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(workspaceCandidate()&&workspaceUnderlying&&!dialog.open){event.preventDefault();lock();gate.focus({preventScroll:true});return;}if(dialog.open){event.preventDefault();cancelDialog();return;}if(controlsUnlocked){event.preventDefault();lock();gate.focus({preventScroll:true});}});
+    window.addEventListener('pageshow',event=>{if(event.persisted){cancelWorkspaceProbe();revokeWorkspace();workspaceManualLock=false;if(workspaceCandidate())void probeWorkspace();}});
+    window.addEventListener('pagehide',()=>{cancelWorkspaceProbe();if(workspaceCandidate())revokeWorkspace();});
+    document.addEventListener('visibilitychange',()=>{if(!workspaceCandidate())return;if(document.hidden)cancelWorkspaceProbe();else if(canProbe()){if(workspaceExpiresAt!==null&&workspaceExpiresAt<=Date.now())revokeWorkspace();workspaceRetryWanted=true;void probeWorkspace();}});
+    window.addEventListener('online',()=>{if(canProbe()){workspaceRetryWanted=true;void probeWorkspace();}});
+    window.addEventListener('offline',()=>{if(workspaceCandidate())cancelWorkspaceProbe();});
+    document.addEventListener('astraprivateworkspacecandidate',()=>{if(workspaceCandidate()){if(!workspaceNote.isConnected)access.append(workspaceNote);if(canProbe())void probeWorkspace();}else{cancelWorkspaceProbe();revokeWorkspace();}});
+    lock(false);
+    if(workspaceCandidate())void probeWorkspace();
   }
 })();
