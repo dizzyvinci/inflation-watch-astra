@@ -4,6 +4,8 @@ import seedVersion from '../dist/version.json' with { type: 'json' };
 import config from '../config.json' with { type: 'json' };
 import { computeReport } from './worker-core.mjs';
 import { withPreviewGate } from './preview-gate.mjs';
+import {createPublicNxHistoryRoute} from './api-public-nx-history-routes.mjs';
+const publicNxHistoryFetch=createPublicNxHistoryRoute();
 import catalogFeed from '../cache/market.json' with { type: 'json' };
 import catalogIdentities from '../catalog-identities-v2.json' with { type: 'json' };
 import { createCachedProjectionFactory, HASH_METHOD } from './market-catalog.mjs';
@@ -654,6 +656,7 @@ async function handleFetch(request, env, ctx) {
   const path = url.pathname;
   if(path==='/api-cash-items.json')return publicCashFetch(request,env);
   if(path==='/api-nx-offers.json')return publicNxFetch(request,env);
+ if(path==='/api-nx-history.json'||path.startsWith('/api-nx-history/'))return publicNxHistoryFetch(request,env);
   if(path.startsWith('/api-item-prices/'))return publicItemPriceFetch(request,env);
   if(path==='/api-item-identities.json'||path.startsWith('/api-item-identities/'))return publicItemIdentitiesFetch(request,env);
   if (path === '/market-index.json' || path.startsWith('/market-item/')) return catalogFetch(request, env, ctx);

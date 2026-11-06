@@ -16,6 +16,7 @@ from catalog_local import LocalCatalog
 from local_cash_reader import LocalCashReader
 from local_nx_reader import LocalNxReader
 from local_item_reader import LocalItemReader
+from local_nx_history_reader import LocalNxHistoryReader
 
 ROOT = Path(__file__).resolve().parent
 BUILD_TIMEOUT_SECONDS = 120
@@ -24,6 +25,7 @@ _catalog = LocalCatalog(ROOT)
 _cash = LocalCashReader(ROOT)
 _nx = LocalNxReader()
 _items = LocalItemReader(ROOT)
+_nx_history = LocalNxHistoryReader(ROOT)
 
 
 class PreviewBuildError(RuntimeError):
@@ -195,6 +197,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                                bind_host=self.server.server_address[0],client_host=self.client_address[0])
         if response is None:response = _nx.handle(self.command, self.path, self.headers,
                                                 bind_host=self.server.server_address[0],client_host=self.client_address[0])
+        if response is None:response = _nx_history.handle(self.command, self.path, self.headers,
+                                                        bind_host=self.server.server_address[0],client_host=self.client_address[0])
         if response is None:response = _items.handle(self.command, self.path, self.headers,
                                                    bind_host=self.server.server_address[0],client_host=self.client_address[0])
         if response is None:response = _catalog.handle(self.command, self.path, self.headers)

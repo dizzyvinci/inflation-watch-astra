@@ -11,7 +11,7 @@ import {privateItemDiscoveryHealth} from './api-private-item-discovery-health.mj
 import {PrivateItemHistoryWork} from './api-private-item-history-work.mjs';
 import {privateHistoryConfiguration} from './api-private-item-history-contract.mjs';
 import {privateItemHistoryHealth} from './api-private-item-history-health.mjs';
-import {PrivateItemWork} from './api-private-item-work.mjs';
+import {makePrivateItemWork,makePrivateItemDiscoveryWork} from './api-item-continuous-lifecycle.mjs';
 import {privateItemConfiguration,privateItemHealth} from './api-private-item-health.mjs';
 import {NxHistoryArchiveWork,nxHistoryArchiveConfiguration} from './nx-history-owner-work.mjs';
 import {nxHistoryArchiveHealth} from './nx-history-health.mjs';
@@ -38,9 +38,9 @@ export class ApiPrivateCashAlarm{
     if(this.initialStatus==='ready')this.materializer=new PrivateCashMaterializer(ctx,env.API_RAW_RECEIPTS,bindings,{enabled:true,now:()=>core.clock()});
     if(this.nxStatus()==='ready')this.nxProducer=new PrivateNxOffersProducer(ctx,env.API_RAW_RECEIPTS,{enabled:true,now:()=>core.clock(),isEnabled:()=>this.nxStatus()==='ready',privatePublicationEnabled:this.nxR2Status()==='ready'});
     if(this.nxProducer&&this.nxR2Status()==='ready')this.nxPublisher=new PrivateNxPublisher(ctx,env.API_RAW_RECEIPTS,{enabled:true,now:()=>core.clock(),isEnabled:()=>this.nxR2Status()==='ready'});
-    if(this.itemsStatus()==='ready')this.itemWork=new PrivateItemWork(ctx,env,core);
+    if(this.itemsStatus()==='ready')this.itemWork=makePrivateItemWork(ctx,env,core);
     if(this.historyStatus()==='ready')this.historyWork=new PrivateItemHistoryWork(ctx,env,core);
-    if(this.discoveryStatus()==='ready')this.discoveryWork=new PrivateItemDiscoveryWork(ctx,env,core,{getItemWork:()=>this.itemWork});
+    if(this.discoveryStatus()==='ready')this.discoveryWork=makePrivateItemDiscoveryWork(ctx,env,core,{getItemWork:()=>this.itemWork});
     if(nxHistoryArchiveConfiguration(env)==='ready')this.nxArchiveWork=new NxHistoryArchiveWork(ctx,env,{getSourceProducer:()=>this.core.config().enabled===true?this.nxProducer:null,now:()=>core.clock()});
     if(!this.cashActive&&!this.nxActive&&!this.itemsActive&&!this.historyActive&&!this.discoveryActive&&!this.recurringActive&&!this.nxArchiveActive)return;
     core.sql.exec(`CREATE TABLE IF NOT EXISTS api_cash_alarm_mux(id INTEGER PRIMARY KEY CHECK(id=1),

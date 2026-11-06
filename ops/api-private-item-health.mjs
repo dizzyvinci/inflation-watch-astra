@@ -1,3 +1,4 @@
+import {itemLifecycleHealth} from './api-item-lifecycle-health.mjs';
 // Private curated SQL diagnostic only; never reads keys, raw bodies or R2.
 export function privateItemConfiguration(env,core){try{const v=JSON.parse(env.API_PRIVATE_ITEMS_JSON??'{"enabled":false}');
  if(v?.enabled===false&&Object.keys(v).join(',')==='enabled')return'disabled';
@@ -5,7 +6,7 @@ export function privateItemConfiguration(env,core){try{const v=JSON.parse(env.AP
  if(core.config().enabled!==true)return'requires_enabled_grant';
  if(typeof env.API_RAW_RECEIPTS?.get!=='function'||typeof env.API_RAW_RECEIPTS?.put!=='function')return'requires_private_storage';return'ready';
  }catch{return'invalid_configuration';}}
-export function privateItemHealth(core,env){const configuration=privateItemConfiguration(env,core),base={diagnosticVersion:1,configuration,publicationEligible:false,sourceObservedAt:null,qualifiedIndividualTrades:0,clockKind:'private_materialization_state_not_market_observation',remoteR2Availability:'not_checked',remoteR2ObjectVerified:false};if(configuration!=='ready')return{...base,bootstrapState:'not_enabled'};
+export function privateItemHealth(core,env){const configuration=privateItemConfiguration(env,core),base={diagnosticVersion:1,configuration,publicationEligible:false,sourceObservedAt:null,qualifiedIndividualTrades:0,clockKind:'private_materialization_state_not_market_observation',remoteR2Availability:'not_checked',remoteR2ObjectVerified:false};if(configuration!=='ready')return{...base,bootstrapState:'not_enabled'};const lifecycle=itemLifecycleHealth(core,env);if(lifecycle)return lifecycle;
  try{if(!core.row("SELECT name FROM sqlite_master WHERE name='private_item_bootstrap' AND type='table'"))return{...base,bootstrapState:'not_initialized'};
  const b=core.row('SELECT state,lease_until,available_at,metadata_hashes FROM private_item_bootstrap WHERE id=1');if(!b||!['pending','running','ready','review'].includes(b.state)||!Number.isSafeInteger(b.available_at)||b.available_at<0||b.lease_until!==null&&(!Number.isSafeInteger(b.lease_until)||b.lease_until<0))return{...base,bootstrapState:'invalid_state'};
  let metadataPins=null;if(b.metadata_hashes!==null){const p=JSON.parse(b.metadata_hashes),expected=['e66a5fb71974f55bad03130d2c3c8926f57ac8a5db949d58a369c4835ca6537f','60166ef0713a547a73b81473fbfa43d5d63f5182c978f5194b16411cd5e88a92'];if(JSON.stringify(p)!==JSON.stringify(expected))return{...base,bootstrapState:'invalid_state'};metadataPins=p;}
