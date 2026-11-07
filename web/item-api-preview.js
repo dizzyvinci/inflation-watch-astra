@@ -1,5 +1,73 @@
 (() => {
 'use strict';
+// ui-src/item-api/reference-status.mjs
+var known = /* @__PURE__ */ new Set(["current", "ready", "shown", "validated", "accepted_cache", "validated_cache"]);
+function describeReferenceStatus({ capturedAt = null, status = "idle", hasData = false, available: available2 = true, retained = false, partial = false, visible = true, online = true, bandMinutes = 20, now = Date.now() } = {}) {
+  const stamp = typeof capturedAt === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.test(capturedAt) ? Date.parse(capturedAt) : NaN;
+  const age = Number.isFinite(stamp) && Number.isFinite(now) ? now - stamp : null;
+  let phase, tone = "amber", label;
+  if (status === "site_access" || status === "access_denied") {
+    phase = "access_blocked";
+    tone = "red";
+    label = "Site access unavailable";
+  } else if (status === "off" || status === "disabled" || status === "hidden") {
+    phase = "off";
+    label = "Reference display inactive";
+  } else if (!visible || !online || status === "paused") {
+    phase = "paused";
+    label = hasData ? "Checks paused; original retrieval retained" : "Checks paused; no validated reference yet";
+  } else if (status === "loading") {
+    phase = "loading";
+    label = hasData ? "Checking cache; displayed reference keeps its original retrieval" : "Awaiting a validated cache response";
+  } else if (!hasData) {
+    phase = status === "not_published" || status === "not_found" ? "not_published" : ["unavailable", "failure", "failed", "error"].includes(status) ? "unavailable" : "unverified";
+    tone = phase === "unavailable" ? "red" : "amber";
+    label = phase === "not_published" ? "Reference not published here" : phase === "unavailable" ? "No validated reference available" : "Reference not yet verified";
+  } else if (retained || status === "retained" || ["unavailable", "failure", "failed", "error"].includes(status)) {
+    phase = "retained";
+    label = "Retained reference; original retrieval unchanged";
+  } else if (age === null) {
+    phase = "clock_unknown";
+    label = "Retrieval clock unavailable; age unknown";
+  } else if (age < 0) {
+    phase = "clock_uncertain";
+    label = "Capture clock ahead; retrieval age uncertain";
+  } else if (!available2) {
+    phase = "unavailable";
+    label = "Selected reference unavailable; missing values are not zero";
+  } else if (partial && age <= bandMinutes * 6e4) {
+    phase = "partial";
+    label = "Partial item evidence; original retrieval retained";
+  } else if (!known.has(status)) {
+    phase = "unverified";
+    label = "Reference state not yet verified";
+  } else if (!Number.isFinite(bandMinutes) || bandMinutes <= 0) {
+    phase = "clock_unknown";
+    label = "Retrieval display band unavailable";
+  } else if (age <= bandMinutes * 6e4) {
+    phase = "recent";
+    tone = "green";
+    label = `Retrieved within ${bandMinutes}-minute display band; not verified fresh trades`;
+  } else {
+    phase = "aged";
+    label = `Retrieval older than ${bandMinutes}-minute display band${partial ? "; partial item evidence remains incomplete" : ""}`;
+  }
+  return Object.freeze({ tone, phase, label, capturedAt: Number.isFinite(stamp) ? capturedAt : null, ageMs: age, bandMinutes });
+}
+function decorateReferenceStatus(node, state, text = node.textContent) {
+  const icon = node.ownerDocument.createElement("i");
+  icon.className = "source-status-dot status-" + state.tone;
+  icon.setAttribute("aria-hidden", "true");
+  const copy = node.ownerDocument.createElement("span");
+  copy.textContent = text;
+  node.replaceChildren(icon, copy);
+  node.dataset.statusTone = state.tone;
+  node.dataset.retrievalState = state.phase;
+  node.title = state.label + "; retrieval is not individual sale or scan time.";
+  if (state.capturedAt) node.dataset.rawCapturedAt = state.capturedAt;
+  else delete node.dataset.rawCapturedAt;
+}
+
 // ops/api-price-item-dto.mjs
 var MAX_BYTES = 5e6;
 var HASH = /^[0-9a-f]{64}$/;
@@ -2017,6 +2085,7 @@ function mountItemHistoryPreview(container, { itemId, fetcher = globalThis.fetch
 }
 
 // ui-src/item-api/entry.mjs
+if (!window.AstraReferenceStatus) Object.defineProperty(window, "AstraReferenceStatus", { value: Object.freeze({ describe: describeReferenceStatus, decorate: decorateReferenceStatus }), writable: false, configurable: false });
 var doc = document;
 var available = doc.body.dataset.itemApiPreview === "available";
 var scope = doc.getElementById("display-options");
@@ -2196,8 +2265,10 @@ function showItem(args) {
     if (value === "access_denied" || value === "unavailable") status.dataset.mode = value;
     else if (retained) status.dataset.mode = "retained";
     const reasons = { not_found: "This item is not in the currently published collection.", generation_changed: "The item generation changed during the bounded check.", invalid: "The new item response failed validation.", timeout: "The own-site check timed out.", unavailable: "The own-site check failed.", read_capacity: "The bounded item reader is busy." };
-    let text = value === "access_denied" ? "Item access unavailable; prior panel withdrawn. After access is restored, turn Item API details Off and On to retry." : value === "paused" ? "Item checks paused while hidden or offline; original retrieval is unchanged." : value === "loading" ? meta.hasData ? "Checking this site\u2019s cached item reference; displayed values keep their original retrieval\u2026" : "Reading this site\u2019s cached item reference\u2026" : retained ? "Retained item reference; original retrieval preserved. " + (reasons[reason] || "The latest check did not supply a replacement.") : value === "shown" ? d.partial ? "Separate item reference; some source fields are unavailable. Retrieval is not trade time." : "Separate item reference; retrieval is not trade time." : value === "unavailable" ? "No validated item reference is connected. " + (reasons[reason] || "") + " Daily and other-source evidence remain separate." : "";
-    status.textContent = (doc.body.dataset.itemApiSynthetic === "true" ? "SYNTHETIC OWN-SITE FIXTURE \xB7 " : "") + text;
+    let text = value === "access_denied" ? "Item access unavailable; prior panel withdrawn. After access is restored, turn Item API details Off and On to retry." : value === "paused" ? meta.hasData ? "Item checks paused while hidden or offline; original retrieval is unchanged." : "Item checks paused while hidden or offline; no validated item reference yet." : value === "loading" ? meta.hasData ? "Checking this site\u2019s cached item reference; displayed values keep their original retrieval\u2026" : "Reading this site\u2019s cached item reference\u2026" : retained ? "Retained item reference; original retrieval preserved. " + (reasons[reason] || "The latest check did not supply a replacement.") : value === "shown" ? d.partial ? "Separate item reference; some source fields are unavailable. Retrieval is not trade time." : "Separate item reference; retrieval is not trade time." : value === "unavailable" ? "No validated item reference is connected. " + (reasons[reason] || "") + " Daily and other-source evidence remain separate." : "";
+    const indicator = describeReferenceStatus({ capturedAt: meta.hasData === true ? state?.capturedAt : null, status: value, hasData: meta.hasData === true, retained, partial: d.partial, visible: !doc.hidden, online: navigator.onLine !== false, bandMinutes: 20 });
+    if (["recent", "aged", "clock_uncertain", "clock_unknown", "partial"].includes(indicator.phase)) text += " " + indicator.label + ".";
+    decorateReferenceStatus(status, indicator, (doc.body.dataset.itemApiSynthetic === "true" ? "SYNTHETIC OWN-SITE FIXTURE \xB7 " : "") + text);
   } });
   void refreshCurrentItem();
   const ownHost = host;

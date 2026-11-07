@@ -31,7 +31,7 @@ function renderApiBindingFailure(failure){
  $('notice').className='notice '+(waiting?'':'error');$('notice').textContent=message;$('notice').dataset.apiCalculationStatus=failure.reason;
  $('main-rate').textContent='—';$('main-cpi').textContent='—';$('rate-change').textContent='—';$('cpi-change').textContent='—';
  $('rate-kind').textContent=mismatch?'Calculation definition mismatch':'API goods calculation unavailable';$('rate-kind').dataset.marketAt=failure.pricesCapturedAt??'';$('rate-kind').dataset.observationKind='api_calculation_unavailable';$('rate-kind').title=message;
- $('header-freshness').textContent=mismatch?'API calculation unavailable · definition mismatch':'API calculation unavailable · '+failure.reason;$('status-dot').className='dot '+(waiting?'yellow':'red');$('status-dot').setAttribute('aria-label','No accepted compatible current goods calculation');
+ $('header-freshness').textContent=mismatch?'API calculation unavailable · definition mismatch':'API calculation unavailable · '+failure.reason;$('status-dot').className='dot '+(waiting?'yellow':'red');$('status-dot').setAttribute('aria-label','No accepted compatible current goods calculation');$('status-dot').dataset.statusTone=waiting?'amber':'red';$('status-dot').dataset.retrievalState=failure.reason==='access_denied'?'access_blocked':waiting?'unverified':'unavailable';$('status-dot').title='No accepted compatible current goods calculation; no source freshness inferred.';
  $('cpi-period').textContent='Current MPI unavailable · API calculation required';$('cpi-complete-note').textContent='Retained legacy history is dated '+utc(failure.legacySourceUpdatedAt)+'; it is not substituted as the current API index.';$('mpi-explanation').textContent='An accepted complete API calculation and a compatible basket definition are required.';
  const period=$('rate-change').nextElementSibling;if(period)period.textContent='Unavailable · '+(mismatch?'calculation definition mismatch':'no accepted API calculation');const description=document.querySelector('.hero-benchmark-explanation');if(description)description.textContent='Current API buying-power calculation unavailable. The dated legacy charts and tables remain separate evidence.';
  const note=document.querySelector('.hero-model-note');if(note){note.textContent=message;note.hidden=window.AstraRollingBenchmark?.getState().showExplanation!==true;}
@@ -45,20 +45,30 @@ function apiCalculationCopy(){
  const selected=view.headline,anchor=selected.mode!=='rolling'?'frozen NX anchor':`previous ${selected.windowDays} complete UTC source-calendar days`;
  return `${retained?'Retained complete':'Latest complete'} reported 3-day sale medians, captured ${utc(view.clocks.currentPrices)}. The goods index uses a frozen retrospective November 4 source link; base weights stay ${referencePeriodLabel()}. NX uses the ${anchor}. Actual daily anchor evidence was captured ${utc(view.clocks.dailyCapture)}; source publication ${utc(view.clocks.dailyPublisher)}. Exact three-day bounds and individual trade times are unknown. Raw sale medians and linked index prices are different quantities; the link preserves the old index level, not constant item quality. Legacy daily and broader-market evidence remains separately dated ${utc(view.clocks.legacyDaily)}.`;
 }
+function apiCalculationStatus(){
+ const view=apiView(),failure=apiBindingFailure(),state=window.AstraApiCalculations?.state()||{},waiting=failure&&(!failure.checkedAt&&failure.reason==='awaiting_accepted_complete_calculation'||failure.reason==='not_published');
+ const status=state.blocked||state.reason==='access_denied'?'access_denied':failure?(waiting?'not_published':'unavailable'):state.status;
+ return window.AstraReferenceStatus?.describe({capturedAt:view?.clocks.currentPrices??failure?.pricesCapturedAt,status,hasData:!!view,available:view?.headline.available===true,retained:state.readerMode==='retained_last_good',visible:!document.hidden,online:navigator.onLine!==false,bandMinutes:20})||{tone:'amber',phase:'unverified',label:'Capture status not yet verified',capturedAt:null};
+}
+function renderApiCalculationSourceStatus(){
+ const host=$('sources-cards');if(!host)return;let card=host.querySelector('[data-status-key="api-calculations"]');if(!apiView()&&!apiBindingFailure()){card?.remove();return;}
+ if(!card){card=document.createElement('article');card.className='panel';card.dataset.statusKey='api-calculations';host.append(card);}const state=apiCalculationStatus();card.dataset.statusTone=state.tone;
+ card.innerHTML=`<p class="eyebrow">${statusDot(state.tone)}API GOODS CALCULATION INPUT</p><div class="source-clock">${esc(utc(state.capturedAt))}<small>${esc(state.label)}</small></div><p>20-minute retrieval display band for the fixed goods input only. Selected-model availability is separate. Original capture is not individual trade or scan time; other items and daily sources keep their own clocks.</p>`;
+}
 function renderApiCalculationCopy(){
  const view=apiView(),failure=apiBindingFailure();
  for(const id of ['method-nx-benchmark','cash-goods-comparison','market-comparison-clock','sources-cards']){
   const target=$(id);if(!target)continue;let note=target.querySelector('[data-api-calculation-method]');
   if(!view&&!failure){note?.remove();continue;}if(!note){note=document.createElement('p');note.dataset.apiCalculationMethod='';note.className='small muted';target.append(note);}note.textContent=failure?bindingFailureCopy(failure):apiCalculationCopy();
  }
- if(failure){renderApiBindingFailure(failure);return;}if(!view)return;
+ renderApiCalculationSourceStatus();if(failure){renderApiBindingFailure(failure);return;}if(!view)return;
  const h=view.headline;$('rate-kind').textContent='3-day reference captured '+utc(view.clocks.currentPrices);$('rate-kind').dataset.marketAt=view.clocks.currentPrices;$('rate-kind').dataset.observationKind='api_reference';
  $('cpi-period').textContent=(window.AstraApiCalculations.state().status==='retained'||window.AstraApiCalculations.state().readerMode==='retained_last_good'?'Retained complete':'Latest complete')+' reported 3-day sale-median reference · '+utc(view.clocks.currentPrices)+' · all 50 same-capture inputs';
  $('cpi-complete-note').textContent=`Fixed base: ${referencePeriodLabel()} = 100. Retrospective source link: November 4, 2026. Actual daily history remains separate.`;
  $('movers-period').textContent=`Fixed-base contributions using API-linked 3-day prices (captured ${utc(view.clocks.currentPrices)}). Changes are not daily returns; raw sale medians are shown in item tables.`;
  $('header-freshness').textContent='API price reference · '+utc(view.clocks.currentPrices);
  const state=window.AstraApiCalculations.state();delete $('notice').dataset.apiCalculationStatus;$('notice').textContent=`${!h.available?'Selected API model unavailable; no legacy model is substituted. ':''}${state.status==='retained'||state.readerMode==='retained_last_good'?'Retained complete calculation':'API-linked calculation'} · price reference captured ${utc(view.clocks.currentPrices)}. Daily anchor capture ${utc(view.clocks.dailyCapture)}. Broader market activity retains its separately dated source.`;
- $('status-dot').className='dot '+(state.status==='retained'||state.readerMode==='retained_last_good'?'yellow':Date.now()-Date.parse(view.clocks.currentPrices)>1200000?'yellow':'');$('status-dot').setAttribute('aria-label','Calculation price-capture status; not source trade freshness');
+ const captureStatus=apiCalculationStatus();$('status-dot').className='dot '+(captureStatus.tone==='green'?'':captureStatus.tone==='amber'?'yellow':'red');$('status-dot').dataset.statusTone=captureStatus.tone;$('status-dot').dataset.retrievalState=captureStatus.phase;$('status-dot').setAttribute('aria-label',captureStatus.label+'; 20-minute capture display band, not source trade freshness');$('status-dot').title=captureStatus.label;
  const change=$('rate-change').nextElementSibling;if(change&&h.mode==='rolling')change.textContent=h.available?`vs previous ${h.windowDays} source days (${h.startDay}–${h.endExclusive}, end exclusive)`:h.reason;
  const daily=view.daily.history;$('cpi-spark').innerHTML=spark(daily.map(p=>p.index));
  $('chart-note').textContent=apiCalculationCopy()+' API daily points are separate from retained legacy points; pre-link values are retrospective backcasts. Model capture points cover this browser session only; durable publication history is retained separately. Missing days are not filled.';
@@ -416,15 +426,16 @@ function renderVolume(){
 }
 
 function sourceHealth(data,now=Date.now()){
- const age=value=>{const time=Date.parse(value);return Number.isFinite(time)?Math.max(0,(now-time)/60000):null;};
+ const age=value=>{const time=Date.parse(value);return Number.isFinite(time)?(now-time)/60000:null;};
  const dailyAge=age(data.sourceUpdatedAt),checkAge=age(data.sourceStatus?.checkedAt),failed=data.sourceStatus?.status==='degraded';
- const daily={tone:dailyAge==null||dailyAge>4320?'red':failed||dailyAge>2160?'amber':'green',state:dailyAge==null?'Source time unavailable':failed?'Retained daily data':dailyAge>4320?'Daily source older than 72h':dailyAge>2160?'Daily source delayed':'Dated daily source · within 36h band'};
- const collector={tone:failed||checkAge>180?'red':checkAge==null||checkAge>30?'amber':'green',state:failed?'Last check failed · last good retained':checkAge==null?'No collector check recorded':checkAge>180?'No check within 3h':checkAge>30?'Collector check delayed':'Collector check within 30 min'};
+ const daily={tone:dailyAge==null||dailyAge>4320?'red':dailyAge<0||failed||dailyAge>2160?'amber':'green',state:dailyAge==null?'Source time unavailable':dailyAge<0?'Daily source clock ahead; age uncertain':failed?'Retained daily data':dailyAge>4320?'Daily source older than 72h':dailyAge>2160?'Daily source delayed':'Dated daily source · within 36h band'};
+ const collector={tone:failed||checkAge>180?'red':checkAge==null||checkAge<0||checkAge>30?'amber':'green',state:failed?'Last check failed · last good retained':checkAge==null?'No collector check recorded':checkAge<0?'Collector check clock ahead; age uncertain':checkAge>180?'No check within 3h':checkAge>30?'Collector check delayed':'Collector check within 30 min'};
  const intraday=(data.intraday||[]).filter(p=>Number.isFinite(p.cpi)||Number.isFinite(p.nxRate)),liveAge=age(data.live?.observedAt);
- const liveQualified=liveAge!=null&&liveAge<40&&(Number.isFinite(data.live?.cpi)||Number.isFinite(data.live?.nxRate));
- return {daily,collector,intraday:{tone:liveQualified?'green':'amber',state:liveQualified?'Qualified recent intraday input':intraday.length?`${intraday.length} qualified dated points · no fresh live input`:'0 qualified intraday points · not connected'},
+ const liveQualified=liveAge!=null&&liveAge>=0&&liveAge<40&&(Number.isFinite(data.live?.cpi)||Number.isFinite(data.live?.nxRate));
+ const offer=window.AstraApiNxOffers?.sourceDescriptor?.(),offerPaused=offer?.connected&&(document.hidden||navigator.onLine===false||offer.status==='paused'||offer.status==='loading');
+ return {daily,collector,intraday:{tone:liveQualified?'green':'amber',state:liveQualified?'Qualified recent intraday input':liveAge<0?'Intraday observation clock ahead; age uncertain':intraday.length?`${intraday.length} qualified dated points · no fresh live input`:'0 qualified intraday points · not connected'},
   reference:{tone:'amber',state:data.rollingReference?'Dated capture · observation time unknown':'No rolling capture connected'},
-  offers:window.AstraApiNxOffers?.sourceDescriptor?.().connected?window.AstraApiNxOffers.sourceDescriptor():{tone:'amber',state:data.smegaSource?'Dated hourly capture · unattended collection not connected':'Hourly offers not connected'}};
+  offers:offer?.connected?(offerPaused?{...offer,tone:'amber',state:offer.status==='loading'?'Checking offer cache; original receipt retained':'Offer checks paused; original receipt retained'}:offer):{tone:'amber',state:data.smegaSource?'Dated hourly capture · unattended collection not connected':'Hourly offers not connected'}};
 }
 function statusDot(tone){return `<i class="source-status-dot status-${tone}" aria-hidden="true"></i>`;}
 function renderOverviewFreshness(){
@@ -436,9 +447,9 @@ function renderOverviewFreshness(){
 function renderFreshness(){
  if(!snapshot)return;
  const stamp=recentLive()?snapshot.live.observedAt:snapshot.sourceUpdatedAt;const age=(Date.now()-Date.parse(stamp))/60000;
- $('header-freshness').textContent=`${freshLive()?'Live observation':'Source snapshot'} · ${utc(stamp)}`;
- const health=sourceHealth(snapshot),tone=health.collector.tone==='red'?'red':health.daily.tone;
- $('status-dot').className='dot '+(tone==='green'?'':tone);$('status-dot').setAttribute('aria-label',health.daily.state+'; '+health.collector.state);
+ $('header-freshness').textContent=`${age<0?'Observation clock ahead':freshLive()?'Live observation':'Source snapshot'} · ${utc(stamp)}`;
+ const health=sourceHealth(snapshot),tone=health.collector.tone==='red'?'red':age<0?'amber':health.daily.tone;
+ $('status-dot').className='dot '+(tone==='green'?'':tone);$('status-dot').setAttribute('aria-label',health.daily.state+'; '+health.collector.state);$('status-dot').dataset.statusTone=tone;$('status-dot').dataset.retrievalState='dated_source';$('status-dot').title=health.daily.state+'; '+health.collector.state;
  renderOverviewFreshness();
  $('notice').className='notice '+(snapshot.sourceStatus.status==='degraded'?'error':'');
  $('notice').textContent=snapshot.sourceStatus.status==='degraded'?`Source unavailable. Showing the last valid market data from ${utc(snapshot.sourceUpdatedAt)}. ${snapshot.sourceStatus.detail}`:freshLive()?`Intraday scanner data · ${utc(snapshot.live.observedAt)}. Market history and tables update together when a new snapshot is available.`:`Dated market snapshot · ${utc(snapshot.sourceUpdatedAt)}. Checked ${utc(snapshot.sourceStatus.checkedAt)}. ${snapshot.rollingReference?'Rolling scanner references and hourly smega offers are available in NX → meso; these captures are dated separately.':snapshot.liveNote}`;
@@ -866,7 +877,8 @@ for(const event of ['astraapicashchange','astraapicashstatusready'])document.add
 for(const event of ['astraapicashchange','astraapicashchoice','astraapicashstatusready'])document.addEventListener(event,()=>{if(snapshot){renderQuickConverter();renderComparisons();}});
 document.addEventListener('astraapinxchange',()=>{if(snapshot){renderSmega();renderComparisons();renderSourceComparisons();renderFreshness();renderSources();publishMarketHighlights();}});
 window.addEventListener('hashchange',()=>{route();if(!focusRouteAnchor())window.scrollTo({top:0,behavior:'instant'});});
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkSnapshot();});
+document.addEventListener('visibilitychange',()=>{if(snapshot){renderFreshness();renderSources();}if(!document.hidden)checkSnapshot();});
+for(const event of ['offline','online'])window.addEventListener(event,()=>{if(snapshot){renderFreshness();renderSources();}});
 $('launch-period').addEventListener('change',e=>{selectedLaunchPeriod=e.target.value;if(snapshot)render();});
 $('display-timezone').addEventListener('change',e=>{displayTimeZone=e.target.value;try{localStorage.setItem('astra-display-timezone',displayTimeZone);}catch{}if(snapshot){render();}});
 $('quick-amount').addEventListener('input',renderQuickConverter);

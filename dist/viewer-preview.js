@@ -68,7 +68,7 @@
     const canProbe=()=>workspaceCandidate()&&!workspaceManualLock&&!document.hidden&&navigator.onLine!==false;
     const cancelWorkspaceProbe=()=>{workspaceEpoch++;workspaceRetryWanted=false;workspaceController?.abort();workspaceController=null;clearTimeout(workspaceDeadline);workspaceDeadline=null;};
     const unlockControls=(automatic=false)=>{controlsUnlocked=true;delete document.body.dataset.previewControlsLocked;closeDialog(!automatic);setViewer(false,false);exit.textContent='Exit viewer preview';exit.title='Return to unlocked editing. Escape relocks preview controls.';gate.textContent='Lock preview controls';if(!automatic){options.open=true;options.querySelector('summary')?.focus({preventScroll:true});}};
-    const revokeWorkspace=(mode='unknown')=>{workspaceExpiresAt=null;workspaceMode=mode;clearTimeout(workspaceExpiry);workspaceExpiry=null;lock(false);publishWorkspace();};
+    const revokeWorkspace=(mode='unknown')=>{workspaceExpiresAt=null;workspaceMode=mode;workspaceNote.textContent='';clearTimeout(workspaceExpiry);workspaceExpiry=null;lock(false);publishWorkspace();};
     function retryWorkspaceWhenSettled(){if(workspaceRetryWanted&&!workspaceUnderlying&&!workspaceWorking&&canProbe()){workspaceRetryWanted=false;void probeWorkspace();}}
     async function readWorkspaceStatus(response,abort){
       const rejected=async()=>{abort.abort();try{await response.body?.cancel();}catch{}return null;};

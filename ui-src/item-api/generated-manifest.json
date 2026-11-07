@@ -60,7 +60,7 @@
     },
     {
       "path": "ui-src/item-api/entry.mjs",
-      "sha256": "9beb0d7b775165095d3688c5eb5cab2b44c10204f33d3315390bb0b63e94a618"
+      "sha256": "687b0551fe75964e377644968835e01c6310d9a78aef9eafca3d8d42a6ca9f60"
     },
     {
       "path": "ui-src/item-api/history.mjs",
@@ -77,11 +77,15 @@
     {
       "path": "ui-src/item-api/panel.mjs",
       "sha256": "e2bb784373297f6228eb9e60f40a744b0446ad9a313bb4d364f9ba7c234dfa89"
+    },
+    {
+      "path": "ui-src/item-api/reference-status.mjs",
+      "sha256": "d314ad72f628779cd972d92b5fa87bac17ec4ae818b87c3095319062480ff687"
     }
   ],
   "output": {
     "path": "web/item-api-preview.js",
-    "sha256": "16b59d79ac2efd913725f55f2d6089f216b8649dfaf3faf9c70c61379ef3f21f",
-    "bytes": 124035
+    "sha256": "c56b6aabcc4254eeed04ac3b79922ca7f3ade5a39b620c0aa30cca2041473ed3",
+    "bytes": 128628
   }
 }

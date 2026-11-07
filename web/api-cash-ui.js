@@ -32,15 +32,15 @@ function feesModel(model){const fees=window.AstraTradeFees,state=fees?.getState(
 // Public status uses only the already-validated own-site client, never private collector health.
 function sourceDescriptor(state=api.getState(),now=Date.now()){
  const data=state?.data,stamp=typeof data?.capturedAt==='string'?Date.parse(data.capturedAt):NaN;
- const valid=Number.isFinite(stamp)&&data.schemaVersion===1&&data.kind==='fixed_nx_item_api_display_subset'&&data.sourceObservedAt===null&&
+ const valid=state?.status!=='site_access'&&state?.status!=='not_published'&&Number.isFinite(stamp)&&data.schemaVersion===1&&data.kind==='fixed_nx_item_api_display_subset'&&data.sourceObservedAt===null&&
   data.window?.reportedLookbackDays===3&&data.window.start===null&&data.window.end===null&&data.window.boundsKnown===false&&
   data.coverage?.expected===29&&Number.isSafeInteger(data.coverage.available)&&data.coverage.available>=0&&data.coverage.available<=29;
  const label='APPROVED API / CASH-ITEM CACHE';
  if(valid){
-  const age=now-stamp,retained=['retained','loading'].includes(state.status)||state.serverMode==='retained_last_good'||!!state.error;
-  const phase=retained?'retained':age<0?'clock_uncertain':age<=600000?'recent':'aged';
+  const age=now-stamp,retained=['retained','loading','unavailable','failed','error'].includes(state.status)||state.serverMode==='retained_last_good'||!!state.error;
+  const phase=document.hidden||navigator.onLine===false?'paused':retained?'retained':age<0?'clock_uncertain':age<=600000?'recent':'aged';
   const tone=phase==='recent'?'green':'amber';
-  const message={recent:'Recent API retrieval · not verified fresh trades',aged:'Older API retrieval · original clock retained',retained:'Retained API reference · original clock retained',clock_uncertain:'API capture clock ahead · age uncertain'}[phase];
+  const message={recent:'Recent API retrieval · not verified fresh trades',aged:'Older API retrieval · original clock retained',retained:'Retained API reference · original clock retained',clock_uncertain:'API capture clock ahead · age uncertain',paused:'API checks paused · original retrieval retained'}[phase];
   return{label,value:`${data.coverage.available} / 29 eligible item medians`,phase,capturedAt:data.capturedAt,state:{tone,state:message},
    detail:`API retrieved ${clock(data.capturedAt)}. Reported 3-day sale-median lookback; exact bounds and individual sale/scan times are unknown. Counts are reported sales, not physical units or unique players; qualities can mix. This separately cached subset changes no daily-source clock, headline, MPI or Cash Basket.`};
  }
@@ -61,7 +61,7 @@ function statusText(){const s=api.getState(),m=api.model();if(!s.data)return s.s
  return`${m.retained?'Retained API reference':'API reference'} · ${m.eligibleCount} / 29 items with eligible sale medians. API retrieved ${clock(m.capturedAt)}. Underlying sale/scan times unknown. ${api.client.freshness()==='recent_retrieval'?'Recent retrieval only; not verified fresh trades.':api.client.freshness()==='clock_uncertain'?'Clock age uncertain; no freshness claim.':'This is an older retrieval; original clocks are retained.'}`;}
 function draw(){
  const model=api.model(),fm=feesModel(model),s=api.getState();window.AstraCashActivity?.configure(section.querySelector('.api-cash-controls'),model);section.dataset.apiStatus=s.status;section.dataset.retrievalAge=api.client.freshness();
- section.querySelector('.api-cash-status').textContent=statusText();
+ const status=section.querySelector('.api-cash-status'),descriptor=sourceDescriptor(),icon=make('i','source-status-dot status-'+descriptor.state.tone);icon.setAttribute('aria-hidden','true');status.replaceChildren(icon,document.createTextNode(descriptor.state.state+'. '+statusText()));status.dataset.statusTone=descriptor.state.tone;status.dataset.retrievalState=descriptor.phase;status.title=descriptor.state.state+'; 10-minute retrieval display band, not verified fresh trades.';
  for(const b of document.querySelectorAll('[data-api-cash-choice]'))b.setAttribute('aria-pressed',String(api.getChoice()===b.dataset.apiCashChoice));
  for(const b of section.querySelectorAll('[data-api-cash-side]'))b.setAttribute('aria-pressed',String(side===b.dataset.apiCashSide));
  for(const b of section.querySelectorAll('[data-api-fee-mode]')){b.setAttribute('aria-pressed',String((fm.state?.mode||'gross')===b.dataset.apiFeeMode));b.disabled=!fm.fees;}
@@ -115,6 +115,7 @@ function focusList(value='sell'){sortKey='value';if(['buy','sell'].includes(valu
 window.AstraApiCashUi=Object.freeze({clock,sourceDescriptor,appendItemEvidence,focusList});
 document.addEventListener('astramarketsnapshot',e=>{report=e.detail;draw();});
 for(const event of ['astraapicashchange','astraapicashchoice','astrafeeschange'])document.addEventListener(event,draw);
+document.addEventListener('visibilitychange',draw);window.addEventListener('offline',draw);window.addEventListener('online',draw);
 document.addEventListener('astracashactivitychange',()=>{sortKey='value';draw();});
 document.getElementById('display-timezone')?.addEventListener('change',draw);draw();document.dispatchEvent(new Event('astraapicashstatusready'));document.dispatchEvent(new Event('astramarkethighlightsready'));
 })();
