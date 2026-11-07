@@ -32,12 +32,12 @@ export function createFastCurrentItemReader({bucket,scope,metadata,enabled=false
  async function bytes(c,key,max,expected,hash){
   fence(c);const o=await bucket.get(key);const body=o?.body;
   try{fence(c);check(o);const size=o.size;check(num(size,1,max)&&(!expected||size===expected)&&body&&typeof body.getReader==='function');return await readBody(c,body,size,hash);}
-  catch(e){try{if(body&&!body.locked)void Promise.resolve(body.cancel()).catch(()=>{});}catch{}throw e;}
+  catch(e){try{if(body&&!body.locked)await Promise.resolve(body.cancel()).catch(()=>{});}catch{}throw e;}
  }
  async function readBody(c,body,declaredSize,hash){
   const reader=body.getReader(),parts=[];let size=0,chunks=0;
   try{for(;;){const v=await reader.read();fence(c);if(v.done)break;check(v.value instanceof Uint8Array&&++chunks<=1024);size+=v.value.byteLength;check(size<=declaredSize);parts.push(v.value.slice());}}
-  catch(e){try{void Promise.resolve(reader.cancel()).catch(()=>{});}catch{}throw e;}
+  catch(e){try{await Promise.resolve(reader.cancel()).catch(()=>{});}catch{}throw e;}
   finally{reader.releaseLock();}
   check(size===declaredSize);const raw=new Uint8Array(size);let at=0;for(const p of parts){raw.set(p,at);at+=p.length;}
   if(hash)check(await sha256(raw)===hash);fence(c);return raw;
@@ -48,7 +48,7 @@ export function createFastCurrentItemReader({bucket,scope,metadata,enabled=false
   const raw=await bytes(c,p.manifestKey,1048576,p.manifestBytes,p.manifestSha256),m=parseStrictJson(raw);assertFastManifest(m);
   check(m.itemCount===p.itemCount&&m.source.rawBodySha256===p.rawBodySha256&&m.source.retrievedAt===p.capturedAt);
   const d=m.shards.find(d=>id>=d.firstId&&id<=d.lastId);
-  if(!m.itemIds.includes(id)){fence(c);monotonic(p);last=p;return freeze({status:'not_in_projection',generation:p.generation,sourceCapturedAt:p.capturedAt});}
+  if(!m.itemIds.includes(id)){fence(c);monotonic(p);last=p;return freeze({status:'not_in_projection',generation:p.generation,sourceCapturedAt:p.capturedAt,publicationOrdinal:p.publicationOrdinal});}
   check(d);const shard=await bytes(c,PREFIX+'shards/'+d.sha256+'.json',262144,d.bytes,d.sha256),dto=await selectFastItem(m,shard,id);fence(c);check(dto);
   // Selector validates ALL siblings, not just the requested item. Bind every
   // sibling's identity evidence to the caller's reviewed metadata references.

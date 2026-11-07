@@ -35,10 +35,12 @@ export function ownedCalculationSource(core,{receiptKey,jobKey}){
 const STAMP_INDEX_OWNERS=new WeakMap(),STAMP_INDEX_PHASES=new WeakMap();
 export function isOwnedStampIndexBridge(value,ctx,core,registry){const b=STAMP_INDEX_OWNERS.get(value);return !!b&&b.ctx===ctx&&b.core===core&&b.registry===registry;}
 export function isOwnedStampIndexCommit(value,bridge,ctx,core,ticket){const b=STAMP_INDEX_PHASES.get(value);return !!b&&b.bridge===bridge&&b.ctx===ctx&&b.core===core&&b.ticket===ticket;}
+export function isOwnedOverviewIndexBridge(value,ctx,core,registry){const b=STAMP_INDEX_OWNERS.get(value);return !!b&&b.ctx===ctx&&b.core===core&&b.registry===registry;}
 export class ApiIndexOwnerBridge{
  #tickets=new WeakMap();
  #stampTickets=new WeakMap();
- constructor(ctx,env,core,{definition=null,api=null,registry=null,stampReferences=null}={}){
+ #activityFinalTickets=new WeakMap();
+ constructor(ctx,env,core,{definition=null,api=null,registry=null,stampReferences=null,overviewActivity=null}={}){
   this.ctx=ctx;this.env=env;this.core=core;this.definition=definition;this.api=api;this.registry=registry;this.flight=null;
   const cfg=apiIndexOwnerConfiguration(env);this.definitionHash=cfg.definitionHash;
   if(cfg.status!=='ready')return;
@@ -46,8 +48,10 @@ export class ApiIndexOwnerBridge{
   if(!definition||definition.definitionHash!==cfg.definitionHash||!api||!registry)return;
   api.definitionData(definition);this.binding=core.config();if(this.binding.enabled!==true)return;
   this.ensure();
-  STAMP_INDEX_OWNERS.set(this,{ctx,core,registry});this.stampReferences=stampReferences;if(stampReferences)stampReferences.bindBridge(this);
+  STAMP_INDEX_OWNERS.set(this,{ctx,core,registry});this.stampReferences=stampReferences;if(stampReferences)stampReferences.bindBridge(this);this.overviewActivity=overviewActivity;if(overviewActivity?.enabled===true)overviewActivity.bindBridge(this);
  }
+ get overviewActivityPhaseRequired(){return this.overviewActivity?.enabled===true;}
+ overviewActivityRequested(job){return this.overviewActivity?.enabled===true&&this.overviewActivity.requested(job);}
  get stampReferencePhaseRequired(){return this.stampReferences?.active===true;}
  get active(){try{const c=apiIndexOwnerConfiguration(this.env),g=this.core.config();return c.status==='ready'&&c.definitionHash===this.definitionHash&&this.definition?.definitionHash===c.definitionHash&&!!this.api&&!!this.registry&&this.binding?.enabled===true&&g.enabled===true&&g.grantReference===this.binding.grantReference&&g.probeRound===this.binding.probeRound;}catch{return false;}}
  guard(){if(!this.active)throw new Paused();}
@@ -81,7 +85,7 @@ export class ApiIndexOwnerBridge{
    let queued=0;for(const r of rows){const s=ownedCalculationSource(this.core,{receiptKey:r.receipt_key,jobKey:r.job_key});this.insert(s);queued++;}return{status:'owned_index_reconciled',queued};
   });
  }
- reserveSharedOverview(job){if(!this.active)return{status:'unavailable'};check(sharedOverviewConfiguration(this.env).status==='ready'&&isOwnedRecurringRegistry(this.registry,this.ctx),'shared_overview_registry_authority');const s=ownedCalculationSource(this.core,{receiptKey:job.receipt_key,jobKey:job.job_key});check(s.operation==='overview','shared_overview_operation');return this.ctx.storage.transactionSync(()=>{const old=this.row('SELECT id FROM api_index_inputs WHERE receipt_key=?',s.receiptKey);if(!old&&this.row("SELECT COUNT(*)n FROM api_index_inputs WHERE state IN ('pending','running')").n>=64)return{status:'backpressure'};this.insert(s);return{status:'reserved'};});}
+ reserveSharedOverview(job){if(!this.active)return{status:'unavailable'};check(sharedOverviewConfiguration(this.env).status==='ready'&&isOwnedRecurringRegistry(this.registry,this.ctx),'shared_overview_registry_authority');const s=ownedCalculationSource(this.core,{receiptKey:job.receipt_key,jobKey:job.job_key});check(s.operation==='overview','shared_overview_operation');const result=this.ctx.storage.transactionSync(()=>{const old=this.row('SELECT id FROM api_index_inputs WHERE receipt_key=?',s.receiptKey);if(!old&&this.row("SELECT COUNT(*)n FROM api_index_inputs WHERE state IN ('pending','running')").n>=64)return{status:'backpressure'};this.insert(s);return{status:'reserved'};});if(result.status==='reserved'&&this.overviewActivity?.enabled===true)this.overviewActivity.reserve(job);return result;}
  insert(s){this.core.sql.exec('INSERT OR IGNORE INTO api_index_inputs(receipt_key,job_key,operation,source_attempt,request_at,raw_sha,definition_hash,available_at)VALUES(?,?,?,?,?,?,?,?)',s.receiptKey,s.jobKey,s.operation,s.sourceAttemptId,s.requestAt,s.rawSha256,this.definitionHash,this.core.clock());}
  validateEnvelope(e,s){
   check(e&&e.kind==='unverified_provider_api_receipt'&&e.operation===s.operation&&e.sourceUrl===s.sourceUrl&&e.httpStatus===200&&e.attemptId===s.sourceAttemptId&&e.grantReference===s.grantReference&&e.roundReference===s.roundReference&&clock(e.requestStartedAt)&&Date.parse(e.requestStartedAt)===s.requestAt&&clock(e.capturedAt)&&Date.parse(e.capturedAt)>=s.requestAt&&Date.parse(e.capturedAt)<=this.core.clock()&&e.sourceObservedAt===null&&e.observationTimestampKnown===false&&e.schemaVerified===false&&e.publicationEligible===false&&e.captureTimeKind==='http_response_completed'&&e.responseSha256===s.rawSha256&&integer(e.responseBytes,1,5000000),'owned_normalization_context');
@@ -102,11 +106,12 @@ export class ApiIndexOwnerBridge{
   // The normal path reuses the registry's already normalized prices snapshot.
   // Failures are confined to this optional model; ID admission is never quarantined by it.
   let capture=null,error=false,sharedHold=null;try{capture=await this.normalize(s,envelope,raw,priceSnapshot,overviewAdaptation);}catch(reason){error=true;if(overviewAdaptation&&isOverviewAdaptation(overviewAdaptation)&&sharedOverviewConfiguration(this.env).status==='ready'&&['shared_overview_capacity_hold','shared_overview_profile_review'].includes(reason?.message))sharedHold=reason.message==='shared_overview_capacity_hold'?'capacity_hold':'quarantined';}
-  if(!this.active)return null;const ticket=Object.freeze({});this.#tickets.set(ticket,{s,capture,error,sharedHold,sharedCommit:overviewAdaptation!==null&&isOverviewAdaptation(overviewAdaptation)&&sharedOverviewConfiguration(this.env).status==='ready',stampTicket:capture?this.#stampTickets.get(capture)??null:null});if(capture)this.#stampTickets.delete(capture);return ticket;
+  if(!this.active)return null;const activityTicket=job.operation==='overview'&&this.overviewActivity?.enabled===true?this.overviewActivity.prepare(this,{job,envelope,overviewAdaptation}):null;const ticket=Object.freeze({});this.#tickets.set(ticket,{s,capture,error,sharedHold,activityTicket,sharedCommit:overviewAdaptation!==null&&isOverviewAdaptation(overviewAdaptation)&&sharedOverviewConfiguration(this.env).status==='ready',stampTicket:capture?this.#stampTickets.get(capture)??null:null});if(capture)this.#stampTickets.delete(capture);return ticket;
  }
- commitRegistryCapture(ticket,stampPhase=null){
+ commitRegistryCapture(ticket,stampPhase=null,activityPhase=null){
   if(ticket===null||!this.active)return;const prepared=this.#tickets.get(ticket);check(prepared,'owned_normalization_ticket');this.#tickets.delete(ticket);const {s,capture,error,sharedHold,sharedCommit}=prepared;
   const current=ownedCalculationSource(this.core,{receiptKey:s.receiptKey,jobKey:s.jobKey});check(Object.keys(s).every(k=>s[k]===current[k]),'prepared_source_rebound');
+  if(prepared.activityTicket){this.overviewActivity.commit(prepared.activityTicket,{bridge:this,phase:activityPhase,calculationTicket:ticket});this.#activityFinalTickets.set(ticket,prepared.activityTicket);}
   if(prepared.stampTicket&&this.stampReferences?.active){check(isOwnedStampRegistryCommit(stampPhase,this.registry,this.ctx,this.core,ticket),'stamp_registry_commit_phase');this.stampReferences.commitFromRegistry(prepared.stampTicket,{bridge:this,phase:stampPhase,calculationTicket:ticket});check(this.stampReferences.active,'stamp_commit_paused');}
   // A full optional queue never blocks existing registry admission. The raw
   // completed source remains in api_jobs and is reconciled after the backlog.
@@ -122,6 +127,7 @@ export class ApiIndexOwnerBridge{
   const body=JSON.stringify(capture);check(bytes(body)<=1048576,'normalized_capture_capacity');
   this.core.sql.exec("UPDATE api_index_inputs SET capture_hash=?,capture_body=?,captured_at=?,phase='archive',last_result='registry_normalization_reused' WHERE receipt_key=? AND state='pending' AND phase='normalize'",capture.captureHash,body,capture.source.capturedAt,s.receiptKey);
  }
+ finalizeOverviewActivity(ticket,phase){const activityTicket=this.#activityFinalTickets.get(ticket);check(activityTicket,'activity_final_calculation_ticket');const result=this.overviewActivity.finalize(activityTicket,{bridge:this,phase,calculationTicket:ticket});this.#activityFinalTickets.delete(ticket);return result;}
  indexNextDue(){if(!this.active)return null;const running=this.row("SELECT lease_until FROM api_index_inputs WHERE state='running' ORDER BY id LIMIT 1");if(running)return running.lease_until;return this.nextPending()?.available_at??null;}
  nextDue(){const current=this.indexNextDue();if(!this.stampReferences?.active)return current;const stamp=this.stampReferences.nextDue();return current===null?stamp:stamp===null?current:Math.min(current,stamp);}
  nextPending(){const g=this.core.config();return this.row(`SELECT i.* FROM api_index_inputs i WHERE i.state='pending'

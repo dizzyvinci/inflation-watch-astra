@@ -1,0 +1,27 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {fixture} from './fast-current-low-copy-fixture.mjs';
+const tableCounts=f=>Object.fromEntries(['fast_current_outbox','recurring_registry_captures','stamp_reference_captures','api_index_inputs'].map(t=>[t,f.row('SELECT COUNT(*)n FROM '+t).n]));
+test('unchanged peer cutpoint: actual synchronous outbox INSERT after deadline rolls back shared admission',{timeout:10000},async t=>{
+ const f=await fixture(t,{stageWaitMs:1500}),source=f.seed(),fence=f.sink.stageFence.bind(f.sink);let deadline=null;
+ f.sink.stageFence=value=>{deadline=value.deadline;return fence(value);};const exec=f.core.sql.exec;let blocked=false,startedBeforeDeadline=false,finishedAfterDeadline=false;
+ f.core.sql.exec=(sql,...args)=>{if(!blocked&&/^INSERT INTO fast_current_outbox\(/.test(sql)){blocked=true;assert.notEqual(deadline,null);startedBeforeDeadline=performance.now()<deadline;const end=deadline+30;while(performance.now()<end){}finishedAfterDeadline=performance.now()>=deadline;}return exec(sql,...args);};
+ const result=await f.accept();assert(blocked&&startedBeforeDeadline&&finishedAfterDeadline);assert.equal(result.status,'registry_storage_retry');assert.deepEqual(tableCounts(f),{fast_current_outbox:0,recurring_registry_captures:0,stamp_reference_captures:0,api_index_inputs:0});assert.equal(f.row('SELECT state FROM fast_current_staging').state,'ready');assert.equal(f.row('SELECT state FROM recurring_registry_jobs WHERE receipt_key=?',source.receiptKey).state,'pending');assert(f.objects.has(source.receiptKey));assert.equal(f.provider.length,0);
+});
+test('all final writes including LAST registry ACK have in-transaction deadline fence and ordinary recovery',{timeout:20000},async t=>{
+ for(const target of ["UPDATE fast_current_staging SET state='admitted'","UPDATE fast_current_reservation SET state='consumed'","UPDATE recurring_registry_jobs SET state='complete'"]){
+  const f=await fixture(t,{stageWaitMs:1500}),source=f.seed(),fence=f.sink.stageFence.bind(f.sink),exec=f.core.sql.exec;let deadline=null,blocked=false;
+  f.sink.stageFence=v=>{deadline=v.deadline;return fence(v);};f.core.sql.exec=(sql,...args)=>{if(!blocked&&sql.startsWith(target)){blocked=true;assert(performance.now()<deadline);while(performance.now()<deadline+30){}}return exec(sql,...args);};
+  assert.equal((await f.accept()).status,'registry_storage_retry');assert(blocked);assert(Object.values(tableCounts(f)).every(n=>n===0));const first=f.row('SELECT prepared_at,staged_bytes FROM fast_current_staging'),body=f.row('SELECT body FROM fast_current_shards WHERE shard_index=0').body;assert.equal(f.row('SELECT state FROM fast_current_staging').state,'ready');assert.equal(f.row('SELECT state FROM fast_current_reservation').state,'reserved');
+  f.now[0]=f.owner.recurring.nextDue();assert.equal((await f.accept()).status,'registry_capture_accepted');assert.equal(f.row('SELECT prepared_at FROM fast_current_outbox').prepared_at,first.prepared_at);assert.equal(f.row('SELECT body FROM fast_current_shards WHERE shard_index=0').body,body);assert.equal(f.row('SELECT captured_at FROM fast_current_outbox').captured_at,source.e.capturedAt);assert.equal(f.row('SELECT COUNT(*)n FROM api_attempts').n,1);assert.equal(f.provider.length,0);
+ }
+});
+test('final ACK boundary rechecks feature auth source claim lease and sink epoch',{timeout:20000},async t=>{
+ for(const mode of ['feature','auth','source','claim','lease','epoch']){const f=await fixture(t),source=f.seed(),exec=f.core.sql.exec;let changed=false;
+  f.core.sql.exec=(sql,...args)=>{const out=exec(sql,...args);if(!changed&&sql.startsWith("UPDATE recurring_registry_jobs SET state='complete'")){changed=true;if(mode==='feature')f.on[0]=false;if(mode==='auth')exec('UPDATE api_control SET auth_stopped=1');if(mode==='source')exec("UPDATE api_attempts SET grant_ref='foreign' WHERE id=?",source.id);if(mode==='claim')exec('UPDATE recurring_registry_jobs SET claim=claim+1');if(mode==='lease')f.now[0]+=130001;if(mode==='epoch')exec('UPDATE fast_current_control SET epoch=epoch+1');}return out;};
+  const result=await f.accept();assert(changed);assert.notEqual(result.status,'registry_capture_accepted',mode);assert(Object.values(tableCounts(f)).every(n=>n===0),mode);assert.equal(f.row('SELECT state FROM fast_current_staging').state,'ready');assert(f.objects.has(source.receiptKey));assert.equal(f.row('SELECT COUNT(*)n FROM api_attempts').n,1);assert.equal(f.provider.length,0);
+ }
+});
+test('early finalization cannot consume final ticket; expiry after premature call still rolls back',{timeout:10000},async t=>{const f=await fixture(t,{stageWaitMs:1500});f.seed();const commit=f.sink.commitRegistryCapture.bind(f.sink),final=f.sink.finalizeRegistryAdmission.bind(f.sink),fence=f.sink.stageFence.bind(f.sink),exec=f.core.sql.exec;let deadline=null,early=false,blocked=false;
+ f.sink.stageFence=v=>{deadline=v.deadline;return fence(v);};f.sink.commitRegistryCapture=(ticket,phase)=>{const out=commit(ticket,phase);assert.throws(()=>final(ticket,phase),/fast_stage_final_authority/);early=true;return out;};f.core.sql.exec=(sql,...args)=>{if(!blocked&&sql.startsWith("UPDATE recurring_registry_jobs SET state='complete'")){blocked=true;while(performance.now()<deadline+30){}}return exec(sql,...args);};
+ assert.equal((await f.accept()).status,'registry_storage_retry');assert(early&&blocked);assert(Object.values(tableCounts(f)).every(n=>n===0));
+});

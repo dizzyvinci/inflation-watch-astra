@@ -61,15 +61,17 @@
     let attempt=0,controller=null,timeout=null;
     const cancelAttempt=()=>{attempt++;controller?.abort();controller=null;clearTimeout(timeout);timeout=null;input.value='';submit.disabled=false;form.removeAttribute('aria-busy');};
     const closeDialog=(focus=true)=>{cancelAttempt();if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}if(focus)gate.focus({preventScroll:true});};
-    const lock=(manual=true)=>{if(manual){workspaceManualLock=true;cancelWorkspaceProbe();}controlsUnlocked=false;cancelAttempt();document.body.dataset.previewControlsLocked='true';setViewer(true,false);entry.hidden=true;exit.hidden=true;gate.textContent='Preview controls';gate.setAttribute('aria-expanded','false');if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}};
+    const lock=(manual=true)=>{if(manual){workspaceManualLock=true;workspaceRenewPending=false;cancelWorkspaceProbe();}controlsUnlocked=false;cancelAttempt();document.body.dataset.previewControlsLocked='true';setViewer(true,false);entry.hidden=true;exit.hidden=true;gate.textContent='Preview controls';gate.setAttribute('aria-expanded','false');if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}};
     const workspaceCandidate=()=>window.astraPreviewSession?.privateWorkspaceCandidate?.()===true;
-    let workspaceManualLock=false,workspaceEpoch=0,workspaceController=null,workspaceDeadline=null,workspaceExpiry=null,workspaceUnderlying=null,workspaceWorking=false,workspaceRetryWanted=false;
+    let workspaceManualLock=false,workspaceEpoch=0,workspaceController=null,workspaceDeadline=null,workspaceExpiry=null,workspaceUnderlying=null,workspaceWorking=false,workspaceRetryWanted=false,workspaceRenewPending=false;
     const workspaceNote=document.createElement('small');workspaceNote.setAttribute('role','status');if(workspaceCandidate())access.append(workspaceNote);
-    const canProbe=()=>workspaceCandidate()&&!workspaceManualLock&&!document.hidden&&navigator.onLine!==false;
+    const localWorkspace=()=>location.protocol==='http:'&&['localhost','127.0.0.1'].includes(location.hostname);
+    const canProbe=(renewOnly=false)=>workspaceCandidate()&&(renewOnly?workspaceRenewPending&&localWorkspace():!workspaceManualLock)&&!document.hidden&&navigator.onLine!==false;
     const cancelWorkspaceProbe=()=>{workspaceEpoch++;workspaceRetryWanted=false;workspaceController?.abort();workspaceController=null;clearTimeout(workspaceDeadline);workspaceDeadline=null;};
     const unlockControls=(automatic=false)=>{controlsUnlocked=true;delete document.body.dataset.previewControlsLocked;closeDialog(!automatic);setViewer(false,false);exit.textContent='Exit viewer preview';exit.title='Return to unlocked editing. Escape relocks preview controls.';gate.textContent='Lock preview controls';if(!automatic){options.open=true;options.querySelector('summary')?.focus({preventScroll:true});}};
-    const revokeWorkspace=(mode='unknown')=>{workspaceExpiresAt=null;workspaceMode=mode;workspaceNote.textContent='';clearTimeout(workspaceExpiry);workspaceExpiry=null;lock(false);publishWorkspace();};
-    function retryWorkspaceWhenSettled(){if(workspaceRetryWanted&&!workspaceUnderlying&&!workspaceWorking&&canProbe()){workspaceRetryWanted=false;void probeWorkspace();}}
+    const revokeWorkspace=(mode='unknown')=>{workspaceExpiresAt=null;workspaceMode=mode;workspaceRenewPending=false;workspaceNote.textContent='';clearTimeout(workspaceExpiry);workspaceExpiry=null;lock(false);publishWorkspace();};
+    function retryWorkspaceWhenSettled(){const renewOnly=workspaceRetryWanted==='local-renew';if(workspaceRetryWanted&&!workspaceUnderlying&&!workspaceWorking&&canProbe(renewOnly)){workspaceRetryWanted=false;void probeWorkspace(renewOnly);}}
+    function expireWorkspace(){const mayRenew=localWorkspace();cancelWorkspaceProbe();revokeWorkspace();workspaceNote.textContent='Private session expired. Reload to sign in again.';if(mayRenew){workspaceRenewPending=true;void probeWorkspace(true);}}
     async function readWorkspaceStatus(response,abort){
       const rejected=async()=>{abort.abort();try{await response.body?.cancel();}catch{}return null;};
       if(response.status!==200||response.headers.get('X-Astra-Preview')!=='password'||response.headers.get('X-Astra-Workspace')!=='private_workspace'||!/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type')||'')||response.headers.has('Set-Cookie'))return rejected();
@@ -85,20 +87,20 @@
       if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join('|')!=='expiresAt|mode|unlocked'||value.unlocked!==true||value.mode!=='private_workspace'||!Number.isSafeInteger(value.expiresAt)||value.expiresAt<=Date.now()||value.expiresAt>Date.now()+8*60*60*1000)return null;
       return value.expiresAt;
     }
-    async function probeWorkspace(){
-      if(!canProbe())return;
-      if(workspaceUnderlying||workspaceWorking){workspaceRetryWanted=true;return;}
+    async function probeWorkspace(renewOnly=false){
+      if(!canProbe(renewOnly))return;
+      if(workspaceUnderlying||workspaceWorking){workspaceRetryWanted=renewOnly?'local-renew':true;return;}
       if(!(location.protocol==='https:'||location.protocol==='http:'&&['localhost','127.0.0.1'].includes(location.hostname)))return;
       workspaceRetryWanted=false;workspaceWorking=true;const ticket=++workspaceEpoch,abort=new AbortController();workspaceController=abort;
       const physical=(async()=>{const response=await fetch('/__preview_controls',{method:'GET',credentials:'same-origin',cache:'no-store',redirect:'error',headers:{Accept:'application/json','X-Astra-Controls-Status':'1'},signal:abort.signal});return {expiresAt:await readWorkspaceStatus(response,abort),review:response.headers.get('X-Astra-Preview')==='review'};})();workspaceUnderlying=physical;
       physical.then(()=>{if(workspaceUnderlying===physical)workspaceUnderlying=null;retryWorkspaceWhenSettled();},()=>{if(workspaceUnderlying===physical)workspaceUnderlying=null;retryWorkspaceWhenSettled();});
       try{
         const deadline=new Promise((_,reject)=>{workspaceDeadline=setTimeout(()=>{abort.abort();reject(Error('status_timeout'));},15000);});
-        const value=await Promise.race([physical,deadline]);if(ticket!==workspaceEpoch||!canProbe())return;
-        if(value.expiresAt===null||value.expiresAt<=Date.now()){revokeWorkspace(value.review?'review':'unknown');workspaceNote.textContent='Private session could not be verified. Reload to sign in again if needed.';return;}
-        workspaceExpiresAt=value.expiresAt;workspaceMode='private_workspace';clearTimeout(workspaceExpiry);workspaceExpiry=setTimeout(()=>{cancelWorkspaceProbe();revokeWorkspace();workspaceNote.textContent='Private session expired. Reload to sign in again.';},Math.max(0,value.expiresAt-Date.now()));
-        workspaceNote.textContent='Existing private session verified; no second password is needed.';unlockControls(true);publishWorkspace();
-      }catch{if(ticket===workspaceEpoch){revokeWorkspace();workspaceNote.textContent='Private session verification is unavailable. Controls remain locked.';}}
+        const value=await Promise.race([physical,deadline]);if(ticket!==workspaceEpoch||!canProbe(renewOnly))return;
+        if(value.expiresAt===null||value.expiresAt<=Date.now()){if(renewOnly)workspaceManualLock=true;revokeWorkspace(value.review?'review':'unknown');workspaceNote.textContent='Private session could not be verified. Reload to sign in again if needed.';return;}
+        workspaceExpiresAt=value.expiresAt;workspaceMode='private_workspace';workspaceRenewPending=false;clearTimeout(workspaceExpiry);workspaceExpiry=setTimeout(expireWorkspace,Math.max(0,value.expiresAt-Date.now()));
+        workspaceNote.textContent='Existing private session verified; no second password is needed.';if(!renewOnly||!workspaceManualLock)unlockControls(true);publishWorkspace();
+      }catch{if(ticket===workspaceEpoch){if(renewOnly)workspaceManualLock=true;revokeWorkspace();workspaceNote.textContent='Private session verification is unavailable. Controls remain locked.';}}
       finally{if(ticket===workspaceEpoch){clearTimeout(workspaceDeadline);workspaceDeadline=null;workspaceController=null;}workspaceWorking=false;retryWorkspaceWhenSettled();}
     }
     gate.addEventListener('click',()=>{if(workspaceExpiresAt!==null&&workspaceExpiresAt<=Date.now())revokeWorkspace();if(controlsUnlocked){lock();gate.focus({preventScroll:true});return;}if(workspaceCandidate()&&workspaceMode!=='review'){workspaceManualLock=false;void probeWorkspace();return;}feedback.textContent='';input.value='';if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');gate.setAttribute('aria-expanded','true');input.focus();});
@@ -131,11 +133,11 @@
       }catch{if(ticket===attempt){feedback.textContent='Controls remain locked. Verification could not complete; try again after checking the site preview session.';input.focus();}}
       finally{password='';if(ticket===attempt){clearTimeout(timeout);timeout=null;controller=null;submit.disabled=false;form.removeAttribute('aria-busy');}}
     });
-    document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(workspaceCandidate()&&workspaceUnderlying&&!dialog.open){event.preventDefault();lock();gate.focus({preventScroll:true});return;}if(dialog.open){event.preventDefault();cancelDialog();return;}if(controlsUnlocked){event.preventDefault();lock();gate.focus({preventScroll:true});}});
+    document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;if(workspaceCandidate()&&(workspaceUnderlying||workspaceRenewPending)&&!dialog.open){event.preventDefault();lock();gate.focus({preventScroll:true});return;}if(dialog.open){event.preventDefault();cancelDialog();return;}if(controlsUnlocked){event.preventDefault();lock();gate.focus({preventScroll:true});}});
     window.addEventListener('pageshow',event=>{if(event.persisted){cancelWorkspaceProbe();revokeWorkspace();workspaceManualLock=false;if(workspaceCandidate())void probeWorkspace();}});
     window.addEventListener('pagehide',()=>{cancelWorkspaceProbe();if(workspaceCandidate())revokeWorkspace();});
-    document.addEventListener('visibilitychange',()=>{if(!workspaceCandidate())return;if(document.hidden)cancelWorkspaceProbe();else if(canProbe()){if(workspaceExpiresAt!==null&&workspaceExpiresAt<=Date.now())revokeWorkspace();workspaceRetryWanted=true;void probeWorkspace();}});
-    window.addEventListener('online',()=>{if(canProbe()){workspaceRetryWanted=true;void probeWorkspace();}});
+    document.addEventListener('visibilitychange',()=>{if(!workspaceCandidate())return;if(document.hidden)cancelWorkspaceProbe();else if(workspaceExpiresAt!==null&&workspaceExpiresAt<=Date.now())expireWorkspace();else{const renewOnly=workspaceRenewPending&&localWorkspace();if(canProbe(renewOnly)){workspaceRetryWanted=renewOnly?'local-renew':true;void probeWorkspace(renewOnly);}}});
+    window.addEventListener('online',()=>{if(workspaceExpiresAt!==null&&workspaceExpiresAt<=Date.now()){expireWorkspace();return;}const renewOnly=workspaceRenewPending&&localWorkspace();if(canProbe(renewOnly)){workspaceRetryWanted=renewOnly?'local-renew':true;void probeWorkspace(renewOnly);}});
     window.addEventListener('offline',()=>{if(workspaceCandidate())cancelWorkspaceProbe();});
     document.addEventListener('astraprivateworkspacecandidate',()=>{if(workspaceCandidate()){if(!workspaceNote.isConnected)access.append(workspaceNote);if(canProbe())void probeWorkspace();}else{cancelWorkspaceProbe();revokeWorkspace();}});
     lock(false);

@@ -1,3 +1,5 @@
+import {createSearchIdentityRegistration} from './api-search-identity-registration.mjs';
+import {createFastCurrentRegistryRegistration} from './api-fast-current-registration.mjs';
 import {FixedFashionPilotOwner} from './fixed-fashion-pilot-owner.mjs';
 import {DurableObject} from 'cloudflare:workers';
 import {apiIndexOwnerConfiguration,ApiIndexOwnerBridge} from './api-index-owner-bridge.mjs';
@@ -30,7 +32,14 @@ export class ApiGrantCollector extends DurableObject {
       }
       try{this.core.fixedFashionPilot=new FixedFashionPilotOwner(ctx,env,this.core);}catch{this.core.fixedFashionPilotInitialization='unavailable';}
       this.privateHealth = new ApiPrivateHealth(ctx, env, this.core);
-      this.privateCash = new ApiPrivateCashAlarm(ctx, env, this.core);
+      const fastRegistration=await createFastCurrentRegistryRegistration(ctx,env,this.core,this.recurring);
+      if(fastRegistration){this.fastCurrentRegistration=fastRegistration;this.privateHealth.fastCurrentDelegate=fastRegistration.delegate;}
+      const searchRegistration=await createSearchIdentityRegistration(ctx,env,this.core,this.recurring,{baseDelegate:fastRegistration?.delegate??this.recurring});
+      if(searchRegistration?.delegate){this.searchIdentityRegistration=searchRegistration;this.privateHealth.searchIdentityDelegate=searchRegistration.delegate;}
+      const registryDelegate=searchRegistration?.delegate??fastRegistration?.delegate;
+      this.privateCash = registryDelegate
+        ? new ApiPrivateCashAlarm(ctx,env,this.core,{registryDelegate})
+        : new ApiPrivateCashAlarm(ctx, env, this.core);
       await this.privateCash.initialize();
       this.scheduler = new ApiAlarmScheduler(ctx, env, this.core,{firstPass:this.firstPass,recurring:this.recurring,...(this.privateCash.hasMux?{alarmControl:this.privateCash.providerControl}:{})});
     });

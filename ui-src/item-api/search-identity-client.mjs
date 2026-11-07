@@ -1,0 +1,47 @@
+import {SEARCH_IDENTITY_DEFINITION,matchesSearchIdentityDefinition} from '../../ops/api-search-identity-definition.mjs';
+// Own-site complete collection only. No price fanout/provider/raw receipt access.
+import {parseStrictJson,sha256} from '../../ops/api-price-item-dto.mjs';
+import {need,publicEpoch,parseIdentityManifest,parseIdentityPage,validateCompleteIdentityRows,SEARCH_IDENTITY_ROUTE,ownIdentityBytes,identityByteLength} from '../../ops/api-search-identity-contract.mjs';
+import {validateSearchIdentityHeaders,validateSearchIdentityPageHeaders,searchIdentityEtag} from '../../ops/api-search-identity-protocol.mjs';
+const clone=v=>structuredClone(v),abort=()=>Object.assign(Error('identity_aborted'),{name:'AbortError'});
+export function createSearchIdentityClient({enabled=false,isEnabled=()=>true,fetcher,expectedEpoch,expectedDefinition=SEARCH_IDENTITY_DEFINITION,now=Date.now,monotonic=()=>performance.now(),ttlMs=30000,timeoutMs=30000,readTimeoutMs=10000}={}){
+ if(enabled===true)publicEpoch(expectedEpoch);for(const [n,v,max]of[['ttl',ttlMs,60000],['deadline',timeoutMs,30000],['read',readTimeoutMs,10000]])if(!Number.isSafeInteger(v)||v<1||v>max)throw TypeError('identity_'+n+'_bound');
+ expectedDefinition=structuredClone(expectedDefinition);let good=null,flight=null,epoch=0,floor=0,floorIndex=null,expires=0,retryAt=0,failures=0,blocked=false,lastFailure=null;
+ const active=()=>{try{return enabled===true&&isEnabled()===true&&!blocked;}catch{return false;}};
+ const view=(mode=good?.mode)=>good?clone({manifest:good.manifest,rows:good.rows,mode}):null;
+ function cancelTask(){if(flight){flight.cancelled=true;for(const c of flight.controllers)c.abort();}}
+ function revoke(){epoch++;good=null;expires=0;cancelTask();}
+ function failure(latch,reason){if(latch.reported)return;latch.reported=true;lastFailure=reason;expires=0;retryAt=now()+Math.min(300000,30000*2**Math.min(failures++,4));}
+ function fence(latch,readEnd=Infinity){need(active()&&latch.epoch===epoch&&!latch.cancelled,'identity_revoked');need(monotonic()<latch.end&&monotonic()<readEnd,'identity_deadline');}
+ async function read(latch,path,limit,previous=null){fence(latch);need(path===SEARCH_IDENTITY_ROUTE+'manifest.json'||new RegExp('^'+SEARCH_IDENTITY_ROUTE+'[a-f0-9]{64}\\.json$').test(path),'identity_fixed_path');const controller=new AbortController(),end=Math.min(latch.end,monotonic()+readTimeoutMs);latch.controllers.add(controller);const timer=setTimeout(()=>controller.abort(),Math.max(1,end-monotonic()));let response,reader=null,finished=false;
+  try{response=await fetcher(path,{method:'GET',credentials:'same-origin',redirect:'error',cache:'no-cache',signal:controller.signal,headers:previous?{'If-None-Match':previous.etag}:{}});fence(latch,end);
+   if(response.status===401){blocked=true;revoke();throw Error('identity_authentication_withdrawn');}
+   need(response.status===200||response.status===304,'identity_http_unavailable');const etag=response.headers.get('ETag');need(/^"search-identities-v2-[a-f0-9]{64}"$/.test(etag??''),'identity_http_etag');
+   if(response.status===304){need(previous&&previous.etag===etag,'identity_http_304');const context=await validateSearchIdentityHeaders(response.headers,{expectedEpoch,bodySha256:previous.sha});fence(latch,end);finished=true;return{...previous,...context,unchanged:true};}
+   need(/^application\/json(?:;|$)/i.test(response.headers.get('Content-Type')??''),'identity_http_type');const declared=response.headers.get('Content-Length');need(declared===null||/^[1-9][0-9]*$/.test(declared)&&Number(declared)<=limit,'identity_http_length');need(response.body&&typeof response.body.getReader==='function','identity_http_body');reader=response.body.getReader();const chunks=[];let n=0,chunksRead=0;
+   for(;;){const p=await reader.read();fence(latch,end);if(p.done)break;need(++chunksRead<=1024,'identity_http_chunks');if(identityByteLength(p.value)===0)continue;const owned=ownIdentityBytes(p.value,limit-n);n+=owned.byteLength;chunks.push(owned);}
+   need(n>0&&(declared===null||n===Number(declared)),'identity_http_length');const raw=new Uint8Array(n);let at=0;for(const p of chunks){raw.set(p,at);at+=p.length;}const sha=await sha256(raw);fence(latch,end);need(etag===searchIdentityEtag(sha),'identity_http_body_hash');const context=path.endsWith('/manifest.json')?await validateSearchIdentityHeaders(response.headers,{expectedEpoch,bodySha256:sha}):validateSearchIdentityPageHeaders(response.headers,{bodySha256:sha});fence(latch,end);finished=true;return{raw,sha,etag,...context,unchanged:false};
+  }finally{clearTimeout(timer);latch.controllers.delete(controller);try{if(!finished){if(reader)await reader.cancel();else if(response?.body&&!response.body.locked)await response.body.cancel();}}finally{reader?.releaseLock();}}
+ }
+ async function collect(latch){
+  const record=await read(latch,SEARCH_IDENTITY_ROUTE+'manifest.json',65536,good?.record),manifest=await parseIdentityManifest(record.raw);fence(latch);need(matchesSearchIdentityDefinition(manifest,expectedDefinition),'identity_reviewed_metadata_definition');need(manifest.publicationEpoch===record.publicationEpoch&&manifest.publicationRevision===record.publicationRevision&&manifest.indexHash===record.indexHash,'identity_manifest_context');
+  need(manifest.publicationRevision>=floor&&(manifest.publicationRevision!==floor||floorIndex===null||manifest.indexHash===floorIndex),'identity_revision_regression');
+  if(good)for(const s of good.manifest.sources){const next=manifest.sources.find(v=>v.operation===s.operation);need(next&&Date.parse(next.capturedAt)>=Date.parse(s.capturedAt),'identity_source_clock_regression');}
+  floor=manifest.publicationRevision;floorIndex=manifest.indexHash;
+  if(record.unchanged){need(good?.manifest.indexHash===manifest.indexHash,'identity_304_collection');fence(latch);const value={...good,record,mode:record.mode};good=value;expires=now()+ttlMs;failures=0;retryAt=0;lastFailure=null;return value;}
+  const prior=good?.pages??new Map(),pages=new Map(),parts=new Array(manifest.pages.length);let cursor=0,failed=false,retained=record.mode==='retained';
+  const workers=Array.from({length:Math.min(4,manifest.pages.length)},async()=>{try{while(!failed){fence(latch);const i=cursor++;if(i>=manifest.pages.length)return;const d=manifest.pages[i];let page=prior.get(d.sha256);
+    if(page){need(page.bytes===d.bytes&&page.firstItemId===d.firstItemId&&page.lastItemId===d.lastItemId&&page.rows.length===d.itemCount,'identity_cached_page');}
+    else{const r=await read(latch,d.url,131072);need(r.sha===d.sha256&&r.raw.length===d.bytes,'identity_page_context');const p=await parseIdentityPage(r.raw,d,manifest);fence(latch);page={rows:p.rows,bytes:d.bytes,firstItemId:d.firstItemId,lastItemId:d.lastItemId};}
+    // Even a hash-reused page must obey the new cohort's source domain.
+    for(const row of page.rows)for(const op of row.currentMemberships)need(manifest.sources.some(s=>s.operation===op),'identity_page_source');pages.set(d.sha256,page);parts[i]=page.rows;
+   }}catch(error){failed=true;for(const c of latch.controllers)c.abort();throw error;}});
+  const results=await Promise.allSettled(workers),error=results.find(r=>r.status==='rejected');if(error)throw error.reason;const rows=validateCompleteIdentityRows(manifest,parts.flat());fence(latch);need(manifest.publicationRevision===floor&&manifest.indexHash===floorIndex,'identity_late_revision');const value={manifest,rows,mode:retained?'retained':'validated_cache',record,pages};good=value;expires=now()+ttlMs;retryAt=0;failures=0;lastFailure=null;return value;
+ }
+ async function wait(latch,signal){if(signal?.aborted)throw abort();let timer,cancel;const deadline=new Promise(resolve=>{timer=setTimeout(()=>{latch.cancelled=true;for(const c of latch.controllers)c.abort();resolve({error:Error('identity_deadline')});},Math.max(1,latch.end-monotonic()));}),stop=new Promise((_,reject)=>{cancel=()=>reject(abort());signal?.addEventListener('abort',cancel,{once:true});});try{return await Promise.race([latch.promise,deadline,stop]);}finally{clearTimeout(timer);signal?.removeEventListener('abort',cancel);}}
+ return Object.freeze({async load({signal}={}){if(!active()||typeof fetcher!=='function')throw Error('identity_not_connected');if(good&&now()<expires&&good.manifest.publicationRevision===floor)return view();if(now()<retryAt){if(good)return view('retained');throw Error('identity_read_backoff');}
+   if(!flight){const latch={epoch,end:monotonic()+timeoutMs,controllers:new Set(),cancelled:false,reported:false,promise:null};flight=latch;latch.promise=collect(latch).then(value=>({value}),error=>({error})).finally(()=>{if(flight===latch)flight=null;});}
+   const latch=flight,result=await wait(latch,signal);if(result.error){failure(latch,result.error.message);if(good&&active())return view('retained');throw result.error;}need(active()&&latch.epoch===epoch&&!latch.cancelled,'identity_revoked');return view(result.value.mode);},
+  clear(){revoke();lastFailure='identity_disabled';retryAt=0;},resetAccess(){revoke();blocked=false;retryAt=0;lastFailure=null;},
+  state(){return{mode:blocked?'authentication_unavailable':good?(lastFailure||good.manifest.publicationRevision<floor?'retained':good.mode):'unavailable',itemCount:good?.manifest.itemCount??0,indexHash:good?.manifest.indexHash??null,sourceSnapshots:clone(good?.manifest.sources??[]),latestObservedRevision:floor,retainedRevision:good?.manifest.publicationRevision??null,physicalFlight:flight!==null,retryAt,blocked,lastFailure,priceAuthority:false};}});
+}

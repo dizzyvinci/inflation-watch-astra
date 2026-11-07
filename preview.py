@@ -20,6 +20,7 @@ from local_nx_history_reader import LocalNxHistoryReader
 from local_item_hour_reader import LocalItemHourReader
 from local_calculations_reader import LocalCalculationsReader, inject_local_availability
 from local_stamp_reference_reader import LocalStampReferenceReader, inject_local_availability as inject_stamp_availability
+from local_current_search_reader import LocalCurrentSearchReader, attach_current_search_reader, inject_local_availability as inject_current_search_availability
 from local_own_site_session import (OwnSiteSession, AuthenticationUnavailable, attach_readers, control_response,
                                    local_request_allowed, read_password)
 
@@ -35,11 +36,13 @@ _item_hours = LocalItemHourReader(ROOT)
 _calculations = LocalCalculationsReader(ROOT, enabled=lambda: os.environ.get("LOCAL_API_CALCULATIONS") == "1")
 _stamps = LocalStampReferenceReader(ROOT, enabled=lambda: os.environ.get("LOCAL_STAMP_REFERENCES") == "1")
 _own_session = OwnSiteSession()
+_current_search = LocalCurrentSearchReader(ROOT, config=lambda: os.environ.get("LOCAL_CURRENT_SEARCH_JSON"))
 
 def enable_private_own_site(password):
     _own_session.configure(password)
     attach_readers(_own_session, cash=_cash, nx=_nx, items=_items, nx_history=_nx_history,
                    item_hours=_item_hours, calculations=_calculations, stamp_references=_stamps)
+    attach_current_search_reader(_own_session, _current_search)
 
 
 
@@ -229,7 +232,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             path = ROOT / 'dist' / 'index.html'
             if path.stat().st_size > 2_000_000:return False
             raw = path.read_bytes()
-            body = inject_stamp_availability(inject_local_availability(raw, _calculations.active()), _stamps.active())
+            body = inject_current_search_availability(inject_stamp_availability(inject_local_availability(raw, _calculations.active()), _stamps.active()), _current_search.available())
         except (OSError, ValueError):return False
         if body == raw:return False
         self.send_response(200)
@@ -240,7 +243,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return True
     def _serve_catalog(self):
         self._catalog_response = False
-        response = _calculations.handle(self.command, self.path, self.headers,
+        response = _current_search.handle(self.command, self.path, self.headers,
+                               bind_host=self.server.server_address[0],client_host=self.client_address[0],port=self.server.server_address[1])
+        if response is None:response = _calculations.handle(self.command, self.path, self.headers,
                                         bind_host=self.server.server_address[0],client_host=self.client_address[0])
         if response is None:response = _stamps.handle(self.command, self.path, self.headers,
                                bind_host=self.server.server_address[0],client_host=self.client_address[0],port=self.server.server_address[1])

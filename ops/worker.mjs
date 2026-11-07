@@ -1,3 +1,5 @@
+import {createCurrentSubsetPublicRoute} from './api-search-identity-public-routes.mjs';
+const currentSearchIdentityFetch=createCurrentSubsetPublicRoute('identities');
 import {maybeRunApprovedApiSchemaProbe} from './api-cron-hook.mjs';
 import seed from '../dist/data.json' with { type: 'json' };
 import seedVersion from '../dist/version.json' with { type: 'json' };
@@ -666,6 +668,7 @@ async function handleFetch(request, env, ctx) {
   if(path==='/api-nx-offers.json')return publicNxFetch(request,env);
  if(path==='/api-nx-history.json'||path.startsWith('/api-nx-history/'))return publicNxHistoryFetch(request,env);
   if(path==='/api-item-history'||path.startsWith('/api-item-history/'))return publicItemHourFetch(request,env);
+  if(path.startsWith('/api-search-identities/v2/'))return currentSearchIdentityFetch(request,env);
   if(path.startsWith('/api-item-prices/'))return publicItemPriceFetch(request,env);
   if(path==='/api-item-identities.json'||path.startsWith('/api-item-identities/'))return publicItemIdentitiesFetch(request,env);
   if (path === '/market-index.json' || path.startsWith('/market-item/')) return catalogFetch(request, env, ctx);

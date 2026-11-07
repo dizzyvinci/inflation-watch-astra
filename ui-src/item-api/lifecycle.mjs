@@ -21,6 +21,7 @@ export function createItemPanelLifecycle({container,mountPanel,loader,getTimezon
   }catch(error){
    if(token!==epoch||ownController.signal.aborted)return{status:'stale'};
    if(error?.code==='access_denied'){clear();onStatus('access_denied',{hasData:false,reason:'access_denied'});return{status:'access_denied'};}
+   if(error?.code==='not_found'){clear();onStatus('unavailable',{hasData:false,reason:'not_found'});return{status:'unavailable',reason:'not_found'};}
    const status=handle?'retained':'unavailable';onStatus(status,{hasData:!!handle,reason:error?.code??'unavailable'});return{status};
   }finally{if(flight===task)flight=null;}})();flight=task;return task.promise;
  }

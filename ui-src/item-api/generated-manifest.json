@@ -15,6 +15,10 @@
       "sha256": "8b0943e5c84153a5e1a48f2748cc95543cc93d17b09b3999204dc83be87a5561"
     },
     {
+      "path": "ops/api-fast-item-public-protocol.mjs",
+      "sha256": "b9196caa5f96f93da9ebef8eacb7c6774aa9ea996a51d18c2d395da65a6c0b8b"
+    },
+    {
       "path": "ops/api-item-discovery-contract.mjs",
       "sha256": "79aa11a5d881027f26d645c4820fb0107ff5555021ba5b26f01e98c6a1886f1c"
     },
@@ -33,6 +37,18 @@
     {
       "path": "ops/api-raw-prices-decoder.mjs",
       "sha256": "7c998f9ba7e72d77a7e6f5b26010c9983a126dd50c584be9d16f618411c1be28"
+    },
+    {
+      "path": "ops/api-search-identity-contract.mjs",
+      "sha256": "1490eeec107940678126d9e5784b858abfa5db956e99a3479fbaf4e753b5ceef"
+    },
+    {
+      "path": "ops/api-search-identity-definition.mjs",
+      "sha256": "d6e8c814d1a32d84c810f7647e64d5c386fef102f1962ac0fd65ea6e7201f304"
+    },
+    {
+      "path": "ops/api-search-identity-protocol.mjs",
+      "sha256": "f47685eeefe0921d04b4729e3ff4355105f4692722d460a99dc34e907ba31608"
     },
     {
       "path": "ops/bounded-base64.mjs",
@@ -60,7 +76,7 @@
     },
     {
       "path": "ui-src/item-api/entry.mjs",
-      "sha256": "687b0551fe75964e377644968835e01c6310d9a78aef9eafca3d8d42a6ca9f60"
+      "sha256": "34dee62d36a3a773c6279fd84838e7da003f7fb0b776be3498a251a50f6138f6"
     },
     {
       "path": "ui-src/item-api/history.mjs",
@@ -68,11 +84,11 @@
     },
     {
       "path": "ui-src/item-api/item-loader.mjs",
-      "sha256": "1db122b7ba6218179880fbb1541d440a32be912196a9aa6a7988a64b3c6904d1"
+      "sha256": "0dea4a62eb2a5b67192cf9dbb4d1583d9bdfe37e6b888eb42cf70df468e2e875"
     },
     {
       "path": "ui-src/item-api/lifecycle.mjs",
-      "sha256": "a4089f66c2eca583ca6503addd2130737aa22db4ee3191eda7ec5c928b347a45"
+      "sha256": "fecc595d49b9d21315de0d8c604e196faa5a06e4b78d94a7859121dc59b2416d"
     },
     {
       "path": "ui-src/item-api/panel.mjs",
@@ -81,11 +97,27 @@
     {
       "path": "ui-src/item-api/reference-status.mjs",
       "sha256": "d314ad72f628779cd972d92b5fa87bac17ec4ae818b87c3095319062480ff687"
+    },
+    {
+      "path": "ui-src/item-api/search-identity-bridge.mjs",
+      "sha256": "9d4d12edd226e2d5e0f2f63b5da1e471cd77e7124f3d6d9ed157b914d060e10c"
+    },
+    {
+      "path": "ui-src/item-api/search-identity-client.mjs",
+      "sha256": "35954058bd75c10d9d582003f941f1d79ce5459b225de35b4d0b9f6dd152ae3f"
+    },
+    {
+      "path": "ui-src/item-api/search-price-relation.mjs",
+      "sha256": "fac8a66f6d547ad7f531744dae9070f8960f22eff204d307ef49591964e255c3"
+    },
+    {
+      "path": "ui-src/item-api/search-selected-price.mjs",
+      "sha256": "bda61b02e7e4a9f76d0d7f63ff0f7b75b247ed2c7ac720f0c8ec29f5e7711930"
     }
   ],
   "output": {
     "path": "web/item-api-preview.js",
-    "sha256": "c56b6aabcc4254eeed04ac3b79922ca7f3ade5a39b620c0aa30cca2041473ed3",
-    "bytes": 128628
+    "sha256": "85a44b0f0f4f434f97b8f98207769f8c1dc44724476c4e1a82b12e3aeca3b667",
+    "bytes": 168079
   }
 }

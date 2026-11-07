@@ -80,9 +80,13 @@ export class FastCurrentImmutableWriter{
   // Existing immutable key or an earlier lost acknowledgement: verify only this
   // exact known artifact. A conflict is review, never an overwrite or deletion.
   const existing=await this.io(j,beforeIO,'get:'+key,async()=>{
-   const object=await this.bucket.get(key);if(!object)throw new Retry();need(object.size===bytes(text)&&object.body?.getReader,'fast_writer_existing_artifact');
-   const reader=object.body.getReader(),parts=[];let n=0,chunks=0;try{for(;;){const v=await reader.read();if(v.done)break;need(v.value instanceof Uint8Array&&++chunks<=1024,'fast_writer_existing_artifact');n+=v.value.length;need(n<=bytes(text),'fast_writer_existing_artifact');parts.push(v.value)}}finally{reader.releaseLock()}
-   const raw=new Uint8Array(n);let at=0;for(const b of parts){raw.set(b,at);at+=b.length}return raw;
+   const object=await this.bucket.get(key);if(!object)throw new Retry();let reader=null;const parts=[];let n=0,chunks=0;
+   try{
+    need(object.size===bytes(text)&&object.body?.getReader,'fast_writer_existing_artifact');reader=object.body.getReader();
+    for(;;){const v=await reader.read();if(v.done)break;need(v.value instanceof Uint8Array&&++chunks<=1024,'fast_writer_existing_artifact');n+=v.value.length;need(n<=bytes(text),'fast_writer_existing_artifact');parts.push(v.value)}
+    const raw=new Uint8Array(n);let at=0;for(const b of parts){raw.set(b,at);at+=b.length}return raw;
+   }catch(error){if(reader)await reader.cancel().catch(()=>{});else if(object.body?.cancel)await object.body.cancel().catch(()=>{});throw error;}finally{if(reader)reader.releaseLock();}
+
   });need(existing.length===bytes(text)&&await sha256(existing)===sha,'fast_writer_immutable_conflict');this.fence(j);
  }
  async perform(j,beforeIO){

@@ -1,3 +1,5 @@
+import {isOwnedSearchIdentityRegistryDelegate} from './api-search-identity-registration.mjs';
+import {isOwnedFastCurrentRegistryDelegate} from './api-fast-current-registration.mjs';
 // WORK proposal: one existing owner/alarm, separate raw-provider and private-decode events.
 import {PrivateCashMaterializer} from './api-private-cash-materializer.mjs';
 import bindings from './api-cash-bindings-v1.json' with {type:'json'};
@@ -27,8 +29,9 @@ export function privateCashConfig(env){
 }
 
 export class ApiPrivateCashAlarm{
-  constructor(ctx,env,core){
-    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.recurringWork=core.recurring;this.indexWork=core.indexBridge;this.fashionPilot=core.fixedFashionPilot;
+  constructor(ctx,env,core,{registryDelegate=null}={}){
+    if(registryDelegate!==null&&!isOwnedFastCurrentRegistryDelegate(registryDelegate,ctx,core,core.recurring)&&!isOwnedSearchIdentityRegistryDelegate(registryDelegate,ctx,core,core.recurring))throw TypeError('fast_registration_same_owner_delegate');
+    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.recurringWork=registryDelegate??core.recurring;this.indexWork=core.indexBridge;this.fashionPilot=core.fixedFashionPilot;
     // A retained mux must keep tracking legacy provider set/delete operations
     // while the private feature is off. Never create one just for default-off.
     this.hasMux=!!core.row("SELECT name FROM sqlite_master WHERE type='table' AND name='api_cash_alarm_mux'")&&

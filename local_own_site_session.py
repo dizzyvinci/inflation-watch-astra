@@ -34,6 +34,8 @@ def route_limit(path):
     need(type(path) is str and len(path)<=250 and '%' not in path and '\\' not in path)
     if path in {'/api-cash-items.json','/api-nx-offers.json','/api-market-calculations.json'}:return 100000 if path=='/api-cash-items.json' else 600000
     if path in {'/api-nx-history.json','/api-item-history/1082002/manifest.json','/api-stamp-references.json'}:return 131072
+    if path=='/api-search-identities/v2/manifest.json':return 65536
+    if re.fullmatch(r'/api-search-identities/v2/[a-f0-9]{64}\.json',path):return 131072
     suffix=r'(?:\?generation=[a-f0-9]{64})?'
     if re.fullmatch(r'/api-item-identities\.json'+suffix,path):return 65536
     if re.fullmatch(r'/api-item-prices/[1-9][0-9]{0,8}\.json'+suffix,path):return 300000
@@ -41,6 +43,11 @@ def route_limit(path):
     if re.fullmatch(r'/api-nx-history/[a-f0-9]{64}\.json\?generation=[a-f0-9]{64}',path):return 196608
     if re.fullmatch(r'/api-item-history/1082002/week/[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{1,3}-[a-f0-9]{64}\.json\?generation=[a-f0-9]{64}',path):return 262144
     raise AuthenticationUnavailable()
+def valid_conditions(path,conditions):
+    need(type(conditions)is dict and set(conditions)<={'If-None-Match','X-Astra-Request-Item-Protocol'})
+    need(all(type(v)is str and len(v)<=160 and '\r'not in v and '\n'not in v for v in conditions.values()))
+    if 'X-Astra-Request-Item-Protocol'in conditions:need(conditions['X-Astra-Request-Item-Protocol']=='fast-current-v1' and re.fullmatch(r'/api-item-prices/[1-9][0-9]{0,8}\.json(?:\?generation=[a-f0-9]{64})?',path)is not None)
+
 @dataclass(frozen=True)
 class RawResponse:
     status:int
@@ -113,9 +120,8 @@ class OwnSiteSession:
             need(self.enabled and epoch==self.epoch and job['done'])
             if job['error'] is not None:raise job['error']
             return job['value']
-    def _request(self,path,*,timeout,limit,login_password=None,conditions=None):
-        need(type(conditions or {}) is dict and set(conditions or {})<={'If-None-Match'})
-        need(all(type(v) is str and len(v)<=160 and '\r' not in v and '\n' not in v for v in (conditions or {}).values()))
+    def _request(self,path,*,timeout,limit,login_password=None,conditions=None,on_fast_withdrawal=None):
+        valid_conditions(path,conditions if conditions is not None else {})
         if login_password is not None:need(path=='/__preview_login' and not conditions and limit==0)
         else:need((path==STATUS and limit==4096 and not conditions) or (path!=STATUS and route_limit(path)==limit))
         deadline=self.clock()+timeout;headers={'Accept':'application/json','Accept-Encoding':'identity','User-Agent':'InflationWatch-LocalPreview/1.0 (+https://inflation.gg/)'}
@@ -139,7 +145,10 @@ class OwnSiteSession:
                 c=cookies[0];need(re.fullmatch(r'[0-9]{10}\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}',c.value) is not None and self.wall()<c.expires<=self.wall()+28805)
                 return jar
             need('set-cookie' not in h)
-            if status!=200:return RawResponse(status,h,b'')
+            fast_negative=(conditions or {}).get('X-Astra-Request-Item-Protocol')=='fast-current-v1' and status in (404,409)
+            if status!=200 and not fast_negative:return RawResponse(status,h,b'')
+            if fast_negative:limit=4096
+            if status==404 and fast_negative and h.get('x-astra-api-item-protocol')=='fast-current-v1' and re.fullmatch(r'[a-z][a-z0-9-]{0,63}',h.get('x-astra-api-item-epoch','')) and on_fast_withdrawal is not None:on_fast_withdrawal(dict(h))
             need(h.get('content-encoding','identity')=='identity');length=h.get('content-length');need(length is None or length.isdigit() and int(length)<=limit)
             parts=[];size=0
             while True:
@@ -162,17 +171,28 @@ class OwnSiteSession:
             if self.epoch==epoch:self.epoch+=1;self._jar.clear();self.profile=None;self.access_mode='unknown';self.access_revision+=1
     def get(self,path,conditions,timeout,response_type):
         need(type(timeout) in (int,float) and math.isfinite(timeout) and 0<timeout<=MAX_TIMEOUT);deadline=self.clock()+timeout
-        limit=route_limit(path);need(type(conditions) is dict and set(conditions)<={'If-None-Match'} and all(type(v) is str and len(v)<=160 and '\r' not in v and '\n' not in v for v in conditions.values()))
+        limit=route_limit(path);valid_conditions(path,conditions)
         # Exact reader ETag is forwarded separately; credentials remain only jar-owned.
         for attempt in range(2):
             left=deadline-self.clock();need(left>0);self._ensure_login(left)
             with self.cv:epoch=self.epoch
+            observed_withdrawal={}
+            def observe(h):
+                with self.cv:
+                    if self.enabled and self.epoch==epoch:
+                        observed_withdrawal['headers']=dict(h)
+                        if h.get('x-astra-preview')=='review':self._review(epoch)
             def read():
                 # Private request helper owns all headers, with only a bounded ETag condition.
+                if conditions.get('X-Astra-Request-Item-Protocol')=='fast-current-v1':return self._request(path,conditions=conditions,timeout=timeout,limit=limit,on_fast_withdrawal=observe)
                 return self._request(path,conditions=conditions,timeout=timeout,limit=limit)
             left=deadline-self.clock();need(left>0)
-            try:r=self._run(('data',path,conditions.get('If-None-Match')),read,left,epoch)
+            key=('data',path,conditions.get('If-None-Match'))
+            if 'X-Astra-Request-Item-Protocol'in conditions:key+=('fast-current-v1',)
+            try:r=self._run(key,read,left,epoch)
             except AuthenticationUnavailable as e:
+                with self.cv:
+                    if e.status!=401 and self.enabled and self.epoch==epoch and observed_withdrawal:return response_type(404,observed_withdrawal['headers'],b'')
                 if e.status!=401:raise
                 self._invalidate(epoch)
                 if attempt==0:continue
@@ -186,9 +206,9 @@ class OwnSiteSession:
                     with self.cv:self._failure(self.epoch,401)
                     raise AuthenticationUnavailable(401)
                 raise AuthenticationUnavailable()
-            if r.status in (200,304):
+            if r.status in (200,304) or conditions.get('X-Astra-Request-Item-Protocol')=='fast-current-v1' and r.status in (404,409):
                 need(r.headers.get('x-astra-preview') in {'review','password'})
-                if r.status==200:need(r.headers.get('content-type','').split(';')[0].strip().lower()=='application/json')
+                if r.status!=304:need(r.headers.get('content-type','').split(';')[0].strip().lower()=='application/json')
                 if r.headers.get('x-astra-preview')!='password':
                     with self.cv:self._review(epoch)
             return response_type(r.status,r.headers,r.body)
