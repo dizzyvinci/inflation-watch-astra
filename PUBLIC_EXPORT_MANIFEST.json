@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-07T16:07:29+00:00",
+  "exportedAt": "2026-11-07T16:49:17+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7583,7 +7583,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 327,
-      "sha256": "4a3f276d1c5102572ae66c4b06156d6f18dd569c21c965bac9ff8637ad619418"
+      "sha256": "13900d29bf59d14e8efae33846d03d4682487cc024c9af4d70fb45d858e3f442"
     },
     {
       "path": "cache/market.json",
@@ -7668,7 +7668,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "f918cdb9460b82b99972372c08248c9d0b345489ac51430abb0ea47ab33d7117"
+      "sha256": "b8b15b1c0843915e7b6f8d23449a4e4735e4944cc37323828a6d86d326e053d3"
     },
     {
       "path": "dist/_headers",
@@ -16616,6 +16616,11 @@
       "sha256": "f6c5ed14923531e41ca7483545d5bb63b049135652ceafa7361c549bd5349e89"
     },
     {
+      "path": "dist/data-f8f1ea24abbc5a65.json",
+      "bytes": 992941,
+      "sha256": "f8f1ea24abbc5a65f6bd5f096addcaa66b7df903410e6767c9b39347fd874e7d"
+    },
+    {
       "path": "dist/data-faba8188c3c07fcd.json",
       "bytes": 992898,
       "sha256": "faba8188c3c07fcdbe8547cc15c3637e9b2e728c292310272b08b383616ba79e"
@@ -16648,7 +16653,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992941,
-      "sha256": "75b14deb3099b660cb76918b43e885d314c3847007f09fa1eeb7a1348d0e837c"
+      "sha256": "f8f1ea24abbc5a65f6bd5f096addcaa66b7df903410e6767c9b39347fd874e7d"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16668,7 +16673,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "f918cdb9460b82b99972372c08248c9d0b345489ac51430abb0ea47ab33d7117"
+      "sha256": "b8b15b1c0843915e7b6f8d23449a4e4735e4944cc37323828a6d86d326e053d3"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16968,7 +16973,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "35e6d600ceeede312bfc7c2f3144b9e4c1a306d2e144523b0570341d2b86840b"
+      "sha256": "182b3bafc449b13d8d5739ad89bd9da82291f40668db0363ba66ccd64af632e9"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -18867,13 +18872,13 @@
     },
     {
       "path": "tests/item-api-fast-build.test.mjs",
-      "bytes": 2075,
-      "sha256": "87a7b285d1fbc5d215b223153faa521fc47e7f4c5ef5bf6ea9e96bfc76ac500b"
+      "bytes": 2438,
+      "sha256": "19c5706e0152d6db6f59cc065b9ab2f43565ef42ea6f32c00c0ad40cfa335164"
     },
     {
       "path": "tests/item-api-fast-generated-entry.test.mjs",
-      "bytes": 4620,
-      "sha256": "8b974d2686b2cf77e6e898c89792ef471abd993695922c2afefd40de52c2aa3a"
+      "bytes": 4775,
+      "sha256": "638b9b58574ccca2cd31c6e7eb9cfeb14d0da574088a184b4a78c5a1120e0c0d"
     },
     {
       "path": "tests/item-api-fixture.mjs",
@@ -18883,7 +18888,7 @@
     {
       "path": "tests/item-api-generated.test.mjs",
       "bytes": 1187,
-      "sha256": "3f8df7472bf7a006101bcbf3efb9d3306072f13f54f5f3128a92b5596e70dead"
+      "sha256": "daa173e3de1d41c95a92484ba4c48d984169396297504766c11d1b23e5ca03c0"
     },
     {
       "path": "tests/item-api-off-state.test.mjs",
@@ -19342,8 +19347,8 @@
     },
     {
       "path": "tests/search-identity-owner.test.mjs",
-      "bytes": 8129,
-      "sha256": "027d28e146df59ce76f73d6be766fc5ae7b2a327fb87bb2397d164ff52455751"
+      "bytes": 11406,
+      "sha256": "1ce1fecb2e018c2b81d8f9bb2526d5ccee255bccdb788ecd3b20f209298e82af"
     },
     {
       "path": "tests/search-identity-pipeline.test.mjs",
