@@ -1,3 +1,6 @@
+import {STAMP_DEFINITION_SHA256} from './stamp-reference-definition.mjs';
+import {stampReferenceConfiguration,isOwnedStampReferenceOwner} from './stamp-reference-owner.mjs';
+import {fixedFashionPilotHealth} from './fixed-fashion-pilot-owner.mjs';
 import {committedCalculationVerificationPins} from './api-index-verification-health.mjs';
 import {privateItemDiscoveryDecisionHealth as privateItemDiscoveryProgressHealth} from './api-item-discovery-progress-health.mjs';
 import {privateSqliteStorageHealth} from './api-private-sqlite-size-health.mjs';
@@ -112,6 +115,8 @@ export class ApiPrivateHealth{
     const itemHourExport=await privateItemHourExportHealth(this.core,this.env,checkedAt);
     const sqliteStorage=privateSqliteStorageHealth(this.ctx,this.env,{checkedAt});
     const discoveryProgress=privateItemDiscoveryProgressHealth(this.core);
+    const fashionPilot=fixedFashionPilotHealth(this.core);
+    const stampCfg=stampReferenceConfiguration(this.env);let stampReferences=null;if(stampCfg.status!=='disabled'){const owner=this.core.indexBridge?.stampReferences;stampReferences=stampCfg.status==='ready'&&isOwnedStampReferenceOwner(owner,this.ctx,this.core)?owner.diagnosticSnapshot(checkedAt):{diagnosticVersion:1,profile:'control_and_committed_capture',operatorCheckedAt:checkedAt,status:stampCfg.status==='ready'?'not_initialized':'invalid_configuration',definitionHash:STAMP_DEFINITION_SHA256,registryArtifactSha256:null,verificationPins:null,pendingSample:[],pendingCoverage:'not_checked',physicalIoPending:null,underlyingActionPending:null,preparationPending:null,flightScope:'current_owner_instance_only_not_global_diagnosis',remoteAvailability:'not_checked',qualifiedIndividualTrades:0};}
     const caps=[config.grantedPerDay,config.operatorDailyRequestCap].filter(value=>integer(value)&&value>0);
     const safe={schemaVersion:1,kind:'private_api_collector_health',providerAlarmRecoveryVersion:1,checkedAt,
       checkedAtMeaning:'owner_check_completion_not_market_observation',
@@ -137,6 +142,8 @@ export class ApiPrivateHealth{
       ...(config.nxSchemaProbesEnabled===true?{nxSchemaProbes:this.nxSchemaProbeProgress(config),completedNxProbeReceipts:this.completedNxProbeReceipts(config)}:{}),
       ...(sqliteStorage===null?{}:{privateSqliteStorage:sqliteStorage}),
       ...(discoveryProgress===null?{}:{privateItemDiscoveryProgress:discoveryProgress}),
+      ...(fashionPilot===null?{}:{privateFashionQuotePilot:fashionPilot}),
+      ...(stampReferences===null?{}:{privateStampReferences:stampReferences}),
       dailyCeilingMeaning:'configured_restriction_not_an_inferred_provider_daily_grant'};
     this.ctx.storage.transactionSync(()=>{
       const row=this.core.row('SELECT revision FROM api_private_health WHERE id=1');

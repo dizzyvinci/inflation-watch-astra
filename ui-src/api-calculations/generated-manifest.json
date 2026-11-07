@@ -24,7 +24,7 @@
     },
     {
       "path": "ui-src/api-calculations/entry.mjs",
-      "sha256": "3fe697d2a10be666dbab547849f83aa56134d1a14ccdee4b516fad3847b8b7cf"
+      "sha256": "8c0ef75b5730c81d1c2d34bd7610fe91d3bdf39d1e7831f6b750c6d2baea06bf"
     },
     {
       "path": "ui-src/api-calculations/runtime.mjs",
@@ -37,7 +37,7 @@
   ],
   "output": {
     "path": "web/api-calculations.js",
-    "sha256": "43a02b00e6738e034fb1caa6df2d7e566ed4237c254117e4cb31cd3ef4b6bff4",
-    "bytes": 79808
+    "sha256": "e04a0b46e531809d5415baf799670da2aa2704acb1fb74770e8035321517e4a4",
+    "bytes": 79867
   }
 }

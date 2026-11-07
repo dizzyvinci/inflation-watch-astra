@@ -23,6 +23,8 @@ import {createPublicItemIdentitiesRoute} from './api-public-item-identity-routes
 const publicItemIdentitiesFetch=createPublicItemIdentitiesRoute();
 import {createPublicCalculationsRoute,calculationsAvailability} from './api-public-calculations-routes.mjs';
 const publicCalculationsFetch=createPublicCalculationsRoute();
+import {createPublicStampReferenceRoute,stampReferencesAvailability} from './stamp-reference-reader.mjs';
+const publicStampReferenceFetch=createPublicStampReferenceRoute();
 
 const catalogProject = createCachedProjectionFactory(catalogIdentities);
 export const catalogIdentityVersion = catalogProject.identityVersion;
@@ -658,6 +660,7 @@ async function serveSnapshot(request, env, data) {
 async function handleFetch(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname;
+  if(path==='/api-stamp-references.json')return publicStampReferenceFetch(request,env);
   if(path==='/api-market-calculations.json')return publicCalculationsFetch(request,env);
   if(path==='/api-cash-items.json')return publicCashFetch(request,env);
   if(path==='/api-nx-offers.json')return publicNxFetch(request,env);
@@ -684,7 +687,7 @@ async function handleFetch(request, env, ctx) {
       response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
       return response;
     }
-    return calculationsAvailability(asset,env,request);
+    return stampReferencesAvailability(calculationsAvailability(asset,env,request),env,request);
   }
   const cache = globalThis.caches?.default;
   const cacheKey = new Request(`${url.origin}${path}`, { method: 'GET' });

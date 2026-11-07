@@ -1,0 +1,43 @@
+{
+  "kind": "generated_nx_stamp_finder",
+  "buildVersion": "0.28.2",
+  "inputs": [
+    {
+      "path": "ops/api-item-reference-protocol.mjs",
+      "sha256": "ff6544350f45f5b6da9b8121537d0d0dc68a382f6282740caaa84356f66ea31e"
+    },
+    {
+      "path": "ops/api-price-item-dto.mjs",
+      "sha256": "2c8315dbbc01470d8a4ca999f085e9485c07e6274e700c67cd0c5d758c8c6ae5"
+    },
+    {
+      "path": "ops/stamp-reference-contract.mjs",
+      "sha256": "000af25c1eb2c77e9804a299bfbeef43a97d783d06a6d64b6af7b727df05a144"
+    },
+    {
+      "path": "ops/stamp-reference-definition.mjs",
+      "sha256": "74bfc085aebf94d711622ecd1e663ae4bee1a6657d0103a3c638191f4829aa6e"
+    },
+    {
+      "path": "ui-src/nx-stamp/entry.mjs",
+      "sha256": "7689ffa36eb24c07dcbe3d7f7f469bcba93759e82503843f3f44fa913fd3457c"
+    },
+    {
+      "path": "ui-src/nx-stamp/model.mjs",
+      "sha256": "5a2788e252d876041acb9a5c0fb57299db44bcf655835318d9cbe16c32744cf6"
+    },
+    {
+      "path": "ui-src/nx-stamp/registry.mjs",
+      "sha256": "9544096e01cef5fc19300dc554875ffd6e703acb97736e1a018f914f0a4ef421"
+    },
+    {
+      "path": "ui-src/nx-stamp/shared-client.mjs",
+      "sha256": "ecb239754cca2bf130f3a65bb235f6b937dbf3fc2012ad4b297f7093a2708123"
+    }
+  ],
+  "output": {
+    "path": "web/nx-stamp-finder.js",
+    "sha256": "1ac3c3e2aa7a023c93663d38d31d84fd7428dd69edda1caa9b2bf1e4e0dc6569",
+    "bytes": 205227
+  }
+}

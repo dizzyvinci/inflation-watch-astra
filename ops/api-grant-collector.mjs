@@ -1,5 +1,8 @@
+import {FixedFashionPilotOwner} from './fixed-fashion-pilot-owner.mjs';
 import {DurableObject} from 'cloudflare:workers';
 import {apiIndexOwnerConfiguration,ApiIndexOwnerBridge} from './api-index-owner-bridge.mjs';
+import {StampReferenceOwner,stampReferenceConfiguration} from './stamp-reference-owner.mjs';
+import {loadStampReferenceDefinition} from './stamp-reference-contract.mjs';
 import * as indexApi from './api-index-calculations.mjs';
 import {loadApiIndexDefinition} from './api-index-definition.mjs';
 import {ApiCollectorCore} from './api-collector-core.mjs';
@@ -23,8 +26,9 @@ export class ApiGrantCollector extends DurableObject {
       if(apiIndexOwnerConfiguration(env).status==='ready'){
         // A failed optional compiled definition closes this feature, never the raw owner.
         try{const definition=await loadApiIndexDefinition();const registry=this.recurring.registry;
-          if(registry){this.core.indexBridge=new ApiIndexOwnerBridge(ctx,env,this.core,{definition,api:indexApi,registry});registry.setCalculationSink(this.core.indexBridge);}}catch{this.core.indexBridgeInitialization='definition_or_scope_review';}
+          if(registry){let stampReferences=null;try{const stampCfg=stampReferenceConfiguration(env);if(stampCfg.status==='ready'){const stampDefinition=await loadStampReferenceDefinition();if(stampDefinition.definitionHash===stampCfg.definitionHash)stampReferences=new StampReferenceOwner(ctx,env,this.core,registry,stampDefinition,{enabled:true});else this.core.stampReferenceInitialization='definition_review';}}catch{this.core.stampReferenceInitialization='optional_initialization_review';}this.core.indexBridge=new ApiIndexOwnerBridge(ctx,env,this.core,{definition,api:indexApi,registry,stampReferences});registry.setCalculationSink(this.core.indexBridge);}}catch{this.core.indexBridgeInitialization='definition_or_scope_review';}
       }
+      try{this.core.fixedFashionPilot=new FixedFashionPilotOwner(ctx,env,this.core);}catch{this.core.fixedFashionPilotInitialization='unavailable';}
       this.privateHealth = new ApiPrivateHealth(ctx, env, this.core);
       this.privateCash = new ApiPrivateCashAlarm(ctx, env, this.core);
       await this.privateCash.initialize();

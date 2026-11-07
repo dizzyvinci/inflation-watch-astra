@@ -103,11 +103,12 @@ class LocalItemReader:
         self.transport=transport;self.validator=validator or (lambda raw,c:validate(raw,c,protocol_root=root))
         self.monotonic=monotonic;self.wall=wall;self.wait_seconds=wait_seconds
         self.max_entries=max_entries;self.max_bytes=max_bytes;self.max_flights=max_flights
-        self.cv=threading.Condition();self.entries=OrderedDict();self.flights=set();self.manifest=None
+        self.cv=threading.Condition();self.entries=OrderedDict();self.flights=set();self.manifest=None;self.epoch=0
+    def _blank(self):return {'raw':None,'dto':None,'etag':None,'generation':None,'mode':None,'due':0,'failures':0,'error':None,'status':503,'checked':None}
     def _entry(self,key):
         e=self.entries.get(key)
         if e is None:
-            e={'raw':None,'dto':None,'etag':None,'generation':None,'mode':None,'due':0,'failures':0,'error':None,'status':503,'checked':None}
+            e=self._blank()
             self.entries[key]=e
         self.entries.move_to_end(key)
         self._trim()
@@ -129,8 +130,8 @@ class LocalItemReader:
             if self.monotonic()<e['due']:return dict(e)
             if len(self.flights)>=self.max_flights:return dict(e)
             self.flights.add(key);conditions={'If-None-Match':e['etag']} if e['raw'] and not (r['kind']=='page' and self.manifest and e['generation']!=self.manifest['indexHash']) else {}
-            old=dict(e);manifest=self.manifest
-        error=None;status=503;retry=None;fresh=None
+            old=dict(e);manifest=self.manifest;epoch=self.epoch
+        error=None;status=503;retry=None;fresh=None;clear=False
         try:
             response=self.transport(key,conditions,TIMEOUT);status=response.status;h=response.headers
             prefix='X-Astra-API-Item-' if r['kind']=='item' else 'X-Astra-API-Identity-'
@@ -163,7 +164,7 @@ class LocalItemReader:
                         need(n is not None and n['retrievedAt']>=previous['retrievedAt'])
                 fresh={'raw':response.body,'dto':dto,'etag':etag,'generation':generation,'mode':mode}
             else:
-                error='own_site_unavailable'
+                error='own_site_unavailable';clear=status in (401,403,404)
                 if status==429:
                     v=header(h,'Retry-After')
                     try:retry=float(v) if v and v.isdigit() else parsedate_to_datetime(v).timestamp()-self.wall() if v else None
@@ -174,22 +175,37 @@ class LocalItemReader:
         except Exception:error='own_site_reader_error'
         finally:
             with self.cv:
-                if fresh:
-                    if r['kind']=='page' and (self.manifest is None or self.manifest['indexHash']!=fresh['generation']):
-                        error='identity_generation_changed';fresh=None;status=409
-                    elif r['kind']=='item' and any(x['dto'] and x['dto']['sourceCapturedAt']>fresh['dto']['sourceCapturedAt'] for k,x in self.entries.items() if k.split('?')[0]==r['path']):
-                        error='source_clock_regression';fresh=None
-                    elif r['kind']=='manifest' and self.manifest and any(not any(n['operation']==s['operation'] and n['retrievedAt']>=s['retrievedAt'] for n in fresh['dto']['sources']) for s in self.manifest['sources']):
-                        error='source_clock_regression';fresh=None
+                withdrawn=False
+                if clear and epoch==self.epoch:
+                    self.epoch+=1;withdrawn=True
+                    if status in (401,403):
+                        self.manifest=None;affected=list(self.entries.values())
+                    elif r['kind']=='item':
+                        affected=[v for k,v in self.entries.items() if k.split('?')[0]==r['path']]
+                    else:
+                        self.manifest=None;affected=[v for k,v in self.entries.items() if k.split('?')[0].startswith('/api-item-identities')]
+                    for entry in affected:
+                        entry.update(self._blank());entry.update(status=status,error='own_site_unavailable',due=self.monotonic()+30)
+                # Other in-flight item/manifest/page callbacks must not restore
+                # a withdrawn namespace or overwrite the new access state.
+                if epoch==self.epoch or withdrawn:
                     if fresh:
-                        e.update(fresh)
-                        if r['kind']=='manifest':self.manifest=e['dto']
-                e['checked']=iso(self.wall());e['error']=error;e['status']=status
-                if error:
-                    e['failures']=min(8,e['failures']+1);delay=min(300,30*2**min(e['failures']-1,4))
-                    if retry is not None and math.isfinite(retry):delay=max(delay,min(3600,max(0,retry)))
-                else:e['failures']=0;delay=TTL
-                e['due']=self.monotonic()+delay;self.flights.discard(key);self._trim();self.cv.notify_all()
+                        if r['kind']=='page' and (self.manifest is None or self.manifest['indexHash']!=fresh['generation']):
+                            error='identity_generation_changed';fresh=None;status=409
+                        elif r['kind']=='item' and any(x['dto'] and x['dto']['sourceCapturedAt']>fresh['dto']['sourceCapturedAt'] for k,x in self.entries.items() if k.split('?')[0]==r['path']):
+                            error='source_clock_regression';fresh=None
+                        elif r['kind']=='manifest' and self.manifest and any(not any(n['operation']==s['operation'] and n['retrievedAt']>=s['retrievedAt'] for n in fresh['dto']['sources']) for s in self.manifest['sources']):
+                            error='source_clock_regression';fresh=None
+                        if fresh:
+                            e.update(fresh)
+                            if r['kind']=='manifest':self.manifest=e['dto']
+                    e['checked']=iso(self.wall());e['error']=error;e['status']=status
+                    if error:
+                        e['failures']=min(8,e['failures']+1);delay=min(300,30*2**min(e['failures']-1,4))
+                        if retry is not None and math.isfinite(retry):delay=max(delay,min(3600,max(0,retry)))
+                    else:e['failures']=0;delay=TTL
+                    e['due']=self.monotonic()+delay
+                self.flights.discard(key);self._trim();self.cv.notify_all()
         return dict(e)
     def handle(self,method,path,headers,*,bind_host='127.0.0.1',client_host='127.0.0.1'):
         # Unrelated preview handlers remain untouched.
@@ -209,16 +225,16 @@ class LocalItemReader:
         try:r=route(path)
         except (Invalid,ValueError,TypeError):return respond(400,b'{"error":"invalid_local_path"}')
         if r['kind']=='page':
-            self._get(route(MANIFEST))
+            m=self._get(route(MANIFEST))
             with self.cv:manifest=self.manifest
-            if manifest is None:return respond(503,b'{"error":"identity_reference_unavailable"}')
+            if manifest is None:return respond(m['status'] if m['status'] in (401,403,404) else 503,b'{"error":"identity_reference_unavailable"}')
             if r['wanted'] and r['wanted']!=manifest['indexHash']:return respond(409,b'{"error":"generation_changed"}')
             if not any(d['sha256']==r['pageHash'] for d in manifest['pages']):return respond(404,b'{"error":"page_not_in_current_index"}')
         e=self._get(r)
         if e['status']==409:return respond(409,b'{"error":"generation_changed"}')
         if e['raw'] is None:
             common['Retry-After']=str(max(1,math.ceil(e['due']-self.monotonic())))
-            return respond(404 if e['status']==404 else 503,b'{"error":"local_item_reference_unavailable","sourceObservedAt":null}')
+            return respond(e['status'] if e['status'] in (401,403,404) else 503,b'{"error":"local_item_reference_unavailable","sourceObservedAt":null}')
         if r['kind']=='page':
             with self.cv:current=self.manifest
             if current is None or current['indexHash']!=e['generation']:return respond(503,b'{"error":"identity_reference_unavailable"}')

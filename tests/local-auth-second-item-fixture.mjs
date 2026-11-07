@@ -1,0 +1,15 @@
+// Small synthetic source rows only. No retained/provider material.
+import {createIdentityIndex,createPriceSnapshot,sha256} from '../ops/api-price-item-dto.mjs';
+import {makePublicItemReference} from '../ops/api-item-reference-protocol.mjs';
+const TARGET=1082001;
+const enc=new TextEncoder(),hash=s=>sha256(enc.encode(s)),at='2026-11-05T21:00:00.000Z',generation='a'.repeat(64);
+const meta=JSON.stringify([{id:TARGET,name:'Synthetic Glove'}]),metadata=[{raw:enc.encode(meta),expectedSha256:await hash(meta),sourceUrl:'https://maplestory.io/api/MCW/1/item/list?cashFilter=false&count=10000',format:'noncash_list'}];
+const raw=JSON.stringify([{item_id:TARGET,sold:null,seen:null,reference:null,by_stats:[{upgrades:1,slots_left:3,stats:{'14':1},reference:null}],by_scrolls:[],by_attack:[]}]);
+const index=await createIdentityIndex(metadata),snap=await createPriceSnapshot(enc.encode(raw),{expectedSha256:await hash(raw),context:{operation:'prices',sourceUrl:'https://maplestory.market/api/prices',capturedAt:at,sourceObservedAt:null,captureTimeKind:'http_response_completed'},identities:index});
+const dto=snap.getItem(TARGET),item=await makePublicItemReference(dto,generation,await hash(JSON.stringify(dto)));
+const page={schemaVersion:1,kind:'api_item_identity_page',rows:[{itemId:TARGET,name:'Synthetic Glove',nameStatus:'unique_client_id',sprite:null,spriteStatus:'unavailable',providerBindings:[],memberships:[{operation:'prices',presentInSnapshot:true,lastSeenRetrievedAt:at,latestSnapshotRetrievedAt:at,sourceObservedAt:null}],priceMembership:'in_committed_price_snapshot'}]};
+const pageText=JSON.stringify(page),pageHash=await hash(pageText);
+const unsigned={schemaVersion:1,kind:'api_item_identity_manifest',scope:'accepted_api_identity_union_with_retained_api_memberships',sourceCreditUrl:'https://maplestory.market/?ref=v6kkdvp6',priceProjectionGeneration:generation,identityMetadata:metadata.map(({raw,...s})=>s),spriteBindingsSha256:'b'.repeat(64),providerBindingsSha256:'c'.repeat(64),sources:[{operation:'prices',sourceUrl:'https://maplestory.market/api/prices',retrievedAt:at,sourceObservedAt:null,sourceGeneratedAt:null,sourceGeneratedAtKind:null,itemCount:1}],itemCount:1,pages:[{page:0,firstItemId:TARGET,lastItemId:TARGET,itemCount:1,sha256:pageHash,bytes:enc.encode(pageText).length,url:'/api-item-identities/'+pageHash+'.json'}]};
+const manifest={...unsigned,indexHash:await hash(JSON.stringify(unsigned))};
+async function response(value,kind,gen){const body=JSON.stringify(value),sha=await hash(body),prefix=kind==='item'?'X-Astra-API-Item-':'X-Astra-API-Identity-';return{status:200,headers:{'Content-Type':'application/json; charset=utf-8',ETag:'"'+(kind==='item'?'api-item-':'api-identities-')+sha+'"',[prefix+'Mode']:'validated_cache',[prefix+'Generation']:gen,...(kind==='item'?{[prefix+'Captured-At']:at}:{})},body};}
+console.log(JSON.stringify({item:await response(item,'item',generation),manifest:await response(manifest,'manifest',manifest.indexHash),page:await response(page,'page',manifest.indexHash),pagePath:unsigned.pages[0].url,indexHash:manifest.indexHash,generation,at}));

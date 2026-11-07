@@ -13,7 +13,7 @@ section.innerHTML='<div class="section-heading"><div><p class="eyebrow">MAPLESTO
 const heading=host.querySelector('.page-heading');if(heading)heading.after(section);else host.prepend(section);
 // Keep original source DOM/handlers as a separate option, not a rewritten series.
 const legacy=make('details','panel api-cash-legacy');legacy.id='api-cash-other-sources';const summary=make('summary','','Other dated cash sources · daily / rolling references');legacy.append(summary);
-for(const child of [...host.children])if(child!==section&&child!==heading&&child.id!=='nx-calculator'&&child!==legacy)legacy.append(child);
+for(const child of [...host.children])if(child!==section&&child!==heading&&child.id!=='nx-calculator'&&child.id!=='nx-stamp-finder'&&child!==legacy)legacy.append(child);
 host.append(legacy);const converter=document.getElementById('nx-calculator');if(converter){const note=make('p','api-cash-converter-note','This converter keeps the separate dated daily / rolling cash reference and its original source clock. It does not use the API29 table above.');converter.append(note);}const table=section.querySelector('.api-cash-table');let legacyTouched=false;window.AstraCashActivity?.mount(section.querySelector('.api-cash-controls'));
 summary.addEventListener('click',()=>{legacyTouched=true;});
 function sourceControls(where){

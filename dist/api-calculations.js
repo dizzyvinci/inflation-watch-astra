@@ -1905,6 +1905,7 @@ async function poll() {
     await runtime.refresh();
   } finally {
     running = false;
+    doc.dispatchEvent(new Event("astracalculationcheck"));
     clearTimeout(timer);
     if (!runtime.state().blocked && visible()) timer = setTimeout(poll, Math.max(1e3, runtime.state().nextCheckAt - Date.now()));
   }

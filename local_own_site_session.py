@@ -33,7 +33,7 @@ def metadata(h,status):
 def route_limit(path):
     need(type(path) is str and len(path)<=250 and '%' not in path and '\\' not in path)
     if path in {'/api-cash-items.json','/api-nx-offers.json','/api-market-calculations.json'}:return 100000 if path=='/api-cash-items.json' else 600000
-    if path in {'/api-nx-history.json','/api-item-history/1082002/manifest.json'}:return 131072
+    if path in {'/api-nx-history.json','/api-item-history/1082002/manifest.json','/api-stamp-references.json'}:return 131072
     suffix=r'(?:\?generation=[a-f0-9]{64})?'
     if re.fullmatch(r'/api-item-identities\.json'+suffix,path):return 65536
     if re.fullmatch(r'/api-item-prices/[1-9][0-9]{0,8}\.json'+suffix,path):return 300000
@@ -221,18 +221,30 @@ class OwnSiteSession:
                 if e.access_mode=='review':self._review(epoch)
             raise
 
-def attach_readers(session,*,cash,nx,items,nx_history,item_hours,calculations):
+def reader_response(session,path,conditions,timeout,response_type):
+    """Preserve typed authorization withdrawal, not an unavailable market payload."""
+    try:return session.get(path,conditions,timeout,response_type)
+    except AuthenticationUnavailable as error:
+        if type(error.status) is int and error.status in (401,403,404):
+            return response_type(error.status,{},b'')
+        raise
+
+def attach_readers(session,*,cash,nx,items,nx_history,item_hours,calculations,stamp_references=None):
     """Same existing cache objects and source validators; change only explicit transport."""
     if not session.enabled:return False
     import local_cash_reader as c,local_nx_reader as n,local_item_reader as i,local_nx_history_reader as h,local_item_hour_reader as j,local_calculations_reader as a
     for reader,module,path in [(cash,c,'/api-cash-items.json'),(nx,n,'/api-nx-offers.json'),(calculations,a,'/api-market-calculations.json')]:
         need(isinstance(reader,{'/api-cash-items.json':c.LocalCashReader,'/api-nx-offers.json':n.LocalNxReader,'/api-market-calculations.json':a.LocalCalculationsReader}[path]))
-        reader.transport=lambda conditions,timeout,m=module,p=path:session.get(p,conditions,timeout,m.TransportResponse)
+        reader.transport=lambda conditions,timeout,m=module,p=path:reader_response(session,p,conditions,timeout,m.TransportResponse)
     for reader,module,cls in [(items,i,i.LocalItemReader),(nx_history,h,h.LocalNxHistoryReader),(item_hours,j,j.LocalItemHourReader)]:
         need(isinstance(reader,cls))
         def routed(path,conditions,timeout,m=module):
-            r=m.route(path);return session.get(r['key'],conditions,timeout,m.TransportResponse)
+            r=m.route(path);return reader_response(session,r['key'],conditions,timeout,m.TransportResponse)
         reader.transport=routed
+    if stamp_references is not None:
+        import local_stamp_reference_reader as s
+        need(isinstance(stamp_references,s.LocalStampReferenceReader))
+        stamp_references.transport=lambda conditions,timeout:reader_response(session,s.PATH,conditions,timeout,s.TransportResponse)
     return True
 
 def local_request_allowed(headers,bind_host,client_host,port,*,origin_proof):

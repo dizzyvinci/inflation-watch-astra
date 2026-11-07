@@ -11,7 +11,7 @@ const runtime=createCalculationRuntime({origin:location.origin,available,definit
  notify:state=>doc.dispatchEvent(new CustomEvent('astracalculationchange',{detail:{status:state.status,readerMode:state.readerMode,snapshotHash:state.snapshot?.snapshotHash??null,evidenceSnapshotHash:state.evidenceSnapshot?.snapshotHash??null}}))});
 window.AstraApiCalculations=runtime;
 const visible=()=>!doc.hidden&&navigator.onLine!==false;
-async function poll(){if(!available||running||!visible())return;running=true;try{await runtime.refresh();}finally{running=false;clearTimeout(timer);if(!runtime.state().blocked&&visible())timer=setTimeout(poll,Math.max(1000,runtime.state().nextCheckAt-Date.now()));}}
+async function poll(){if(!available||running||!visible())return;running=true;try{await runtime.refresh();}finally{running=false;doc.dispatchEvent(new Event('astracalculationcheck'));clearTimeout(timer);if(!runtime.state().blocked&&visible())timer=setTimeout(poll,Math.max(1000,runtime.state().nextCheckAt-Date.now()));}}
 doc.addEventListener('visibilitychange',()=>{if(!visible())clearTimeout(timer);else void poll();});
 window.addEventListener('online',()=>void poll());window.addEventListener('offline',()=>clearTimeout(timer));
 doc.addEventListener('input',event=>{if(event.target?.matches?.('#price-check-header-query,#price-check-query'))void poll();});

@@ -28,7 +28,7 @@ export function privateCashConfig(env){
 
 export class ApiPrivateCashAlarm{
   constructor(ctx,env,core){
-    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.recurringWork=core.recurring;this.indexWork=core.indexBridge;
+    this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.recurringWork=core.recurring;this.indexWork=core.indexBridge;this.fashionPilot=core.fixedFashionPilot;
     // A retained mux must keep tracking legacy provider set/delete operations
     // while the private feature is off. Never create one just for default-off.
     this.hasMux=!!core.row("SELECT name FROM sqlite_master WHERE type='table' AND name='api_cash_alarm_mux'")&&
@@ -96,6 +96,7 @@ export class ApiPrivateCashAlarm{
   get recurringActive(){return this.recurringWork?.active===true;}
   get nxArchiveActive(){return this.nxArchiveWork?.active===true;}
   get indexActive(){return this.indexWork?.active===true;}
+  get registryNextDue(){const regular=this.recurringWork.nextDue(),pilot=this.fashionPilot?.nextDue()??null;return regular===null?pilot:pilot===null?regular:Math.min(regular,pilot);}
   get active(){return this.cashActive||this.nxActive||this.itemsActive||this.historyActive||this.discoveryActive||this.recurringActive||this.nxArchiveActive||this.indexActive;}
   row(){return this.core.row('SELECT * FROM api_cash_alarm_mux WHERE id=1');}
   async setProviderAlarm(at){
@@ -115,7 +116,7 @@ export class ApiPrivateCashAlarm{
   get providerControl(){return{setAlarm:at=>this.setProviderAlarm(at),deleteAlarm:()=>this.clearProviderAlarm()};}
   async arm(){
     const row=this.row(),now=this.core.clock();
-    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[]),...(this.nxR2Active?[this.nxPublisher.nextDue()]:[]),...(this.itemsActive?[this.itemWork.nextDue()]:[]),...(this.historyActive?[this.historyWork.nextDue()]:[]),...(this.discoveryActive?[this.discoveryWork.nextDue()]:[]),...(this.recurringActive?[this.recurringWork.nextDue()]:[]),...(this.nxArchiveActive?[this.nxArchiveWork.nextDue()]:[]),...(this.indexActive?[this.indexWork.nextDue()]:[])].filter(value=>value!==null);
+    const choices=[row.provider_at,...(this.cashActive?[row.private_at,this.publisher?.nextDue()??null]:[]),...(this.active?[row.recovery_at]:[]),...(this.nxActive?[this.nxProducer.nextDue()]:[]),...(this.nxR2Active?[this.nxPublisher.nextDue()]:[]),...(this.itemsActive?[this.itemWork.nextDue()]:[]),...(this.historyActive?[this.historyWork.nextDue()]:[]),...(this.discoveryActive?[this.discoveryWork.nextDue()]:[]),...(this.recurringActive?[this.registryNextDue]:[]),...(this.nxArchiveActive?[this.nxArchiveWork.nextDue()]:[]),...(this.indexActive?[this.indexWork.nextDue()]:[])].filter(value=>value!==null);
     if(!choices.length){await this.ctx.storage.deleteAlarm();return null;}
     const at=Math.max(now+1,Math.min(...choices));await this.ctx.storage.setAlarm(at);return at;
   }
@@ -203,7 +204,7 @@ export class ApiPrivateCashAlarm{
     const itemsAt=this.itemsActive?this.itemWork.nextDue():null,itemsDue=itemsAt!==null&&itemsAt<=now;
     const historyAt=this.historyActive?this.historyWork.nextDue():null,historyDue=historyAt!==null&&historyAt<=now;
     const discoveryAt=this.discoveryActive?this.discoveryWork.nextDue():null,discoveryDue=discoveryAt!==null&&discoveryAt<=now;
-    const registryAt=this.recurringActive?this.recurringWork.nextDue():null,registryDue=registryAt!==null&&registryAt<=now;
+    const registryAt=this.recurringActive?this.registryNextDue:null,registryDue=registryAt!==null&&registryAt<=now;
     const nxArchiveAt=this.nxArchiveActive?this.nxArchiveWork.nextDue():null,nxArchiveDue=nxArchiveAt!==null&&nxArchiveAt<=now;
     const indexAt=this.indexActive?this.indexWork.nextDue():null,indexDue=indexAt!==null&&indexAt<=now;
     if(!indexDue&&!privateDue&&!providerDue&&!publicDue&&!nxDue&&!nxR2Due&&!itemsDue&&!historyDue&&!discoveryDue&&!registryDue&&!nxArchiveDue)return'early';
@@ -320,7 +321,8 @@ export class ApiPrivateCashAlarm{
   }
   async runRegistryAlarm(recurringFrame){
     if(!this.recurringActive)return{status:'disabled',eventKind:'private_item_registry',providerAttempted:false};
-    try{await this.armItemsRecovery(this.core.clock()+130000);const result=await this.recurringWork.drainOne(until=>this.armItemsRecovery(until),recurringFrame);this.refreshPrivateDeadline();await this.arm();return{...result,eventKind:'private_item_registry',providerAttempted:false};}
+    if(this.fashionPilot?.active&&this.fashionPilot.shouldRun(this.recurringWork.nextDue())){try{await this.armItemsRecovery(this.core.clock()+130000);const result=await this.fashionPilot.drainOne(until=>this.armItemsRecovery(until));this.refreshPrivateDeadline();await this.arm();return result;}catch{this.fashionPilot.defer();await this.arm();return{status:'private_fixed_fashion_retry',providerAttempted:false};}}
+    try{await this.armItemsRecovery(this.core.clock()+130000);const result=await this.recurringWork.drainOne(until=>this.armItemsRecovery(until),recurringFrame);this.fashionPilot?.registryServed();this.refreshPrivateDeadline();await this.arm();return{...result,eventKind:'private_item_registry',providerAttempted:false};}
     catch{const at=this.recurringWork.defer();try{await this.arm();}catch{if(Number.isSafeInteger(at)){const prior=await this.ctx.storage.getAlarm();await this.ctx.storage.setAlarm(prior===null?at:Math.min(prior,at));}}return{status:'private_item_registry_retry',eventKind:'private_item_registry',providerAttempted:false};}
   }
   async runNxHistoryAlarm(){

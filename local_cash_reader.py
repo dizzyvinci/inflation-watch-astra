@@ -135,7 +135,7 @@ class LocalCashReader:
         self.transport=transport;self.monotonic=monotonic;self.wall=wall;self.wait_seconds=wait_seconds
         if type(wait_seconds) not in (int,float) or not math.isfinite(wait_seconds) or not 0<wait_seconds<=5:_bad('invalid_wait_bound')
         self.condition=threading.Condition();self.inflight=False;self.raw=None;self.dto=None;self.tag=None;self.remote_tag=None;self.upstream_mode=None
-        self.next_due=0;self.checked_at=None;self.last_200_at=None;self.failures=0;self.error=None
+        self.next_due=0;self.checked_at=None;self.last_200_at=None;self.failures=0;self.error=None;self.absent_status=None
     def _refresh(self):
         with self.condition:
             now=self.monotonic()
@@ -146,7 +146,7 @@ class LocalCashReader:
             self.inflight=True;conditions={}
             if self.raw is not None:
                 if self.remote_tag:conditions['If-None-Match']=self.remote_tag
-        error=None;retry=None
+        error=None;retry=None;absent=None
         try:
             response=self.transport(conditions,TIMEOUT)
             metadata=response.headers
@@ -166,6 +166,10 @@ class LocalCashReader:
                     self.last_200_at=_iso(self.wall())
             else:
                 error='own_site_http_'+str(response.status) if response.status in (301,302,303,307,308,401,403,404,429,500,502,503,504) else 'own_site_http_error'
+                if response.status in (401,403,404):
+                    absent=response.status
+                    with self.condition:
+                        self.raw=self.dto=self.tag=self.remote_tag=self.upstream_mode=None
                 if response.status==429:
                     value=_header(metadata,'Retry-After')
                     if value:
@@ -177,7 +181,7 @@ class LocalCashReader:
         except Exception:error='own_site_reader_error'
         finally:
             with self.condition:
-                self.checked_at=_iso(self.wall());self.error=error
+                self.checked_at=_iso(self.wall());self.error=error;self.absent_status=absent
                 if error:
                     self.failures=min(self.failures+1,8);delay=min(300,30*2**min(self.failures-1,4))
                     if retry is not None and math.isfinite(retry):delay=max(delay,min(3600,max(0,retry)))
@@ -207,7 +211,7 @@ class LocalCashReader:
         with self.condition:
             if self.raw is None:
                 common['Retry-After']=str(max(1,math.ceil(self.next_due-self.monotonic())))
-                common['X-Local-Cash-State']='unavailable';return respond(503,b'{"status":"local_public_cash_unavailable"}')
+                common['X-Local-Cash-State']='not_published' if self.absent_status==404 else 'access_required' if self.absent_status in (401,403) else 'unavailable';return respond(self.absent_status or 503,b'{"status":"not_published"}' if self.absent_status==404 else b'{"status":"access_required"}' if self.absent_status in (401,403) else b'{"status":"local_public_cash_unavailable"}')
             common['ETag']=self.tag;common['X-Local-Cash-State']='stale_last_good' if self.error else 'refreshing_last_good' if self.inflight else 'retained_upstream' if self.upstream_mode=='retained_last_good' else 'cached_verified'
             common['X-Astra-Cash-Phase']='published_subset'
             common['X-Astra-Cash-Mode']='retained_last_good' if self.error or self.inflight or self.upstream_mode=='retained_last_good' else 'accepted_cache'

@@ -54,6 +54,7 @@ export function createItemReferenceClient({fetcher,enabled=false,isEnabled=()=>t
    if(!flights.has(itemId)){if(flights.size>=maxFlights)throw failure('read_capacity');const task=read(itemId);flights.set(itemId,task);task.finally(()=>{if(flights.get(itemId)===task)flights.delete(itemId);}).catch(()=>{});}
    value=await wait(flights.get(itemId),signal);return{data:structuredClone(value.data),mode:value.mode};
   },
+  peekCachedReferences(){return !active()||blocked?{status:blocked?'access_denied':'disabled',references:[]}:{status:'cache_only',references:[...cache.values()].map(v=>({data:structuredClone(v.data),mode:now()<v.expires?v.mode:'retained'}))};},
   state(id){const value=cache.get(id);return value?{mode:value.mode,capturedAt:value.data.sourceCapturedAt,generation:value.data.projectionGeneration}:null;},
   diagnostic(id){const f=failures.get(id),value=cache.get(id);return{blocked,reason:blocked?'access_denied':f?.reason??null,retryAt:f?.retryAt??0,partial:!!value&&(value.data.item.aggregate.sold===null||value.data.item.aggregate.asking===null||value.data.item.aggregate.reference===null)};},
   cancelItem(id){const c=controllers.get(id);if(c){c.cancelled=true;c.controller.abort();}return(flights.get(id)??Promise.resolve()).catch(()=>{});},

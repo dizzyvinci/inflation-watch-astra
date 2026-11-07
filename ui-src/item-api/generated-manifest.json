@@ -56,7 +56,7 @@
     },
     {
       "path": "ui-src/item-api/entry.mjs",
-      "sha256": "6e204bdd1587bb9cbb55feb1ef6ef205cc36c2db9059268e29ce8858626a379b"
+      "sha256": "9beb0d7b775165095d3688c5eb5cab2b44c10204f33d3315390bb0b63e94a618"
     },
     {
       "path": "ui-src/item-api/history.mjs",
@@ -64,7 +64,7 @@
     },
     {
       "path": "ui-src/item-api/item-loader.mjs",
-      "sha256": "b4ebf7653f6b94797c6c7815be3216c4882edb1c914a1c6ec81feff1f53bddc6"
+      "sha256": "1db122b7ba6218179880fbb1541d440a32be912196a9aa6a7988a64b3c6904d1"
     },
     {
       "path": "ui-src/item-api/lifecycle.mjs",
@@ -77,7 +77,7 @@
   ],
   "output": {
     "path": "web/item-api-preview.js",
-    "sha256": "7a689313089e492cc388a2dbf33367bd36c14b0fb6fe23f86837a882fdcad6ed",
-    "bytes": 123533
+    "sha256": "16b59d79ac2efd913725f55f2d6089f216b8649dfaf3faf9c70c61379ef3f21f",
+    "bytes": 124035
   }
 }

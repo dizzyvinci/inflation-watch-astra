@@ -4,7 +4,7 @@ import {historyEnvelopeText,parseHistoryEnvelope} from './api-private-item-histo
 import {validateIndexPointer} from './api-index-publication-contract.mjs';
 import {prepareOverviewAdaptation,overviewIndex79FromAdaptation,isOverviewAdaptation} from './api-overview-adapter.mjs';
 import {sharedOverviewConfiguration} from './api-shared-overview-guard.mjs';
-import {isOwnedRecurringRegistry} from './item-recurring-registry.mjs';
+import {isOwnedRecurringRegistry,isOwnedStampRegistryCommit} from './item-recurring-registry.mjs';
 import {OverviewProfileError} from './api-overview-snapshot.mjs';
 const HASH=/^[a-f0-9]{64}$/,KEY=/^_private\/provider-api\/v1\/receipts\/(\d{12,16})-(prices|overview)-([a-f0-9]{64})\.json$/;
 const URLS={prices:'https://maplestory.market/api/prices',overview:'https://maplestory.market/api/market/overview'},PREFIX='_private/provider-api/v1/api-index/v1/',LEASE=130000;
@@ -31,9 +31,13 @@ export function ownedCalculationSource(core,{receiptKey,jobKey}){
  check(r&&r.operation===m[2]&&r.state==='complete'&&r.round_ref===g.probeRound&&r.receipt_key===receiptKey&&r.result==='success'&&r.grant_ref===g.grantReference&&integer(r.at,1)&&r.at<=core.clock(),'completed_owned_source');
  return Object.freeze({receiptKey,jobKey:r.job_key,operation:r.operation,sourceAttemptId:r.id,requestAt:r.at,rawSha256:m[3],sourceUrl:URLS[r.operation],grantReference:g.grantReference,roundReference:g.probeRound});
 }
+const STAMP_INDEX_OWNERS=new WeakMap(),STAMP_INDEX_PHASES=new WeakMap();
+export function isOwnedStampIndexBridge(value,ctx,core,registry){const b=STAMP_INDEX_OWNERS.get(value);return !!b&&b.ctx===ctx&&b.core===core&&b.registry===registry;}
+export function isOwnedStampIndexCommit(value,bridge,ctx,core,ticket){const b=STAMP_INDEX_PHASES.get(value);return !!b&&b.bridge===bridge&&b.ctx===ctx&&b.core===core&&b.ticket===ticket;}
 export class ApiIndexOwnerBridge{
  #tickets=new WeakMap();
- constructor(ctx,env,core,{definition=null,api=null,registry=null}={}){
+ #stampTickets=new WeakMap();
+ constructor(ctx,env,core,{definition=null,api=null,registry=null,stampReferences=null}={}){
   this.ctx=ctx;this.env=env;this.core=core;this.definition=definition;this.api=api;this.registry=registry;this.flight=null;
   const cfg=apiIndexOwnerConfiguration(env);this.definitionHash=cfg.definitionHash;
   if(cfg.status!=='ready')return;
@@ -41,7 +45,9 @@ export class ApiIndexOwnerBridge{
   if(!definition||definition.definitionHash!==cfg.definitionHash||!api||!registry)return;
   api.definitionData(definition);this.binding=core.config();if(this.binding.enabled!==true)return;
   this.ensure();
+  STAMP_INDEX_OWNERS.set(this,{ctx,core,registry});this.stampReferences=stampReferences;if(stampReferences)stampReferences.bindBridge(this);
  }
+ get stampReferencePhaseRequired(){return this.stampReferences?.active===true;}
  get active(){try{const c=apiIndexOwnerConfiguration(this.env),g=this.core.config();return c.status==='ready'&&c.definitionHash===this.definitionHash&&this.definition?.definitionHash===c.definitionHash&&!!this.api&&!!this.registry&&this.binding?.enabled===true&&g.enabled===true&&g.grantReference===this.binding.grantReference&&g.probeRound===this.binding.probeRound;}catch{return false;}}
  guard(){if(!this.active)throw new Paused();}
  row(q,...a){return this.core.row(q,...a);}
@@ -81,12 +87,13 @@ export class ApiIndexOwnerBridge{
  }
  async normalize(s,envelope,raw,priceSnapshot=null,overviewAdaptation=null){
   this.validateEnvelope(envelope,s);const context={operation:s.operation,sourceUrl:s.sourceUrl,capturedAt:envelope.capturedAt,sourceObservedAt:null,captureTimeKind:'http_response_completed'};
-  let capture;if(s.operation==='prices'){
+  let capture,stampTicket=null;if(s.operation==='prices'){
    const snapshot=priceSnapshot??await this.registry.createCalculationSnapshot(raw,{...context,rawBodySha256:s.rawSha256});
+   if(this.stampReferences?.active){try{stampTicket=await this.stampReferences.prepareFromSnapshot(this,s,envelope,snapshot);}catch{this.stampReferences.notePreparationFailure();}}
    const dtos=this.definition.targetItemIds.map(id=>snapshot.getItem(id)).filter(Boolean);
    capture=await this.api.normalizeApiPriceSubset(dtos,{context:{...context,rawBodySha256:s.rawSha256},definition:this.definition});
   }else{const shared=sharedOverviewConfiguration(this.env).status==='ready';if(overviewAdaptation&&!shared)throw new Paused();if(shared){check(isOwnedRecurringRegistry(this.registry,this.ctx),'shared_overview_registry_authority');const adaptation=overviewAdaptation??await prepareOverviewAdaptation(raw,{expectedSha256:s.rawSha256,context,definition:this.definition});if(sharedOverviewConfiguration(this.env).status!=='ready')throw new Paused();check(isOverviewAdaptation(adaptation)&&adaptation.source.rawBodySha256===s.rawSha256&&adaptation.source.capturedAt===envelope.capturedAt&&adaptation.source.sourceUrl===s.sourceUrl,'shared_overview_source_binding');const result=overviewIndex79FromAdaptation(adaptation,{definition:this.definition});if(result.status!=='ready')throw new this.api.InvalidCalculation(result.status==='derived_capacity_hold'?'shared_overview_capacity_hold':'shared_overview_profile_review');capture=result.capture;}else capture=await this.api.normalizeOverviewDailySubset(raw,{expectedSha256:s.rawSha256,context,definition:this.definition});}
-  capture=await this.api.validateIndexCapture(capture,{definition:this.definition});check(capture.source.operation===s.operation&&capture.source.rawBodySha256===s.rawSha256&&capture.source.capturedAt===envelope.capturedAt,'normalized_capture_binding');return capture;
+  capture=await this.api.validateIndexCapture(capture,{definition:this.definition});check(capture.source.operation===s.operation&&capture.source.rawBodySha256===s.rawSha256&&capture.source.capturedAt===envelope.capturedAt,'normalized_capture_binding');if(stampTicket)this.#stampTickets.set(capture,stampTicket);return capture;
  }
  async prepareRegistryCapture({job,envelope,raw,priceSnapshot=null,overviewAdaptation=null}){
   if(!this.active||!['prices','overview'].includes(job.operation))return null;
@@ -94,11 +101,12 @@ export class ApiIndexOwnerBridge{
   // The normal path reuses the registry's already normalized prices snapshot.
   // Failures are confined to this optional model; ID admission is never quarantined by it.
   let capture=null,error=false,sharedHold=null;try{capture=await this.normalize(s,envelope,raw,priceSnapshot,overviewAdaptation);}catch(reason){error=true;if(overviewAdaptation&&isOverviewAdaptation(overviewAdaptation)&&sharedOverviewConfiguration(this.env).status==='ready'&&['shared_overview_capacity_hold','shared_overview_profile_review'].includes(reason?.message))sharedHold=reason.message==='shared_overview_capacity_hold'?'capacity_hold':'quarantined';}
-  if(!this.active)return null;const ticket=Object.freeze({});this.#tickets.set(ticket,{s,capture,error,sharedHold,sharedCommit:overviewAdaptation!==null&&isOverviewAdaptation(overviewAdaptation)&&sharedOverviewConfiguration(this.env).status==='ready'});return ticket;
+  if(!this.active)return null;const ticket=Object.freeze({});this.#tickets.set(ticket,{s,capture,error,sharedHold,sharedCommit:overviewAdaptation!==null&&isOverviewAdaptation(overviewAdaptation)&&sharedOverviewConfiguration(this.env).status==='ready',stampTicket:capture?this.#stampTickets.get(capture)??null:null});if(capture)this.#stampTickets.delete(capture);return ticket;
  }
- commitRegistryCapture(ticket){
+ commitRegistryCapture(ticket,stampPhase=null){
   if(ticket===null||!this.active)return;const prepared=this.#tickets.get(ticket);check(prepared,'owned_normalization_ticket');this.#tickets.delete(ticket);const {s,capture,error,sharedHold,sharedCommit}=prepared;
   const current=ownedCalculationSource(this.core,{receiptKey:s.receiptKey,jobKey:s.jobKey});check(Object.keys(s).every(k=>s[k]===current[k]),'prepared_source_rebound');
+  if(prepared.stampTicket&&this.stampReferences?.active){check(isOwnedStampRegistryCommit(stampPhase,this.registry,this.ctx,this.core,ticket),'stamp_registry_commit_phase');this.stampReferences.commitFromRegistry(prepared.stampTicket,{bridge:this,phase:stampPhase,calculationTicket:ticket});check(this.stampReferences.active,'stamp_commit_paused');}
   // A full optional queue never blocks existing registry admission. The raw
   // completed source remains in api_jobs and is reconciled after the backlog.
   const old=this.row('SELECT id FROM api_index_inputs WHERE receipt_key=?',s.receiptKey);
@@ -113,7 +121,8 @@ export class ApiIndexOwnerBridge{
   const body=JSON.stringify(capture);check(bytes(body)<=1048576,'normalized_capture_capacity');
   this.core.sql.exec("UPDATE api_index_inputs SET capture_hash=?,capture_body=?,captured_at=?,phase='archive',last_result='registry_normalization_reused' WHERE receipt_key=? AND state='pending' AND phase='normalize'",capture.captureHash,body,capture.source.capturedAt,s.receiptKey);
  }
- nextDue(){if(!this.active)return null;const running=this.row("SELECT lease_until FROM api_index_inputs WHERE state='running' ORDER BY id LIMIT 1");if(running)return running.lease_until;return this.nextPending()?.available_at??null;}
+ indexNextDue(){if(!this.active)return null;const running=this.row("SELECT lease_until FROM api_index_inputs WHERE state='running' ORDER BY id LIMIT 1");if(running)return running.lease_until;return this.nextPending()?.available_at??null;}
+ nextDue(){const current=this.indexNextDue();if(!this.stampReferences?.active)return current;const stamp=this.stampReferences.nextDue();return current===null?stamp:stamp===null?current:Math.min(current,stamp);}
  nextPending(){const g=this.core.config();return this.row(`SELECT i.* FROM api_index_inputs i WHERE i.state='pending'
   ORDER BY CASE WHEN i.phase NOT IN ('normalize','archive') THEN 0 ELSE 1 END,
    CASE WHEN i.source_attempt=(SELECT MAX(a.id) FROM api_jobs j JOIN api_attempts a ON a.job_key=j.job_key
@@ -121,7 +130,7 @@ export class ApiIndexOwnerBridge{
      AND j.receipt_key=('_private/provider-api/v1/receipts/'||printf('%012d',a.id)||'-'||j.operation||'-'||substr(j.receipt_key,-69))) THEN 0 ELSE 1 END,
    CASE WHEN i.operation='overview' AND CAST(i.request_at/86400000 AS INTEGER)<(SELECT CAST(MAX(a.at)/86400000 AS INTEGER) FROM api_jobs j JOIN api_attempts a ON a.job_key=j.job_key WHERE j.operation='overview' AND j.state='complete' AND j.round_ref=? AND a.grant_ref=? AND a.result='success') THEN 0 ELSE 1 END,
    CASE WHEN i.operation='overview' THEN 0 ELSE 1 END,i.source_attempt DESC,i.id DESC LIMIT 1`,g.probeRound,g.grantReference,g.probeRound,g.grantReference);}
- defer(){if(!this.active)return null;const at=this.core.clock()+30000;this.core.sql.exec("UPDATE api_index_inputs SET available_at=MAX(available_at,?) WHERE state='pending'",at);return at;}
+ defer(){if(!this.active)return null;const at=this.core.clock()+30000;if(this.stampReferences?.active)this.stampReferences.defer();this.core.sql.exec("UPDATE api_index_inputs SET available_at=MAX(available_at,?) WHERE state='pending'",at);return at;}
  claim(){return this.ctx.storage.transactionSync(()=>{
   this.core.sql.exec("UPDATE api_index_inputs SET state='pending',lease_until=NULL,last_result='interrupted' WHERE state='running' AND lease_until<=?",this.core.clock());if(this.row("SELECT 1 FROM api_index_inputs WHERE state='running' LIMIT 1"))return null;
   const job=this.nextPending();if(!job||job.available_at>this.core.clock())return null;
@@ -134,7 +143,7 @@ export class ApiIndexOwnerBridge{
   const result=await io(()=>this.core.env.API_RAW_RECEIPTS.put(key,body,{onlyIf:{etagDoesNotMatch:'*'},httpMetadata:{contentType:'application/json'}}));if(!result)throw new StorageFailure('immutable_index_write_race');
  }
  cells(){const latest=this.row('SELECT MAX(day)day FROM api_index_days').day;if(!latest)return[];const start=new Date(Date.parse(latest+'T00:00:00Z')-(ACTIVE_DAYS-1)*86400000).toISOString().slice(0,10);const rows=this.core.sql.exec('SELECT body FROM api_index_days WHERE day>=? ORDER BY day,item_id LIMIT 5057',start).toArray();check(rows.length<=79*ACTIVE_DAYS,'active_cell_capacity');return rows.map(r=>parsed(r.body));}
- async drainOne(beforeIO){if(!this.active)return{status:'disabled',providerAttempted:false};if(this.flight)return{status:'busy',providerAttempted:false};check(typeof beforeIO==='function','index_recovery_required');this.flight=this.perform(beforeIO);try{return await this.flight;}finally{this.flight=null;}}
+ async drainOne(beforeIO){if(!this.active)return{status:'disabled',providerAttempted:false};if(this.flight)return{status:'busy',providerAttempted:false};check(typeof beforeIO==='function','index_recovery_required');const stamp=this.stampReferences?.active&&this.stampReferences.fairnessStampDue(this.indexNextDue());this.flight=stamp?this.stampReferences.drainOne(beforeIO):this.perform(beforeIO);try{return await this.flight;}finally{this.flight=null;if(this.stampReferences?.active)this.stampReferences.noteKind(stamp?'stamp':'index');}}
  async perform(beforeIO){const job=this.claim();if(!job)return{status:'idle',providerAttempted:false};try{
   await beforeIO(this.core.clock()+LEASE);this.fence(job);
   const source=ownedCalculationSource(this.core,{receiptKey:job.receipt_key,jobKey:job.job_key});
@@ -142,7 +151,7 @@ export class ApiIndexOwnerBridge{
    if(job.operation==='overview'&&sharedOverviewConfiguration(this.env).status==='ready'){check(isOwnedRecurringRegistry(this.registry,this.ctx),'shared_overview_registry_authority');const r=this.row('SELECT state FROM recurring_registry_jobs WHERE receipt_key=?',job.receipt_key);if(!r||r.state==='pending'||r.state==='running')throw new Waiting();check(r.state==='complete','shared_overview_registry_review');const c=this.row('SELECT * FROM recurring_registry_captures WHERE receipt_key=?',job.receipt_key);check(c&&c.operation==='overview'&&c.source_attempt===job.source_attempt&&c.raw_sha===job.raw_sha&&Date.parse(c.request_started_at)===job.request_at,'shared_overview_registry_capture_binding');}
    const o=await io(()=>this.core.env.API_RAW_RECEIPTS.get(job.receipt_key));this.fence(job);check(o&&integer(o.size,1,7500000),'owned_receipt_size');
    let text;try{text=await historyEnvelopeText(o);}catch(e){if(e?.name==='ItemHistoryContractError')throw new ContractFailure('owned_envelope_contract');throw new StorageFailure('owned_envelope_read');}
-   let e;try{e=parseHistoryEnvelope(text);}catch{throw new ContractFailure('owned_envelope_contract');}this.validateEnvelope(e,source);check(e.rawBodyEncoding==='base64'&&typeof e.rawBodyBase64==='string'&&e.rawBodyBase64.length<=6666668&&/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(e.rawBodyBase64),'owned_raw_encoding');const binary=atob(e.rawBodyBase64);check(btoa(binary)===e.rawBodyBase64&&binary.length===e.responseBytes,'owned_raw_bytes');const raw=Uint8Array.from(binary,c=>c.charCodeAt(0));const capture=await this.normalize(source,e,raw);this.fence(job);const body=JSON.stringify(capture);check(bytes(body)<=1048576,'normalized_capture_capacity');this.core.sql.exec("UPDATE api_index_inputs SET capture_body=?,capture_hash=?,captured_at=?,phase='archive',state='pending',lease_until=NULL,available_at=? WHERE id=? AND claim=?",body,capture.captureHash,capture.source.capturedAt,this.core.clock(),job.id,job.claim);return{status:'index_capture_normalized',providerAttempted:false};
+   let e;try{e=parseHistoryEnvelope(text);}catch{throw new ContractFailure('owned_envelope_contract');}this.validateEnvelope(e,source);check(e.rawBodyEncoding==='base64'&&typeof e.rawBodyBase64==='string'&&e.rawBodyBase64.length<=6666668&&/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(e.rawBodyBase64),'owned_raw_encoding');const binary=atob(e.rawBodyBase64);check(btoa(binary)===e.rawBodyBase64&&binary.length===e.responseBytes,'owned_raw_bytes');const raw=Uint8Array.from(binary,c=>c.charCodeAt(0));const capture=await this.normalize(source,e,raw);this.fence(job);const body=JSON.stringify(capture);check(bytes(body)<=1048576,'normalized_capture_capacity');const stampTicket=this.#stampTickets.get(capture);this.#stampTickets.delete(capture);if(stampTicket&&this.stampReferences?.active){this.ctx.storage.transactionSync(()=>{this.fence(job);const phase=Object.freeze({});STAMP_INDEX_PHASES.set(phase,{bridge:this,ctx:this.ctx,core:this.core,ticket:stampTicket});try{this.stampReferences.commitFromIndex(stampTicket,{bridge:this,phase});this.fence(job);check(this.stampReferences.active,'stamp_commit_paused');this.core.sql.exec("UPDATE api_index_inputs SET capture_body=?,capture_hash=?,captured_at=?,phase='archive',state='pending',lease_until=NULL,available_at=? WHERE id=? AND claim=?",body,capture.captureHash,capture.source.capturedAt,this.core.clock(),job.id,job.claim);}finally{STAMP_INDEX_PHASES.delete(phase);}});}else{this.core.sql.exec("UPDATE api_index_inputs SET capture_body=?,capture_hash=?,captured_at=?,phase='archive',state='pending',lease_until=NULL,available_at=? WHERE id=? AND claim=?",body,capture.captureHash,capture.source.capturedAt,this.core.clock(),job.id,job.claim);}return{status:'index_capture_normalized',providerAttempted:false};
   }
   const capture=await this.api.validateIndexCapture(parsed(job.capture_body),{definition:this.definition});this.fence(job);check(capture.captureHash===job.capture_hash&&capture.source.rawBodySha256===job.raw_sha&&capture.source.capturedAt===job.captured_at,'stored_index_capture_binding');
   if(job.phase==='archive'){

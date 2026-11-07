@@ -489,6 +489,9 @@ function createItemReferenceClient({ fetcher, enabled: enabled2 = false, isEnabl
       value = await wait(flights.get(itemId), signal);
       return { data: structuredClone(value.data), mode: value.mode };
     },
+    peekCachedReferences() {
+      return !active() || blocked ? { status: blocked ? "access_denied" : "disabled", references: [] } : { status: "cache_only", references: [...cache.values()].map((v) => ({ data: structuredClone(v.data), mode: now() < v.expires ? v.mode : "retained" })) };
+    },
     state(id2) {
       const value = cache.get(id2);
       return value ? { mode: value.mode, capturedAt: value.data.sourceCapturedAt, generation: value.data.projectionGeneration } : null;
@@ -2179,9 +2182,13 @@ function showItem(args) {
   host.append(status, body);
   args.container.append(host);
   life = createItemPanelLifecycle({ container: body, mountPanel: mountItemPricingPanel, loader: async (query) => {
-    const value = await client.loadItem(query);
-    status.dataset.mode = value.mode;
-    return value.data;
+    try {
+      const value = await client.loadItem(query);
+      status.dataset.mode = value.mode;
+      return value.data;
+    } finally {
+      doc.dispatchEvent(new Event("astrapiitemcache"));
+    }
   }, getTimezone: zone, spriteMap: { ...args.spriteMap, ...Object.fromEntries(rows().filter((r) => r.sprite).map((r) => [r.itemId, r.sprite])) }, onStatus: (value, meta = {}) => {
     const state = client.state(id2), d = client.diagnostic(id2), reason = meta.reason || d.reason, retained = value === "retained" || value === "shown" && state?.mode === "retained";
     status.dataset.status = value;
@@ -2238,7 +2245,7 @@ function mergeSearchRecords(input) {
   }
   return out;
 }
-var api = { available, get enabled() {
+var api = { available, peekCachedReferences: () => client.peekCachedReferences(), get enabled() {
   return enabled;
 }, async setEnabled(value) {
   if (!available) return;
@@ -2253,6 +2260,7 @@ var api = { available, get enabled() {
   if (!enabled) {
     hide();
     doc.dispatchEvent(new CustomEvent("astrapiitemidentities"));
+    doc.dispatchEvent(new Event("astrapiitemcache"));
     if (location.hash.startsWith("#item/")) window.dispatchEvent(new Event("hashchange"));
     return;
   }

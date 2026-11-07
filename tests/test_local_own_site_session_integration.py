@@ -28,7 +28,7 @@ class Tests(unittest.TestCase):
   def method(text):
    tree=ast.parse(text);cls=next(n for n in tree.body if isinstance(n,ast.ClassDef) and n.name=='Handler');node=next(n for n in cls.body if isinstance(n,ast.FunctionDef) and n.name=='_serve_calculation_index');return ast.get_source_segment(text,node)
   self.assertNotIn('_own_session',method(new));self.assertNotIn('data-private-workspace-status',new)
- def test_actual_unchanged_calculation_validator_preserves_raw_lastgood_and_clocks_on_auth401(self):
+ def test_actual_unchanged_calculation_validator_withdraws_raw_on_typed_auth401(self):
   raw=(S/'tests/api-calculations-local-snapshot.json').read_bytes();dto=json.loads(raw);now=[0]
   class Backend(Server):
    def open(self,request,timeout):
@@ -36,9 +36,9 @@ class Tests(unittest.TestCase):
      self.calls.append(('/api-market-calculations.json',request));return Response(request.full_url,200,raw,{'Content-Type':'application/json','X-Astra-Preview':'password','ETag':'"api-calculations-'+hashlib.sha256(raw).hexdigest()+'"','X-Astra-Calculations-Definition-Hash':dto['definitionHash'],'X-Astra-Calculations-Prices-Captured-At':dto['sources']['prices']['capturedAt'],'X-Astra-Calculations-Overview-Captured-At':dto['sources']['overview']['capturedAt'],'X-Astra-Calculations-Mode':'accepted_cache'})
     return super().open(request,timeout)
   backend=Backend();s=auth.OwnSiteSession(opener_factory=backend);s.configure('SYNTHETIC_PASSWORD')
-  reader=calc.LocalCalculationsReader(enabled=True,transport=lambda c,t:s.get(calc.PATH,c,t,calc.TransportResponse),monotonic=lambda:now[0])
+  reader=calc.LocalCalculationsReader(enabled=True,transport=lambda c,t:auth.reader_response(s,calc.PATH,c,t,calc.TransportResponse),monotonic=lambda:now[0])
   get=lambda:reader.handle('GET',calc.PATH,{'Host':'localhost:8765'})
-  a=get();self.assertEqual(a.status,200);self.assertEqual(a.body,raw);capture=a.headers[calc.PREFIX+'Prices-Captured-At'];now[0]=61;backend.fail_data=10;b=get();self.assertEqual(b.status,200);self.assertEqual(b.body,raw);self.assertEqual(b.headers[calc.PREFIX+'Prices-Captured-At'],capture);self.assertEqual(b.headers[calc.PREFIX+'Mode'],'retained_last_good');self.assertIsNotNone(reader.error)
+  a=get();self.assertEqual(a.status,200);self.assertEqual(a.body,raw);capture=a.headers[calc.PREFIX+'Prices-Captured-At'];now[0]=61;backend.fail_data=10;b=get();self.assertEqual(b.status,401);self.assertNotEqual(b.body,raw);self.assertNotIn('ETag',b.headers);self.assertNotIn(calc.PREFIX+'Prices-Captured-At',b.headers);self.assertIsNone(reader.raw);self.assertIsNotNone(reader.error);self.assertEqual(capture,dto['sources']['prices']['capturedAt'])
  def test_status_success_is_closed_and_auth_errors_are_never_data_or_cookie_egress(self):
   s=auth.OwnSiteSession(opener_factory=Server());s.configure('SYNTHETIC_PASSWORD');headers={'Host':'localhost:8765','Origin':'http://localhost:8765','Accept':'application/json','X-Astra-Controls-Status':'1'}
   r=auth.control_response(s,'GET',auth.STATUS,headers,bind_host='127.0.0.1',client_host='127.0.0.1',port=8765);self.assertEqual(r.status,200);self.assertEqual(set(json.loads(r.body)),{'unlocked','mode','expiresAt'});self.assertNotIn('Set-Cookie',r.headers);self.assertNotIn('SYNTHETIC',r.body.decode())
