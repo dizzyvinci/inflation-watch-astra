@@ -751,7 +751,7 @@ test('runtime/config contain no credentials or public collection endpoint', () =
   assert.doesNotMatch(source, /(?:from\s+['"]node:|CLOUDFLARE_API_TOKEN|Authorization\s*:)/);
   assert.equal(wrangler.name, 'inflation-watch-astra');
   assert.equal(wrangler.r2_buckets[0].binding, 'SNAPSHOTS');
-  assert.equal(wrangler.limits.cpu_ms, 5000);
+  assert.equal(wrangler.limits.cpu_ms, 30000);
   assert.equal(wrangler.assets.run_worker_first, true);
   assert.deepEqual(wrangler.triggers.crons, ['3,13,23,33,43,53 * * * *']);
 });

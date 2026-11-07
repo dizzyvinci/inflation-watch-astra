@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-07T04:21:50+00:00",
+  "exportedAt": "2026-11-07T05:43:32+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7583,7 +7583,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 284,
-      "sha256": "533ec7cef91ddc96420846df571824150268d3a239dcbc8bc194f9a6abc051de"
+      "sha256": "32ff586007cc43ad4cdecb30a7fa4abec023d5cbdb9a4ec92046141a7f4117fd"
     },
     {
       "path": "cache/market.json",
@@ -7668,7 +7668,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "a93f0a834c6779f64b18ca5b90f2b71f5daceb3171ff5caf115562eac8e3cf33"
+      "sha256": "a3eecab959e8e036aba83ae202441cc429fab452c74bfef4595b47d286862458"
     },
     {
       "path": "dist/_headers",
@@ -16541,6 +16541,11 @@
       "sha256": "e7e31eb0bbae38f12ad70e83473111f44d692767f85e8d9c123e6dc679108b5c"
     },
     {
+      "path": "dist/data-ed51477e449adc75.json",
+      "bytes": 992898,
+      "sha256": "ed51477e449adc7516711f0021014ae9a5d75396634b0570da86ecffb8790ddc"
+    },
+    {
       "path": "dist/data-ee34ff3cdd18f324.json",
       "bytes": 992898,
       "sha256": "ee34ff3cdd18f3244da9566a502f7005ee2f154b057c5b4a94b1e7d204cb8554"
@@ -16598,7 +16603,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992898,
-      "sha256": "2a3d8e5635024e48a4bcff43f6fd94e7253497bb0b900d611e7091383af27992"
+      "sha256": "ed51477e449adc7516711f0021014ae9a5d75396634b0570da86ecffb8790ddc"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16618,7 +16623,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "a93f0a834c6779f64b18ca5b90f2b71f5daceb3171ff5caf115562eac8e3cf33"
+      "sha256": "a3eecab959e8e036aba83ae202441cc429fab452c74bfef4595b47d286862458"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16918,7 +16923,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "a004b19db6c259524930ba7e668cddf8635a25001e28d6501958257e51593406"
+      "sha256": "d504120d30810f2733c68748cd23161e5683180ea20ea3073ad97dee216ae434"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -17607,8 +17612,8 @@
     },
     {
       "path": "ops/wrangler.jsonc",
-      "bytes": 1156,
-      "sha256": "a79efa041b612776b76db5d99f2fc9fca822af6f714b2b06e362690f2b300686"
+      "bytes": 1157,
+      "sha256": "11b9224b8111bce5d1aae70474f7daa742eb28c81876db8d775ec2f5027f5952"
     },
     {
       "path": "package-lock.json",
@@ -19142,8 +19147,8 @@
     },
     {
       "path": "tests/worker-runtime.test.mjs",
-      "bytes": 67454,
-      "sha256": "3dfe86bd850e3098e18f6bba35422a4b7da59707138ecfd64ebd86e893646a01"
+      "bytes": 67455,
+      "sha256": "b89d1f05ba6fd1b3e35e6b93a65097d4131d69a19fe857232b389b0e08857b61"
     },
     {
       "path": "tests/worker-ui-assets.test.mjs",
