@@ -8,7 +8,7 @@
     },
     {
       "path": "ops/api-price-item-dto.mjs",
-      "sha256": "2c8315dbbc01470d8a4ca999f085e9485c07e6274e700c67cd0c5d758c8c6ae5"
+      "sha256": "50ee059691225e183dcfb48aca061b0cb764c52cdd4faff6e0dade17538536d7"
     },
     {
       "path": "ops/stamp-reference-contract.mjs",

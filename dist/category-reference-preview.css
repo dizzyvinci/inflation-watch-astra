@@ -8,3 +8,6 @@
 .category-reference-note{display:block;text-align:center;font-size:13px;line-height:1.6;padding:12px 10px 4px;color:var(--muted)}
 #category-section:not([data-category-reference="frozen"]) .category-value-label{font-size:15px}
 @media(max-width:700px){.category-reference-preview label{font-size:18px}.category-reference-preview{padding:10px 0}.category-reference-status{font-size:15px}.category-reference-preview select{font-size:16px}}
+
+/* Bound native option width within the narrow category-reference grid. */
+@media(max-width:360px){.category-reference-preview label{width:100%;min-width:0;grid-template-columns:minmax(0,1fr)}#category-reference-select{width:100%;min-width:0}}

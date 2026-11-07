@@ -1,197 +1,85 @@
-# Astra production architecture and operations
+# Astra architecture and operations
 
-This runbook describes `ops/worker.mjs` and `ops/wrangler.jsonc`. The public test is [inflation-watch-astra.dizzyvinci.workers.dev](https://inflation-watch-astra.dizzyvinci.workers.dev/). The custom domain remains pending and is not represented as active.
+This is the current runbook as of November 7, 2026. The earlier runbook is preserved [here](https://github.com/dizzyvinci/inflation-watch-astra/blob/9a76a7e4f03df6c9c362375f950da3139e4e7b24/DEPLOYMENT.md). Historical defaults, approval status and old operator scripts do not override the current verified runtime.
 
-## Verified production record
+## Verified baseline and access
 
-On **November 5, 2026 at 04:43 UTC**, scheduled collection successfully fetched the public daily source, computed the report and published it through the private R2 binding. Public `version.json` reported `status: ok`, `mode: collector` and version `59106aecbc3821ba`. Its referenced immutable JSON was retrieved successfully, with basket version 2, 50 indexed rows and 29 cash rows; its source date matched the pointer.
+The most recently verified deployment at this checkpoint is commit `9a76a7e4f03df6c9c362375f950da3139e4e7b24`, Worker `71348825-95e1-413e-af4f-01fc6725269f`. Both [inflation.gg](https://inflation.gg/) and [the Worker alias](https://inflation-watch-astra.dizzyvinci.workers.dev/) require the existing whole-site password. A signed eight-hour session also unlocks design controls after the actual server session check. A DOM marker or event cannot confer authentication.
 
-| Clock | Verified value |
-| --- | --- |
-| Collector check began | `2026-11-05T04:43:46.813Z` |
-| Last successful full fetch completed | `2026-11-05T04:43:49.137Z` |
-| Provider publication | `2026-11-04T08:30:56+00:00` |
+Personal author information remains omitted from generated HTML and replaced by a DRAFT placeholder. The full Methodology and Compare pages are available after the verified private-session handshake. Preserve the earlier clean public-review restore point if a later API application needs anonymous URL review. Do not change access mode merely to silence a monitor warning.
 
-The provider publication remained dated after collection. This is a record of a successful production invocation, not evidence of new individual trades, a continuously connected authenticated feed, a load test or an uptime guarantee. Later live status is available at [/health.json](https://inflation-watch-astra.dizzyvinci.workers.dev/health.json).
+The deployed CPU execution cap is 30,000 ms. The actual subscription plan, sustainable throughput and exclusive Durable Object headroom are separate questions. Prior bounded HTTP tests and configured client counts do not certify 10,000 concurrent users or a million daily visits.
 
-The first production attempt exposed an edge-runtime incompatibility with fetch redirect mode `error`. The collector now uses supported `manual` mode and rejects redirect responses explicitly, while allowing conditional HTTP 304 responses. It never follows the supplied redirect location. The regression tests verify retention of the last-good report and clocks when a redirect is rejected. Code upgrades also remap obsolete compiled-seed fallback pointers to the current compiled seed without visitor storage writes or a fabricated collection time.
-
-## Delivery and collection
+## Collection and derived publication
 
 ```text
-Code changes → Python static build → Worker + Static Assets deployment
+Public daily collector (existing ten-minute cron)
+  → conditional public-source fetch
+  → frozen-v2 legacy calculation and retained histories
+  → immutable report, then mutable pointer
 
-Scheduled collector, every ten minutes
-  → conditional request to the public daily source
-  → validate and compute using the compiled immutable seed
-  → private raw-feed/state cache in R2
-  → immutable data-<16 hex>.json
-  → version.json pointer published last
+Approved provider (one existing account owner and ledger)
+  → paced, charged request → immutable private raw receipt
+  → validated normalized evidence and original provenance
+  → durable derivative outboxes / immutable bodies
+  → approved typed own-site readers
 
-Visitor → Cloudflare Static Assets for UI/images
-        → Worker edge cache/R2 for allowlisted public JSON
-        → no provider requests
+Browser → whole-site gate → static UI and bounded own-site caches
+        → no provider fetch or visitor-owned collection job
 ```
 
-The frontend checks `version.json`; it must consume `sourceStatus` even when the content version is unchanged. A 304 or unchanged valid 200 updates pointer status without publishing another full report. New source values create a content-addressed report before the pointer advances. The original full cash-denomination seed is always the compute input; a previous report is only retained data/history, never the next basket or NX schedule.
+The provider API is approved and collecting. Runtime secrets and the reviewed grant are server-side; do not read or print their values. The checked-in configuration intentionally contains disabled defaults and is not the live runtime settings inventory. Deploying those defaults over an active owner would be a regression.
 
-Only `/version.json`, `/data.json`, `/data-<16 lowercase hex>.json` and `/health.json` are dynamic public JSON paths. A hashed object must match that exact name format. There is no public collection/admin endpoint. Raw source feed, validators, lock and state use private `_private/` keys and cannot be requested through the snapshot handler. The R2 bucket must remain private; no `r2.dev` URL is required.
+The existing owner, round, Durable Object namespace and key binding must survive code upgrades. Preserve charged attempts, in-flight leases, callbacks, deadlines, explicit pauses, authentication stops and `recoveryVersion1`. Do not create another key consumer, reset the round/ledger, rotate credentials for quota, force a provider callback for proof or bypass browser/session/challenge protection.
 
-Static asset requests avoid Worker execution by default. Selective Worker-first routing applies only to the configured JSON paths. Pointer/status responses use a 30-second edge cache; immutable report responses use a one-year cache. Active-page polling and edge propagation add delay to the scheduled cadence, which is also bounded by the source's actual publication frequency.
+The actual provider allowance is 30 requests/minute; its daily grant is unknown. Operator restrictions are at most 30,000 attempted requests per rolling 24 hours and starts at least 2,500 ms apart. They do not establish a provider daily grant. Honor 401/403 stops and 429/Retry-After. Existing status/prices/catalogue/overview/NX/per-ID schedules share this same accounting. The completed finite 1,551-ID first pass must not silently become a repeated startup backfill.
 
-## Clocks, failure and retained history
+The current calculation bridge consumes accepted receipts for the fixed 50-goods / 29-fixed-NX calibration and actual overview daily history. Downstream browser views reuse validated typed results without new provider requests. This is not a claim of globally single-parse source normalization: fallback paths and the default-Off shared-overview optimization remain separate. Publication, receipt, source day/hour and actual trade time remain distinct; unknown trade times stay unknown. The three-day bulk reference is not daily history. No seven-day-to-three-day fallback is permitted.
 
-- `sourceUpdatedAt`: the provider's actual dated publication, preserved on unchanged/error checks.
-- `sourceStatus.checkedAt`: collector attempt start, including failed attempts.
-- `lastSuccessfulFetchAt`: completion of the last validated full HTTP 200 fetch; a 304 does not renew it.
-- `builtAt`: the immutable report computation time, preserved when no report changes.
-- Separately dated scanner captures, offers and comparisons never receive a new observation timestamp from a daily poll.
+Item/identity publication, per-ID refresh and finite hourly history have independent generations and readiness. The finite hourly public scope is item `1082002`, Steel Fingerless Gloves, explicitly pinned to its approved generation. It must not follow a newer private generation or expand to all items automatically. Existing stat filters do not apply to mixed-roll whole-item hourly aggregates.
 
-The collector sends `If-None-Match` and `If-Modified-Since` when available, identifies the public repository in its User-Agent, rejects redirects, limits the body to 5 MB and times out fetching after 20 seconds. It rejects malformed/future/regressed sources and missing indexed members. HTTP 429 `Retry-After` persists a cooldown; skipped cooldown invocations do not claim another provider check.
+## Serving, caching and failure
 
-Overlapping invocations use an R2 conditional lease capped at 120 seconds. Conditional writes protect private state and the public pointer. R2 has no conditional DELETE in its Worker binding API, so release conditionally writes an expired lease tombstone. It cannot blindly delete another collector's lease. A losing publication may leave an unreferenced immutable report; the public pointer stays on the winning/last-good report. These multiple object writes are not a cross-object transaction.
+`ops/worker-entry.mjs` registers the current Worker and owner. `run_worker_first: true` places the whole-site gate before static assets and dynamic routes. This differs from the historical selective-JSON routing design.
 
-Where the frozen method matches, retained daily CPI/volume series merge by day and new source points replace matching dates. V1 and v2 are never spliced. Those series are capped at 7,300 dates. Source/item histories are bounded to 365 days for computation and publication; older immutable report objects are not rewritten. Frozen base prices, base NX rate and selection-source metadata survive a rolling source window. Missing context items retain their own original source date and activity-window bounds.
+The allowlisted route families include the legacy report/pointer/status paths, `/api-cash-items.json`, `/api-nx-offers.json`, `/api-market-calculations.json`, bounded item identity/price readers, approved NX history and the explicitly pinned finite item-hour manifest/known hashed pages. Exact endpoint schemas and bounds are enforced by their route modules. Unknown IDs/hashes do not fall through to a raw bucket mirror or an ad hoc provider query.
 
-On source failure, the collector keeps the last-good version and marks pointer status degraded. If storage/pointer is unavailable, the compiled dated seed supplies startup/fallback data with an explicit fallback status. `/health.json` exposes only public version, clocks, mode, status and cooldown information.
+R2 remains private. Raw receipts, provider credentials, player/shop strings, jobs and private owner diagnostics are not public API responses. Public item summaries and filters contain only approved projections. An item identity or name match does not imply a sale, stock, price, exact quantity or conversion eligibility.
 
-## Configuration and deployment
+Anonymous requests encounter the expected password gate, including data paths. Authenticated response cache headers preserve private access boundaries. Within the Worker, bounded caches coalesce concurrent storage reads, retain validated last-good bodies and back off on failures. A retained result keeps its original capture clocks. A cold missing/invalid publication stays unavailable; it does not fabricate empty data. ETag/HEAD/304 behavior is tested for the enabled route families.
 
-Current target:
+The UI polls own-site data while visible and online, and invalidates dependent views when a new accepted body/hash arrives. Data checks do not redeploy or rebuild the static UI. Hash-named UI assets and old report objects remain available across releases. The local preview shares own-site caches/session access and does not use the provider key.
 
-| Setting | Value |
-| --- | --- |
-| Worker | `inflation-watch-astra` |
-| Assets | `dist/`, binding `ASSETS` |
-| Private bucket | `inflation-watch-astra-data`, binding `SNAPSHOTS` |
-| Cron | `3,13,23,33,43,53 * * * *` (UTC) |
-| CPU cap | 1,000 ms per invocation |
-| Observability | Enabled, 1% head sampling |
-| Usage model | Omitted; preserve configured account/Worker model |
+The legacy daily source remains separately dated November 4, 2026 at 08:30:56 UTC at this checkpoint. API calculation receipts may be newer without refreshing legacy market-activity evidence. NX offers are not completed trades; native summary windows, source last-heard labels, derived histogram pools and hourly proxies must not be conflated. Reported counts, median×count turnover estimates and individual trades are distinct quantities.
 
-Run from the repository root with a compatible Node/Wrangler installation and authorized Cloudflare authentication. The account ID is already explicit in `ops/wrangler.jsonc`; a different operator must select their own target. Use existing scoped credentials. Dashboard sign-in alone is not proof of CLI authentication or binding permission. Runtime R2 bindings do not require putting a storage token in Worker code.
+## Release procedure
 
-```sh
-npm run check
-npm run test:worker
-npm run test:dom
-python -m unittest discover -s tests -v
-python engine.py --offline
-npm run deploy:check
-npm run deploy
-```
+1. Preserve the previous source snapshot, failed candidates, content-addressed assets and immutable report/history objects. Do not touch the separate Claude project.
+2. Freeze reviewed current source and a finite file manifest. Distinguish existing afterimages, new production files, tests, documentation and validation-only copies. Do not replace a current whole Worker/app with a stale candidate copy.
+3. Run appropriate Python, Worker and DOM/browser checks. Use the existing deterministic builders for generated modules and CSS. Verify that generated HTML preserves the redacted footer and that source hashes match browser manifests. Keep existing test commands and their ordering constraints.
+4. Export through the reviewed explicit allowlist and verify every archive file against its manifest. No wildcard ops expansion or private tool/receipt inclusion. CI must test the actual release candidate; an earlier green run is historical evidence.
+5. Use a newly reviewed operator bound to the actual active baseline, current CPU limit and all 25 plaintext override texts (24 API settings plus access mode), without reading secret values. Check the same namespace/key-binding metadata/owner/round. A verification-only operator for a previous UUID cannot deploy the next release.
+6. Deploy once only after the coherent review/CI/export gates pass. Preserve every current runtime text byte-for-byte unless a separately authorized configuration change is the explicit purpose of the release. Do not buy a plan or change DNS as part of routine code release.
+7. Independently verify the active deployment percentage/version, CPU cap, binding metadata and exact runtime texts. A normal changed script ETag is permitted only by a reviewed closed metadata comparison; it is not remote source-code attestation.
+8. Verify both hosts anonymously and through the actual signed session: gate, controls, typed API responses, HTTP GET/HEAD/304 semantics, exact UI assets and browser rendering. Verify local own-site parity separately. Password/session material stays in RAM or stdin, never files, environment, command arguments or logs.
+9. Install the matching reviewed monitor-access policy pair only after its release/runtime proof is valid. Preserve the original monitoring schedule and last-good clocks. Record deployment, artifact, configuration, source and browser evidence separately.
 
-The dry run validates bundling/configuration without publishing. It does not prove the token can publish/bind R2, that the bucket exists, that the cron is installed or that runtime reads/writes succeed. Verify imported `dist/data.json` and `config.json` share the same frozen basket version before deploying. Stop/restart old Python preview collectors after code changes so an older imported engine cannot overwrite the static seed.
+The checked-in `npm run deploy:check` and `npm run deploy` commands are operator primitives. They do not on their own preserve the active private runtime configuration or satisfy this release procedure. CI/source checks are not permission to replace current grants with checked-in disabled defaults.
 
-After deployment, inspect the returned URL, UI, `/version.json`, `/health.json` and the referenced report. Confirm a real scheduled check changes `checkedAt`, preserves the provider timestamp when unchanged and records a valid R2-backed collector mode. Cron configuration can take several minutes to propagate. Do not create a public force-refresh route to shortcut this verification.
+## Diagnostics and recovery
 
-For rollback, use the previous Worker deployment; retained immutable report objects remain available. Inspect health/source dates before publishing claims about update frequency. If the source fails, repair collection while the last-good report remains served. If a token lacks deployment/binding permission, report the exact missing operation rather than expanding credentials by default.
+Use bounded own-site or own-R2 inspections on meaningful transitions. A SQL health record proves committed metadata at its recorded check, not remote artifact availability, current pointer equality, a new trade or full-game coverage. For private graph verification, save independent committed SQL pins before downloading the pointer/body/pages; never obtain expected hashes from the downloaded pointer itself.
 
-## Prepared API schema probes
+Observe automatic owner adoption and selected deadlines without resetting them or forcing RPC/provider work. Deferred owner code updates can lag Worker version metadata. An incomplete callback or observation timeout is not proof that a job stopped. Recovery must retain source ownership and charged attempts; an explicit pause/authentication stop remains stopped.
 
-The optional hosted API collector is disabled by default: `API_GRANT_JSON` is
-`{"enabled":false,"publicationEnabled":false}`. Scheduled checks return before
-reading its key, creating a Durable Object instance or making an API request.
-The normal daily collector operates independently. Registering the internal
-`ApiGrantCollector` class and its SQLite namespace does not activate collection.
+For code rollback, restore a verified prior deployment and its matching runtime/access/monitor policy, while retaining immutable history. For a bad derived artifact, hold that publication and serve an explicitly dated last-good result where its contract allows it. Do not overwrite raw receipts or rewrite source clocks to conceal the problem.
 
-After an actual approval, record the granted scope and limits separately from
-the requested allowance. Configure the server-side secret
-`MAPLESTORY_MARKET_APPROVED_API_KEY` and an explicit reviewed grant only then.
-One fixed Durable Object owns the account-wide request budget; do not run a
-separate Python collector against the same allowance. The six documented GET
-probes include Apple detail/history and capture private raw schema receipts, with persisted spacing, rolling
-minute/day budgets, Retry-After and an authentication stop. Their existence is
-not evidence of historical coverage, sales quantities, item variants or a live
-intraday feed.
+The local preview should have one collector per checkout. A restart is deliberate and only after code/configuration changes require it. Re-authenticate through the existing prompt or stdin; RAM-only sessions are not transferred between processes. Preserve cadence settings and original source clocks; exact next-due continuity requires separate verification. Do not start a second provider consumer to repair a local display issue. Optional resource monitoring must use the existing reviewed process/schedule or a controlled single-process handoff; a stale saved PID is not proof that monitoring is running.
 
-`API_RAW_RECEIPTS` aliases the existing private R2 bucket under
-`_private/provider-api/v1/`. Keep public bucket URLs and custom domains disabled.
-No HTTP route exposes the receipts or collector administration. Raw response
-bytes and their hashes are retained for inspection; parsed JSON is explicitly
-only a potentially lossy view. Publication remains prohibited even after raw
-collection is enabled. Schema validation and normalization require a separate
-implementation once actual responses and provider permissions are available.
+## Unfinished and disabled work
 
-An optional `API_SCHEDULE_JSON` enables alarm-assisted scheduling after explicit
-grant and operator-budget review. It remains absent/off by default. One alarm
-runs at most one metered request, preserving existing attempts, deadlines,
-authentication stops and Retry-After across restarts. Recurring raw checks require
-an explicit bounded plan. Faster scheduling does not activate normalized prices,
-historical backfill or public API data automatically.
+Faster full-catalogue updates, continuous FAST admission/slot reuse/reference release, broader all-market/fashion derivations, durable model-history integration, additional item-hour scopes, scanner/OCR intake, inventory valuation, EV/arbitrage studies and capacity validation remain unfinished. WORK packets and passing Node tests do not activate these paths. Retention planning is not authorization to delete raw/source history.
 
-Private `_private/provider-api/v1/health.json` records owner checks, queue counts
-and a bounded index of the initial schema receipts. Its check time is separate
-from provider observations, and the public `/health.json` still describes the
-daily collector. Storage-only pointer repairs use durable exponential backoff
-without repeating a successful provider request.
+Current runtime proof distinguishes disabled shared-overview optimization, stamp sidecar/fixed-fashion pilot and admission-governor switches from reviewed code foundations. Do not infer availability from a module, test fixture or preview toggle. Actual lowest listings/lot cost/available quantity remain separate from reported sale/asking medians, and official item conversion conditions remain mandatory.
 
-The optional private calculation stage uses `API_PRIVATE_CASH_JSON` with exactly
-`{"schemaVersion":1,"enabled":true,"methodVersion":1,"publicationEnabled":false}`.
-It validates retained original bytes and creates a private, attributed 29-item
-projection. It uses sale medians and reported sale-count weights; physical units,
-asking prices and source averages do not replace those fields. Missing records
-remain missing. This does not update the public headline or publish API prices.
-One existing owner multiplexes provider and calculation deadlines, with one heavy
-operation per alarm event. Separate durable jobs and outboxes retain retries,
-quarantine and last-good results without another upstream request.
-
-An explicit `nxSchemaProbesEnabled:true` grant flag plus both `nx-rate` and
-`nx-history` in `allowedOperations` permits two additional capability probes
-after the original six complete. Their fixed keys retain the same owner, round
-and request ledger. They do not enable recurring offer collection. Server
-acceptance is not assumed from the public client helper: authentication failures
-stop collection, and no browser-session or challenge fallback is implemented.
-
-When passing JSON runtime overrides through PowerShell, use PowerShell 7 or
-newer (`pwsh`). Windows PowerShell 5 can strip JSON quotes in native arguments.
-Verify the deployed variables against the reviewed configuration, the existing
-Durable Object namespace and server-secret binding before declaring success.
-Never print the secret value to perform this verification.
-
-`API_OBSERVED_FIRSTPASS_JSON` is a separate, absent-by-default finite backfill
-switch. The compiled plan pins 1,551 observed item IDs, including 79 priorities
-and the 50 supplemental fashion identities. One detail and one retained-history
-request per ID produce 3,102 jobs. The raw plan SHA256 is
-`a271b2597096100cb8fa18c123f16a845ff9471b78deea2f61d0823ce427ccd8`.
-Enqueue at most 32 jobs per chunk with a 64-job pending high-water mark; all
-requests use the existing account-wide reservations, pacing and budgets.
-The operator's daily cap must be reviewed independently of the provider's
-displayed per-minute allowance; an unknown daily grant must remain unknown.
-Do not run a second collector or reset the existing round to obtain more quota.
-
-The finite plan binds registered keys, ordinals, item IDs and source-presence
-metadata before reserving a request. Unknown item names remain unknown.
-An item/history 404 becomes a per-job unavailable result; 401/403 still stops
-the account. Bounded retries retain their attempts and Retry-After cooldown.
-Track complete, unavailable and failed results separately: a terminal queue does
-not prove that every item has history. Chunks, leases and the cursor survive
-restarts. Existing bulk refreshes continue, while repeating the full per-item
-plan or publishing its raw data requires a separate implementation decision.
-
-`API_PUBLIC_CASH_JSON` is a separate derived-display switch, absent by default.
-The reviewed opt-in is `{"schemaVersion":1,"enabled":true,"methodVersion":1,"publicationEnabled":true}`.
-It also requires the existing private29 projection to remain enabled. It does
-not turn raw collection publication on or alter the goods-inflation headline.
-The existing owner stages a whitelisted29-item subset in a separate durable
-outbox and alarm event. Storage retries reuse saved bytes and never request the
-provider again. Original private receipts, player/shop records and progress
-metadata remain private.
-
-`GET /api-cash-items.json` serves only that validated subset through the existing
-preview gate. It coalesces storage reads for30seconds, supports ETag/HEAD, and
-retains verified last-good bytes and their original retrieval clocks on a
-storage failure. A cold missing/invalid publication returns503; disabled returns404.
-The29bound identities carry attributed source links, fixedNX costs, source sale
-medians and reported sale counts. Counts are not physical units. The source
-reports a three-day lookback without exact bounds or individual-sale timestamps;
-neither an HTTP cache refresh nor owner health establishes new market evidence.
-Keep partial/null rows visible and separate from historical daily-source data.
-
-## Traffic and build planning
-
-Data checks do not rebuild the site: ten-minute scheduling is approximately 4,320 invocations per 30-day month, independently of visitor traffic. Deployments happen on code changes. The [Workers Static Assets billing documentation](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/) describes static requests as free and unlimited; JSON Worker invocations, CPU and R2 operations are separately metered under the account's actual plan. See [Workers pricing](https://developers.cloudflare.com/workers/platform/pricing/) and [R2 pricing](https://developers.cloudflare.com/r2/pricing/) for current terms.
-
-For scale estimates, 500,000 visits with five pointer checks each produce about 2.5 million dynamic pointer requests before other JSON requests. Concurrent tabs and long sessions can produce much more. Account-wide usage, bots, actual payload size, cache hit rates and CPU must be measured; this design is not a capacity or cost guarantee. Pages deployment quotas and Workers build-minute allowances are different products and are not interchangeable.
-
-API credentials and collection opt-ins remain server-side. This deployment workflow does not submit applications, register domains or change DNS. Configure only the source permissions and limits actually granted to the deployed account.
+Source replies are monitored only in the verified intended account/session. Keep cancelled or held drafts unsent. New requests require a dedicated API invitation/form and final human approval; no new plans or agreements are accepted through this workflow. Official OST website-background rights remain unverified and fresh music stays Off.

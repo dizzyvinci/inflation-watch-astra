@@ -1,72 +1,77 @@
 # inflation.gg · Astra
 
-A MapleStory Classic World market dashboard: a fixed-basket price index, a modelled goods-inflation NX benchmark, separate cash-item comparisons, recorded market-volume charts and dated scanner/offer references. Independent fan project; no Nexon affiliation.
+An independent MapleStory Classic World market observatory: a fixed-goods Meso Price Index (MPI), a modelled goods-inflation NX benchmark, separate cash-item value comparisons, item search, and dated market evidence. No Nexon affiliation.
 
-Password-gated preview: [inflation.gg](https://inflation.gg/) and [the Worker alias](https://inflation-watch-astra.dizzyvinci.workers.dev/). Both hosts and their whole-site access gate were verified on November 5, 2026. Source repository: [dizzyvinci/inflation-watch-astra](https://github.com/dizzyvinci/inflation-watch-astra).
+## Current status
 
-Scheduled production collection was verified on November 5, 2026 at 04:43 UTC: the public pointer reported `status: ok`, `mode: collector` and report version `59106aecbc3821ba`; its referenced report contained the fixed 50-item basket and 29 cash items. The check began at `04:43:46.813Z` and the successful fetch completed at `04:43:49.137Z`. The source publication remained **November 4 at 08:30:56 UTC**. A successful collection does not turn those daily observations into fresh trades or a connected intraday feed. See [health status](https://inflation-watch-astra.dizzyvinci.workers.dev/health.json) and [the operational record](DEPLOYMENT.md).
+The working site is password-protected at [inflation.gg](https://inflation.gg/) and [its Worker alias](https://inflation-watch-astra.dizzyvinci.workers.dev/). One verified eight-hour site session also unlocks design controls. The personal footer remains hidden behind a DRAFT placeholder. The earlier clean public API-review presentation is preserved as a restore snapshot; it is not the current access mode.
 
-That historical check verified the scheduled fetch, compute and R2 publication path. The custom domain is connected. Code release, report publication, source publication and browser receipt retain separate clocks; a successful check does not create fresh trades. Qualified unattended intraday sales are not connected, and the authenticated-source application remains an unsubmitted draft. Existing bounded serving tests are not a global-capacity certification.
+The last verified deployed code at this documentation checkpoint is commit `9a76a7e4f03df6c9c362375f950da3139e4e7b24`, Worker version `71348825-95e1-413e-af4f-01fc6725269f` (November 7, 2026). The execution CPU cap is 30,000 ms. A cap is not measured resource headroom, a subscription change or a traffic-capacity certification. Later local changes are not deployed merely because they appear in this checkout.
 
-## Run and verify
+MapleStory Market API access has been approved and the shared authenticated collector is active. Its credentials stay server-side. The finite 1,551-ID / 3,102-request detail-and-history first pass completed without failed or unavailable jobs. That establishes raw retention for that finite plan, not full-game coverage, complete schema validation or public rendering of every retained field. Other sources retain their own permission and coverage status.
 
-Python runs the local collector/preview. Node 22 or newer runs the Worker tests; the Node test suite uses JSON module import attributes.
+## Evidence and calculations
+
+| Evidence | Meaning and current use |
+| --- | --- |
+| Retained public daily source | Daily medians and reported counts from MapleStory Classic. Its last retained publication is November 4, 2026 at 08:30:56 UTC. Broader legacy market/activity views retain that date. |
+| API bulk prices | Reported three-day sale-median references and reported sales counts. Exact window bounds and individual sale times are unknown. Accepted receipts feed the shared current 50-goods / 29-fixed-NX calculation path. |
+| API overview daily history | Actual source-calendar-day observations, retained with original receipt provenance and revision precedence. Supplies daily history and rolling anchors; a three-day snapshot is never converted into daily observations. |
+| Item prices and identities | Separate accepted generations support additive sprite search and per-item summaries/stat filters. Identity-only rows do not acquire a price. Full-item publication has a slower independent schedule; minute-level catalogue parity remains unfinished. |
+| NX offers | Native eight-hour summary, source last-heard label, derived 24-hour histogram pool and hourly chart proxies remain separate. These are advertised offers, not completed trades, unique people or traded volume. |
+| Finite item-hour preview | Explicitly pinned item `1082002`, Steel Fingerless Gloves. Whole-item aggregates with unknown roll mix; not ATT/slot-matched history or individual trades. It does not automatically expand to other items or future generations. |
+
+The frozen v2 basket contains 50 representative goods selected outside the provider's Cash Shop category using reference-period expenditure and a liquidity screen. Base prices and capped weights remain fixed to October 21–27, 2026. The category screen does not prove that every retained item has a non-monetized acquisition route. Mystery Palette Exchange Coupon retains its frozen weight; changing that policy requires a versioned definition and compatible history.
+
+The active API-linked calculation preserves the old index level through a retrospective November 4 calibration:
+
+```text
+linkedPrice_i(t) = legacyLinkPrice_i × apiPrice_i(t) / apiLinkPrice_i
+MPI(t) = 100 × Σ(fixedWeight_i × linkedPrice_i(t) / fixedBasePrice_i)
+```
+
+This link does not make equipment quality constant or merge the two sources' observation clocks. Current API prices are reported three-day medians; daily history uses actual daily observations. Pre-link API points are retrospective backcasts. The prior legacy history remains available separately.
+
+The headline defaults to the prior seven complete UTC source days' count-weighted cash-item rate, multiplied by current MPI and divided by the arithmetic mean of linked daily MPI over those same days. A three-day anchor and the frozen-reference alternative are reversible selections. Missing seven-day evidence makes that model unavailable or retains a separately dated last-good result; it never silently substitutes three days. The headline is a purchasing-power benchmark, not an executable exchange quote or a policy that controls inflation.
+
+Cash-item rankings remain separate from the goods MPI. Sale medians, asking medians, actual lowest listings, hypothetical after-fee values and expected returns have different meanings. Reported counts are not verified physical units. Median × count is a turnover proxy, not audited expenditure or total mesos in circulation. Qualified individual intraday trades remain zero at this checkpoint.
+
+## Updating and serving
+
+One existing provider owner shares a durable ledger, pacing, raw retention and derivative work across all visitors. Current configured provider cadences are status every 600 seconds, prices every 300 seconds, catalogue/overview every 900 seconds, NX summary every 60 seconds and NX history every 300 seconds. Per-item priority and regular refresh schedules are separate. These are scheduler settings, not source-publication or end-to-end latency guarantees.
+
+Accepted source receipts can recompute the current MPI, benchmark, cards and calculation-backed search evidence without rebuilding the static site. Original price, daily-anchor, legacy-publication, offer-hour and receipt clocks stay distinct. Own-site readers coalesce storage reads; visible clients poll bounded shared caches and pause while hidden or offline. Visitors never trigger provider collection. Missing or invalid input does not become zero, a new observation time or an unlabelled substitute source.
+
+Full-catalogue faster publication, broader all-market/fashion derivations, durable model-history integration and additional analyses remain under development. A local FAST foundation is unregistered and disabled; its presence in source is not continuous live adoption. Scanner research and an inventory prototype do not establish a deployed OCR scanner or private inventory access.
+
+## Local development and verification
+
+The already running authenticated local preview uses own-site caches and a RAM-only session, not a second provider-key consumer. Do not start another collector over that checkout. Python keeps imported code until a controlled restart; browser reload alone does not replace a Python process.
+
+For a separate offline checkout:
 
 ```sh
 python engine.py --offline
 python preview.py --offline --no-collector
 ```
 
-Open `http://127.0.0.1:8765`. To run the local ten-minute source collector instead, use `python preview.py`. Run one Python preview collector per checkout and restart it after engine/config changes; an old process retains its imported code.
+Those commands render retained offline evidence. They do not enable authenticated API collection or prove current source freshness. The explicit `--private-own-site` mode supports the existing own-site session; enter its password only through the prompt or `--private-password-stdin`, never in an argument, environment variable or saved file.
+
+Relevant local checks:
 
 ```sh
-npm install
 npm run check
 npm run test:worker
 npm run test:dom
 python -m unittest discover -s tests -v
 ```
 
-The Worker suite tests computation parity, fixed definitions, changing daily observations, clocks, invalid sources, conditional storage, collector overlap, cooldowns and visitor isolation using fake R2/cache bindings. It makes no Cloudflare API calls.
+Use the pinned dependency lock and deterministic builders for generated browser bundles. A changed imported source can require a provenance-manifest rebuild even if tree-shaking leaves browser JavaScript byte-identical. Preserve all prior test registrations and historical assets. The checks above are offline software evidence, not live provider or large-scale load certification.
 
-## Data and method
-
-The public [daily market feed](https://maplestory-classic.com/market.json) supplies dated daily medians and recorded sold volume. Ten-minute checks do not imply ten-minute source observations. Daily-source data, rolling scanner captures and buyer/seller offers retain separate timestamps and meanings.
-
-The v2 MPI selects 50 items outside the provider's `Cash Shop` category by reference-period median-price-times-recorded-volume expenditure, after a liquidity screen. This is a source-category filter, not a verified exclusion of every item with a monetized acquisition route. Mystery Palette Exchange Coupon is classified `Use` by the provider and retains its frozen 2.01% weight despite its stamp-shop connection; it is distinct from the excluded Mystery Palette cash-shop row. Membership, base prices and capped base-expenditure weights stay fixed. The base period is October 21–27, 2026; each item needs at least five base days with recorded volume of at least 50. Usable base observations include days with volume of at least five. Weights are capped at 8% and redistributed to sum to one.
-
-`CPI = 100 × Σ(fixed weight × current qualifying daily median / fixed base price)`
-
-The seed includes the specification, basket and original source-snapshot hashes. Those identify the frozen definition; they are not hashes of each subsequently fetched feed. Earlier CPI values are reconstructed with that definition. A missing indexed member stops publication; it never silently changes the basket. Wolbi is retained separately as zero-weight context when it is outside the index. The archived v1 CPI remains at `/history/cpi-v1.json`.
-
-The daily NX estimate averages each tracked cash item's meso/NX ratio, weighted by that day's recorded sold volume, with at least three qualifying items. NX denominations and the base NX rate remain frozen. Recent activity uses the seven complete source-calendar days before the source date, independently of the frozen selection period.
-
-The headline defaults to a rolling model: the prior seven complete source days' count-weighted cash-item rate multiplied by current MPI divided by the mean MPI over those same days. A three-day anchor and the original fixed-reference model are reversible options. The active model, formulas and chart exports change together. This is a purchasing-power benchmark, not an observed or executable exchange quote; cash-item pricing and player offers remain separate evidence.
-
-Median price × recorded volume is an estimated turnover proxy, not audited trade expenditure or a measure of the money supply. The feed's transaction/lot/stack-unit semantics and equipment quality mixes are limitations. Source coverage and partial days remain visible.
-
-## Production
-
-Cloudflare Workers Static Assets delivers the UI. A scheduled Worker checks the public feed at minutes 3, 13, 23, 33, 43 and 53 UTC. A private R2 binding holds feed cache, collector state and immutable public-report snapshots. Visitors read reports through an allowlisted Worker path and never trigger upstream collection. Code deployment and data publication are separate.
-
-This project's configuration enables deterministic offline UI bundles: two guarded optional-module bundles, a separately executed content-hashed app, and one stylesheet. Original modules remain available, prior verified hashed assets are retained, and the preview gate keeps every response private/no-store. See [the bundle contract](ops/UI_ASSET_BUNDLES.md). The durable provider queue is disabled until explicit approved limits and a reviewed transport are supplied; its presence alone does not connect a feed.
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for the architecture, configuration, verification and recovery procedure.
-
-```sh
-npm run deploy:check
-npm run deploy
-```
-
-These are operator commands, not automatic CI triggers. Configure the target account and existing private bucket before deployment; never commit tokens or provider credentials. Omission of `usage_model` preserves the account/Worker's configured billing model.
-
-The authenticated-provider application remains **DRAFT ONLY**. This runtime does not submit it or call authenticated/proprietary feeds. Domain purchases and DNS changes are outside these commands; no domain ownership is implied by the dashboard name.
+See [DEPLOYMENT.md](DEPLOYMENT.md) for release, access, failure and recovery boundaries. The previous published documents are preserved in [the historical README](https://github.com/dizzyvinci/inflation-watch-astra/blob/9a76a7e4f03df6c9c362375f950da3139e4e7b24/README.md) and [the historical runbook](https://github.com/dizzyvinci/inflation-watch-astra/blob/9a76a7e4f03df6c9c362375f950da3139e4e7b24/DEPLOYMENT.md); their old pending/DRAFT/configuration statements are historical.
 
 ## Attribution
 
-Market sources include [MapleStory Classic](https://maplestory-classic.com/market), [mesos.watch](https://mesos.watch/), [MapleStory Market](https://maplestory.market/ads?tab=services) and [NiaDB](https://meowdb.com/msclassic/free-market), with their individual provenance shown in the dashboard. Game names and sprites belong to Nexon; community sprite delivery is credited to [maplestory.io](https://maplestory.io/). Asset provenance is recorded alongside the local assets. The [BLS CPI methodology](https://www.bls.gov/opub/hom/cpi/calculation.htm) is a comparison reference, not a claim of equivalence to a household CPI.
+Sources include [MapleStory Classic](https://maplestory-classic.com/market), [MapleStory Market](https://maplestory.market/?ref=v6kkdvp6), separately dated [mesos.watch](https://mesos.watch/) references and [NiaDB](https://meowdb.com/msclassic/free-market). A source link or login does not itself grant programmatic access. Singular meso.watch and mesos.watch are different operators; no-data-sharing restrictions are not an invitation to copy data through a browser.
 
-
-The full item lookup lazily loads every item in the accepted public daily developer feed, including items without a qualifying daily price. Its own-site index and exact-item endpoints share the report’s portable catalogue hash and reviewed identity map; visitors never trigger a provider collection. Summary medians, qualified daily prices, thin observations and unknown NX costs remain separate. The fixed 50-item MPI and its weights are unchanged.
-
-During the current public review, the main chart defaults to observed cash-item-derived NX history while the headline remains the goods-inflation benchmark. The personal footer remains omitted from generated HTML, and preview design controls require the preview password. Verified content-addressed UI and report files may be retained in a private browser cache; HTML, controls, catalogue responses and mutable pointers retain no-store. Compression is unchanged.
+Game art belongs to Nexon and its respective owners; sprite provenance is retained alongside assets, including [maplestory.io](https://maplestory.io/) references. No official OST website-background licence has been verified; fresh music remains Off. The [BLS CPI methodology](https://www.bls.gov/opub/hom/cpi/calculation.htm) is explanatory context, not a claim that this game index is a household CPI.

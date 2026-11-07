@@ -14,3 +14,6 @@
 .overview-basket-controls button:focus-visible,.overview-basket-links a:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
 body[data-viewer-preview="on"] #overview-basket[data-enabled="false"]{display:none!important}
 @media(max-width:600px){#overview-basket{padding:22px 14px}.overview-basket-controls small{flex-basis:100%;text-align:center}}
+
+/* Keep the narrow Overview basket inside its section without reducing card text. */
+@media(max-width:360px){#overview-basket .tiles{grid-template-columns:minmax(0,1fr)}}

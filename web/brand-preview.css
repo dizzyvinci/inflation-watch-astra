@@ -31,8 +31,20 @@ body[data-brand-typeface="pixel"] :is(#display-options button,#display-options l
 @media(max-width:1000px){.masthead.brand-preview-masthead{grid-template-columns:minmax(0,1fr);min-height:0;row-gap:16px;padding-top:22px;padding-bottom:22px}.brand-preview-masthead .header-status{justify-self:start}.brand-preview-masthead[data-brand-placement="center"] .header-status{justify-self:center}}
 @media(max-width:600px){.masthead.brand-preview-masthead{padding-top:20px;padding-bottom:20px;row-gap:15px}.brand-preview-masthead .brand{font-size:clamp(30px,8.5vw,42px);gap:10px;letter-spacing:.35px}.brand-preview-masthead[data-brand-typeface="display"] .brand{font-size:clamp(32px,9vw,44px);letter-spacing:.2px}.brand-preview-masthead[data-brand-typeface="arcade"] .brand{font-size:clamp(28px,7.8vw,38px);letter-spacing:0}.brand-preview-masthead .brand .brand-leaf{width:48px;height:50px}.brand-preview-masthead .brand-leaf img{width:44px;height:44px}.brand-preview-masthead .brand small{font-size:9px;letter-spacing:1px;margin-top:8px}.brand-preview-controls{padding:10px 7px}.brand-preview-group{gap:6px}.brand-preview-group>span{flex-basis:100%;margin:0}.brand-preview-group button{font-size:12px;padding:8px 10px}}
 
-/* A max-content strip centers when it fits, and scrolls from its real first edge when it does not. */
-.nav-wrap{overflow-x:auto;overflow-y:hidden;max-width:100%;scroll-padding-inline:20px;overscroll-behavior-x:contain}.nav-wrap>nav.shell{box-sizing:border-box;width:max-content!important;min-width:100%;max-width:none!important;margin:0!important;padding:0 22px;justify-content:center;gap:26px;height:auto;min-height:68px}.nav-wrap .nav-link{flex:none;align-self:stretch;height:auto;min-height:66px;padding:18px 4px;font-size:18px;font-weight:650;line-height:1.4;letter-spacing:.015em;color:var(--text);white-space:nowrap}.nav-wrap .nav-link.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--surface2)}.nav-wrap .nav-link:hover{color:var(--mint)}.nav-wrap .nav-link:focus-visible{outline:2px solid var(--mint);outline-offset:-3px;border-radius:4px}.nav-wrap .nav-link span{font-size:12px;color:inherit}.nav-wrap>nav.shell>.fallback-link{margin-left:0;flex:none;font-size:14px}.nav-wrap>nav.shell>#scenery-toggle{flex:none}@media(max-width:700px){.nav-wrap>nav.shell{padding-inline:16px;gap:22px;min-height:62px}.nav-wrap .nav-link{font-size:16px;min-height:60px;padding:16px 3px}}
+/* Keep every main link visible; reserve a right-aligned search row when crowded. */
+.nav-wrap{overflow:visible;max-width:100%}
+.nav-wrap>nav.shell{box-sizing:border-box;width:100%!important;min-width:0;max-width:100%!important;margin:0!important;padding:0 22px;justify-content:center;flex-wrap:wrap;column-gap:26px;row-gap:0;height:auto;min-height:68px}
+.nav-wrap .nav-link{flex:0 1 auto;min-width:0;max-width:100%;align-self:stretch;height:auto;min-height:66px;padding:18px 4px;font-size:18px;font-weight:650;line-height:1.4;letter-spacing:.015em;color:var(--text);white-space:normal;overflow-wrap:anywhere}
+.nav-wrap .nav-link.active{color:var(--gold);border-bottom-color:var(--gold);background:var(--surface2)}
+.nav-wrap .nav-link:hover{color:var(--mint)}
+.nav-wrap .nav-link:focus-visible{outline:2px solid var(--mint);outline-offset:-3px;border-radius:4px}
+.nav-wrap .nav-link span{font-size:12px;color:inherit}
+.nav-wrap>nav.shell>.fallback-link{margin-left:0;flex:0 1 auto;min-width:0;max-width:100%;font-size:14px;white-space:normal;overflow-wrap:anywhere}
+.nav-wrap>nav.shell>#scenery-toggle{flex:0 1 auto;max-width:100%}
+.nav-wrap>nav.shell>.price-check-searchbar{min-width:0;max-width:100%;margin:5px 0 5px auto}
+.nav-wrap>nav.shell>.price-check-searchbar input{min-width:0;max-width:calc(100% - 80px)}
+@media(max-width:1500px){.nav-wrap>nav.shell>.price-check-searchbar{order:-1;flex:0 0 100%;justify-content:flex-end}}
+@media(max-width:700px){.nav-wrap>nav.shell{padding-inline:16px;column-gap:22px;min-height:62px}.nav-wrap .nav-link{font-size:16px;min-height:60px;padding:16px 3px}}
 
 .brand-preview-masthead .brand .brand-leaf[hidden],.brand-preview-masthead .brand .brand-leaf img[hidden],.brand-preview-masthead .brand .brand-logo-maple[hidden]{display:none}.brand-preview-masthead .brand-logo-maple{display:block;width:72px;height:72px}.brand-preview-masthead[data-brand-placement="center"] .brand{justify-content:center}.brand-preview-masthead .brand-wordmark-copy{max-width:100%}@media(max-width:600px){.brand-preview-masthead .brand-logo-maple{width:44px;height:44px}}
 

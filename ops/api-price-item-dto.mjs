@@ -147,7 +147,12 @@ export async function createPriceSnapshot(raw,{expectedSha256,context,identities
       semantics:{moneyUnit:'source_unit_price_in_mesos',counts:'source_reported_counts_not_independently_verified_trades',sampleThresholdApplied:null,exactVariantHistoryAvailable:false,cleanStateInferred:false,feesApplied:false,publicationAuthorized:false,statMapSha256:PROFILE.statMapSha256}};
     assertSafeItemDto(dto);rows.set(row.itemId,freeze(dto));
   }
-  return Object.freeze({summary:freeze({profileVersion:1,itemCount:rows.size,rawBodySha256:expectedSha256,source:{...source,window:{...source.window}}}),getItem(itemId){return rows.get(id(itemId))??null;}});
+  const itemIds=Object.freeze([...rows.keys()].sort((a,b)=>a-b));
+  const snapshot={summary:freeze({profileVersion:1,itemCount:rows.size,rawBodySha256:expectedSha256,source:{...source,window:{...source.window}}}),getItem(itemId){return rows.get(id(itemId))??null;}};
+  // Read-only capability outside the public DTO/closed four-field summary. It
+  // derives from the same fully validated map, never reparses retained raw.
+  Object.defineProperty(snapshot,'getItemIds',{value:()=>itemIds,enumerable:false});
+  return Object.freeze(snapshot);
 }
 // Egress check reconstructs allowed nested fields; it does not scan/blocklist words.
 export function assertSafeItemDto(dto){
