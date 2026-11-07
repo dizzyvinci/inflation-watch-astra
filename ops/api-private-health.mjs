@@ -2,7 +2,7 @@ import {STAMP_DEFINITION_SHA256} from './stamp-reference-definition.mjs';
 import {stampReferenceConfiguration,isOwnedStampReferenceOwner} from './stamp-reference-owner.mjs';
 import {fixedFashionPilotHealth} from './fixed-fashion-pilot-owner.mjs';
 import {committedCalculationVerificationPins} from './api-index-verification-health.mjs';
-import {privateItemDiscoveryDecisionHealth as privateItemDiscoveryProgressHealth} from './api-item-discovery-progress-health.mjs';
+import {privateItemDiscoveryCheckpointAndAlarmHealth as privateItemDiscoveryProgressHealth} from './api-item-discovery-progress-health.mjs';
 import {privateSqliteStorageHealth} from './api-private-sqlite-size-health.mjs';
 import {privateItemHourExportHealth} from './api-item-hour-export-health.mjs';
 import {privateItemRefreshHealth} from './api-item-recurring-health.mjs';
@@ -114,7 +114,7 @@ export class ApiPrivateHealth{
     const config=this.core.config();
     const itemHourExport=await privateItemHourExportHealth(this.core,this.env,checkedAt);
     const sqliteStorage=privateSqliteStorageHealth(this.ctx,this.env,{checkedAt});
-    const discoveryProgress=privateItemDiscoveryProgressHealth(this.core);
+    const discoveryProgress=await privateItemDiscoveryProgressHealth(this.core,this.ctx.storage);
     const fashionPilot=fixedFashionPilotHealth(this.core);
     const stampCfg=stampReferenceConfiguration(this.env);let stampReferences=null;if(stampCfg.status!=='disabled'){const owner=this.core.indexBridge?.stampReferences;stampReferences=stampCfg.status==='ready'&&isOwnedStampReferenceOwner(owner,this.ctx,this.core)?owner.diagnosticSnapshot(checkedAt):{diagnosticVersion:1,profile:'control_and_committed_capture',operatorCheckedAt:checkedAt,status:stampCfg.status==='ready'?'not_initialized':'invalid_configuration',definitionHash:STAMP_DEFINITION_SHA256,registryArtifactSha256:null,verificationPins:null,pendingSample:[],pendingCoverage:'not_checked',physicalIoPending:null,underlyingActionPending:null,preparationPending:null,flightScope:'current_owner_instance_only_not_global_diagnosis',remoteAvailability:'not_checked',qualifiedIndividualTrades:0};}
     const caps=[config.grantedPerDay,config.operatorDailyRequestCap].filter(value=>integer(value)&&value>0);
