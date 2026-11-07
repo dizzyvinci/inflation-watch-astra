@@ -1,4 +1,5 @@
 // Pure retained-hourly profile. No network, filesystem, key, route or persistence.
+import {decodeCanonicalBase64} from './bounded-base64.mjs';
 import {parseStrictJson,isOriginalJsonNumber} from './api-raw-prices-decoder.mjs';
 import {portableHash} from './portable-hash.mjs';
 export const HISTORY_METHOD='retained-item-hour-aggregate-v1';
@@ -32,10 +33,10 @@ export async function projectItemHistoryReceipt(input,expected){
  check(e.kind==='unverified_provider_api_receipt'&&e.httpStatus===200&&e.rawBodyEncoding==='base64'&&e.sourceObservedAt===null&&e.observationTimestampKnown===false&&e.schemaVerified===false&&e.publicationEligible===false&&e.captureTimeKind==='http_response_completed','history_receipt_flags');
  check(Number.isSafeInteger(e.attemptId)&&e.attemptId>0&&e.attemptId===x.attemptId&&e.grantReference===x.grantReference&&e.roundReference===x.roundReference&&typeof e.grantReference==='string'&&typeof e.roundReference==='string','history_owned_attempt_context');
  check(clock(e.requestStartedAt)&&clock(e.capturedAt)&&e.requestStartedAt<=e.capturedAt&&e.requestStartedAt===x.requestStartedAt,'history_original_clock');
- check(Number.isSafeInteger(e.responseBytes)&&e.responseBytes>0&&e.responseBytes<=5000000&&HEX.test(e.responseSha256)&&typeof e.rawBodyBase64==='string'&&e.rawBodyBase64.length<=6666668&&/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(e.rawBodyBase64),'history_raw_bound');
+ check(Number.isSafeInteger(e.responseBytes)&&e.responseBytes>0&&e.responseBytes<=5000000&&HEX.test(e.responseSha256)&&typeof e.rawBodyBase64==='string'&&e.rawBodyBase64.length<=6666668,'history_raw_bound');
  const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';check(e.rawBodyBase64.endsWith('==')?(alphabet.indexOf(e.rawBodyBase64.at(-3))&15)===0:e.rawBodyBase64.endsWith('=')?(alphabet.indexOf(e.rawBodyBase64.at(-2))&3)===0:true,'history_canonical_base64');
  const key=`_private/provider-api/v1/receipts/${String(e.attemptId).padStart(12,'0')}-${e.operation}-${e.responseSha256}.json`;check(x.receiptKey===key,'history_owned_receipt_key');
- const raw=Uint8Array.from(atob(e.rawBodyBase64),c=>c.charCodeAt(0));check(raw.length===e.responseBytes&&await historyByteHash(raw)===e.responseSha256,'history_raw_integrity');
+ let raw;try{raw=decodeCanonicalBase64(e.rawBodyBase64,e.responseBytes);}catch{throw new ItemHistoryContractError('history_raw_bound');}check(raw.length===e.responseBytes&&await historyByteHash(raw)===e.responseSha256,'history_raw_integrity');
  check(!(raw[0]===239&&raw[1]===187&&raw[2]===191),'history_unexpected_bom');let values;try{values=parseStrictJson(new TextDecoder('utf-8',{fatal:true}).decode(raw));}catch{throw new ItemHistoryContractError('history_json_or_utf8');}check(Array.isArray(values)&&values.length<=10000,'history_rows');let previous=0;
  const rows=values.map(v=>{exact(v,'hour seen sold');const at=integer(v.hour,946684800,4102444799);check(at%3600===0&&at>previous,'history_hour_order');previous=at;return{providerBucketEpochSeconds:at,providerBucketTimestampUtc:new Date(at*1000).toISOString().replace('.000Z','Z'),seen:seen(v.seen),sold:sold(v.sold),sourceObservedAt:null,bucketCompletionKnown:false,exactBucketStartAt:null,exactBucketEndAt:null,qualityConstant:false,variantIdentity:null};});
  const first=rows[0]?.providerBucketEpochSeconds??null,last=rows.at(-1)?.providerBucketEpochSeconds??null,span=first===null?null:(last-first)/3600+1;

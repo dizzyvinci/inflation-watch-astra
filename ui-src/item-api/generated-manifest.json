@@ -20,7 +20,7 @@
     },
     {
       "path": "ops/api-item-hour-history-profile.mjs",
-      "sha256": "1b008858f6ba3fa4a21735f33585b81e0c38a57dea718b13721e108f47711cd1"
+      "sha256": "dfaf74536f2a259c30e7793ff427bbe11f3e753295cec5678deb2495c33d1e4d"
     },
     {
       "path": "ops/api-item-reference-protocol.mjs",
@@ -33,6 +33,10 @@
     {
       "path": "ops/api-raw-prices-decoder.mjs",
       "sha256": "7c998f9ba7e72d77a7e6f5b26010c9983a126dd50c584be9d16f618411c1be28"
+    },
+    {
+      "path": "ops/bounded-base64.mjs",
+      "sha256": "22b58005acdd0f82052c70a700f831d2e38b43a7c849415f189a399df08d37c8"
     },
     {
       "path": "ops/item-hour-client.mjs",

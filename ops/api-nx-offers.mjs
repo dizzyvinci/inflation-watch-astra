@@ -1,4 +1,5 @@
 // WORK-only strict stored-raw NX offers decoder. No network, key, persistence or clock invention.
+import {decodeCanonicalBase64} from './bounded-base64.mjs';
 import {parseStrictJson,isOriginalJsonNumber} from './api-raw-prices-decoder.mjs';
 const URLS=Object.freeze({'nx-rate':'https://maplestory.market/api/nx-rate','nx-history':'https://maplestory.market/api/nx-rate/history?range=7d&step=hour'});
 const SIDES=['buy','sell'],MAX=BigInt(Number.MAX_SAFE_INTEGER);
@@ -23,8 +24,8 @@ export async function decodeNxReceipt(input){
  for(const [k,v]of Object.entries(required))fail(e[k]===v,'receipt_context_'+k);
  fail(typeof e.requestStartedAt==='string'&&typeof e.capturedAt==='string'&&/\.\d{3}Z$/.test(e.requestStartedAt)&&/\.\d{3}Z$/.test(e.capturedAt),'collector_millisecond_capture_required');
  fail(clock(e.requestStartedAt)<=clock(e.capturedAt),'capture_before_request');fail(Number.isSafeInteger(e.attemptId)&&e.attemptId>0,'invalid_attempt');fail(Number.isSafeInteger(e.responseBytes)&&e.responseBytes>0&&e.responseBytes<=5_000_000&&typeof e.rawBodyBase64==='string'&&e.rawBodyBase64.length<=6_666_668,'raw_bound');
- fail(/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(e.rawBodyBase64),'invalid_base64');
- const raw=Uint8Array.from(atob(e.rawBodyBase64),c=>c.charCodeAt(0));fail(raw.length===e.responseBytes,'raw_byte_length');fail(await hash(raw)===e.responseSha256,'raw_integrity');
+ let raw;try{raw=decodeCanonicalBase64(e.rawBodyBase64,e.responseBytes);}catch{throw new TypeError('invalid_base64');}
+ fail(raw.length===e.responseBytes,'raw_byte_length');fail(await hash(raw)===e.responseSha256,'raw_integrity');
  const value=parseStrictJson(new TextDecoder('utf-8',{fatal:true}).decode(raw));const data=e.operation==='nx-rate'?summary(value):history(value);
  const context={schemaVersion:1,kind:e.operation==='nx-rate'?'nx_offer_summary':'nx_hourly_offer_history',methodVersion:'maplemarket-nx-offers-actual-v1',sourceUrl:e.sourceUrl,publisherUrl:'https://maplestory.market/?ref=v6kkdvp6',capturedAt:e.capturedAt,requestStartedAt:e.requestStartedAt,sourceObservedAt:null,captureTimeKind:'http_response_completed',rawSha256:e.responseSha256,rawBytes:raw.length,attemptId:e.attemptId,qualifiedIndividualTrades:0,unit:'mesos_per_NX',unitEvidence:{...unitEvidence},basis:'advertised_NX_offer_rates_not_completed_sales',publicationEligible:false};
  if(e.operation==='nx-rate')return {...context,summary:data};const hours=[...new Set(data.map(r=>r.at))].sort();const has=(at,side)=>data.some(r=>r.at===at&&r.side===side);return {...context,requestedRange:'7d',requestedStep:'hour',sourceTimestampMeaning:'source_UTC_hour_label_not_individual_ad_or_trade_clock',bucketCompletionKnown:false,actualLookbackStart:null,actualLookbackEnd:null,rows:data,coverage:{rows:data.length,hourLabels:hours.length,matchedHours:hours.filter(at=>SIDES.every(side=>data.some(r=>r.at===at&&r.side===side&&r.median!==null))).length,missingBuyHours:hours.filter(at=>!has(at,'buy')).length,missingSellHours:hours.filter(at=>!has(at,'sell')).length,firstHourLabel:hours[0]??null,lastHourLabel:hours.at(-1)??null}};
