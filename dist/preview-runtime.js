@@ -3,8 +3,9 @@
   if (window.astraPreviewSession) return;
   const footer = document.querySelector('footer');
   const root = new URL('./', location.href);
+  const maintainedLocalPreview = root.protocol === 'http:' && root.port === '8765' && ['127.0.0.1', 'localhost'].includes(root.hostname);
   const workerUrl = new URL('sw.js', root).href;
-  let form,workspaceCandidate=false;
+  let form,workspaceCandidate=false,localPasswordSession=false;
   const notifyWorkspaceCandidate=()=>document.dispatchEvent(new document.defaultView.CustomEvent('astraprivateworkspacecandidate'));
   function ownedWorkspaceResponse(response) {
     if(response?.status!==200||response.ok!==true||response.redirected===true||typeof response.url!=='string'||!/^application\/json(?:;|$)/i.test(response.headers?.get?.('Content-Type')||''))return false;
@@ -12,6 +13,7 @@
   }
   function showLock() {
     if (!footer || form) return;
+    if (maintainedLocalPreview) { localPasswordSession=true; return; }
     form = document.createElement('form');
     form.className = 'preview-session';
     form.method = 'post';
@@ -36,7 +38,7 @@
       const accessMode=response?.headers?.get?.('X-Astra-Preview');
       if (accessMode !== 'password') {
         if(workspaceCandidate&&accessMode==='review'&&ownedWorkspaceResponse(response)){
-          workspaceCandidate=false;form?.remove();form=undefined;notifyWorkspaceCandidate();
+          workspaceCandidate=false;form?.remove();form=undefined;localPasswordSession=false;notifyWorkspaceCandidate();
         }
         return true;
       }
@@ -60,6 +62,6 @@
   if (window.caches?.keys) window.caches.keys().then(names => Promise.allSettled(
     names.filter(name => name.startsWith('inflation-watch-shell-')).map(name => window.caches.delete(name)))).catch(() => {});
   window.addEventListener('pageshow', event => {
-    if (event.persisted && form) lockDocument();
+    if (event.persisted && (form || localPasswordSession)) lockDocument();
   });
 })();

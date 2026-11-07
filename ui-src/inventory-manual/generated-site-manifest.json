@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "kind": "generated_inventory_site_preview",
+  "buildVersion": "0.28.2",
+  "inputHashMode": "utf8_lf",
+  "entry": "ui-src/inventory-manual/site-entry.mjs",
+  "inputs": [
+    {
+      "path": "ops/api-fast-item-public-protocol.mjs",
+      "sha256": "b9196caa5f96f93da9ebef8eacb7c6774aa9ea996a51d18c2d395da65a6c0b8b"
+    },
+    {
+      "path": "ops/api-item-reference-protocol.mjs",
+      "sha256": "ff6544350f45f5b6da9b8121537d0d0dc68a382f6282740caaa84356f66ea31e"
+    },
+    {
+      "path": "ops/api-price-item-dto.mjs",
+      "sha256": "50ee059691225e183dcfb48aca061b0cb764c52cdd4faff6e0dade17538536d7"
+    },
+    {
+      "path": "ops/api-search-identity-contract.mjs",
+      "sha256": "1490eeec107940678126d9e5784b858abfa5db956e99a3479fbaf4e753b5ceef"
+    },
+    {
+      "path": "ops/api-search-identity-definition.mjs",
+      "sha256": "d6e8c814d1a32d84c810f7647e64d5c386fef102f1962ac0fd65ea6e7201f304"
+    },
+    {
+      "path": "ops/api-search-identity-protocol.mjs",
+      "sha256": "f47685eeefe0921d04b4729e3ff4355105f4692722d460a99dc34e907ba31608"
+    },
+    {
+      "path": "ui-src/inventory-manual/cache-controller.mjs",
+      "sha256": "370a0c9e16d06cd449ff3043cc37b02e6958b42510c235495b8be95a6540458e"
+    },
+    {
+      "path": "ui-src/inventory-manual/deps/api-item-reference-protocol.mjs",
+      "sha256": "9caa786336b187f881a603f0975bb2b4943122ccdae264083879ec587a423fe5"
+    },
+    {
+      "path": "ui-src/inventory-manual/deps/api-price-item-dto.mjs",
+      "sha256": "96749f2d7700fef8373fe39fd4d6690afa034ca1d56520610aa24c3a2793d172"
+    },
+    {
+      "path": "ui-src/inventory-manual/inventory.mjs",
+      "sha256": "81e7c97d9baa0b9ff8ae1d8281e4d0f573943a8a3ce0fe08517f052d90cc7eb8"
+    },
+    {
+      "path": "ui-src/inventory-manual/multipage.mjs",
+      "sha256": "9a5d2e9553e02ebaabff6f89c4751c0ba7cf9fcb7cc253772b67150affec5490"
+    },
+    {
+      "path": "ui-src/inventory-manual/page.mjs",
+      "sha256": "093699807101367d5608e07a0427eafa0d88a44648919986b1f3310ae3dffd4d"
+    },
+    {
+      "path": "ui-src/inventory-manual/physical-fetch.mjs",
+      "sha256": "f921b83572c881233a7c7795c6a4378fe5e4e268941b94cab899490012643f82"
+    },
+    {
+      "path": "ui-src/inventory-manual/reference-cache-adapter.mjs",
+      "sha256": "75d7abd48304afc68bfd645d03b7f88474c25078d5ea66467936388b444c072f"
+    },
+    {
+      "path": "ui-src/inventory-manual/site-entry.mjs",
+      "sha256": "b51614cdc455416d9f410343559936511dabac1bef1760f6355ffdc1fb5fd587"
+    },
+    {
+      "path": "ui-src/item-api/item-loader.mjs",
+      "sha256": "0dea4a62eb2a5b67192cf9dbb4d1583d9bdfe37e6b888eb42cf70df468e2e875"
+    },
+    {
+      "path": "ui-src/item-api/reference-status.mjs",
+      "sha256": "d314ad72f628779cd972d92b5fa87bac17ec4ae818b87c3095319062480ff687"
+    },
+    {
+      "path": "ui-src/item-api/search-identity-client.mjs",
+      "sha256": "35954058bd75c10d9d582003f941f1d79ce5459b225de35b4d0b9f6dd152ae3f"
+    },
+    {
+      "path": "ui-src/item-api/search-price-relation.mjs",
+      "sha256": "fac8a66f6d547ad7f531744dae9070f8960f22eff204d307ef49591964e255c3"
+    },
+    {
+      "path": "ui-src/item-api/search-selected-price.mjs",
+      "sha256": "bda61b02e7e4a9f76d0d7f63ff0f7b75b247ed2c7ac720f0c8ec29f5e7711930"
+    }
+  ],
+  "output": {
+    "path": "web/inventory-preview.js",
+    "bytes": 136928,
+    "sha256": "04621538a5703471decebc1e572e86cec5409c8101cba7f77b9dd7847da28137"
+  },
+  "defaultEnabled": false,
+  "automaticInventoryRequests": 0,
+  "providerConsumer": false,
+  "ocr": false,
+  "requiresExistingPrivateWorkspace": true
+}

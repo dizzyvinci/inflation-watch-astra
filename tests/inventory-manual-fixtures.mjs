@@ -1,0 +1,10 @@
+import{createIdentityIndex,createPriceSnapshot,sha256}from'../ui-src/inventory-manual/deps/api-price-item-dto.mjs';
+import{makePublicItemReference}from'../ui-src/inventory-manual/deps/api-item-reference-protocol.mjs';
+export{entry}from'./inventory-manual-ledger-fixtures.mjs';const E=new TextEncoder();
+export async function references({generation='a'.repeat(64),capturedAt='2026-11-06T12:00:00.000Z',commodityPrice='10.25',count=10,asking=true,emptyGearStats=false}={}){
+ const metadata=E.encode(JSON.stringify([{id:9000001,name:'Synthetic commodity'},{id:9000002,name:'Synthetic equipment'}])),identities=await createIdentityIndex([{raw:metadata,expectedSha256:await sha256(metadata),sourceUrl:'https://maplestory.io/api/MCW/1/item/list?cashFilter=false&count=10000',format:'noncash_list'}]);
+ const raw=E.encode('[{"item_id":9000001,"sold":{"sales":'+count+',"units":999,"day_sales":0,"day_units":0,"avg_unit_price":999,"median_unit_price":'+commodityPrice+'},"seen":'+(asking?'{"listings":8,"sellers":4,"median_unit_price":50,"p25_unit_price":40,"p75_unit_price":60}':'null')+',"reference":{"unit_price":40,"basis":"listed","samples":8,"scope":"item"}},{"item_id":9000002,"sold":{"sales":10,"units":50,"day_sales":0,"day_units":0,"avg_unit_price":999,"median_unit_price":12},"seen":null,"reference":null,"by_stats":[{"upgrades":1,"slots_left":3,"stats":'+JSON.stringify(emptyGearStats?{}:{16:2})+',"reference":{"unit_price":20.125,"basis":"sold","samples":10,"scope":"stats"}}]}]');
+ const snapshot=await createPriceSnapshot(raw,{identities,expectedSha256:await sha256(raw),context:{operation:'prices',sourceUrl:'https://maplestory.market/api/prices',capturedAt,sourceObservedAt:null,captureTimeKind:'http_response_completed'}});
+ return Promise.all([9000001,9000002].map(async id=>{const dto=snapshot.getItem(id),hash=await sha256(E.encode(JSON.stringify(dto)));return makePublicItemReference(dto,generation,hash)}));
+}
+export async function coherent(r,mutate){const copy=structuredClone(r);mutate(copy.item);copy.dtoSha256=await sha256(E.encode(JSON.stringify(copy.item)));return copy;}

@@ -38,5 +38,33 @@ const sw=fs.readFileSync('web/sw.js','utf8');
  assert.equal(swEvents.fetch,undefined);assert.equal(swEvents.message,undefined);
  await new Promise((resolve,reject)=>swEvents.activate({waitUntil:p=>p.then(resolve,reject)}));
  assert.deepEqual(deleted,['inflation-watch-shell-v1']);assert.equal(claimed,1);assert.equal(retired,1);
+ // Exact maintained IPv4 loopback HTTP origin only; no authority or network change.
+ const localCases=['http://127.0.0.1:8765/#index','http://localhost:8765/#price-check'];
+ const hostedCases=['https://inflation.gg/#index','https://inflation.gg/sub/index.html','http://localhost:8766/','https://localhost:8765/','http://127.0.0.1.evil.example:8765/','http://localhost.evil.example:8765/','http://[::1]:8765/'];
+ function runtimeFrame(url){
+  const d=new JSDOM('<body><main>Original market view</main><footer><p>Original footer</p></footer></body>',{url}),events={},seen={reload:0,candidates:0,requests:0,timers:0};
+  const w={addEventListener:(name,fn)=>events[name]=fn},l={href:url,reload:()=>seen.reload++};d.window.document.addEventListener('astraprivateworkspacecandidate',()=>seen.candidates++);
+  const forbidden=()=>{seen.requests++;throw Error('No new transport');};
+  vm.runInNewContext(script,{window:w,document:d.window.document,navigator:{},location:l,URL,Promise,fetch:forbidden,setTimeout:()=>{seen.timers++;throw Error('No new timer');}});
+  const data=(mode='password',status=200)=>({status,ok:status===200,redirected:false,url:new URL('version.json',new URL('./',url)).href,headers:{get:key=>({'content-type':'application/json; charset=utf-8','x-astra-preview':mode}[key.toLowerCase()]||null)}});
+  return{d,w,events,seen,data,close:()=>d.window.close()};
+ }
+ for(const url of [...localCases,...hostedCases]){
+  const f=runtimeFrame(url);try{
+   const local=localCases.includes(url);assert.equal(f.w.astraPreviewSession.privateWorkspaceCandidate(),false);
+   f.w.astraPreviewSession.onResponse(f.data(null));assert.equal(f.d.window.document.querySelectorAll('.preview-session').length,0);
+   f.w.astraPreviewSession.onResponse(f.data());f.w.astraPreviewSession.onResponse(f.data());
+   assert.equal(f.d.window.document.querySelectorAll('.preview-session').length,local?0:1,url);
+   if(!local){const form=f.d.window.document.querySelector('.preview-session');assert.equal(form.method,'post');assert.equal(form.action,new URL('__preview_logout',new URL('./',url)).href);}
+   assert.equal(f.d.window.document.querySelector('footer p').textContent,'Original footer');assert.equal(f.w.astraPreviewSession.privateWorkspaceCandidate(),true);assert.equal(f.seen.candidates,1);
+   assert.equal(f.d.window.document.body.dataset.privateWorkspace,undefined,'candidate cannot confer private controls authority');
+   f.events.pageshow({persisted:false});assert.equal(f.seen.reload,0);assert.equal(f.w.astraPreviewSession.onResponse(f.data('password',401)),false);assert.equal(f.seen.reload,1);assert.equal(f.d.window.document.body.hidden,true);
+   f.events.pageshow({persisted:true});assert.equal(f.seen.reload,2,'local form suppression must preserve persisted-session relock');assert.equal(f.seen.requests,0);assert.equal(f.seen.timers,0);
+  }finally{f.close();}
+ }
+ for(const url of [...localCases,'https://inflation.gg/']){
+  const f=runtimeFrame(url);try{f.w.astraPreviewSession.onResponse(f.data());assert.equal(f.w.astraPreviewSession.privateWorkspaceCandidate(),true);f.w.astraPreviewSession.onResponse(f.data('review'));assert.equal(f.w.astraPreviewSession.privateWorkspaceCandidate(),false);assert.equal(f.d.window.document.querySelector('.preview-session'),null);f.events.pageshow({persisted:true});assert.equal(f.seen.reload,0,'owned review downgrade clears obsolete form/session witness');assert.equal(f.seen.requests,0);assert.equal(f.seen.timers,0);}finally{f.close();}
+ }
+ console.log('PASS local-loopback footer suppression: 2 maintained origins, 7 nonmatching/hosted origins, 3 review downgrades;401/bfcache/candidate preserved;0requests/timers');
  dom.window.close();console.log('PASS: preview session expiry/logout, own-cache retirement, preserved preferences and no offline fetch bypass');
 })().catch(error=>{console.error(error);process.exitCode=1});

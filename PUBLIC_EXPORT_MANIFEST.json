@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-07T16:49:17+00:00",
+  "exportedAt": "2026-11-07T23:00:35+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7583,7 +7583,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 327,
-      "sha256": "13900d29bf59d14e8efae33846d03d4682487cc024c9af4d70fb45d858e3f442"
+      "sha256": "64544f8dff7faa49507088b661d29333ee346cd06f6e4ca0b72c7083c3126902"
     },
     {
       "path": "cache/market.json",
@@ -7668,7 +7668,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "b8b15b1c0843915e7b6f8d23449a4e4735e4944cc37323828a6d86d326e053d3"
+      "sha256": "975c605e11e6b107e15cd520c696730d4a36b89ec2b12b46017988f2f7ac703c"
     },
     {
       "path": "dist/_headers",
@@ -7732,8 +7732,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 184786,
-      "sha256": "572b89ee5aa318d5cb22b720a0ff2c5f9de44f8e26eb808d40f25a04709af19b"
+      "bytes": 184798,
+      "sha256": "0c6e8b42d62cd455804e92a94e339efafb6eb370e18ae80954169d50964498d6"
     },
     {
       "path": "dist/assets/PixelifySans-9ba86cd010a4de30.ttf",
@@ -15766,6 +15766,11 @@
       "sha256": "0ba8cdd80042968a468641ee66f33a89f172b02db4148f88cb258136fe9dc26c"
     },
     {
+      "path": "dist/astra-app-0c6e8b42d62cd455.js",
+      "bytes": 184798,
+      "sha256": "0c6e8b42d62cd455804e92a94e339efafb6eb370e18ae80954169d50964498d6"
+    },
+    {
       "path": "dist/astra-app-2b32a7ca9c698dd6.js",
       "bytes": 147189,
       "sha256": "2b32a7ca9c698dd601476f2a54947820a9407049f5dd55e979a6349ab1806b6b"
@@ -15926,6 +15931,11 @@
       "sha256": "22aa606e4582692d0acd5e9b9f421c3bc6c1b75ef2c6d6e990c5ca816c012b17"
     },
     {
+      "path": "dist/astra-ui-26244ebdd79691f4.js",
+      "bytes": 390725,
+      "sha256": "26244ebdd79691f4a6f1a524e9786d0730edd0b0f8dd7e66fc3773d94055c74a"
+    },
+    {
       "path": "dist/astra-ui-26898d75a38d6f6c.css",
       "bytes": 182636,
       "sha256": "26898d75a38d6f6ce9dcda765e644afc2263eb2a1631e6480e2800f545725665"
@@ -15999,6 +16009,11 @@
       "path": "dist/astra-ui-8101f0a8d2e69792.js",
       "bytes": 699021,
       "sha256": "8101f0a8d2e69792bd6d61bbff0a8902f34137e76aea9b44fff551893d95a105"
+    },
+    {
+      "path": "dist/astra-ui-821ac93f3f8e2427.js",
+      "bytes": 841247,
+      "sha256": "821ac93f3f8e24274364d633de10a2471a68f65b704afcffe9cc8236537aa3ce"
     },
     {
       "path": "dist/astra-ui-8592668eed5518f2.css",
@@ -16099,6 +16114,11 @@
       "path": "dist/astra-ui-cab432c6e0d0ee1f.js",
       "bytes": 480588,
       "sha256": "cab432c6e0d0ee1fa70a316aa07576f6610436ed294d97283fc66776188ce574"
+    },
+    {
+      "path": "dist/astra-ui-cc2eee63dfaed285.css",
+      "bytes": 209635,
+      "sha256": "cc2eee63dfaed285ce988242db839de7850de9420520bc05cd8b322e1bdd7db8"
     },
     {
       "path": "dist/astra-ui-d5b7e38dd7403465.css",
@@ -16551,6 +16571,11 @@
       "sha256": "c29c456f1d834331d3d9d460b952aea63b164b34865f3e01121222901d22c607"
     },
     {
+      "path": "dist/data-c7e50ff25220dfeb.json",
+      "bytes": 992941,
+      "sha256": "c7e50ff25220dfeb10994848faff876c7af6ec2cbe6a041ed115971b2c2c8472"
+    },
+    {
       "path": "dist/data-ce6510bb9ae85dfe.json",
       "bytes": 267719,
       "sha256": "ce6510bb9ae85dfe518b2c82a73ed6827d8e8860e70f6830f5c0920fd9d91b46"
@@ -16653,7 +16678,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992941,
-      "sha256": "f8f1ea24abbc5a65f6bd5f096addcaa66b7df903410e6767c9b39347fd874e7d"
+      "sha256": "c7e50ff25220dfeb10994848faff876c7af6ec2cbe6a041ed115971b2c2c8472"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16673,7 +16698,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "b8b15b1c0843915e7b6f8d23449a4e4735e4944cc37323828a6d86d326e053d3"
+      "sha256": "975c605e11e6b107e15cd520c696730d4a36b89ec2b12b46017988f2f7ac703c"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16707,8 +16732,18 @@
     },
     {
       "path": "dist/index.html",
-      "bytes": 50532,
-      "sha256": "3deb6a49c4f098ef47d034774fa4921d9857977491d8fb65a5fc26a475b11754"
+      "bytes": 51810,
+      "sha256": "ef8a95795c50eda6a2837287f37cdc6e6a3773da4d61d0600737527815bd76f3"
+    },
+    {
+      "path": "dist/inventory-preview.css",
+      "bytes": 2105,
+      "sha256": "c1b2e904706b38cf01d077add038562abf9530ffc3f5550cf4552759cf0a4ed4"
+    },
+    {
+      "path": "dist/inventory-preview.js",
+      "bytes": 136928,
+      "sha256": "04621538a5703471decebc1e572e86cec5409c8101cba7f77b9dd7847da28137"
     },
     {
       "path": "dist/item-api-preview.css",
@@ -16837,8 +16872,8 @@
     },
     {
       "path": "dist/preview-runtime.js",
-      "bytes": 3309,
-      "sha256": "1227e11221b7a58e6e30973614055164f001faeb6f81d9eab243b63bda214787"
+      "bytes": 3598,
+      "sha256": "1c2c1e4869f2658fa83c7614b8a5fd2b7037af83b9e718e059e7f95db0d6e3a8"
     },
     {
       "path": "dist/price-check.css",
@@ -16957,8 +16992,8 @@
     },
     {
       "path": "dist/ui-bundles.json",
-      "bytes": 12057,
-      "sha256": "0369daa878518748d5660df600b14c1b6403a3d3b3ffbf703d8646b0d8afe0b8"
+      "bytes": 12302,
+      "sha256": "523ff812cbabc9903e914b685eee1dede12fa6c6c98ed71f54159fa45e21799e"
     },
     {
       "path": "dist/upcoming-announcements.css",
@@ -16973,7 +17008,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "182b3bafc449b13d8d5739ad89bd9da82291f40668db0363ba66ccd64af632e9"
+      "sha256": "63406d889c35b9db2c666def608716865228fd29fa977322dcf82055b7d59f3f"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -16997,8 +17032,8 @@
     },
     {
       "path": "engine.py",
-      "bytes": 57872,
-      "sha256": "8babbfd19c4d173ac36ad6e91517c5bd0b96f6b25455035922bb937d82da49ff"
+      "bytes": 57921,
+      "sha256": "cfe3ba7dc6bea462b757c875ac6abc3e3498a46d0aeaa4e275efaf31d779425b"
     },
     {
       "path": "historical_backfill.py",
@@ -17827,8 +17862,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 19643,
-      "sha256": "a5aac9c3a4099dc2fad8110447e70cd3d40b68658af6bd66dd8d46925ac1d055"
+      "bytes": 20309,
+      "sha256": "7c67e2508a6dcc4f4581b78911ec6db7cfc3e9a17ed3011591c15fe1cb7de4eb"
     },
     {
       "path": "portable_hash.py",
@@ -17864,6 +17899,11 @@
       "path": "scripts/build-api-calculations.mjs",
       "bytes": 2389,
       "sha256": "cb390f3acfa769d021108d248be17e007497796ff59fef6aa775c35984b89296"
+    },
+    {
+      "path": "scripts/build-inventory.mjs",
+      "bytes": 2486,
+      "sha256": "58e1fe36707831d3822e3c1383cedc933bdf4b78ee599fabc2e7e6a96f6aca8a"
     },
     {
       "path": "scripts/build-item-api.mjs",
@@ -18606,6 +18646,11 @@
       "sha256": "202fe095e62824f87fbeac87e6475e0d5b51be92999c0034a3b6a1a081016a9e"
     },
     {
+      "path": "tests/current-reference-profile.test.mjs",
+      "bytes": 13678,
+      "sha256": "de01bc1ab0c0585c84e343d0ea9f57bf3c68848966502d1fa992fb5ef4063f62"
+    },
+    {
       "path": "tests/date-presentation.cjs",
       "bytes": 1350,
       "sha256": "62d8963215b368b434b5336feae098a00510731c32f560ed71ea6b1838020697"
@@ -18859,6 +18904,76 @@
       "path": "tests/index-owner-fixture.mjs",
       "bytes": 5116,
       "sha256": "4fdef21bc70ec7de57455ed22870d9ef1f7f3906c9ff3f9cb690a8c08bcf3c96"
+    },
+    {
+      "path": "tests/inventory-clear-controls.cjs",
+      "bytes": 4714,
+      "sha256": "b2a5ff2704f0aec726e8d8766cbdda7550e876e56b6fdc9f93b549104a48e8af"
+    },
+    {
+      "path": "tests/inventory-manual-boundaries.test.mjs",
+      "bytes": 3595,
+      "sha256": "c41f60ee7b551c7409654ea9f512b187a8905f034b52dfa77e417fa623863ef9"
+    },
+    {
+      "path": "tests/inventory-manual-cache-adapter.test.mjs",
+      "bytes": 13450,
+      "sha256": "ccec7333f742a50fa09ef5678c4fa5f5e8ddbc9aef64de1ce603a9be03dd563c"
+    },
+    {
+      "path": "tests/inventory-manual-cache-fixtures.mjs",
+      "bytes": 2593,
+      "sha256": "0f9cd0468d4f69e40edf4b727eef426487031902dd9ef689d5be69324232e7d9"
+    },
+    {
+      "path": "tests/inventory-manual-controller.test.mjs",
+      "bytes": 8510,
+      "sha256": "3c2c9e8782ded1afb7c315b951d97c77a6bf34280aa01288fc8add55bb8e5907"
+    },
+    {
+      "path": "tests/inventory-manual-deadline.test.mjs",
+      "bytes": 2024,
+      "sha256": "0b74a0b3e151017c468e23f8c52fc3ee148ce9981c59848f772841faacbdcd23"
+    },
+    {
+      "path": "tests/inventory-manual-fixtures.mjs",
+      "bytes": 2093,
+      "sha256": "d1f52ac0f0c8ae3730c9081846732ea0691dd860a21f7ecac1446c0f659ac2c7"
+    },
+    {
+      "path": "tests/inventory-manual-identity-fixture.json",
+      "bytes": 249260,
+      "sha256": "e6f3d2ebbac0e3ef918f574d4ab8e6463d4812517d7d9d33152f699094d2af86"
+    },
+    {
+      "path": "tests/inventory-manual-ledger-fixtures.mjs",
+      "bytes": 1670,
+      "sha256": "c84d6064eb3accaf8604e13297b201dd126c4c086dbcf9c9ebc54ba27d43462f"
+    },
+    {
+      "path": "tests/inventory-manual-ledger.test.mjs",
+      "bytes": 6407,
+      "sha256": "3c25ba182468ada4eb0f5682427905f74ff547f6a7ec261d348e8b0efd6df62e"
+    },
+    {
+      "path": "tests/inventory-manual-pages.test.mjs",
+      "bytes": 7752,
+      "sha256": "d2d287a637e56bac8db4dde193c287b60d93f5e0440d994157cc71c33b786b4e"
+    },
+    {
+      "path": "tests/inventory-manual-physical.test.mjs",
+      "bytes": 6582,
+      "sha256": "4bd051b14836deb7eabf3c8f3eeb639028ab023a4cc209c04313c37d793250df"
+    },
+    {
+      "path": "tests/inventory-site-entry.cjs",
+      "bytes": 13550,
+      "sha256": "d7411e03ef05f1d5a608fd4bb4a38b77ebcb9dd74ab77a47d72a02355c9e9625"
+    },
+    {
+      "path": "tests/inventory-site-fixture.cjs",
+      "bytes": 6057,
+      "sha256": "a5917b28f26190bbe0ab84e53315a1a2a402e590c8da7cc9ebe9e2d9d4fbb9e9"
     },
     {
       "path": "tests/item-api-bridge.test.mjs",
@@ -19157,8 +19272,8 @@
     },
     {
       "path": "tests/nx-stamp-finder.test.mjs",
-      "bytes": 13529,
-      "sha256": "8accec393b35c9275192de113eb710759dcae642c4b6691fefe3d464f4581a0a"
+      "bytes": 13700,
+      "sha256": "f1693adfba723969bf6e649c0393ecde9ecd2c085618a0925acf738739bef36d"
     },
     {
       "path": "tests/original-client404-evidence.test.mjs",
@@ -19202,8 +19317,8 @@
     },
     {
       "path": "tests/preview-runtime.cjs",
-      "bytes": 3411,
-      "sha256": "637ccb1d239bf4c681d4b853266c890bc3142d2b325595bbe363bf20edc1a34d"
+      "bytes": 7080,
+      "sha256": "19df18afde7dca14c497521c2453f48d5c0ca772a0955f2e22a5a67189768936"
     },
     {
       "path": "tests/price-check-api-calculations.test.cjs",
@@ -19497,8 +19612,8 @@
     },
     {
       "path": "tests/test_basket_v2.py",
-      "bytes": 11566,
-      "sha256": "99602070cc15fa50cc28418b08f4ae24ef30ad5449ca382d65d1447ed0c5f874"
+      "bytes": 11615,
+      "sha256": "753bb5b03e47c0238a4935d7e0082683f945021de886edbe38c0e2b4cece6950"
     },
     {
       "path": "tests/test_cash_basket.py",
@@ -19756,6 +19871,56 @@
       "sha256": "5b72328fce8dd3268b2c395734b06d12914e7027348745397f77638b400f6ab4"
     },
     {
+      "path": "ui-src/inventory-manual/cache-controller.mjs",
+      "bytes": 8470,
+      "sha256": "370a0c9e16d06cd449ff3043cc37b02e6958b42510c235495b8be95a6540458e"
+    },
+    {
+      "path": "ui-src/inventory-manual/deps/api-item-reference-protocol.mjs",
+      "bytes": 62,
+      "sha256": "9caa786336b187f881a603f0975bb2b4943122ccdae264083879ec587a423fe5"
+    },
+    {
+      "path": "ui-src/inventory-manual/deps/api-price-item-dto.mjs",
+      "bytes": 53,
+      "sha256": "96749f2d7700fef8373fe39fd4d6690afa034ca1d56520610aa24c3a2793d172"
+    },
+    {
+      "path": "ui-src/inventory-manual/generated-site-manifest.json",
+      "bytes": 3583,
+      "sha256": "745af7453d8db063b9085afb8c605ee5b03c4aef90304b658015268ab771f60b"
+    },
+    {
+      "path": "ui-src/inventory-manual/inventory.mjs",
+      "bytes": 9117,
+      "sha256": "81e7c97d9baa0b9ff8ae1d8281e4d0f573943a8a3ce0fe08517f052d90cc7eb8"
+    },
+    {
+      "path": "ui-src/inventory-manual/multipage.mjs",
+      "bytes": 6876,
+      "sha256": "9a5d2e9553e02ebaabff6f89c4751c0ba7cf9fcb7cc253772b67150affec5490"
+    },
+    {
+      "path": "ui-src/inventory-manual/page.mjs",
+      "bytes": 15580,
+      "sha256": "093699807101367d5608e07a0427eafa0d88a44648919986b1f3310ae3dffd4d"
+    },
+    {
+      "path": "ui-src/inventory-manual/physical-fetch.mjs",
+      "bytes": 7001,
+      "sha256": "f921b83572c881233a7c7795c6a4378fe5e4e268941b94cab899490012643f82"
+    },
+    {
+      "path": "ui-src/inventory-manual/reference-cache-adapter.mjs",
+      "bytes": 9127,
+      "sha256": "75d7abd48304afc68bfd645d03b7f88474c25078d5ea66467936388b444c072f"
+    },
+    {
+      "path": "ui-src/inventory-manual/site-entry.mjs",
+      "bytes": 6120,
+      "sha256": "b51614cdc455416d9f410343559936511dabac1bef1760f6355ffdc1fb5fd587"
+    },
+    {
       "path": "ui-src/item-api/discovery-bridge.mjs",
       "bytes": 1353,
       "sha256": "8ebf1dbb8a702bc843e7671c5d462db6fca2e9fa79cd5eb5f485be1aeaba2c5a"
@@ -19927,8 +20092,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 184786,
-      "sha256": "572b89ee5aa318d5cb22b720a0ff2c5f9de44f8e26eb808d40f25a04709af19b"
+      "bytes": 184798,
+      "sha256": "0c6e8b42d62cd455804e92a94e339efafb6eb370e18ae80954169d50964498d6"
     },
     {
       "path": "web/author-portrait.css",
@@ -20087,8 +20252,18 @@
     },
     {
       "path": "web/index.html",
-      "bytes": 56512,
-      "sha256": "7ab706c3a966c474ed1e1c09a2acc0e8383323a044ecd5a55e26aeae50739711"
+      "bytes": 57898,
+      "sha256": "5e351bf2da3bcc0e5cb10f9831bc2a5e8475284934fd645c94bc9eaf81ae38ed"
+    },
+    {
+      "path": "web/inventory-preview.css",
+      "bytes": 2105,
+      "sha256": "c1b2e904706b38cf01d077add038562abf9530ffc3f5550cf4552759cf0a4ed4"
+    },
+    {
+      "path": "web/inventory-preview.js",
+      "bytes": 136928,
+      "sha256": "04621538a5703471decebc1e572e86cec5409c8101cba7f77b9dd7847da28137"
     },
     {
       "path": "web/item-api-preview.css",
@@ -20217,8 +20392,8 @@
     },
     {
       "path": "web/preview-runtime.js",
-      "bytes": 3309,
-      "sha256": "1227e11221b7a58e6e30973614055164f001faeb6f81d9eab243b63bda214787"
+      "bytes": 3598,
+      "sha256": "1c2c1e4869f2658fa83c7614b8a5fd2b7037af83b9e718e059e7f95db0d6e3a8"
     },
     {
       "path": "web/price-check.css",
