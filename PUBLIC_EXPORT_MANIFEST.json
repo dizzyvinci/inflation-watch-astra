@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-07T23:00:35+00:00",
+  "exportedAt": "2026-11-08T00:14:12+00:00",
   "basketVersion": 2,
   "textNormalization": "LF; upstream assets and immutable reports preserved byte-for-byte",
   "files": [
@@ -7583,7 +7583,7 @@
     {
       "path": "cache/fetch.json",
       "bytes": 327,
-      "sha256": "64544f8dff7faa49507088b661d29333ee346cd06f6e4ca0b72c7083c3126902"
+      "sha256": "cfade048e121192b650a7fb9e030b0d7746a782ea93eb54620fedaaee6eb9850"
     },
     {
       "path": "cache/market.json",
@@ -7668,7 +7668,7 @@
     {
       "path": "dist/404.html",
       "bytes": 1026,
-      "sha256": "975c605e11e6b107e15cd520c696730d4a36b89ec2b12b46017988f2f7ac703c"
+      "sha256": "84dbf224c9540c35a07088a7f4c02c43e7bd02e8dc419d0f30b0d11c009c5946"
     },
     {
       "path": "dist/_headers",
@@ -7732,8 +7732,8 @@
     },
     {
       "path": "dist/app.js",
-      "bytes": 184798,
-      "sha256": "0c6e8b42d62cd455804e92a94e339efafb6eb370e18ae80954169d50964498d6"
+      "bytes": 184801,
+      "sha256": "01172ba102fbded8a067eec2b615b144f07e25976aa6b1f4f8ef44f29ce943dd"
     },
     {
       "path": "dist/assets/PixelifySans-9ba86cd010a4de30.ttf",
@@ -15761,6 +15761,11 @@
       "sha256": "b41c8755d5be0528952d6b836404869c6c7b786f960ca94f59ad3149b5bd7353"
     },
     {
+      "path": "dist/astra-app-01172ba102fbded8.js",
+      "bytes": 184801,
+      "sha256": "01172ba102fbded8a067eec2b615b144f07e25976aa6b1f4f8ef44f29ce943dd"
+    },
+    {
       "path": "dist/astra-app-0ba8cdd80042968a.js",
       "bytes": 177198,
       "sha256": "0ba8cdd80042968a468641ee66f33a89f172b02db4148f88cb258136fe9dc26c"
@@ -16566,6 +16571,11 @@
       "sha256": "bf5d37930ecdecc0e60d3e373cc11b68e28fd74e7a0373c5ffc42a26ab2034b1"
     },
     {
+      "path": "dist/data-bfce883abb81101b.json",
+      "bytes": 992941,
+      "sha256": "bfce883abb81101b56351c735077aef15bd6ff157a5ceab15309d1aead99b199"
+    },
+    {
       "path": "dist/data-c29c456f1d834331.json",
       "bytes": 992898,
       "sha256": "c29c456f1d834331d3d9d460b952aea63b164b34865f3e01121222901d22c607"
@@ -16678,7 +16688,7 @@
     {
       "path": "dist/data.json",
       "bytes": 992941,
-      "sha256": "c7e50ff25220dfeb10994848faff876c7af6ec2cbe6a041ed115971b2c2c8472"
+      "sha256": "bfce883abb81101b56351c735077aef15bd6ff157a5ceab15309d1aead99b199"
     },
     {
       "path": "dist/date-presentation.js",
@@ -16698,7 +16708,7 @@
     {
       "path": "dist/fallback.html",
       "bytes": 1026,
-      "sha256": "975c605e11e6b107e15cd520c696730d4a36b89ec2b12b46017988f2f7ac703c"
+      "sha256": "84dbf224c9540c35a07088a7f4c02c43e7bd02e8dc419d0f30b0d11c009c5946"
     },
     {
       "path": "dist/fee-preview.css",
@@ -16733,7 +16743,7 @@
     {
       "path": "dist/index.html",
       "bytes": 51810,
-      "sha256": "ef8a95795c50eda6a2837287f37cdc6e6a3773da4d61d0600737527815bd76f3"
+      "sha256": "330c0129938461177c0fb99b33c2746de6fdc51fba311ea43ae11c06e1ea6756"
     },
     {
       "path": "dist/inventory-preview.css",
@@ -16993,7 +17003,7 @@
     {
       "path": "dist/ui-bundles.json",
       "bytes": 12302,
-      "sha256": "523ff812cbabc9903e914b685eee1dede12fa6c6c98ed71f54159fa45e21799e"
+      "sha256": "4d8ae3e2dfff46509f3c42c978049b9d2bf70d3fcc716eed82b88f5ca3213bbd"
     },
     {
       "path": "dist/upcoming-announcements.css",
@@ -17008,7 +17018,7 @@
     {
       "path": "dist/version.json",
       "bytes": 543,
-      "sha256": "63406d889c35b9db2c666def608716865228fd29fa977322dcf82055b7d59f3f"
+      "sha256": "3f605431beaaa07fed6fd6623d6aad2c6d4340fd081c974a52b4f4428665ea96"
     },
     {
       "path": "dist/viewer-preview.css",
@@ -19267,8 +19277,8 @@
     },
     {
       "path": "tests/nx-overview-benchmark.cjs",
-      "bytes": 12671,
-      "sha256": "37b5cc02b4783913db2687b04a163ef767a3150ae483cc84d4011060bc4c3853"
+      "bytes": 12674,
+      "sha256": "09936c38186fa58a9dfe2393e434d98ab3b28ee7b79e5975e01b6a624c1d5c3d"
     },
     {
       "path": "tests/nx-stamp-finder.test.mjs",
@@ -20092,8 +20102,8 @@
     },
     {
       "path": "web/app.js",
-      "bytes": 184798,
-      "sha256": "0c6e8b42d62cd455804e92a94e339efafb6eb370e18ae80954169d50964498d6"
+      "bytes": 184801,
+      "sha256": "01172ba102fbded8a067eec2b615b144f07e25976aa6b1f4f8ef44f29ce943dd"
     },
     {
       "path": "web/author-portrait.css",

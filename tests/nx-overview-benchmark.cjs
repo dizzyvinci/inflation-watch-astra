@@ -81,7 +81,7 @@ const flush = async () => { for (let i = 0; i < 200 && !published.length; i++) a
     assert(rows.every(row=>row[headers.indexOf('selected_mode')]==='compare'));
     rollingApi.setMode('rolling');
     assert.equal(doc.getElementById('main-rate').textContent,expected.toFixed(2));
-    assert(doc.querySelector('.hero-benchmark-explanation').textContent.includes('previous week'));
+    assert(doc.querySelector('.hero-benchmark-explanation').textContent.includes('reference period'));
     assert(doc.querySelector('.hero-bottom').textContent.includes(selected.startDay+'–'+selected.endDay));
     assert(doc.querySelector('.hero-model-note').hidden,'Long equation defaultsOff');
     doc.querySelector('[aria-controls="rolling-benchmark-explanation"]').click();
