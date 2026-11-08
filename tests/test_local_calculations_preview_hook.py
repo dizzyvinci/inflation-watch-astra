@@ -43,6 +43,7 @@ class Tests(unittest.TestCase):
             h,_=self.fixture();self.assertFalse(self.mod.Handler._serve_calculation_index(h))
     def test_catalog_handler_consumes_off_route_before_static_or_other_reader(self):
         h,calls=self.fixture(path='/api-market-calculations.json');h.headers={'Host':'localhost:8765'};h.server=types.SimpleNamespace(server_address=('127.0.0.1',8765));h.client_address=('127.0.0.1',12345)
+        h._serve_basic_items=types.MethodType(self.mod.Handler._serve_basic_items,h)
         with patch.dict(os.environ,{'LOCAL_API_CALCULATIONS':'0'}),patch.object(self.mod._cash,'handle',side_effect=AssertionError('oldreader should not run')):
             self.assertTrue(self.mod.Handler._serve_catalog(h))
         self.assertIn(('status',404),calls);self.assertTrue(h._catalog_response)

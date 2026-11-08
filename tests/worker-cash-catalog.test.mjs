@@ -6,14 +6,15 @@ import { fileURLToPath } from 'node:url';
 import { computeCashCatalog, cashCatalogMetadata, computeReport } from '../ops/worker-core.mjs';
 
 const project = fileURLToPath(new URL('../', import.meta.url));
-const feed = JSON.parse(readFileSync(new URL('../cache/market.json', import.meta.url), 'utf8'));
-const seed = JSON.parse(readFileSync(new URL('../dist/data.json', import.meta.url), 'utf8'));
+import {historical} from './fixtures/worker-historical-inputs.mjs';
+const feed = historical('feed');
+const seed = historical('report');
 const cfg = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf8'));
 const metadata = JSON.parse(readFileSync(new URL('../cache/cash-catalog-metadata.json', import.meta.url), 'utf8'));
 // Pure Python helpers only: no compute/build, SQLite, canonical cache or network.
 const expected = JSON.parse(execFileSync(process.env.PYTHON || 'python', ['-c', `
 import engine,json
-feed=engine.read('cache/market.json');cfg=engine.read('config.json');seed=engine.read('dist/data.json')
+feed=engine.read('tests/fixtures/worker-historical-market-20261104.json');cfg=engine.read('config.json');seed=engine.read('tests/fixtures/worker-historical-report-20261104.json')
 ref=seed.get('rollingReference',{})
 ids=seed.get('cashCatalog',{}).get('identityMap') or [
  {'slug':row['slug'],'name':row['name'],'id':item['id'],'planHash':ref['planHash']}

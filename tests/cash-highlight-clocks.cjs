@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..');
 const script=fs.readFileSync(path.join(root,'web/cash-highlights.js'),'utf8');
 const app=fs.readFileSync(path.join(root,'web/app.js'),'utf8');
 const pricing=app.slice(app.indexOf('const CASH_SCHEDULE='),app.indexOf('function renderCash(){'));
-const saved=JSON.parse(fs.readFileSync(path.join(root,'dist/data.json'),'utf8'));
+const saved=require('./fixtures/dom-historical-inputs.cjs').createHistoricalDomInputs(root).report();
 function fixture({zone='UTC',blocked=false}={}){
  const errors=[],vc=new VirtualConsole();vc.on('jsdomError',e=>errors.push(e.message));let network=0;
  const dom=new JSDOM('<select id="display-timezone"></select><select id="cash-lookback"><option selected>3</option><option>7</option></select><select id="cash-evidence"><option value="daily">Daily</option><option value="rolling">Rolling</option></select><main id="view-index"><section id="category-section"></section></main>',{url:'https://inflation.gg/',runScripts:'outside-only',virtualConsole:vc});

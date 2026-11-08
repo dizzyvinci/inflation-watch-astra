@@ -1,1 +1,5 @@
-{"status":"unchanged","checkedAt":"2026-11-08T00:10:40+00:00","etag":"W/\"db639-1a1ab18ca38\"","lastModified":"Thu, 05 Nov 2026 09:44:51 GMT","detail":"Source unavailable; using last good data. URLError: <urlopen error [Errno 11001] getaddrinfo failed>","lastSuccessfulFetchAt":"2026-11-08T00:10:40+00:00","nextAllowedAt":null}
+{
+  "checkedAt": null,
+  "detail": "Offline verification of a Root-admitted saved public feed; no network check or successful fetch time is asserted.",
+  "status": "cached"
+}

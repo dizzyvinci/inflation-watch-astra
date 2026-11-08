@@ -167,7 +167,9 @@
     const copy = make('span', undefined, 'market-highlight-copy'), title = make('span', undefined, 'market-highlight-title-line'), value = make('span', undefined, 'market-highlight-value-line');
     title.append(make('strong', current.basis==='api_actual_daily'?kind==='cash'?'Most volatile fixed-NX cash item':'Most volatile goods-basket item':kind === 'cash' ? 'Most volatile cash item' : 'Most volatile goods item', 'market-highlight-kind'), make('span', item.name, 'market-highlight-headline'));
     value.append(make('strong', `${percent(item.value)} daily price volatility`, 'market-highlight-value'));
-    copy.append(title, value, make('small', `${current.basis==='api_actual_daily'?'API actual daily · ':''}${current.window.start}–${current.window.end} · ${item.returns} consecutive daily returns · medians, not individual trades${current.basis==='api_actual_daily'?` · original daily receipt range ${capture(item.oldestOriginalReceipt)}–${capture(item.newestOriginalReceipt)}`:''}`, 'market-highlight-dates'));
+    const dates = make('small', undefined, 'market-highlight-dates');
+    dates.append(document.createTextNode('('), make('strong', `${current.window.start}–${current.window.end}`, 'market-highlight-date'), document.createTextNode(` · ${current.basis==='api_actual_daily'?'API actual daily · ':''}${item.returns} consecutive daily returns · medians, not individual trades${current.basis==='api_actual_daily'?` · original daily receipt range ${capture(item.oldestOriginalReceipt)}–${capture(item.newestOriginalReceipt)}`:''})`));
+    copy.append(title, value, dates);
     if (fallback) copy.append(make('small', 'Generic megaphone icon', 'volatility-icon-note'));
     root.append(fallback ? generic() : image, copy); return root;
   }

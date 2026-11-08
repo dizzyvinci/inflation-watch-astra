@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from historical_market_fixture import historical_market
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -63,6 +64,7 @@ class CashBasketTests(unittest.TestCase):
         self.assertEqual(result['rows'][0]['baseObservationDays'], 2)
 
     def test_missing_initial_prices_are_null_and_carry_only_after_observed(self):
+        self.feed = historical_market()
         definition = cash_basket.make_definition(self.feed, self.cfg)
         items = []
         for index, row in enumerate(definition['rows']):

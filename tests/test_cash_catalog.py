@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from historical_market_fixture import historical_market
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -39,6 +40,7 @@ class CashCatalogTests(unittest.TestCase):
                                    self.identities if identities is None else identities, self.metadata)
 
     def test_all_source_cash_items_survive_without_cost_or_reference_week(self):
+        self.feed = historical_market()
         result = self.catalog()
         source = [item for item in self.feed['items'] if item['k'] == 'Cash Shop']
         self.assertEqual(result['itemCount'], len(source))

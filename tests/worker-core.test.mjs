@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { computeReport } from '../ops/worker-core.mjs';
 
-const seed = JSON.parse(readFileSync(new URL('../dist/data.json', import.meta.url), 'utf8'));
-const feed = JSON.parse(readFileSync(new URL('../cache/market.json', import.meta.url), 'utf8'));
+const seed = historical('report');
+import {historical} from './fixtures/worker-historical-inputs.mjs';
+const feed = historical('feed');
 const clone = value => structuredClone(value);
 const options = { checkedAt: seed.builtAt, builtAt: seed.builtAt, sourceStatus: { status: 'ok' } };
 const compute = (input = feed, baseline = seed, opts = options) => computeReport(input, baseline, opts);

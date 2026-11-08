@@ -1,0 +1,4 @@
+// Fixed own-derived namespace. No source keys, SQL or writer authority here.
+import {ACTIVITY_DEFINITION_SHA,activityNeed as need,activityHash as hash,activityInteger as integer,activityIso} from './api-overview-activity-public-contract.mjs';
+export const activityScopeKey=scope=>{need(hash(scope),'activity_scope_hash');return'_private/provider-api/v1/derived/overview-window-activity-v1/'+scope+'/';};
+export function validateActivityPointer(p,scopeHash){need(p&&Object.keys(p).sort().join('|')==='bodyBytes|bodySha256|capturedAt|definitionHash|generation|kind|schemaVersion|scopeHash|sourceAttemptId|sourceWitnessSha256','activity_pointer_fields');need(p.schemaVersion===1&&p.kind==='overview_window_activity_pointer'&&p.scopeHash===scopeHash&&p.definitionHash===ACTIVITY_DEFINITION_SHA&&[p.generation,p.bodySha256,p.sourceWitnessSha256].every(hash)&&integer(p.bodyBytes,1,8192)&&integer(p.sourceAttemptId,1)&&activityIso(p.capturedAt),'activity_pointer');return p;}

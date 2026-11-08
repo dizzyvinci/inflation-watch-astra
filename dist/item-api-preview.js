@@ -1,88 +1,5 @@
 (() => {
 'use strict';
-// ui-src/item-api/search-price-relation.mjs
-function qualifySearchPriceStatus(indicator, relation) {
-  return relation?.pending && indicator.phase === "recent" ? { ...indicator, tone: "amber", phase: "publication_pending", label: "FAST price publication is separately dated" } : indicator;
-}
-function describeSearchPriceRelation(identity2, itemId, capturedAt) {
-  if (identity2?.schemaVersion !== 2) return null;
-  const source = identity2.sourceSnapshots.find((s) => s.operation === "prices"), row = identity2.rows.find((r) => r.itemId === itemId);
-  if (!capturedAt) return { pending: false, label: "Identity membership is not a price; a current FAST price has not been verified for this selection." };
-  if (!source || !row) return { pending: true, label: "No matching admitted identity membership is connected; the FAST reference remains separately dated." };
-  if (Date.parse(source.capturedAt) < Date.parse(capturedAt)) return { pending: false, label: "The FAST price capture is newer than this identity membership snapshot; they remain independently versioned." };
-  if (!row.memberships.some((m) => m.operation === "prices")) return { pending: true, label: "This known ID is absent from the latest published normalized prices membership. The FAST reference remains separately dated; membership does not verify stock or a current sale." };
-  if (Date.parse(source.capturedAt) > Date.parse(capturedAt)) return { pending: true, label: "A newer normalized prices membership has been accepted. The displayed FAST reference keeps its older original retrieval until price publication catches up." };
-  return { pending: false, label: source.capturedAt === capturedAt ? "Identity membership and FAST prices are independently versioned; equal capture clocks do not establish the same receipt." : "FAST prices and identity membership keep their separate original retrievals and publication versions." };
-}
-
-// ui-src/item-api/reference-status.mjs
-var known = /* @__PURE__ */ new Set(["current", "ready", "shown", "validated", "accepted_cache", "validated_cache"]);
-function describeReferenceStatus({ capturedAt = null, status = "idle", hasData = false, available: available2 = true, retained = false, partial = false, visible = true, online = true, bandMinutes = 20, now = Date.now() } = {}) {
-  const stamp = typeof capturedAt === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.test(capturedAt) ? Date.parse(capturedAt) : NaN;
-  const age = Number.isFinite(stamp) && Number.isFinite(now) ? now - stamp : null;
-  let phase, tone = "amber", label;
-  if (status === "site_access" || status === "access_denied") {
-    phase = "access_blocked";
-    tone = "red";
-    label = "Site access unavailable";
-  } else if (status === "off" || status === "disabled" || status === "hidden") {
-    phase = "off";
-    label = "Reference display inactive";
-  } else if (!visible || !online || status === "paused") {
-    phase = "paused";
-    label = hasData ? "Checks paused; original retrieval retained" : "Checks paused; no validated reference yet";
-  } else if (status === "loading") {
-    phase = "loading";
-    label = hasData ? "Checking cache; displayed reference keeps its original retrieval" : "Awaiting a validated cache response";
-  } else if (!hasData) {
-    phase = status === "not_published" || status === "not_found" ? "not_published" : ["unavailable", "failure", "failed", "error"].includes(status) ? "unavailable" : "unverified";
-    tone = phase === "unavailable" ? "red" : "amber";
-    label = phase === "not_published" ? "Reference not published here" : phase === "unavailable" ? "No validated reference available" : "Reference not yet verified";
-  } else if (retained || status === "retained" || ["unavailable", "failure", "failed", "error"].includes(status)) {
-    phase = "retained";
-    label = "Retained reference; original retrieval unchanged";
-  } else if (age === null) {
-    phase = "clock_unknown";
-    label = "Retrieval clock unavailable; age unknown";
-  } else if (age < 0) {
-    phase = "clock_uncertain";
-    label = "Capture clock ahead; retrieval age uncertain";
-  } else if (!available2) {
-    phase = "unavailable";
-    label = "Selected reference unavailable; missing values are not zero";
-  } else if (partial && age <= bandMinutes * 6e4) {
-    phase = "partial";
-    label = "Partial item evidence; original retrieval retained";
-  } else if (!known.has(status)) {
-    phase = "unverified";
-    label = "Reference state not yet verified";
-  } else if (!Number.isFinite(bandMinutes) || bandMinutes <= 0) {
-    phase = "clock_unknown";
-    label = "Retrieval display band unavailable";
-  } else if (age <= bandMinutes * 6e4) {
-    phase = "recent";
-    tone = "green";
-    label = `Retrieved within ${bandMinutes}-minute display band; not verified fresh trades`;
-  } else {
-    phase = "aged";
-    label = `Retrieval older than ${bandMinutes}-minute display band${partial ? "; partial item evidence remains incomplete" : ""}`;
-  }
-  return Object.freeze({ tone, phase, label, capturedAt: Number.isFinite(stamp) ? capturedAt : null, ageMs: age, bandMinutes });
-}
-function decorateReferenceStatus(node, state, text = node.textContent) {
-  const icon = node.ownerDocument.createElement("i");
-  icon.className = "source-status-dot status-" + state.tone;
-  icon.setAttribute("aria-hidden", "true");
-  const copy = node.ownerDocument.createElement("span");
-  copy.textContent = text;
-  node.replaceChildren(icon, copy);
-  node.dataset.statusTone = state.tone;
-  node.dataset.retrievalState = state.phase;
-  node.title = state.label + "; retrieval is not individual sale or scan time.";
-  if (state.capturedAt) node.dataset.rawCapturedAt = state.capturedAt;
-  else delete node.dataset.rawCapturedAt;
-}
-
 // ops/api-price-item-dto.mjs
 var MAX_BYTES = 5e6;
 var HASH = /^[0-9a-f]{64}$/;
@@ -248,7 +165,7 @@ function assertSafeItemDto(dto) {
   iso(dto.source.retrievedAt);
   shape(dto.source.window, ["reportedDays", "exactStartAt", "exactEndAt"]);
   if (dto.source.window.reportedDays !== 3 || dto.source.window.exactStartAt !== null || dto.source.window.exactEndAt !== null) fail("dto_window");
-  function money(v, nullable = true) {
+  function money2(v, nullable = true) {
     if (v === null && nullable) return;
     if (typeof v !== "string" || v.length > 160 || !/^\d+(?:\.\d+)?$/.test(v)) fail("dto_price");
   }
@@ -256,8 +173,8 @@ function assertSafeItemDto(dto) {
     if (v === null) return;
     shape(v, ["reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount", "averageUnitPrice", "medianUnitPrice", "basis", "dayCounterBoundsKnown"]);
     for (const k of ["reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount"]) integer(v[k]);
-    money(v.averageUnitPrice);
-    money(v.medianUnitPrice);
+    money2(v.averageUnitPrice);
+    money2(v.medianUnitPrice);
     if (v.basis !== "source_labelled_sold_not_independently_confirmed_transactions" || v.dayCounterBoundsKnown !== false) fail("dto_sold");
   }
   function a(v) {
@@ -265,13 +182,13 @@ function assertSafeItemDto(dto) {
     shape(v, ["reportedListingCount", "reportedSellerCount", "medianUnitPrice", "p25UnitPrice", "p75UnitPrice", "basis", "currentAvailabilityVerified"]);
     integer(v.reportedListingCount);
     integer(v.reportedSellerCount);
-    for (const k of ["medianUnitPrice", "p25UnitPrice", "p75UnitPrice"]) money(v[k]);
+    for (const k of ["medianUnitPrice", "p25UnitPrice", "p75UnitPrice"]) money2(v[k]);
     if (v.basis !== "source_seen_asking_prices" || v.currentAvailabilityVerified !== false) fail("dto_asking");
   }
   function r(v, scopes, isItem = false) {
     if (v === null) return;
     shape(v, ["unitPrice", "basis", "reportedSamples", "scope", "aggregation", "exactVariantValue", "isNearFallback"]);
-    money(v.unitPrice, false);
+    money2(v.unitPrice, false);
     integer(v.reportedSamples);
     if (!["sold", "listed"].includes(v.basis) || !scopes.includes(v.scope) || v.aggregation !== (isItem ? v.basis === "sold" ? "average" : "median" : "unknown") || v.exactVariantValue !== false || v.isNearFallback !== (v.scope === "near")) fail("dto_reference");
   }
@@ -389,1241 +306,554 @@ function filterEvidenceGroups(dto, query) {
   });
 }
 
-// ops/api-item-reference-protocol.mjs
-var HASH2 = /^[a-f0-9]{64}$/;
+// ops/api-basic-current-public-definition-v1.json
+var api_basic_current_public_definition_v1_default = { schemaVersion: 1, profile: "basic_aggregate_v1", rowColumns: ["itemId", "presenceMask", "soldMedianUnitPriceLexeme", "soldAverageUnitPriceLexeme", "reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount", "askingMedianUnitPriceLexeme", "reportedListingCount", "reportedSellerCount"], moneyUnit: "mesos_per_reported_source_unit", reportedWindowDays: 3, exactWindowBoundsKnown: false, sourceObservedAtKnown: false, qualityMatched: false, lowestListingKnown: false, availabilityKnown: false, verifiedIndividualTrades: false, fullVariantFreshness: false, upstreamLatestInspected: false };
+
+// ops/api-basic-public-structure.mjs
+var B = Object.freeze({ totalBytes: 8388608 });
 var enc = new TextEncoder();
-var check = (v) => {
-  if (!v) throw TypeError("Invalid item reference");
+var need = (v, c = "basic_contract_hold") => {
+  if (!v) throw Error(c);
 };
-async function validatePublicItemReference(v) {
-  v = structuredClone(v);
-  check(enc.encode(JSON.stringify(v)).length <= 3e5);
-  const keys = ["schemaVersion", "kind", "itemId", "projectionGeneration", "dtoSha256", "sourceCapturedAt", "sourceObservedAt", "reportedWindowDays", "exactWindowBoundsKnown", "qualifiedIndividualTrades", "sourceCreditUrl", "item"];
-  check(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === keys.sort().join(","));
-  assertSafeItemDto(v.item);
-  check(v.schemaVersion === 1 && v.kind === "api_item_price_reference" && v.itemId === v.item.itemId && HASH2.test(v.projectionGeneration) && HASH2.test(v.dtoSha256) && v.sourceCapturedAt === v.item.source.retrievedAt && v.sourceObservedAt === null && v.reportedWindowDays === 3 && v.exactWindowBoundsKnown === false && v.qualifiedIndividualTrades === 0 && v.sourceCreditUrl === `https://maplestory.market/items/${v.itemId}?ref=v6kkdvp6`);
-  check(await sha256(enc.encode(JSON.stringify(v.item))) === v.dtoSha256);
-  return v;
+var integer2 = (n, a = 0, b = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && n >= a && n <= b;
+function exact(v, keys) {
+  need(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join("|") === keys.slice().sort().join("|"), "basic_shape");
+}
+var hash = (s) => typeof s === "string" && /^[a-f0-9]{64}$/.test(s);
+function iso2(s) {
+  need(typeof s === "string" && s.length === 24 && Number.isFinite(Date.parse(s)) && new Date(s).toISOString() === s, "basic_clock");
+  return s;
 }
 
-// ops/api-fast-item-public-protocol.mjs
-var enc2 = new TextEncoder();
-var H = /^[a-f0-9]{64}$/;
-var FAST_ITEM_PROTOCOL = "fast-current-v1";
-var FAST_ITEM_HEADERS = Object.freeze({ protocol: "X-Astra-API-Item-Protocol", epoch: "X-Astra-API-Item-Epoch", revision: "X-Astra-API-Item-Publication", binding: "X-Astra-API-Item-Binding" });
-var need = (v) => {
-  if (!v) throw TypeError("Invalid FAST item ordering");
-};
-var validPublicEpoch = (v) => typeof v === "string" && /^[a-z][a-z0-9-]{0,63}$/.test(v);
-var iso2 = (v) => typeof v === "string" && v.length === 24 && Number.isFinite(Date.parse(v)) && new Date(v).toISOString() === v;
-function fields(v, now) {
-  need(v && validPublicEpoch(v.epoch) && Number.isSafeInteger(v.revision) && v.revision > 0 && H.test(v.generation) && iso2(v.capturedAt) && Date.parse(v.capturedAt) <= now && H.test(v.bodySha256));
+// ops/api-basic-current-public-contract.mjs
+var BASIC_PUBLIC_DEFINITION_SHA = "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705";
+var BASIC_PUBLIC_MAX_BYTES = 8192;
+Object.freeze(api_basic_current_public_definition_v1_default.rowColumns);
+Object.freeze(api_basic_current_public_definition_v1_default);
+var proto = Object.getPrototypeOf(Uint8Array.prototype);
+var byteLength = Object.getOwnPropertyDescriptor(proto, "byteLength").get;
+var tag = Object.getOwnPropertyDescriptor(proto, Symbol.toStringTag).get;
+function basicByteLength(raw, max) {
+  need(integer2(max, 1, B.totalBytes), "basic_public_max_bound");
+  let n;
+  try {
+    need(tag.call(raw) === "Uint8Array", "basic_public_byte_type");
+    n = byteLength.call(raw);
+  } catch {
+    throw Error("basic_public_byte_type");
+  }
+  need(integer2(n, 1, max), "basic_public_byte_bound");
+  return n;
 }
-var tuple = (v) => enc2.encode(JSON.stringify([FAST_ITEM_PROTOCOL, v.epoch, String(v.revision), v.generation, v.capturedAt, v.bodySha256]));
-function hasFastItemHeaders(headers) {
-  return Object.values(FAST_ITEM_HEADERS).some((k) => headers.has(k));
+function ownBasicBytes(raw, max) {
+  const n = basicByteLength(raw, max);
+  const out = new Uint8Array(n);
+  Uint8Array.prototype.set.call(out, raw);
+  return out;
 }
-async function validateFastItemHeaders(headers, { generation, capturedAt, bodySha256, now = Date.now() } = {}) {
-  need(headers.get(FAST_ITEM_HEADERS.protocol) === FAST_ITEM_PROTOCOL);
-  const raw = headers.get(FAST_ITEM_HEADERS.revision);
-  need(typeof raw === "string" && /^[1-9][0-9]{0,15}$/.test(raw));
-  const v = { epoch: headers.get(FAST_ITEM_HEADERS.epoch), revision: Number(raw), generation, capturedAt, bodySha256 };
-  fields(v, now);
-  need(String(v.revision) === raw && headers.get(FAST_ITEM_HEADERS.binding) === await sha256(tuple(v)));
+async function verifyBasicPublicDefinition() {
+  need(await sha256(enc.encode(JSON.stringify(api_basic_current_public_definition_v1_default) + "\n")) === BASIC_PUBLIC_DEFINITION_SHA, "basic_public_definition");
+}
+var money = (v) => v === null || typeof v === "string" && v.length <= 160 && /^\d+(?:\.\d+)?$/.test(v);
+function basicPublicShape(v) {
+  exact(v, ["schemaVersion", "kind", "profile", "definitionHash", "itemId", "generation", "sourceBodySha256", "capturedAt", "sourceObservedAt", "captureTimeKind", "reportedWindowDays", "exactStartAt", "exactEndAt", "state", "sold", "asking", "upstreamLatestInspected", "fullVariantFreshness", "availabilityKnown", "lowestListingKnown", "qualityMatched", "verifiedIndividualTrades"]);
+  need(v.schemaVersion === 1 && v.kind === "basic_current_item_reference" && v.profile === "basic_aggregate_v1" && v.definitionHash === BASIC_PUBLIC_DEFINITION_SHA && integer2(v.itemId, 1, 999999999) && hash(v.generation) && hash(v.sourceBodySha256), "basic_public_profile");
+  iso2(v.capturedAt);
+  need(v.sourceObservedAt === null && v.captureTimeKind === "http_response_completed" && v.reportedWindowDays === 3 && v.exactStartAt === null && v.exactEndAt === null, "basic_public_source_clock");
+  for (const k of ["upstreamLatestInspected", "fullVariantFreshness", "availabilityKnown", "lowestListingKnown", "qualityMatched", "verifiedIndividualTrades"]) need(v[k] === false, "basic_public_false_claim");
+  need(["present_in_generation", "absent_in_generation"].includes(v.state), "basic_public_state");
+  if (v.state === "absent_in_generation") need(v.sold === null && v.asking === null, "basic_public_absence");
+  if (v.sold !== null) {
+    exact(v.sold, ["medianUnitPrice", "averageUnitPrice", "reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount"]);
+    need(money(v.sold.medianUnitPrice) && money(v.sold.averageUnitPrice), "basic_public_sold_money");
+    for (const k of ["reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount"]) need(integer2(v.sold[k]), "basic_public_sold_count");
+    Object.freeze(v.sold);
+  }
+  if (v.asking !== null) {
+    exact(v.asking, ["medianUnitPrice", "reportedListingCount", "reportedSellerCount"]);
+    need(money(v.asking.medianUnitPrice) && integer2(v.asking.reportedListingCount) && integer2(v.asking.reportedSellerCount), "basic_public_asking");
+    Object.freeze(v.asking);
+  }
   return Object.freeze(v);
 }
-function parseFastItemError(raw, { kind, itemId, generation, capturedAt }) {
-  need(raw instanceof Uint8Array && raw.length > 0 && raw.length <= 4096);
-  const v = parseStrictJson(raw);
-  need(v && Object.keys(v).sort().join("|") === "generation|itemId|kind|schemaVersion|sourceCapturedAt|sourceObservedAt" && v.schemaVersion === 1 && v.kind === "fast_item_" + kind && v.itemId === itemId && v.generation === generation && v.sourceCapturedAt === capturedAt && v.sourceObservedAt === null);
+async function parseBasicPublicItem(raw, { expectedItemId, expectedDefinitionHash, expectedPayloadSha256, expectedGeneration, expectedCapturedAt, signal = null, monotonic = () => performance.now(), waitMs = 3e4 } = {}) {
+  need(integer2(expectedItemId, 1, 999999999) && expectedDefinitionHash === BASIC_PUBLIC_DEFINITION_SHA && hash(expectedPayloadSha256) && hash(expectedGeneration) && integer2(waitMs, 1, 3e4), "basic_public_expectations");
+  iso2(expectedCapturedAt);
+  const end = monotonic() + waitMs, fence = () => need(!signal?.aborted && Number.isFinite(end) && monotonic() < end, "basic_public_deadline");
+  fence();
+  const owned = ownBasicBytes(raw, BASIC_PUBLIC_MAX_BYTES);
+  await verifyBasicPublicDefinition();
+  fence();
+  need(await sha256(owned) === expectedPayloadSha256, "basic_public_body_hash");
+  fence();
+  const v = basicPublicShape(parseStrictJson(owned));
+  need(v.itemId === expectedItemId && v.generation === expectedGeneration && v.capturedAt === expectedCapturedAt, "basic_public_binding");
+  fence();
   return v;
 }
 
-// ui-src/item-api/item-loader.mjs
-var sha = async (bytes4) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes4))].map((n) => n.toString(16).padStart(2, "0")).join("");
+// ops/api-basic-item-http-protocol.mjs
+var BASIC_ITEM_HTTP_PROTOCOL = "basic-aggregate-v1";
+var BASIC_HTTP_BASE = Object.freeze({
+  "Content-Type": "application/json; charset=utf-8",
+  "Cache-Control": "private, no-store, no-transform",
+  "CDN-Cache-Control": "no-store",
+  "Cloudflare-CDN-Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "X-Robots-Tag": "noindex, nofollow, noarchive",
+  "X-Astra-Basic-Protocol": BASIC_ITEM_HTTP_PROTOCOL,
+  "X-Astra-Basic-Definition": BASIC_PUBLIC_DEFINITION_SHA
+});
+var enc2 = new TextEncoder();
+var basicHttpHash = (value) => typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+var validBasicHttpEpoch = (value) => typeof value === "string" && /^[a-z0-9][a-z0-9-]{7,95}$/.test(value);
+async function basicItemHttpHeaders({ publicEpoch: publicEpoch2, generation, capturedAt, payloadSha256, mode }) {
+  if (!validBasicHttpEpoch(publicEpoch2) || !basicHttpHash(generation) || !basicHttpHash(payloadSha256) || !["current", "retained", "absent", "retained_absent"].includes(mode) || typeof capturedAt !== "string" || new Date(Date.parse(capturedAt)).toISOString() !== capturedAt) {
+    throw Error("basic_http_metadata");
+  }
+  const revision = await sha256(enc2.encode(JSON.stringify([publicEpoch2, generation])));
+  const etagHash = await sha256(enc2.encode(JSON.stringify([publicEpoch2, payloadSha256])));
+  return Object.freeze({
+    ETag: '"basic-item-' + etagHash + '"',
+    "X-Astra-Basic-Epoch": publicEpoch2,
+    "X-Astra-Basic-Revision": revision,
+    "X-Astra-Basic-Generation": generation,
+    "X-Astra-Basic-Captured-At": capturedAt,
+    "X-Astra-Basic-Body-SHA256": payloadSha256,
+    "X-Astra-Basic-Mode": mode,
+    "X-Astra-Basic-Verification": "committed-sql-and-selected-page",
+    "X-Astra-Basic-Body-Verification": "producer-sql-attested-not-recomputed",
+    "Last-Modified": new Date(capturedAt).toUTCString()
+  });
+}
+
+// ui-src/item-api/basic-loader.mjs
+var fail2 = (code) => Object.assign(Error(code), { code });
+var need2 = (v) => {
+  if (!v) throw fail2("invalid");
+};
 var abort = () => Object.assign(Error("Aborted"), { name: "AbortError" });
-async function boundedBytes(response, limit) {
-  const size = Number(response.headers.get("content-length"));
-  if (Number.isFinite(size) && size > limit) throw Error("Body bound");
-  if (response.body?.getReader) {
-    const reader = response.body.getReader(), chunks = [];
-    let length = 0;
+var idOK = (id2) => Number.isSafeInteger(id2) && id2 > 0 && id2 <= 999999999;
+function createBasicItemReferenceClient({ fetcher, enabled: enabled2 = false, isEnabled = () => true, expectedEpoch, now = Date.now, monotonic = () => performance.now(), ttlMs = 3e4, timeoutMs = 1e4, maxItems = 32, maxFlights = 4 } = {}) {
+  need2(Number.isInteger(ttlMs) && ttlMs >= 0 && ttlMs <= 6e4 && Number.isInteger(timeoutMs) && timeoutMs > 0 && timeoutMs <= 12e3 && Number.isInteger(maxItems) && maxItems > 0 && maxItems <= 64 && Number.isInteger(maxFlights) && maxFlights > 0 && maxFlights <= 4);
+  let paused = false, blocked = false, epoch = 0, sequence = 0, high = null;
+  const cache = /* @__PURE__ */ new Map(), flights = /* @__PURE__ */ new Map(), failures = /* @__PURE__ */ new Map();
+  const live = () => {
     try {
-      for (; ; ) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        length += value.byteLength;
-        if (length > limit) {
-          await reader.cancel();
-          throw Error("Body bound");
-        }
-        chunks.push(value);
-      }
-    } finally {
-      reader.releaseLock();
+      return enabled2 === true && !paused && !blocked && isEnabled() === true && validBasicHttpEpoch(expectedEpoch);
+    } catch {
+      return false;
     }
-    const out = new Uint8Array(length);
+  };
+  const expose = (v) => Object.freeze({ data: structuredClone(v.data), mode: v.mode, evidenceKind: "basic_aggregate", quoteAuthority: v.mode === "current" && v.data.state === "present_in_generation" && [v.data.sold?.medianUnitPrice, v.data.sold?.averageUnitPrice, v.data.asking?.medianUnitPrice].some((x) => typeof x === "string"), currentAgainstProvidedPins: v.mode === "current" || v.mode === "absent", globalLatestVerified: false, verificationScope: "committed_sql_attestation_and_selected_page", bodyHashVerification: "producer_sql_attested_not_recomputed", upstreamLatestInspected: false });
+  function put(id2, v) {
+    cache.delete(id2);
+    cache.set(id2, v);
+    while (cache.size > maxItems) cache.delete(cache.keys().next().value);
+  }
+  function cancel(c) {
+    c.cancelled = true;
+    c.controller.abort();
+    if (c.reader && !c.cancelPromise) c.cancelPromise = Promise.resolve().then(() => c.reader.cancel()).catch(() => {
+    });
+    c.reject?.(c.timedOut ? fail2("timeout") : abort());
+  }
+  const fence = (c) => {
+    if (c.cancelled || c.epoch !== epoch || !live()) throw abort();
+    if (monotonic() >= c.deadline) {
+      c.timedOut = true;
+      cancel(c);
+      throw fail2("timeout");
+    }
+  };
+  async function bytes4(r, c, limit) {
+    const declared = r.headers.get("Content-Length");
+    if (declared !== null) need2(/^(0|[1-9][0-9]*)$/.test(declared) && Number(declared) <= limit);
+    const chunks = [];
+    let n = 0, complete = false;
+    if (r.body) {
+      c.reader = r.body.getReader();
+      try {
+        for (; ; ) {
+          fence(c);
+          const x = await c.reader.read();
+          fence(c);
+          if (x.done) {
+            complete = true;
+            break;
+          }
+          need2(x.value instanceof Uint8Array && x.value.byteLength > 0);
+          n += x.value.byteLength;
+          need2(n <= limit);
+          chunks.push(x.value.slice());
+        }
+      } finally {
+        if (c.cancelled || !complete) {
+          if (!c.cancelPromise) c.cancelPromise = Promise.resolve(c.reader.cancel()).catch(() => {
+          });
+          await c.cancelPromise;
+        }
+        c.reader.releaseLock();
+        c.reader = null;
+      }
+    }
+    need2(declared === null || n === Number(declared));
+    const out = new Uint8Array(n);
     let at = 0;
-    for (const b2 of chunks) {
-      out.set(b2, at);
-      at += b2.length;
+    for (const b of chunks) {
+      out.set(b, at);
+      at += b.length;
     }
     return out;
   }
-  const b = new Uint8Array(await response.arrayBuffer());
-  if (b.length > limit) throw Error("Body bound");
-  return b;
-}
-var failure = (code) => Object.assign(Error(code), { code });
-function createItemReferenceClient({ fetcher, enabled: enabled2 = false, isEnabled = () => true, now = Date.now, ttlMs = 3e4, timeoutMs = 1e4, maxItems = 32, maxBytes = 2097152, maxFlights = 4 } = {}) {
-  if (!Number.isInteger(ttlMs) || ttlMs < 0 || ttlMs > 6e4 || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 12e3 || !Number.isSafeInteger(maxItems) || maxItems < 1 || maxItems > 64 || !Number.isSafeInteger(maxBytes) || maxBytes < 3e5 || maxBytes > 8388608 || !Number.isSafeInteger(maxFlights) || maxFlights < 1 || maxFlights > 8) throw Error("Bounded client settings required");
-  let bytes4 = 0, blocked = false, fastSeen = false, fastEpoch = null, high = null, saturatedAt = 0;
-  const cache = /* @__PURE__ */ new Map(), flights = /* @__PURE__ */ new Map(), controllers = /* @__PURE__ */ new Map(), failures = /* @__PURE__ */ new Map(), tombstones = /* @__PURE__ */ new Map();
-  const active = () => enabled2 === true && isEnabled() === true;
-  const touch = (id2, value) => {
-    if (cache.has(id2)) bytes4 -= cache.get(id2).bytes;
-    cache.delete(id2);
-    cache.set(id2, value);
-    bytes4 += value.bytes;
-    while (cache.size > maxItems || bytes4 > maxBytes) {
-      const first = cache.keys().next().value;
-      bytes4 -= cache.get(first).bytes;
-      cache.delete(first);
-    }
-  };
-  const drop = (id2) => {
-    const old = cache.get(id2);
-    if (old) bytes4 -= old.bytes;
-    cache.delete(id2);
-  };
-  function recognize(response) {
-    const marked = hasFastItemHeaders(response.headers);
-    if (marked && !fastSeen) {
-      fastSeen = true;
-      for (const [id2, v] of [...cache]) if (!v.fast) drop(id2);
-    }
-    return marked;
+  async function frame(r, c, v, sha2, mode) {
+    need2(r.headers.get("X-Astra-Basic-Protocol") === BASIC_ITEM_HTTP_PROTOCOL && r.headers.get("X-Astra-Basic-Definition") === BASIC_PUBLIC_DEFINITION_SHA && r.headers.get("X-Astra-Basic-Epoch") === expectedEpoch && r.headers.get("X-Astra-Basic-Mode") === mode && r.headers.get("X-Astra-Basic-Verification") === "committed-sql-and-selected-page" && r.headers.get("X-Astra-Basic-Body-Verification") === "producer-sql-attested-not-recomputed");
+    const h = await basicItemHttpHeaders({ publicEpoch: expectedEpoch, generation: v.generation, capturedAt: v.capturedAt, payloadSha256: sha2, mode });
+    fence(c);
+    for (const k of ["ETag", "X-Astra-Basic-Revision", "X-Astra-Basic-Generation", "X-Astra-Basic-Captured-At", "X-Astra-Basic-Body-SHA256"]) need2(r.headers.get(k) === h[k]);
+    need2(Date.parse(v.capturedAt) <= now());
+    return h;
   }
-  function missing(id2, frame) {
-    if (!frame) return;
-    const old = tombstones.get(id2);
-    if (old && old.revision > frame.revision) return;
-    if (!old && tombstones.size >= 64) {
-      saturatedAt = Math.max(saturatedAt, frame.revision);
-      return;
+  function order(c, v) {
+    if (high) {
+      need2(v.data.capturedAt >= high.capture);
+      if (v.data.capturedAt === high.capture && v.data.generation !== high.generation) need2(c.sequence > high.sequence);
     }
-    tombstones.set(id2, frame);
+    if (!high || v.data.capturedAt > high.capture || c.sequence > high.sequence) high = { capture: v.data.capturedAt, generation: v.data.generation, sequence: c.sequence };
+    for (const [k, old] of [...cache]) if (old.data.capturedAt < v.data.capturedAt || old.data.capturedAt === v.data.capturedAt && old.data.generation !== v.data.generation) put(k, { ...old, mode: old.data.state === "absent_in_generation" ? "retained_absent" : "retained", expires: 0 });
   }
-  function admit(frame, id2, negative = false, prior = null) {
-    if (fastEpoch !== null && frame.epoch !== fastEpoch) throw failure("invalid");
-    if (high && (frame.revision < high.revision || Date.parse(frame.capturedAt) < Date.parse(high.capturedAt) || frame.revision === high.revision && (frame.generation !== high.generation || frame.capturedAt !== high.capturedAt))) throw failure("invalid");
-    const absent = tombstones.get(id2);
-    if (!negative && (frame.revision <= saturatedAt || absent && frame.revision <= absent.revision)) throw failure("invalid");
-    if (!negative && prior?.fast && frame.revision === prior.fast.revision && (frame.bodySha256 !== prior.fast.bodySha256 || frame.generation !== prior.fast.generation || frame.capturedAt !== prior.fast.capturedAt)) throw failure("invalid");
-    if (!high || frame.revision > high.revision) {
-      for (const [k, v] of tombstones) if (v.revision < frame.revision) tombstones.delete(k);
-      if (saturatedAt < frame.revision) saturatedAt = 0;
-      for (const [k, v] of [...cache]) if (v.fast && v.fast.revision < frame.revision) touch(k, { ...v, mode: "retained", expires: 0 });
-    }
-    high = { epoch: frame.epoch, revision: frame.revision, generation: frame.generation, capturedAt: frame.capturedAt };
-    fastEpoch = frame.epoch;
-    if (negative) missing(id2, frame);
-    else tombstones.delete(id2);
-  }
-  const wait = (promise, signal) => new Promise((resolve, reject) => {
-    if (signal?.aborted) return reject(abort());
-    const onAbort = () => {
-      cleanup();
-      reject(abort());
-    }, cleanup = () => signal?.removeEventListener("abort", onAbort);
-    signal?.addEventListener("abort", onAbort, { once: true });
-    promise.then((v) => {
-      cleanup();
-      signal?.aborted ? reject(abort()) : resolve(v);
-    }, (e) => {
-      cleanup();
-      reject(e);
-    });
-  });
-  async function read(id2) {
-    const prior = cache.get(id2), control = { controller: new AbortController(), cancelled: false, timedOut: false, fastDeadline: performance.now() + timeoutMs };
-    let captureFloor = prior?.data.sourceCapturedAt ?? failures.get(id2)?.capturedAtFloor ?? null, negativeSeen = false;
-    controllers.set(id2, control);
-    let timer;
-    const expired = new Promise((_, reject) => {
-      timer = setTimeout(() => {
-        control.timedOut = true;
-        control.controller.abort();
-        reject(failure("timeout"));
-      }, timeoutMs);
-    });
-    const deadline = (p) => Promise.race([p, expired]);
-    const fence = () => {
-      if (control.cancelled || !active()) throw abort();
-      if (control.timedOut || performance.now() >= control.fastDeadline) {
-        control.timedOut = true;
-        control.controller.abort();
-        throw failure("timeout");
-      }
-      if (blocked) throw failure("access_denied");
-    };
-    function commit(action) {
-      const old = { bytes: bytes4, fastEpoch, high, saturatedAt, cache: new Map(cache), tombstones: new Map(tombstones), failures: new Map(failures) };
-      fence();
-      try {
-        action();
-        fence();
-      } catch (error) {
-        bytes4 = old.bytes;
-        fastEpoch = old.fastEpoch;
-        high = old.high;
-        saturatedAt = old.saturatedAt;
-        for (const [target, saved] of [[cache, old.cache], [tombstones, old.tombstones], [failures, old.failures]]) {
-          target.clear();
-          for (const [k, v] of saved) target.set(k, v);
-        }
-        throw error;
-      }
-    }
-    async function headerFrame(response, values) {
-      try {
-        const frame = await deadline(validateFastItemHeaders(response.headers, { ...values, now: now() }));
-        fence();
-        return frame;
-      } catch {
-        fence();
-        throw failure("invalid");
-      }
-    }
-    async function errorFrame(response, kind) {
-      const capturedAt = response.headers.get("X-Astra-API-Item-Captured-At"), generation = response.headers.get("X-Astra-API-Item-Generation"), etag = response.headers.get("ETag");
-      if (!/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? "") || !/^"api-item-[a-f0-9]{64}"$/.test(etag ?? "")) throw failure("invalid");
-      const raw = await deadline(boundedBytes(response, 4096));
-      fence();
-      const bodySha256 = await deadline(sha(raw));
-      fence();
-      if (etag !== '"api-item-' + bodySha256 + '"') throw failure("invalid");
-      try {
-        parseFastItemError(raw, { kind, itemId: id2, generation, capturedAt });
-      } catch {
-        throw failure("invalid");
-      }
-      return headerFrame(response, { generation, capturedAt, bodySha256 });
-    }
+  async function work(id2, c) {
+    const prior = cache.get(id2);
+    let negative = false;
     try {
-      let response;
       for (let attempt = 0; attempt < 2; attempt++) {
-        const generation2 = attempt === 0 ? prior?.data.projectionGeneration : null, url = "/api-item-prices/" + id2 + ".json" + (generation2 ? "?generation=" + generation2 : "");
-        response = await deadline(fetcher(url, { method: "GET", credentials: "same-origin", cache: "no-cache", redirect: "error", signal: control.controller.signal, headers: prior ? { "If-None-Match": prior.etag } : {} }));
-        fence();
-        if (response.status === 401 || response.status === 403) throw failure("access_denied");
-        const marked = recognize(response);
-        fence();
-        if (response.status === 404) {
-          negativeSeen = true;
-          drop(id2);
-          missing(id2, prior?.fast);
-          if (fastSeen) {
-            if (!marked) throw failure("invalid");
-            const frame = await errorFrame(response, "membership_absent");
-            commit(() => admit(frame, id2, true));
-            if (captureFloor === null || Date.parse(frame.capturedAt) > Date.parse(captureFloor)) captureFloor = frame.capturedAt;
-          }
-          throw failure("not_found");
+        fence(c);
+        const conditional = attempt === 0 ? prior : null, url = "/api-basic-item-prices/" + id2 + ".json" + (conditional ? "?generation=" + conditional.data.generation : "");
+        const r = await fetcher(url, { method: "GET", credentials: "same-origin", cache: "no-cache", redirect: "error", signal: c.controller.signal, headers: { "X-Astra-Request-Basic-Protocol": BASIC_ITEM_HTTP_PROTOCOL, ...conditional ? { "If-None-Match": conditional.etag } : {} } });
+        c.response = r;
+        if (c.cancelled || !live() || c.epoch !== epoch) {
+          if (r.body && !r.body.locked) await r.body.cancel();
+          throw abort();
         }
-        if (response.status !== 409) break;
-        if (fastSeen) {
-          if (!marked) throw failure("invalid");
-          const frame = await errorFrame(response, "generation_changed");
-          commit(() => admit(frame, id2));
+        fence(c);
+        if (r.status === 401 || r.status === 403) {
+          blocked = true;
+          cache.clear();
+          throw fail2("access_denied");
         }
-        if (attempt === 1) throw failure("generation_changed");
-      }
-      const mode = response.headers.get("X-Astra-API-Item-Mode"), captured = response.headers.get("X-Astra-API-Item-Captured-At"), generation = response.headers.get("X-Astra-API-Item-Generation"), etag = response.headers.get("ETag");
-      if (response.status !== 200 && response.status !== 304) throw failure("unavailable");
-      if (!["validated_cache", "retained"].includes(mode) || !/^"api-item-[a-f0-9]{64}"$/.test(etag ?? "")) throw failure("invalid");
-      if (response.status === 304) {
-        if (!prior || prior.etag !== etag || prior.data.sourceCapturedAt !== captured || prior.data.projectionGeneration !== generation) throw failure("invalid");
-        let fast2 = null;
-        if (fastSeen) {
-          if (!hasFastItemHeaders(response.headers)) throw failure("invalid");
-          fast2 = await headerFrame(response, { generation, capturedAt: captured, bodySha256: etag.slice(10, -1) });
-          fence();
+        if (r.status === 404) {
+          negative = true;
+          cache.delete(id2);
         }
-        const value2 = { ...prior, mode, fast: fast2, expires: now() + ttlMs };
-        commit(() => {
-          if (fast2) admit(fast2, id2, false, prior);
-          touch(id2, value2);
+        if (r.status === 409) {
+          need2(attempt === 0 && /^application\/json(?:;|$)/i.test(r.headers.get("Content-Type") ?? ""));
+          const raw2 = await bytes4(r, c, 4096), e = parseStrictJson(raw2);
+          need2(e && Object.keys(e).length === 7 && e.schemaVersion === 1 && e.kind === "basic_item_reference_error" && e.error === "generation_changed" && e.sourceObservedAt === null && e.itemId === id2 && basicHttpHash(e.generation) && typeof e.capturedAt === "string" && new Date(Date.parse(e.capturedAt)).toISOString() === e.capturedAt && Date.parse(e.capturedAt) <= now());
+          need2(r.headers.get("X-Astra-Basic-Epoch") === expectedEpoch && r.headers.get("X-Astra-Basic-Generation") === e.generation && r.headers.get("X-Astra-Basic-Captured-At") === e.capturedAt);
+          const revision = await sha256(new TextEncoder().encode(JSON.stringify([expectedEpoch, e.generation])));
+          fence(c);
+          need2(r.headers.get("X-Astra-Basic-Revision") === revision);
+          continue;
+        }
+        if (r.status === 304) {
+          need2(conditional && conditional.data.state === "present_in_generation");
+          await frame(r, c, conditional.data, conditional.bodySha, "current");
+          fence(c);
+          const v2 = { ...conditional, mode: "current", expires: now() + ttlMs };
+          order(c, v2);
+          fence(c);
+          put(id2, v2);
           failures.delete(id2);
-        });
-        return value2;
-      }
-      if (!/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? "")) throw failure("invalid");
-      const body = await deadline(boundedBytes(response, 3e5));
-      fence();
-      if ('"api-item-' + await deadline(sha(body)) + '"' !== etag) throw failure("invalid");
-      fence();
-      let data;
-      try {
-        data = await deadline(validatePublicItemReference(parseStrictJson(body)));
-      } catch {
-        throw failure("invalid");
-      }
-      fence();
-      if (data.itemId !== id2 || data.sourceCapturedAt !== captured || data.projectionGeneration !== generation || captureFloor !== null && Date.parse(data.sourceCapturedAt) < Date.parse(captureFloor)) throw failure("invalid");
-      let fast = null;
-      if (fastSeen) {
-        if (!hasFastItemHeaders(response.headers)) throw failure("invalid");
-        fast = await headerFrame(response, { generation, capturedAt: captured, bodySha256: etag.slice(10, -1) });
-        fence();
-      }
-      const value = { data, mode, etag, fast, bytes: body.length, expires: now() + ttlMs };
-      commit(() => {
-        if (fast) admit(fast, id2, false, prior);
-        touch(id2, value);
+          return v2;
+        }
+        if (r.status !== 200 && r.status !== 404) throw fail2("unavailable");
+        need2(/^application\/json(?:;|$)/i.test(r.headers.get("Content-Type") ?? ""));
+        const mode = r.headers.get("X-Astra-Basic-Mode");
+        need2(["current", "retained", "absent", "retained_absent"].includes(mode));
+        const raw = await bytes4(r, c, 8192);
+        fence(c);
+        const bodySha = await sha256(raw);
+        fence(c);
+        const data = await parseBasicPublicItem(raw, { expectedItemId: id2, expectedDefinitionHash: BASIC_PUBLIC_DEFINITION_SHA, expectedPayloadSha256: bodySha, expectedGeneration: r.headers.get("X-Astra-Basic-Generation"), expectedCapturedAt: r.headers.get("X-Astra-Basic-Captured-At"), signal: c.controller.signal, monotonic, waitMs: Math.max(1, Math.floor(c.deadline - monotonic())) });
+        fence(c);
+        const absent = data.state === "absent_in_generation";
+        need2(absent === (r.status === 404) && absent === ["absent", "retained_absent"].includes(mode));
+        const h = await frame(r, c, data, bodySha, mode);
+        fence(c);
+        const v = { data, mode, bodySha, etag: h.ETag, expires: now() + ttlMs };
+        if (mode === "current" || mode === "absent") order(c, v);
+        else if (high) need2(data.capturedAt <= high.capture || !prior);
+        fence(c);
+        put(id2, v);
         failures.delete(id2);
-      });
-      return value;
-    } catch (error) {
-      if (control.cancelled || !active() || error?.name === "AbortError" && !control.timedOut) throw abort();
-      const reason = control.timedOut ? "timeout" : ["timeout", "access_denied", "not_found", "generation_changed", "invalid", "unavailable"].includes(error?.code) ? error.code : "unavailable", old = failures.get(id2)?.count ?? 0;
-      failures.set(id2, { count: old + 1, reason, checkedAt: now(), retryAt: now() + Math.min(3e5, 3e4 * 2 ** Math.min(old, 4)), capturedAtFloor: captureFloor });
+        return v;
+      }
+      throw fail2("generation_changed");
+    } catch (e) {
+      if (c.cancelled || c.epoch !== epoch || !live() && !blocked) throw c.timedOut ? fail2("timeout") : abort();
+      const code = blocked ? "access_denied" : ["invalid", "timeout", "unavailable", "generation_changed"].includes(e?.code) ? e.code : "invalid";
+      const count2 = (failures.get(id2)?.count ?? 0) + 1;
+      failures.delete(id2);
+      failures.set(id2, { reason: code, count: count2, retryAt: now() + Math.min(3e5, 3e4 * 2 ** Math.min(count2 - 1, 4)) });
       while (failures.size > 64) failures.delete(failures.keys().next().value);
-      if (reason === "access_denied") {
-        blocked = true;
-        throw failure(reason);
+      if (!blocked && !negative && prior) {
+        const v = { ...prior, mode: prior.data.state === "absent_in_generation" ? "retained_absent" : "retained", expires: 0 };
+        put(id2, v);
+        return v;
       }
-      if (negativeSeen || reason === "not_found") {
-        drop(id2);
-        throw failure("not_found");
-      }
-      if (prior && active() && (!fastSeen || prior.fast)) {
-        const value = { ...prior, mode: "retained", expires: prior.fast && high && prior.fast.revision < high.revision ? 0 : prior.expires };
-        touch(id2, value);
-        return value;
-      }
-      throw failure(reason);
+      throw fail2(negative ? "not_found" : code);
     } finally {
-      clearTimeout(timer);
-      if (controllers.get(id2) === control) controllers.delete(id2);
+      if (c.cancelPromise) await c.cancelPromise;
+      if (typeof c.response?.body?.cancel === "function" && !c.response.body.locked) await c.response.body.cancel().catch(() => {
+      });
     }
+  }
+  function delivery(v, ticket) {
+    const prepared = expose(v), retained = expose({ ...v, mode: v.data.state === "absent_in_generation" ? "retained_absent" : "retained" });
+    const beforeClock = monotonic(), wall = now();
+    const allowed = live(), clock3 = monotonic();
+    const latest2 = cache.get(ticket.id);
+    if (!allowed || ticket.epoch !== epoch || !latest2 || latest2.bodySha !== v.bodySha || latest2.data.generation !== v.data.generation) throw abort();
+    if (!Number.isFinite(beforeClock) || !Number.isFinite(clock3) || clock3 < beforeClock || clock3 >= ticket.deadline) throw fail2("timeout");
+    const chargedWall = wall + Math.max(0, clock3 - beforeClock);
+    need2(Number.isFinite(wall) && Number.isFinite(chargedWall));
+    const current2 = (!ticket.cacheHit && ttlMs === 0 || chargedWall < v.expires) && latest2.mode === v.mode;
+    return current2 ? prepared : retained;
+  }
+  const nativeCallerAborted = Object.getOwnPropertyDescriptor(AbortSignal.prototype, "aborted").get;
+  function waiter(p, signal, ticket) {
+    if (signal?.aborted) return Promise.reject(abort());
+    return new Promise((resolve, reject) => {
+      const stopped = () => {
+        clean();
+        reject(abort());
+      }, clean = () => signal?.removeEventListener("abort", stopped);
+      signal?.addEventListener("abort", stopped, { once: true });
+      p.then((v) => {
+        clean();
+        try {
+          signal?.aborted ? reject(abort()) : (() => {
+            const value = delivery(v, ticket);
+            let cancelled = false;
+            try {
+              cancelled = signal != null && nativeCallerAborted.call(signal);
+            } catch {
+              cancelled = true;
+            }
+            if (cancelled || ticket.epoch !== epoch) reject(abort());
+            else resolve(value);
+          })();
+        } catch (e) {
+          reject(e);
+        }
+      }, (e) => {
+        clean();
+        reject(e);
+      });
+    });
   }
   return Object.freeze({
-    async loadItem({ itemId, signal } = {}) {
-      if (!Number.isSafeInteger(itemId) || itemId < 1 || itemId > 999999999) throw Error("Exact numeric ID required");
-      if (!active() || typeof fetcher !== "function") throw failure("disabled");
-      if (blocked) throw failure("access_denied");
-      let value = cache.get(itemId);
-      if (value && now() < value.expires) return { data: structuredClone(value.data), mode: value.mode };
-      if ((failures.get(itemId)?.retryAt ?? 0) > now()) {
-        if (value) return { data: structuredClone(value.data), mode: "retained" };
-        throw failure(failures.get(itemId).reason);
+    loadItem({ itemId, signal } = {}) {
+      if (!idOK(itemId)) return Promise.reject(fail2("invalid_id"));
+      if (!live() || typeof fetcher !== "function") return Promise.reject(fail2(blocked ? "access_denied" : "disabled"));
+      const ticket = { id: itemId, epoch, deadline: monotonic() + timeoutMs };
+      const v = cache.get(itemId);
+      if (v && now() < v.expires) {
+        ticket.cacheHit = true;
+        return waiter(Promise.resolve(v), signal, ticket);
       }
+      const f = failures.get(itemId);
+      if (f && now() < f.retryAt) return v ? waiter(Promise.resolve({ ...v, mode: v.data.state === "absent_in_generation" ? "retained_absent" : "retained" }), signal, ticket) : Promise.reject(fail2(f.reason));
       if (!flights.has(itemId)) {
-        if (flights.size >= maxFlights) throw failure("read_capacity");
-        const task = read(itemId);
-        flights.set(itemId, task);
+        if (flights.size >= maxFlights) return Promise.reject(fail2("read_capacity"));
+        const c = { epoch, sequence: ++sequence, controller: new AbortController(), cancelled: false, timedOut: false, reader: null, cancelPromise: null, deadline: monotonic() + timeoutMs };
+        let timer;
+        const expired = new Promise((_, reject) => {
+          c.reject = reject;
+          timer = setTimeout(() => {
+            c.timedOut = true;
+            const count2 = (failures.get(itemId)?.count ?? 0) + 1;
+            failures.delete(itemId);
+            failures.set(itemId, { reason: "timeout", count: count2, retryAt: now() + Math.min(3e5, 3e4 * 2 ** Math.min(count2 - 1, 4)) });
+            while (failures.size > 64) failures.delete(failures.keys().next().value);
+            cancel(c);
+          }, timeoutMs);
+        });
+        const task = work(itemId, c), visible = Promise.race([task, expired]);
+        flights.set(itemId, { c, task, visible });
         task.finally(() => {
-          if (flights.get(itemId) === task) flights.delete(itemId);
+          clearTimeout(timer);
+          if (flights.get(itemId)?.c === c) flights.delete(itemId);
         }).catch(() => {
         });
+        visible.catch(() => {
+        });
       }
-      value = await wait(flights.get(itemId), signal);
-      return { data: structuredClone(value.data), mode: value.mode };
+      return waiter(flights.get(itemId).visible, signal, ticket);
     },
     peekCachedReferences() {
-      return !active() || blocked ? { status: blocked ? "access_denied" : "disabled", references: [] } : { status: "cache_only", references: [...cache.values()].map((v) => ({ data: structuredClone(v.data), mode: now() < v.expires ? v.mode : "retained" })) };
-    },
-    state(id2) {
-      const value = cache.get(id2);
-      return value ? { mode: value.mode, capturedAt: value.data.sourceCapturedAt, generation: value.data.projectionGeneration } : null;
+      if (!live()) return { status: blocked ? "access_denied" : paused ? "paused" : "disabled", references: [] };
+      return { status: "cache_only", references: [...cache.values()].map((v) => expose({ ...v, mode: now() < v.expires ? v.mode : v.data.state === "absent_in_generation" ? "retained_absent" : "retained" })) };
     },
     diagnostic(id2) {
-      const f = failures.get(id2), value = cache.get(id2);
-      return { blocked, reason: blocked ? "access_denied" : f?.reason ?? null, retryAt: f?.retryAt ?? 0, partial: !!value && (value.data.item.aggregate.sold === null || value.data.item.aggregate.asking === null || value.data.item.aggregate.reference === null) };
-    },
-    ordering() {
-      return Object.freeze({ protocolSeen: fastSeen, epoch: fastEpoch, revision: high?.revision ?? null, tombstones: tombstones.size, saturatedAt });
+      const f = failures.get(id2);
+      return Object.freeze({ blocked, paused, reason: f?.reason ?? null, retryAt: f?.retryAt ?? 0, physicalPending: flights.size, cacheItems: cache.size });
     },
     cancelItem(id2) {
-      const c = controllers.get(id2);
-      if (c) {
-        c.cancelled = true;
-        c.controller.abort();
-      }
-      return (flights.get(id2) ?? Promise.resolve()).catch(() => {
+      const f = flights.get(id2);
+      if (f) cancel(f.c);
+      return (f?.task ?? Promise.resolve()).catch(() => {
       });
     },
-    resetAccess() {
-      if (blocked) {
-        for (const [id2, value] of [...cache]) touch(id2, { ...value, expires: 0 });
-        failures.clear();
-      }
-      blocked = false;
+    pause() {
+      paused = true;
+      epoch++;
+      for (const [id2, v] of [...cache]) put(id2, { ...v, mode: v.data.state === "absent_in_generation" ? "retained_absent" : "retained", expires: 0 });
+      for (const f of flights.values()) cancel(f.c);
     },
-    clear() {
-      for (const c of controllers.values()) {
-        c.cancelled = true;
-        c.controller.abort();
-      }
+    resume() {
+      paused = false;
+    },
+    setEnabled(v) {
+      enabled2 = v === true;
+      epoch++;
+      for (const f of flights.values()) cancel(f.c);
       cache.clear();
       failures.clear();
-      bytes4 = 0;
+      high = null;
       blocked = false;
-    }
-  });
-}
-
-// ops/api-discovery-membership.mjs
-var NUMBER_PROTO = Object.getPrototypeOf(parseStrictJson("0.5"));
-var enc3 = new TextEncoder();
-var MembershipProfileError = class extends Error {
-};
-var check2 = (ok, code = "membership_profile") => {
-  if (!ok) throw new MembershipProfileError(code);
-};
-var int = (v, min = 0, max = Number.MAX_SAFE_INTEGER) => {
-  check2(Number.isSafeInteger(v) && v >= min && v <= max);
-  return v;
-};
-var shape2 = (v, keys) => check2(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys].sort().join(","));
-var clock = (v) => typeof v === "string" && Number.isFinite(Date.parse(v)) && new Date(v).toISOString() === v;
-var hash = async (value) => sha256(typeof value === "string" ? enc3.encode(value) : value);
-
-// ops/api-item-discovery-contract.mjs
-var HASH3 = /^[a-f0-9]{64}$/;
-async function validateManifest(m, p = null) {
-  shape2(m, ["schemaVersion", "kind", "scope", "sourceCreditUrl", "priceProjectionGeneration", "identityMetadata", "spriteBindingsSha256", "providerBindingsSha256", "sources", "itemCount", "pages", "indexHash"]);
-  check2(m.schemaVersion === 1 && m.kind === "api_item_identity_manifest" && m.scope === "accepted_api_identity_union_with_retained_api_memberships" && m.sourceCreditUrl === "https://maplestory.market/?ref=v6kkdvp6" && HASH3.test(m.priceProjectionGeneration) && HASH3.test(m.spriteBindingsSha256) && HASH3.test(m.providerBindingsSha256) && HASH3.test(m.indexHash) && Array.isArray(m.identityMetadata) && m.identityMetadata.length >= 1 && m.identityMetadata.length <= 4 && Array.isArray(m.sources) && m.sources.length >= 1 && m.sources.length <= 3 && Array.isArray(m.pages) && m.pages.length > 0 && m.pages.length <= 128);
-  int(m.itemCount, 1, 1e4);
-  let count2 = 0, last = 0, totalBytes = 0;
-  for (const [page, d] of m.pages.entries()) {
-    shape2(d, ["page", "firstItemId", "lastItemId", "itemCount", "sha256", "bytes", "url"]);
-    check2(d.page === page && HASH3.test(d.sha256) && d.url === "/api-item-identities/" + d.sha256 + ".json");
-    int(d.firstItemId, last + 1, 999999999);
-    int(d.lastItemId, d.firstItemId, 999999999);
-    int(d.itemCount, 1, 128);
-    int(d.bytes, 1, 131072);
-    count2 += d.itemCount;
-    last = d.lastItemId;
-    totalBytes += d.bytes;
-  }
-  check2(count2 === m.itemCount && totalBytes <= 8388608);
-  const ops = /* @__PURE__ */ new Set();
-  for (const s of m.sources) {
-    shape2(s, ["operation", "sourceUrl", "retrievedAt", "sourceObservedAt", "sourceGeneratedAt", "sourceGeneratedAtKind", "itemCount"]);
-    check2(["prices", "catalogue", "overview"].includes(s.operation) && !ops.has(s.operation) && s.sourceUrl === { prices: "https://maplestory.market/api/prices", catalogue: "https://maplestory.market/api/items", overview: "https://maplestory.market/api/market/overview" }[s.operation] && clock(s.retrievedAt) && s.sourceObservedAt === null);
-    ops.add(s.operation);
-    int(s.itemCount, 0, m.itemCount);
-    check2(s.sourceGeneratedAt === null ? s.sourceGeneratedAtKind === null : clock(s.sourceGeneratedAt) && s.sourceGeneratedAtKind === "publisher_generation_not_individual_sale_time" && Date.parse(s.sourceGeneratedAt) <= Date.parse(s.retrievedAt));
-  }
-  check2(ops.has("prices"));
-  for (const d of m.identityMetadata) {
-    shape2(d, ["expectedSha256", "sourceUrl", "format"]);
-    check2(HASH3.test(d.expectedSha256) && ["cash_client_catalog", "noncash_list"].includes(d.format) && d.sourceUrl === `https://maplestory.io/api/MCW/1/item/list?cashFilter=${d.format === "cash_client_catalog" ? "true" : "false"}&count=10000`);
-  }
-  const { indexHash, ...unsigned } = m;
-  check2(await hash(JSON.stringify(unsigned)) === indexHash && (!p || p.indexHash === indexHash), "manifest_semantic_hash");
-  return m;
-}
-function validatePage(page, descriptor, manifest) {
-  shape2(page, ["schemaVersion", "kind", "rows"]);
-  check2(page.schemaVersion === 1 && page.kind === "api_item_identity_page" && Array.isArray(page.rows) && page.rows.length === descriptor.itemCount);
-  let last = descriptor.firstItemId - 1;
-  for (const r of page.rows) {
-    shape2(r, ["itemId", "name", "nameStatus", "sprite", "spriteStatus", "providerBindings", "memberships", "priceMembership"]);
-    int(r.itemId, last + 1, descriptor.lastItemId);
-    last = r.itemId;
-    check2(["unique_client_id", "unknown_client_id", "conflicting_client_id"].includes(r.nameStatus) && (r.nameStatus === "unique_client_id" ? typeof r.name === "string" && r.name.trim() && r.name.length <= 300 : r.name === null));
-    check2(r.sprite === null ? r.spriteStatus === "unavailable" : r.spriteStatus === "reviewed_local" && typeof r.sprite === "string" && /^assets\/[A-Za-z0-9._-]+\.(?:png|webp|gif|svg)$/.test(r.sprite));
-    check2(Array.isArray(r.providerBindings) && r.providerBindings.length <= 4 && Array.isArray(r.memberships) && r.memberships.length > 0 && r.memberships.length <= 3 && ["in_committed_price_snapshot", "retained_price_identity_only", "no_accepted_price_membership"].includes(r.priceMembership));
-    for (const b of r.providerBindings) {
-      shape2(b, ["slug", "name", "planHash"]);
-      check2(typeof b.slug === "string" && /^[a-z0-9][a-z0-9-]*$/.test(b.slug) && typeof b.name === "string" && b.name.length <= 300 && HASH3.test(b.planHash));
-    }
-    const ops = /* @__PURE__ */ new Set();
-    for (const m of r.memberships) {
-      shape2(m, ["operation", "presentInSnapshot", "lastSeenRetrievedAt", "latestSnapshotRetrievedAt", "sourceObservedAt"]);
-      const s = manifest.sources.find((s2) => s2.operation === m.operation);
-      check2(s && !ops.has(m.operation) && typeof m.presentInSnapshot === "boolean" && clock(m.lastSeenRetrievedAt) && m.latestSnapshotRetrievedAt === s.retrievedAt && Date.parse(m.lastSeenRetrievedAt) <= Date.parse(s.retrievedAt) && m.sourceObservedAt === null && (!m.presentInSnapshot || m.lastSeenRetrievedAt === m.latestSnapshotRetrievedAt));
-      ops.add(m.operation);
-    }
-    const priced = r.memberships.find((m) => m.operation === "prices");
-    check2(r.priceMembership === (priced?.presentInSnapshot ? "in_committed_price_snapshot" : priced ? "retained_price_identity_only" : "no_accepted_price_membership"));
-  }
-  check2(page.rows[0].itemId === descriptor.firstItemId && page.rows.at(-1).itemId === descriptor.lastItemId);
-  return page;
-}
-
-// ui-src/item-api/discovery-client.mjs
-var bytes2 = new TextEncoder();
-var abort2 = () => Object.assign(Error("aborted"), { name: "AbortError" });
-function createIdentityDiscoveryClient({ enabled: enabled2 = false, isEnabled = () => true, fetcher, now = Date.now, ttlMs = 3e4, timeoutMs = 1e4 } = {}) {
-  if (!Number.isSafeInteger(ttlMs) || ttlMs < 0 || ttlMs > 6e4 || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 12e3) throw TypeError("Bounded client settings required");
-  let good = null, flight = null, expires = 0, retryAt = 0, failures = 0;
-  const pages = /* @__PURE__ */ new Map();
-  let cacheBytes = 0;
-  const active = () => {
-    try {
-      return enabled2 === true && isEnabled() === true;
-    } catch {
-      return false;
-    }
-  };
-  const wait = (p, signal) => new Promise((resolve, reject) => {
-    if (signal?.aborted) return reject(abort2());
-    const clear = () => signal?.removeEventListener("abort", cancel), cancel = () => {
-      clear();
-      reject(abort2());
-    };
-    signal?.addEventListener("abort", cancel, { once: true });
-    p.then((v) => {
-      clear();
-      signal?.aborted ? reject(abort2()) : resolve(v);
-    }, (e) => {
-      clear();
-      reject(e);
-    });
-  });
-  async function get(url, limit, previous = null) {
-    const controller = new AbortController();
-    let timer;
-    const timeout = new Promise((_, reject) => {
-      timer = setTimeout(() => {
-        controller.abort();
-        reject(Error("read_deadline"));
-      }, timeoutMs);
-    });
-    const deadline = (p) => Promise.race([p, timeout]);
-    try {
-      const response = await deadline(fetcher(url, { method: "GET", credentials: "same-origin", cache: "no-cache", redirect: "error", signal: controller.signal, headers: previous ? { "If-None-Match": previous.etag } : {} }));
-      if (response.status === 409) throw Object.assign(Error("generation_changed"), { generationChanged: true });
-      const mode = response.headers.get("X-Astra-API-Identity-Mode"), generation = response.headers.get("X-Astra-API-Identity-Generation"), etag = response.headers.get("ETag");
-      if (!["validated_cache", "retained"].includes(mode) || !/^"api-identities-[a-f0-9]{64}"$/.test(etag ?? "")) throw Error("response_context");
-      if (response.status === 304) {
-        if (!previous || etag !== previous.etag || generation !== previous.generation) throw Error("invalid304");
-        return { ...previous, mode };
-      }
-      if (response.status !== 200 || !/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? "")) throw Error("unavailable");
-      const chunks = [], reader = response.body.getReader();
-      let size = 0;
-      try {
-        for (; ; ) {
-          const { done, value } = await deadline(reader.read());
-          if (done) break;
-          size += value.byteLength;
-          if (size > limit) {
-            await reader.cancel();
-            throw Error("body_bound");
-          }
-          chunks.push(value);
-        }
-      } finally {
-        reader.releaseLock();
-      }
-      const raw = new Uint8Array(size);
-      let offset = 0;
-      for (const c of chunks) {
-        raw.set(c, offset);
-        offset += c.length;
-      }
-      const sha2 = await hash(raw);
-      if (etag !== '"api-identities-' + sha2 + '"') throw Error("body_hash");
-      return { text: new TextDecoder("utf-8", { fatal: true }).decode(raw), document: parseStrictJson(raw), etag, generation, mode, sha: sha2, bytes: size };
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-  const remember = (key, value) => {
-    if (pages.has(key)) cacheBytes -= pages.get(key).bytes;
-    pages.delete(key);
-    pages.set(key, value);
-    cacheBytes += value.bytes;
-    while (pages.size > 8 || cacheBytes > 1048576) {
-      const first = pages.keys().next().value;
-      cacheBytes -= pages.get(first).bytes;
-      pages.delete(first);
-    }
-  };
-  async function collect() {
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        const manifestRecord = await get("/api-item-identities.json", 65536, good?.manifestRecord), manifest = await validateManifest(manifestRecord.document);
-        if (manifestRecord.generation !== manifest.indexHash) throw Error("manifest_context");
-        if (good) for (const old of good.manifest.sources) {
-          const next = manifest.sources.find((s) => s.operation === old.operation);
-          if (!next || Date.parse(next.retrievedAt) < Date.parse(old.retrievedAt)) throw Error("source_clock_regression");
-        }
-        const output = new Array(manifest.pages.length);
-        let cursor = 0, retained = manifestRecord.mode === "retained";
-        let cancelled = false;
-        const workers = Array.from({ length: Math.min(4, manifest.pages.length) }, async () => {
-          try {
-            for (; ; ) {
-              if (cancelled) return;
-              if (!active()) throw Error("disabled");
-              const i = cursor++;
-              if (i >= manifest.pages.length) return;
-              const d = manifest.pages[i];
-              let record = pages.get(d.sha256);
-              if (!record) {
-                record = await get(d.url + "?generation=" + manifest.indexHash, 131072);
-                if (record.generation !== manifest.indexHash || record.sha !== d.sha256 || record.bytes !== d.bytes) throw Error("page_context");
-              }
-              validatePage(record.document, d, manifest);
-              if (record.mode === "retained") retained = true;
-              remember(d.sha256, record);
-              output[i] = record.document.rows;
-            }
-          } catch (error) {
-            cancelled = true;
-            throw error;
-          }
-        });
-        const settled = await Promise.allSettled(workers), failed = settled.find((r) => r.status === "rejected");
-        if (failed) throw failed.reason;
-        const rows2 = output.flat();
-        if (rows2.length !== manifest.itemCount) throw Error("row_count");
-        for (const source of manifest.sources) if (rows2.filter((r) => r.memberships.some((m) => m.operation === source.operation && m.presentInSnapshot)).length !== source.itemCount) throw Error("membership_count");
-        if (!active()) throw Error("disabled");
-        const value = { manifest, rows: rows2, mode: retained ? "retained" : "validated_cache", manifestRecord };
-        good = value;
-        failures = 0;
-        retryAt = 0;
-        expires = now() + ttlMs;
-        return value;
-      } catch (error) {
-        if (error.generationChanged && attempt === 0) continue;
-        throw error;
-      }
-    }
-    throw Error("generation_retry_bound");
-  }
-  return Object.freeze({ async load({ signal } = {}) {
-    if (!active() || typeof fetcher !== "function") throw Error("not_connected");
-    if (good && (now() < expires || now() < retryAt)) return structuredClone({ manifest: good.manifest, rows: good.rows, mode: now() < retryAt ? "retained" : good.mode });
-    if (now() < retryAt) throw Error("read_backoff");
-    if (!flight) {
-      flight = collect().catch((error) => {
-        retryAt = now() + Math.min(3e5, 3e4 * 2 ** Math.min(failures++, 4));
-        if (good && active()) return { ...good, mode: "retained" };
-        throw error;
-      }).finally(() => flight = null);
-    }
-    const value = await wait(flight, signal);
-    return structuredClone({ manifest: value.manifest, rows: value.rows, mode: value.mode });
-  }, state() {
-    return good ? { mode: now() < retryAt ? "retained" : good.mode, indexHash: good.manifest.indexHash, sources: structuredClone(good.manifest.sources) } : null;
-  } });
-}
-
-// ui-src/item-api/discovery-bridge.mjs
-function searchIdentityView(value) {
-  const { manifest, rows: rows2, mode } = value;
-  return {
-    itemCount: manifest.itemCount,
-    pricedItemCount: manifest.sources.find((s) => s.operation === "prices").itemCount,
-    indexHash: manifest.indexHash,
-    priceProjectionGeneration: manifest.priceProjectionGeneration,
-    mode,
-    sourceSnapshots: manifest.sources.map((s) => ({ ...s, capturedAt: s.retrievedAt })),
-    rows: rows2.map((r) => ({
-      ...r,
-      name: r.name ?? `Item ${r.itemId} (name unavailable)`,
-      memberships: r.memberships.map((m) => ({ ...m, capturedAt: m.lastSeenRetrievedAt })),
-      hasRetainedPriceSnapshot: r.memberships.some((m) => m.operation === "prices"),
-      hasCurrentAcceptedPriceSnapshot: r.priceMembership === "in_committed_price_snapshot",
-      retainedPriceCapturedAt: r.memberships.find((m) => m.operation === "prices")?.lastSeenRetrievedAt ?? null
-    }))
-  };
-}
-function createSearchIdentityBridge(options = {}) {
-  const client2 = createIdentityDiscoveryClient(options);
-  return Object.freeze({
-    async load({ signal } = {}) {
-      return searchIdentityView(await client2.load({ signal }));
-    },
-    state: () => client2.state()
-  });
-}
-
-// ops/api-search-identity-definition.mjs
-var SEARCH_IDENTITY_DEFINITION = Object.freeze({
-  metadata: Object.freeze([
-    Object.freeze({ expectedSha256: "e66a5fb71974f55bad03130d2c3c8926f57ac8a5db949d58a369c4835ca6537f", sourceUrl: "https://maplestory.io/api/MCW/1/item/list?cashFilter=true&count=10000", format: "cash_client_catalog" }),
-    Object.freeze({ expectedSha256: "60166ef0713a547a73b81473fbfa43d5d63f5182c978f5194b16411cd5e88a92", sourceUrl: "https://maplestory.io/api/MCW/1/item/list?cashFilter=false&count=10000", format: "noncash_list" })
-  ]),
-  spriteBindingsSha256: "356280fac3d0b4719ce31aa9e263b5de5a2797e191600f178c3fa4e53d1711de"
-});
-function matchesSearchIdentityDefinition(manifest, definition = SEARCH_IDENTITY_DEFINITION) {
-  const sort = (rows2) => [...rows2].sort((a, b) => a.sourceUrl.localeCompare(b.sourceUrl));
-  return manifest.spriteBindingsSha256 === definition.spriteBindingsSha256 && JSON.stringify(sort(manifest.identityMetadata)) === JSON.stringify(sort(definition.metadata));
-}
-
-// ops/api-search-identity-contract.mjs
-var SEARCH_IDENTITY_PROFILE = "price_free_owned_membership_v2";
-var SEARCH_IDENTITY_ROUTE = "/api-search-identities/v2/";
-var SEARCH_IDENTITY_LIMITS = Object.freeze({ items: 1e4, pageRows: 128, pageBytes: 131072, rowBytes: 2048, pages: 128, collectionBytes: 8388608, manifestBytes: 65536 });
-var SEARCH_SOURCE_URLS = Object.freeze({ prices: "https://maplestory.market/api/prices", catalogue: "https://maplestory.market/api/items", overview: "https://maplestory.market/api/market/overview" });
-var SEARCH_OPERATIONS = Object.freeze(["prices", "catalogue", "overview"]);
-var HASH4 = /^[a-f0-9]{64}$/;
-var EPOCH = /^[a-z][a-z0-9-]{0,63}$/;
-var LOCAL = /^assets\/[A-Za-z0-9._-]+\.(?:png|webp|gif|svg)$/;
-var enc4 = new TextEncoder();
-var U8 = Uint8Array;
-var typed = Object.getPrototypeOf(Uint8Array.prototype);
-var typedBytes = Object.getOwnPropertyDescriptor(typed, "byteLength").get;
-var typedOffset = Object.getOwnPropertyDescriptor(typed, "byteOffset").get;
-var typedBuffer = Object.getOwnPropertyDescriptor(typed, "buffer").get;
-var typedKind = Object.getOwnPropertyDescriptor(typed, Symbol.toStringTag).get;
-var arrayBytes = Object.getOwnPropertyDescriptor(ArrayBuffer.prototype, "byteLength").get;
-var setBytes = Uint8Array.prototype.set;
-var SearchIdentityError = class extends Error {
-  constructor(code) {
-    super(code);
-    this.name = "SearchIdentityError";
-  }
-};
-function need2(ok, code = "identity_shape") {
-  if (!ok) throw new SearchIdentityError(code);
-}
-function closed(v, keys) {
-  need2(v !== null && typeof v === "object" && !Array.isArray(v));
-  need2(Object.keys(v).sort().join("|") === [...keys].sort().join("|"));
-  return v;
-}
-function integer2(v, min, max) {
-  need2(Number.isSafeInteger(v) && v >= min && v <= max, "identity_integer");
-  return v;
-}
-function identityHash(v) {
-  need2(typeof v === "string" && HASH4.test(v), "identity_hash");
-  return v;
-}
-function identityClock(v) {
-  need2(typeof v === "string" && Number.isFinite(Date.parse(v)) && Date.parse(v) >= 0 && new Date(v).toISOString() === v, "identity_clock");
-  return v;
-}
-function publicEpoch(v) {
-  need2(typeof v === "string" && EPOCH.test(v), "identity_epoch");
-  return v;
-}
-function identityByteLength(raw) {
-  try {
-    need2(typedKind.call(raw) === "Uint8Array", "identity_bytes");
-    const buffer = typedBuffer.call(raw);
-    arrayBytes.call(buffer);
-    return typedBytes.call(raw);
-  } catch {
-    throw new SearchIdentityError("identity_bytes");
-  }
-}
-function ownIdentityBytes(raw, max) {
-  const n = identityByteLength(raw);
-  need2(n > 0 && n <= max, "identity_bytes_bound");
-  const result = new U8(n), view = new U8(typedBuffer.call(raw), typedOffset.call(raw), n);
-  setBytes.call(result, view);
-  return result;
-}
-var jsonBytes = (v) => enc4.encode(JSON.stringify(v));
-function validateIdentityRow(r) {
-  closed(r, ["itemId", "name", "nameStatus", "sprite", "spriteStatus", "currentMemberships"]);
-  integer2(r.itemId, 1, 999999999);
-  need2(["unique_client_id", "unknown_client_id", "conflicting_client_id"].includes(r.nameStatus), "identity_name_status");
-  need2(r.nameStatus === "unique_client_id" ? typeof r.name === "string" && r.name.trim().length > 0 && r.name.length <= 300 : r.name === null, "identity_name");
-  need2(r.sprite === null ? r.spriteStatus === "unavailable" : r.spriteStatus === "reviewed_local" && typeof r.sprite === "string" && LOCAL.test(r.sprite), "identity_sprite");
-  need2(Array.isArray(r.currentMemberships) && r.currentMemberships.length <= 3, "identity_memberships");
-  let prior = -1;
-  for (const op of r.currentMemberships) {
-    const at = SEARCH_OPERATIONS.indexOf(op);
-    need2(at > prior, "identity_membership_order");
-    prior = at;
-  }
-  need2(jsonBytes(r).length <= SEARCH_IDENTITY_LIMITS.rowBytes, "identity_row_bound");
-  return r;
-}
-function validateIdentitySources(sources, itemCount) {
-  need2(Array.isArray(sources) && sources.length >= 1 && sources.length <= 3, "identity_sources");
-  let prior = -1;
-  for (const s of sources) {
-    closed(s, ["operation", "sourceUrl", "capturedAt", "sourceObservedAt", "setSha256", "itemCount"]);
-    const at = SEARCH_OPERATIONS.indexOf(s.operation);
-    need2(at > prior, "identity_source_order");
-    prior = at;
-    need2(s.sourceUrl === SEARCH_SOURCE_URLS[s.operation] && s.sourceObservedAt === null, "identity_source");
-    identityClock(s.capturedAt);
-    identityHash(s.setSha256);
-    integer2(s.itemCount, 0, itemCount);
-  }
-  need2(sources[0].operation === "prices", "identity_prices_required");
-  return sources;
-}
-function metadata(items) {
-  need2(Array.isArray(items) && items.length >= 1 && items.length <= 4, "identity_metadata");
-  const seen = /* @__PURE__ */ new Set();
-  for (const d of items) {
-    closed(d, ["expectedSha256", "sourceUrl", "format"]);
-    identityHash(d.expectedSha256);
-    need2(["cash_client_catalog", "noncash_list"].includes(d.format) && d.sourceUrl === `https://maplestory.io/api/MCW/1/item/list?cashFilter=${d.format === "cash_client_catalog" ? "true" : "false"}&count=10000` && !seen.has(d.sourceUrl), "identity_metadata");
-    seen.add(d.sourceUrl);
-  }
-  return items;
-}
-async function parseIdentityManifest(raw) {
-  raw = ownIdentityBytes(raw, SEARCH_IDENTITY_LIMITS.manifestBytes);
-  const m = parseStrictJson(raw);
-  closed(m, ["schemaVersion", "kind", "profile", "publicationEpoch", "publicationRevision", "sourceCreditUrl", "identityMetadata", "spriteBindingsSha256", "sources", "admittedItemLimit", "itemCount", "pages", "indexHash"]);
-  need2(m.schemaVersion === 2 && m.kind === "api_search_identity_manifest" && m.profile === SEARCH_IDENTITY_PROFILE && m.sourceCreditUrl === "https://maplestory.market/?ref=v6kkdvp6" && m.admittedItemLimit === 1e4, "identity_profile");
-  publicEpoch(m.publicationEpoch);
-  integer2(m.publicationRevision, 1, Number.MAX_SAFE_INTEGER);
-  integer2(m.itemCount, 1, 1e4);
-  metadata(m.identityMetadata);
-  identityHash(m.spriteBindingsSha256);
-  validateIdentitySources(m.sources, m.itemCount);
-  identityHash(m.indexHash);
-  need2(Array.isArray(m.pages) && m.pages.length >= 1 && m.pages.length <= 128, "identity_pages");
-  let count2 = 0, last = 0, total = 0;
-  for (const [i, d] of m.pages.entries()) {
-    closed(d, ["page", "firstItemId", "lastItemId", "itemCount", "sha256", "bytes", "url"]);
-    need2(d.page === i, "identity_page_order");
-    integer2(d.firstItemId, last + 1, 999999999);
-    integer2(d.lastItemId, d.firstItemId, 999999999);
-    integer2(d.itemCount, 1, 128);
-    integer2(d.bytes, 1, 131072);
-    identityHash(d.sha256);
-    need2(d.url === SEARCH_IDENTITY_ROUTE + d.sha256 + ".json", "identity_page_url");
-    last = d.lastItemId;
-    count2 += d.itemCount;
-    total += d.bytes;
-  }
-  need2(count2 === m.itemCount && total <= 8388608, "identity_collection_bound");
-  const { indexHash, ...unsigned } = m;
-  need2(await sha256(jsonBytes(unsigned)) === indexHash, "identity_index_hash");
-  return m;
-}
-async function parseIdentityPage(raw, d, m) {
-  raw = ownIdentityBytes(raw, 131072);
-  need2(raw.length === d.bytes && await sha256(raw) === d.sha256, "identity_page_hash");
-  const p = parseStrictJson(raw);
-  closed(p, ["schemaVersion", "kind", "rows"]);
-  need2(p.schemaVersion === 2 && p.kind === "api_search_identity_page" && Array.isArray(p.rows) && p.rows.length === d.itemCount, "identity_page");
-  let prior = d.firstItemId - 1;
-  for (const r of p.rows) {
-    validateIdentityRow(r);
-    need2(r.itemId > prior && r.itemId <= d.lastItemId, "identity_row_order");
-    prior = r.itemId;
-    for (const op of r.currentMemberships) need2(m.sources.some((s) => s.operation === op), "identity_unknown_source");
-  }
-  need2(p.rows[0].itemId === d.firstItemId && p.rows.at(-1).itemId === d.lastItemId, "identity_page_range");
-  return p;
-}
-function validateCompleteIdentityRows(m, rows2) {
-  need2(Array.isArray(rows2) && rows2.length === m.itemCount, "identity_rows");
-  let prior = 0;
-  const counts = { prices: 0, catalogue: 0, overview: 0 };
-  for (const r of rows2) {
-    validateIdentityRow(r);
-    need2(r.itemId > prior, "identity_duplicate_id");
-    prior = r.itemId;
-    for (const op of r.currentMemberships) counts[op]++;
-  }
-  for (const s of m.sources) need2(counts[s.operation] === s.itemCount, "identity_membership_count");
-  return rows2;
-}
-
-// ops/api-search-identity-protocol.mjs
-var SEARCH_IDENTITY_PROTOCOL = "search-identities-v2";
-var SEARCH_IDENTITY_PAGE_HEADER = "X-Astra-Search-Identity-Object";
-var SEARCH_IDENTITY_HEADERS = Object.freeze({ protocol: "X-Astra-Search-Identity-Protocol", epoch: "X-Astra-Search-Identity-Epoch", revision: "X-Astra-Search-Identity-Revision", index: "X-Astra-Search-Identity-Index", binding: "X-Astra-Search-Identity-Binding", mode: "X-Astra-Search-Identity-Mode" });
-var searchIdentityEtag = (sha2) => '"search-identities-v2-' + identityHash(sha2) + '"';
-function validateSearchIdentityPageHeaders(headers, { bodySha256 }) {
-  need2(headers?.get && headers.get(SEARCH_IDENTITY_PAGE_HEADER) === "page-v2" && headers.get("ETag") === searchIdentityEtag(bodySha256), "identity_http_page_protocol");
-  need2(Object.values(SEARCH_IDENTITY_HEADERS).every((k) => !headers.has(k)), "identity_page_not_current_revision");
-  return { objectProtocol: "page-v2" };
-}
-async function makeSearchIdentityHeaders({ publicationEpoch, publicationRevision, indexHash, bodySha256, mode = "validated_cache" }) {
-  publicEpoch(publicationEpoch);
-  integer2(publicationRevision, 1, Number.MAX_SAFE_INTEGER);
-  identityHash(indexHash);
-  identityHash(bodySha256);
-  need2(["validated_cache", "retained"].includes(mode), "identity_mode");
-  return { [SEARCH_IDENTITY_HEADERS.protocol]: SEARCH_IDENTITY_PROTOCOL, [SEARCH_IDENTITY_HEADERS.epoch]: publicationEpoch, [SEARCH_IDENTITY_HEADERS.revision]: String(publicationRevision), [SEARCH_IDENTITY_HEADERS.index]: indexHash, [SEARCH_IDENTITY_HEADERS.binding]: await sha256(jsonBytes([SEARCH_IDENTITY_PROTOCOL, publicationEpoch, String(publicationRevision), indexHash, bodySha256])), [SEARCH_IDENTITY_HEADERS.mode]: mode, ETag: searchIdentityEtag(bodySha256) };
-}
-async function validateSearchIdentityHeaders(headers, { expectedEpoch, bodySha256 }) {
-  need2(headers?.get && headers.get(SEARCH_IDENTITY_HEADERS.protocol) === SEARCH_IDENTITY_PROTOCOL, "identity_http_protocol");
-  const epoch = headers.get(SEARCH_IDENTITY_HEADERS.epoch), revision = headers.get(SEARCH_IDENTITY_HEADERS.revision), indexHash = headers.get(SEARCH_IDENTITY_HEADERS.index), mode = headers.get(SEARCH_IDENTITY_HEADERS.mode);
-  publicEpoch(epoch);
-  need2(epoch === expectedEpoch && /^[1-9][0-9]{0,15}$/.test(revision ?? ""), "identity_http_epoch_revision");
-  const n = integer2(Number(revision), 1, Number.MAX_SAFE_INTEGER);
-  need2(String(n) === revision, "identity_http_revision");
-  const expected = await makeSearchIdentityHeaders({ publicationEpoch: epoch, publicationRevision: n, indexHash, bodySha256, mode });
-  for (const [k, v] of Object.entries(expected)) need2(headers.get(k) === v, "identity_http_binding");
-  return { publicationEpoch: epoch, publicationRevision: n, indexHash, mode };
-}
-
-// ui-src/item-api/search-identity-client.mjs
-var clone = (v) => structuredClone(v);
-var abort3 = () => Object.assign(Error("identity_aborted"), { name: "AbortError" });
-function createSearchIdentityClient({ enabled: enabled2 = false, isEnabled = () => true, fetcher, expectedEpoch, expectedDefinition = SEARCH_IDENTITY_DEFINITION, now = Date.now, monotonic = () => performance.now(), ttlMs = 3e4, timeoutMs = 3e4, readTimeoutMs = 1e4 } = {}) {
-  if (enabled2 === true) publicEpoch(expectedEpoch);
-  for (const [n, v, max] of [["ttl", ttlMs, 6e4], ["deadline", timeoutMs, 3e4], ["read", readTimeoutMs, 1e4]]) if (!Number.isSafeInteger(v) || v < 1 || v > max) throw TypeError("identity_" + n + "_bound");
-  expectedDefinition = structuredClone(expectedDefinition);
-  let good = null, flight = null, epoch = 0, floor = 0, floorIndex = null, expires = 0, retryAt = 0, failures = 0, blocked = false, lastFailure = null;
-  const active = () => {
-    try {
-      return enabled2 === true && isEnabled() === true && !blocked;
-    } catch {
-      return false;
-    }
-  };
-  const view = (mode = good?.mode) => good ? clone({ manifest: good.manifest, rows: good.rows, mode }) : null;
-  function cancelTask() {
-    if (flight) {
-      flight.cancelled = true;
-      for (const c of flight.controllers) c.abort();
-    }
-  }
-  function revoke() {
-    epoch++;
-    good = null;
-    expires = 0;
-    cancelTask();
-  }
-  function failure2(latch, reason) {
-    if (latch.reported) return;
-    latch.reported = true;
-    lastFailure = reason;
-    expires = 0;
-    retryAt = now() + Math.min(3e5, 3e4 * 2 ** Math.min(failures++, 4));
-  }
-  function fence(latch, readEnd = Infinity) {
-    need2(active() && latch.epoch === epoch && !latch.cancelled, "identity_revoked");
-    need2(monotonic() < latch.end && monotonic() < readEnd, "identity_deadline");
-  }
-  async function read(latch, path, limit, previous = null) {
-    fence(latch);
-    need2(path === SEARCH_IDENTITY_ROUTE + "manifest.json" || new RegExp("^" + SEARCH_IDENTITY_ROUTE + "[a-f0-9]{64}\\.json$").test(path), "identity_fixed_path");
-    const controller = new AbortController(), end = Math.min(latch.end, monotonic() + readTimeoutMs);
-    latch.controllers.add(controller);
-    const timer = setTimeout(() => controller.abort(), Math.max(1, end - monotonic()));
-    let response, reader = null, finished = false;
-    try {
-      response = await fetcher(path, { method: "GET", credentials: "same-origin", redirect: "error", cache: "no-cache", signal: controller.signal, headers: previous ? { "If-None-Match": previous.etag } : {} });
-      fence(latch, end);
-      if (response.status === 401) {
-        blocked = true;
-        revoke();
-        throw Error("identity_authentication_withdrawn");
-      }
-      need2(response.status === 200 || response.status === 304, "identity_http_unavailable");
-      const etag = response.headers.get("ETag");
-      need2(/^"search-identities-v2-[a-f0-9]{64}"$/.test(etag ?? ""), "identity_http_etag");
-      if (response.status === 304) {
-        need2(previous && previous.etag === etag, "identity_http_304");
-        const context2 = await validateSearchIdentityHeaders(response.headers, { expectedEpoch, bodySha256: previous.sha });
-        fence(latch, end);
-        finished = true;
-        return { ...previous, ...context2, unchanged: true };
-      }
-      need2(/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? ""), "identity_http_type");
-      const declared = response.headers.get("Content-Length");
-      need2(declared === null || /^[1-9][0-9]*$/.test(declared) && Number(declared) <= limit, "identity_http_length");
-      need2(response.body && typeof response.body.getReader === "function", "identity_http_body");
-      reader = response.body.getReader();
-      const chunks = [];
-      let n = 0, chunksRead = 0;
-      for (; ; ) {
-        const p = await reader.read();
-        fence(latch, end);
-        if (p.done) break;
-        need2(++chunksRead <= 1024, "identity_http_chunks");
-        if (identityByteLength(p.value) === 0) continue;
-        const owned = ownIdentityBytes(p.value, limit - n);
-        n += owned.byteLength;
-        chunks.push(owned);
-      }
-      need2(n > 0 && (declared === null || n === Number(declared)), "identity_http_length");
-      const raw = new Uint8Array(n);
-      let at = 0;
-      for (const p of chunks) {
-        raw.set(p, at);
-        at += p.length;
-      }
-      const sha2 = await sha256(raw);
-      fence(latch, end);
-      need2(etag === searchIdentityEtag(sha2), "identity_http_body_hash");
-      const context = path.endsWith("/manifest.json") ? await validateSearchIdentityHeaders(response.headers, { expectedEpoch, bodySha256: sha2 }) : validateSearchIdentityPageHeaders(response.headers, { bodySha256: sha2 });
-      fence(latch, end);
-      finished = true;
-      return { raw, sha: sha2, etag, ...context, unchanged: false };
-    } finally {
-      clearTimeout(timer);
-      latch.controllers.delete(controller);
-      try {
-        if (!finished) {
-          if (reader) await reader.cancel();
-          else if (response?.body && !response.body.locked) await response.body.cancel();
-        }
-      } finally {
-        reader?.releaseLock();
-      }
-    }
-  }
-  async function collect(latch) {
-    const record = await read(latch, SEARCH_IDENTITY_ROUTE + "manifest.json", 65536, good?.record), manifest = await parseIdentityManifest(record.raw);
-    fence(latch);
-    need2(matchesSearchIdentityDefinition(manifest, expectedDefinition), "identity_reviewed_metadata_definition");
-    need2(manifest.publicationEpoch === record.publicationEpoch && manifest.publicationRevision === record.publicationRevision && manifest.indexHash === record.indexHash, "identity_manifest_context");
-    need2(manifest.publicationRevision >= floor && (manifest.publicationRevision !== floor || floorIndex === null || manifest.indexHash === floorIndex), "identity_revision_regression");
-    if (good) for (const s of good.manifest.sources) {
-      const next = manifest.sources.find((v) => v.operation === s.operation);
-      need2(next && Date.parse(next.capturedAt) >= Date.parse(s.capturedAt), "identity_source_clock_regression");
-    }
-    floor = manifest.publicationRevision;
-    floorIndex = manifest.indexHash;
-    if (record.unchanged) {
-      need2(good?.manifest.indexHash === manifest.indexHash, "identity_304_collection");
-      fence(latch);
-      const value2 = { ...good, record, mode: record.mode };
-      good = value2;
-      expires = now() + ttlMs;
-      failures = 0;
-      retryAt = 0;
-      lastFailure = null;
-      return value2;
-    }
-    const prior = good?.pages ?? /* @__PURE__ */ new Map(), pages = /* @__PURE__ */ new Map(), parts2 = new Array(manifest.pages.length);
-    let cursor = 0, failed = false, retained = record.mode === "retained";
-    const workers = Array.from({ length: Math.min(4, manifest.pages.length) }, async () => {
-      try {
-        while (!failed) {
-          fence(latch);
-          const i = cursor++;
-          if (i >= manifest.pages.length) return;
-          const d = manifest.pages[i];
-          let page = prior.get(d.sha256);
-          if (page) {
-            need2(page.bytes === d.bytes && page.firstItemId === d.firstItemId && page.lastItemId === d.lastItemId && page.rows.length === d.itemCount, "identity_cached_page");
-          } else {
-            const r = await read(latch, d.url, 131072);
-            need2(r.sha === d.sha256 && r.raw.length === d.bytes, "identity_page_context");
-            const p = await parseIdentityPage(r.raw, d, manifest);
-            fence(latch);
-            page = { rows: p.rows, bytes: d.bytes, firstItemId: d.firstItemId, lastItemId: d.lastItemId };
-          }
-          for (const row of page.rows) for (const op of row.currentMemberships) need2(manifest.sources.some((s) => s.operation === op), "identity_page_source");
-          pages.set(d.sha256, page);
-          parts2[i] = page.rows;
-        }
-      } catch (error2) {
-        failed = true;
-        for (const c of latch.controllers) c.abort();
-        throw error2;
-      }
-    });
-    const results = await Promise.allSettled(workers), error = results.find((r) => r.status === "rejected");
-    if (error) throw error.reason;
-    const rows2 = validateCompleteIdentityRows(manifest, parts2.flat());
-    fence(latch);
-    need2(manifest.publicationRevision === floor && manifest.indexHash === floorIndex, "identity_late_revision");
-    const value = { manifest, rows: rows2, mode: retained ? "retained" : "validated_cache", record, pages };
-    good = value;
-    expires = now() + ttlMs;
-    retryAt = 0;
-    failures = 0;
-    lastFailure = null;
-    return value;
-  }
-  async function wait(latch, signal) {
-    if (signal?.aborted) throw abort3();
-    let timer, cancel;
-    const deadline = new Promise((resolve) => {
-      timer = setTimeout(() => {
-        latch.cancelled = true;
-        for (const c of latch.controllers) c.abort();
-        resolve({ error: Error("identity_deadline") });
-      }, Math.max(1, latch.end - monotonic()));
-    }), stop = new Promise((_, reject) => {
-      cancel = () => reject(abort3());
-      signal?.addEventListener("abort", cancel, { once: true });
-    });
-    try {
-      return await Promise.race([latch.promise, deadline, stop]);
-    } finally {
-      clearTimeout(timer);
-      signal?.removeEventListener("abort", cancel);
-    }
-  }
-  return Object.freeze({
-    async load({ signal } = {}) {
-      if (!active() || typeof fetcher !== "function") throw Error("identity_not_connected");
-      if (good && now() < expires && good.manifest.publicationRevision === floor) return view();
-      if (now() < retryAt) {
-        if (good) return view("retained");
-        throw Error("identity_read_backoff");
-      }
-      if (!flight) {
-        const latch2 = { epoch, end: monotonic() + timeoutMs, controllers: /* @__PURE__ */ new Set(), cancelled: false, reported: false, promise: null };
-        flight = latch2;
-        latch2.promise = collect(latch2).then((value) => ({ value }), (error) => ({ error })).finally(() => {
-          if (flight === latch2) flight = null;
-        });
-      }
-      const latch = flight, result = await wait(latch, signal);
-      if (result.error) {
-        failure2(latch, result.error.message);
-        if (good && active()) return view("retained");
-        throw result.error;
-      }
-      need2(active() && latch.epoch === epoch && !latch.cancelled, "identity_revoked");
-      return view(result.value.mode);
     },
     clear() {
-      revoke();
-      lastFailure = "identity_disabled";
-      retryAt = 0;
-    },
-    resetAccess() {
-      revoke();
+      epoch++;
+      for (const f of flights.values()) cancel(f.c);
+      cache.clear();
+      failures.clear();
+      high = null;
       blocked = false;
-      retryAt = 0;
-      lastFailure = null;
-    },
-    state() {
-      return { mode: blocked ? "authentication_unavailable" : good ? lastFailure || good.manifest.publicationRevision < floor ? "retained" : good.mode : "unavailable", itemCount: good?.manifest.itemCount ?? 0, indexHash: good?.manifest.indexHash ?? null, sourceSnapshots: clone(good?.manifest.sources ?? []), latestObservedRevision: floor, retainedRevision: good?.manifest.publicationRevision ?? null, physicalFlight: flight !== null, retryAt, blocked, lastFailure, priceAuthority: false };
     }
   });
 }
 
-// ui-src/item-api/search-identity-bridge.mjs
-function searchIdentityV2View({ manifest, rows: rows2, mode }) {
-  return { schemaVersion: 2, profile: manifest.profile, itemCount: manifest.itemCount, pricesMembershipCount: manifest.sources.find((s) => s.operation === "prices").itemCount, indexHash: manifest.indexHash, publicationEpoch: manifest.publicationEpoch, publicationRevision: manifest.publicationRevision, mode, sourceSnapshots: manifest.sources.map((s) => ({ ...s })), priceProjectionGeneration: null, priceProjectionMeaning: "not_part_of_price_free_identity_profile", rows: rows2.map((r) => ({ ...r, profile: manifest.profile, name: r.name ?? `Item ${r.itemId} (name unavailable)`, providerBindings: [], memberships: r.currentMemberships.map((operation) => ({ operation, presentInSnapshot: true, capturedAt: manifest.sources.find((s) => s.operation === operation).capturedAt, sourceObservedAt: null })), knownSourceId: true, retainedKnownId: r.currentMemberships.length === 0, collectionRetained: mode === "retained", priceState: "not_prefetched_by_search", hasCurrentAcceptedPriceSnapshot: false, hasRetainedPriceSnapshot: false, retainedPriceCapturedAt: null })) };
-}
-function createPriceFreeIdentityBridge(options = {}) {
-  let client2;
-  try {
-    client2 = createSearchIdentityClient(options);
-  } catch {
-    client2 = null;
-  }
-  return Object.freeze({ async load(args) {
-    if (!client2) throw Error("identity_profile_configuration");
-    return searchIdentityV2View(await client2.load(args));
-  }, state: () => client2?.state() ?? { mode: "invalid_profile", blocked: false }, clear: () => client2?.clear(), resetAccess: () => client2?.resetAccess() });
-}
-
-// ui-src/item-api/search-selected-price.mjs
-var FAST_SELECTION_REQUEST_HEADER = "X-Astra-Request-Item-Protocol";
-function createSearchSelectedPriceFetcher(fetcher, { expectedEpoch, isEnabled = () => true } = {}) {
-  return async (...args) => {
-    if (!validPublicEpoch(expectedEpoch) || isEnabled() !== true) throw Error("fast_selection_not_configured");
-    const options = { ...args[1] ?? {}, headers: new Headers(args[1]?.headers) };
-    options.headers.set(FAST_SELECTION_REQUEST_HEADER, FAST_ITEM_PROTOCOL);
-    const response = await fetcher(args[0], options);
-    if (isEnabled() !== true) {
-      if (response.body && !response.body.locked) await response.body.cancel();
-      throw Error("fast_selection_revoked");
+// ui-src/item-api/basic-profile.mjs
+var bad = (code = "unavailable") => Object.assign(Error("basic_profile_unavailable"), { code });
+function createBasicProfileClient({ fetcher, isEnabled = () => false, timeoutMs = 1e4, now = Date.now } = {}) {
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 12e3) throw bad();
+  let epoch = 0, flight = null, cached = null, expires = 0, retryAt = 0;
+  const active = () => {
+    try {
+      return isEnabled() === true;
+    } catch {
+      return false;
     }
-    if ([200, 304, 404, 409].includes(response.status) && (response.headers.get(FAST_ITEM_HEADERS.protocol) !== FAST_ITEM_PROTOCOL || response.headers.get(FAST_ITEM_HEADERS.epoch) !== expectedEpoch)) {
-      if (response.body && !response.body.locked) await response.body.cancel();
-      throw Error("ordered_fast_selection_required");
-    }
-    return response;
   };
-}
-
-// ui-src/item-api/lifecycle.mjs
-function createItemPanelLifecycle({ container, mountPanel, loader, getTimezone = () => "UTC", spriteMap = {}, onStatus = () => {
-} } = {}) {
-  if (!container?.ownerDocument || typeof mountPanel !== "function") throw TypeError("Explicit item panel dependencies required");
-  let epoch = 0, controller = null, handle = null, currentId = null, timezone = null, lastCapture = null, lastDtoSha = null, flight = null;
-  const clear = () => {
-    handle?.destroy();
-    handle = null;
-  };
-  function load(itemId, preserveState) {
-    if (!Number.isSafeInteger(itemId) || itemId < 1 || itemId > 999999999) throw TypeError("Exact numeric item ID required");
-    if (flight?.itemId === itemId) return flight.promise;
-    const token = ++epoch;
-    controller?.abort();
-    controller = new AbortController();
-    const ownController = controller;
-    if (currentId !== itemId) {
-      clear();
-      lastCapture = null;
-      lastDtoSha = null;
-    }
-    currentId = itemId;
-    if (typeof loader !== "function") {
-      onStatus("not_connected");
-      return Promise.resolve({ status: "not_connected" });
-    }
-    onStatus("loading", { hasData: !!handle });
-    const task = { itemId };
-    task.promise = (async () => {
-      try {
-        const reply = await loader({ itemId, signal: ownController.signal });
-        if (token !== epoch || ownController.signal.aborted) return { status: "stale" };
-        const value = await validatePublicItemReference(reply);
-        if (token !== epoch || ownController.signal.aborted) return { status: "stale" };
-        if (value.itemId !== itemId || lastCapture !== null && Date.parse(value.sourceCapturedAt) < Date.parse(lastCapture)) throw Object.assign(TypeError("Wrong or older item reference"), { code: "invalid" });
-        const options = { timezone: timezone ?? getTimezone(), spriteMap };
-        if (handle) {
-          if (value.dtoSha256 !== lastDtoSha) handle.updateDto(value.item, { preserveState });
-          handle.updateTimezone(options.timezone);
-        } else handle = mountPanel(container, value.item, options);
-        lastCapture = value.sourceCapturedAt;
-        lastDtoSha = value.dtoSha256;
-        onStatus("shown", { hasData: true });
-        return { status: "shown", itemId, sourceCapturedAt: value.sourceCapturedAt, generation: value.projectionGeneration };
-      } catch (error) {
-        if (token !== epoch || ownController.signal.aborted) return { status: "stale" };
-        if (error?.code === "access_denied") {
-          clear();
-          onStatus("access_denied", { hasData: false, reason: "access_denied" });
-          return { status: "access_denied" };
-        }
-        if (error?.code === "not_found") {
-          clear();
-          onStatus("unavailable", { hasData: false, reason: "not_found" });
-          return { status: "unavailable", reason: "not_found" };
-        }
-        const status = handle ? "retained" : "unavailable";
-        onStatus(status, { hasData: !!handle, reason: error?.code ?? "unavailable" });
-        return { status };
-      } finally {
-        if (flight === task) flight = null;
-      }
-    })();
-    flight = task;
-    return task.promise;
-  }
   return Object.freeze({
-    show: (itemId) => load(itemId, false),
-    refresh() {
-      return currentId === null ? Promise.resolve({ status: "not_connected" }) : load(currentId, true);
+    async load() {
+      if (!active()) throw bad();
+      if (cached && now() < expires) {
+        const owned = { ...cached }, ownEpoch = epoch, ownCache = cached, start = performance.now();
+        await Promise.resolve();
+        const wall = now(), allowed = active(), end = performance.now();
+        if (!allowed || ownEpoch !== epoch || ownCache !== cached || end - start >= timeoutMs || wall + Math.max(0, end - start) >= expires) throw bad();
+        return owned;
+      }
+      if (flight) return flight.visible;
+      if (now() < retryAt) throw bad();
+      const c = { epoch, deadline: performance.now() + timeoutMs, controller: new AbortController(), cancelled: false, reader: null, cancel: null, response: null };
+      let timer, reject;
+      const stopped = new Promise((_, r) => reject = r), fence = () => {
+        if (c.cancelled || c.epoch !== epoch || !active() || performance.now() >= c.deadline) throw bad();
+      };
+      const task = (async () => {
+        try {
+          const r = await fetcher("/api-basic-item-prices/profile.json", { method: "GET", credentials: "same-origin", cache: "no-store", redirect: "error", signal: c.controller.signal });
+          c.response = r;
+          fence();
+          if (r.status === 401 || r.status === 403) throw bad("access_denied");
+          if (r.status === 404) {
+            cached = null;
+            return null;
+          }
+          if (r.status !== 200 || !/^application\/json(?:;|$)/i.test(r.headers.get("Content-Type") ?? "")) throw bad();
+          const declared = r.headers.get("Content-Length");
+          if (declared !== null && (!/^[1-9][0-9]*$/.test(declared) || Number(declared) > 2048)) throw bad();
+          let n = 0, chunks = [];
+          if (!r.body) throw bad();
+          c.reader = r.body.getReader();
+          for (; ; ) {
+            const x = await c.reader.read();
+            fence();
+            if (x.done) break;
+            if (!(x.value instanceof Uint8Array) || !x.value.length) throw bad();
+            n += x.value.length;
+            if (n > 2048) throw bad();
+            chunks.push(x.value.slice());
+          }
+          c.reader.releaseLock();
+          c.reader = null;
+          if (declared !== null && n !== Number(declared)) throw bad();
+          const raw = new Uint8Array(n);
+          let at = 0;
+          for (const b of chunks) {
+            raw.set(b, at);
+            at += b.length;
+          }
+          const v = parseStrictJson(raw);
+          if (!v || Object.keys(v).sort().join("|") !== ["schemaVersion", "kind", "protocol", "definitionHash", "publicEpoch", "available"].sort().join("|") || v.schemaVersion !== 1 || v.kind !== "basic_item_public_profile" || v.protocol !== BASIC_ITEM_HTTP_PROTOCOL || v.definitionHash !== BASIC_PUBLIC_DEFINITION_SHA || !validBasicHttpEpoch(v.publicEpoch) || v.available !== true) throw bad();
+          fence();
+          cached = Object.freeze({ ...v });
+          expires = now() + 3e4;
+          fence();
+          return { ...cached };
+        } catch (error) {
+          cached = null;
+          retryAt = now() + 3e4;
+          throw bad(error?.code === "access_denied" ? "access_denied" : "unavailable");
+        } finally {
+          if (c.reader) {
+            c.cancel ??= Promise.resolve(c.reader.cancel()).catch(() => {
+            });
+            await c.cancel;
+            c.reader.releaseLock();
+          }
+          if (c.response?.body && !c.response.body.locked) await c.response.body.cancel().catch(() => {
+          });
+          clearTimeout(timer);
+          if (flight?.c === c) flight = null;
+        }
+      })();
+      timer = setTimeout(() => {
+        c.cancelled = true;
+        c.controller.abort();
+        if (c.reader) c.cancel ??= Promise.resolve(c.reader.cancel()).catch(() => {
+        });
+        retryAt = now() + 3e4;
+        reject(bad());
+      }, timeoutMs);
+      const admitted = task.then((value) => {
+        fence();
+        return value ? { ...value } : null;
+      });
+      const visible = Promise.race([admitted, stopped]);
+      flight = { c, visible };
+      task.catch(() => {
+      });
+      return visible;
     },
-    pause() {
+    clear() {
       epoch++;
-      controller?.abort();
-      controller = null;
-      flight = null;
-      onStatus("paused", { hasData: !!handle });
+      cached = null;
+      expires = 0;
+      retryAt = 0;
+      if (flight) {
+        const c = flight.c;
+        c.cancelled = true;
+        c.controller.abort();
+        if (c.reader) c.cancel ??= Promise.resolve(c.reader.cancel()).catch(() => {
+        });
+      }
     },
-    timezoneChanged(value) {
-      timezone = value;
-      handle?.updateTimezone(value);
-    },
-    hide() {
-      epoch++;
-      controller?.abort();
-      controller = null;
-      flight = null;
-      currentId = null;
-      lastCapture = null;
-      lastDtoSha = null;
-      clear();
-      onStatus("hidden");
+    state() {
+      return Object.freeze({ physicalPending: flight !== null });
     }
   });
 }
@@ -1643,13 +873,13 @@ function exactMoney(value) {
 function displayInteger(value) {
   return Number.isSafeInteger(value) ? value.toLocaleString("en-US", { maximumFractionDigits: 0 }) : "Unknown";
 }
-function retrievalClock(iso3, zone2 = "UTC") {
-  if (!Number.isFinite(Date.parse(iso3))) return "Unknown";
+function retrievalClock(iso4, zone2 = "UTC") {
+  if (!Number.isFinite(Date.parse(iso4))) return "Unknown";
   try {
-    const parts2 = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: zone2, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date(iso3)).map((p) => [p.type, p.value]));
+    const parts2 = Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: zone2, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date(iso4)).map((p) => [p.type, p.value]));
     return `${parts2.month}-${parts2.day}-${parts2.year} ${parts2.hour}:${parts2.minute}:${parts2.second} ${zone2}`;
   } catch {
-    return retrievalClock(iso3, "UTC");
+    return retrievalClock(iso4, "UTC");
   }
 }
 var spritePath = (value) => typeof value === "string" && /^\/?assets\/[A-Za-z0-9._/-]+\.png$/.test(value) && !value.split("/").includes("..") ? value : null;
@@ -1664,8 +894,8 @@ function mountItemPricingPanel(container, input, { timezone = "UTC", spriteMap =
   if (!container?.ownerDocument) throw new TypeError("A DOM container is required");
   assertSafeItemDto(input);
   let dto = structuredClone(input), zone2 = timezone, destroyed = false, page = 0;
-  const doc2 = container.ownerDocument, id2 = `item-api-panel-${++instance}`, el = (tag, text, cls) => {
-    const n = doc2.createElement(tag);
+  const doc2 = container.ownerDocument, id2 = `item-api-panel-${++instance}`, el = (tag2, text, cls) => {
+    const n = doc2.createElement(tag2);
     if (text !== void 0) n.textContent = text;
     if (cls) n.className = cls;
     return n;
@@ -2020,6 +1250,1378 @@ function mountItemPricingPanel(container, input, { timezone = "UTC", spriteMap =
   } });
 }
 
+// ui-src/item-api/reference-status.mjs
+var known = /* @__PURE__ */ new Set(["current", "ready", "shown", "validated", "accepted_cache", "validated_cache"]);
+function describeReferenceStatus({ capturedAt = null, status = "idle", hasData = false, available: available2 = true, retained = false, partial = false, visible = true, online = true, bandMinutes = 20, now = Date.now() } = {}) {
+  const stamp = typeof capturedAt === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.test(capturedAt) ? Date.parse(capturedAt) : NaN;
+  const age = Number.isFinite(stamp) && Number.isFinite(now) ? now - stamp : null;
+  let phase, tone = "amber", label;
+  if (status === "site_access" || status === "access_denied") {
+    phase = "access_blocked";
+    tone = "red";
+    label = "Site access unavailable";
+  } else if (status === "off" || status === "disabled" || status === "hidden") {
+    phase = "off";
+    label = "Reference display inactive";
+  } else if (!visible || !online || status === "paused") {
+    phase = "paused";
+    label = hasData ? "Checks paused; original retrieval retained" : "Checks paused; no validated reference yet";
+  } else if (status === "loading") {
+    phase = "loading";
+    label = hasData ? "Checking cache; displayed reference keeps its original retrieval" : "Awaiting a validated cache response";
+  } else if (!hasData) {
+    phase = status === "not_published" || status === "not_found" ? "not_published" : ["unavailable", "failure", "failed", "error"].includes(status) ? "unavailable" : "unverified";
+    tone = phase === "unavailable" ? "red" : "amber";
+    label = phase === "not_published" ? "Reference not published here" : phase === "unavailable" ? "No validated reference available" : "Reference not yet verified";
+  } else if (retained || status === "retained" || ["unavailable", "failure", "failed", "error"].includes(status)) {
+    phase = "retained";
+    label = "Retained reference; original retrieval unchanged";
+  } else if (age === null) {
+    phase = "clock_unknown";
+    label = "Retrieval clock unavailable; age unknown";
+  } else if (age < 0) {
+    phase = "clock_uncertain";
+    label = "Capture clock ahead; retrieval age uncertain";
+  } else if (!available2) {
+    phase = "unavailable";
+    label = "Selected reference unavailable; missing values are not zero";
+  } else if (partial && age <= bandMinutes * 6e4) {
+    phase = "partial";
+    label = "Partial item evidence; original retrieval retained";
+  } else if (!known.has(status)) {
+    phase = "unverified";
+    label = "Reference state not yet verified";
+  } else if (!Number.isFinite(bandMinutes) || bandMinutes <= 0) {
+    phase = "clock_unknown";
+    label = "Retrieval display band unavailable";
+  } else if (age <= bandMinutes * 6e4) {
+    phase = "recent";
+    tone = "green";
+    label = `Retrieved within ${bandMinutes}-minute display band; not verified fresh trades`;
+  } else {
+    phase = "aged";
+    label = `Retrieval older than ${bandMinutes}-minute display band${partial ? "; partial item evidence remains incomplete" : ""}`;
+  }
+  return Object.freeze({ tone, phase, label, capturedAt: Number.isFinite(stamp) ? capturedAt : null, ageMs: age, bandMinutes });
+}
+function decorateReferenceStatus(node, state, text = node.textContent) {
+  const icon = node.ownerDocument.createElement("i");
+  icon.className = "source-status-dot status-" + state.tone;
+  icon.setAttribute("aria-hidden", "true");
+  const copy = node.ownerDocument.createElement("span");
+  copy.textContent = text;
+  node.replaceChildren(icon, copy);
+  node.dataset.statusTone = state.tone;
+  node.dataset.retrievalState = state.phase;
+  node.title = state.label + "; retrieval is not individual sale or scan time.";
+  if (state.capturedAt) node.dataset.rawCapturedAt = state.capturedAt;
+  else delete node.dataset.rawCapturedAt;
+}
+
+// ui-src/item-api/basic-panel.mjs
+function renderBasicReference(container, value, { status = "unavailable", timezone = "UTC", visible = true, online = true } = {}) {
+  const doc2 = container.ownerDocument, make2 = (tag2, text) => {
+    const n = doc2.createElement(tag2);
+    if (text !== void 0) n.textContent = text;
+    return n;
+  };
+  container.replaceChildren();
+  container.classList.add("api-basic-section");
+  container.dataset.basicStatus = status;
+  const title = make2("h3", "Separate Basic aggregate reference"), note2 = make2("p");
+  note2.setAttribute("role", "status");
+  container.append(title, note2);
+  if (!value) {
+    note2.textContent = status === "loading" ? "Checking this site\u2019s shared Basic reference\u2026" : status === "paused" ? "Basic checks paused; no validated Basic reference yet." : status === "access_denied" ? "Basic access unavailable; prior Basic quotes withdrawn. Turn the overall preview Off and On only after site access is restored." : "Basic aggregate reference unavailable; full variants and daily evidence remain separate.";
+    return;
+  }
+  const d = value.data, retained = value.mode === "retained" || value.mode === "retained_absent" || status === "paused", hasPrice = value.quoteAuthority === true && !retained;
+  container.dataset.basicCapturedAt = d.capturedAt;
+  container.dataset.basicGeneration = d.generation;
+  container.dataset.basicMode = retained ? d.state === "absent_in_generation" ? "retained_absent" : "retained" : value.mode;
+  const descriptor = describeReferenceStatus({ capturedAt: d.capturedAt, status: status === "paused" ? "paused" : retained ? "retained" : "shown", hasData: true, retained, available: d.state === "present_in_generation", visible, online, bandMinutes: 20 });
+  decorateReferenceStatus(note2, descriptor, (retained ? "Retained dated Basic evidence. " : "Accepted shared cached Basic reference; latest underlying source not checked. ") + descriptor.label + ". Original retrieval " + retrievalClock(d.capturedAt, timezone) + ".");
+  if (d.state === "absent_in_generation") {
+    container.append(make2("p", "Absent in this Basic generation. This is no price, zero, stock statement or identity deletion."));
+    return;
+  }
+  const wrap = make2("div"), table = make2("table");
+  wrap.className = "table-wrap";
+  table.className = "api-basic-values";
+  const head = table.createTHead().insertRow();
+  for (const text of ["Separate source field", "Reported value"]) head.append(make2("th", text));
+  const body = table.createTBody();
+  const row = (label, text, raw) => {
+    const tr = body.insertRow();
+    tr.append(make2("th", label));
+    const td = tr.insertCell();
+    td.textContent = text;
+    if (raw !== void 0 && raw !== null) td.dataset.exactBasicValue = String(raw);
+  };
+  row("Sold median \xB7 mesos / source unit", exactMoney(d.sold?.medianUnitPrice), d.sold?.medianUnitPrice);
+  row("Sold average \xB7 mesos / source unit", exactMoney(d.sold?.averageUnitPrice), d.sold?.averageUnitPrice);
+  for (const [key, label] of [["reportedSalesCount", "Reported sales count"], ["reportedUnitCount", "Reported units"], ["reportedDaySalesCount", "Reported day sales count"], ["reportedDayUnitCount", "Reported day units"]]) row(label, displayInteger(d.sold?.[key]), d.sold?.[key]);
+  row("Asking median \xB7 mesos / source unit", exactMoney(d.asking?.medianUnitPrice), d.asking?.medianUnitPrice);
+  row("Reported asking listings", displayInteger(d.asking?.reportedListingCount), d.asking?.reportedListingCount);
+  row("Reported asking sellers", displayInteger(d.asking?.reportedSellerCount), d.asking?.reportedSellerCount);
+  wrap.append(table);
+  container.append(wrap, make2("p", (hasPrice ? "Basic amounts are source aggregate references. " : "Dated or unknown Basic amounts have no current quote authority. ") + "Reported 3-day lookback; exact window and individual sale times unknown. Whole-item medians may mix stats, slots and upgrades. No matched quality, lowest listing, available stock, verified trades or globally latest source is established. Full variants and history keep their own dates."));
+}
+
+// ui-src/item-api/search-price-relation.mjs
+function qualifySearchPriceStatus(indicator, relation) {
+  return relation?.pending && indicator.phase === "recent" ? { ...indicator, tone: "amber", phase: "publication_pending", label: "FAST price publication is separately dated" } : indicator;
+}
+function describeSearchPriceRelation(identity2, itemId, capturedAt) {
+  if (identity2?.schemaVersion !== 2) return null;
+  const source = identity2.sourceSnapshots.find((s) => s.operation === "prices"), row = identity2.rows.find((r) => r.itemId === itemId);
+  if (!capturedAt) return { pending: false, label: "Identity membership is not a price; a current FAST price has not been verified for this selection." };
+  if (!source || !row) return { pending: true, label: "No matching admitted identity membership is connected; the FAST reference remains separately dated." };
+  if (Date.parse(source.capturedAt) < Date.parse(capturedAt)) return { pending: false, label: "The FAST price capture is newer than this identity membership snapshot; they remain independently versioned." };
+  if (!row.memberships.some((m) => m.operation === "prices")) return { pending: true, label: "This known ID is absent from the latest published normalized prices membership. The FAST reference remains separately dated; membership does not verify stock or a current sale." };
+  if (Date.parse(source.capturedAt) > Date.parse(capturedAt)) return { pending: true, label: "A newer normalized prices membership has been accepted. The displayed FAST reference keeps its older original retrieval until price publication catches up." };
+  return { pending: false, label: source.capturedAt === capturedAt ? "Identity membership and FAST prices are independently versioned; equal capture clocks do not establish the same receipt." : "FAST prices and identity membership keep their separate original retrievals and publication versions." };
+}
+
+// ops/api-item-reference-protocol.mjs
+var HASH2 = /^[a-f0-9]{64}$/;
+var enc3 = new TextEncoder();
+var check = (v) => {
+  if (!v) throw TypeError("Invalid item reference");
+};
+async function validatePublicItemReference(v) {
+  v = structuredClone(v);
+  check(enc3.encode(JSON.stringify(v)).length <= 3e5);
+  const keys = ["schemaVersion", "kind", "itemId", "projectionGeneration", "dtoSha256", "sourceCapturedAt", "sourceObservedAt", "reportedWindowDays", "exactWindowBoundsKnown", "qualifiedIndividualTrades", "sourceCreditUrl", "item"];
+  check(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === keys.sort().join(","));
+  assertSafeItemDto(v.item);
+  check(v.schemaVersion === 1 && v.kind === "api_item_price_reference" && v.itemId === v.item.itemId && HASH2.test(v.projectionGeneration) && HASH2.test(v.dtoSha256) && v.sourceCapturedAt === v.item.source.retrievedAt && v.sourceObservedAt === null && v.reportedWindowDays === 3 && v.exactWindowBoundsKnown === false && v.qualifiedIndividualTrades === 0 && v.sourceCreditUrl === `https://maplestory.market/items/${v.itemId}?ref=v6kkdvp6`);
+  check(await sha256(enc3.encode(JSON.stringify(v.item))) === v.dtoSha256);
+  return v;
+}
+
+// ops/api-fast-item-public-protocol.mjs
+var enc4 = new TextEncoder();
+var H = /^[a-f0-9]{64}$/;
+var FAST_ITEM_PROTOCOL = "fast-current-v1";
+var FAST_ITEM_HEADERS = Object.freeze({ protocol: "X-Astra-API-Item-Protocol", epoch: "X-Astra-API-Item-Epoch", revision: "X-Astra-API-Item-Publication", binding: "X-Astra-API-Item-Binding" });
+var need3 = (v) => {
+  if (!v) throw TypeError("Invalid FAST item ordering");
+};
+var validPublicEpoch = (v) => typeof v === "string" && /^[a-z][a-z0-9-]{0,63}$/.test(v);
+var iso3 = (v) => typeof v === "string" && v.length === 24 && Number.isFinite(Date.parse(v)) && new Date(v).toISOString() === v;
+function fields(v, now) {
+  need3(v && validPublicEpoch(v.epoch) && Number.isSafeInteger(v.revision) && v.revision > 0 && H.test(v.generation) && iso3(v.capturedAt) && Date.parse(v.capturedAt) <= now && H.test(v.bodySha256));
+}
+var tuple = (v) => enc4.encode(JSON.stringify([FAST_ITEM_PROTOCOL, v.epoch, String(v.revision), v.generation, v.capturedAt, v.bodySha256]));
+function hasFastItemHeaders(headers) {
+  return Object.values(FAST_ITEM_HEADERS).some((k) => headers.has(k));
+}
+async function validateFastItemHeaders(headers, { generation, capturedAt, bodySha256, now = Date.now() } = {}) {
+  need3(headers.get(FAST_ITEM_HEADERS.protocol) === FAST_ITEM_PROTOCOL);
+  const raw = headers.get(FAST_ITEM_HEADERS.revision);
+  need3(typeof raw === "string" && /^[1-9][0-9]{0,15}$/.test(raw));
+  const v = { epoch: headers.get(FAST_ITEM_HEADERS.epoch), revision: Number(raw), generation, capturedAt, bodySha256 };
+  fields(v, now);
+  need3(String(v.revision) === raw && headers.get(FAST_ITEM_HEADERS.binding) === await sha256(tuple(v)));
+  return Object.freeze(v);
+}
+function parseFastItemError(raw, { kind, itemId, generation, capturedAt }) {
+  need3(raw instanceof Uint8Array && raw.length > 0 && raw.length <= 4096);
+  const v = parseStrictJson(raw);
+  need3(v && Object.keys(v).sort().join("|") === "generation|itemId|kind|schemaVersion|sourceCapturedAt|sourceObservedAt" && v.schemaVersion === 1 && v.kind === "fast_item_" + kind && v.itemId === itemId && v.generation === generation && v.sourceCapturedAt === capturedAt && v.sourceObservedAt === null);
+  return v;
+}
+
+// ui-src/item-api/item-loader.mjs
+var sha = async (bytes4) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes4))].map((n) => n.toString(16).padStart(2, "0")).join("");
+var abort2 = () => Object.assign(Error("Aborted"), { name: "AbortError" });
+async function boundedBytes(response, limit) {
+  const size = Number(response.headers.get("content-length"));
+  if (Number.isFinite(size) && size > limit) throw Error("Body bound");
+  if (response.body?.getReader) {
+    const reader = response.body.getReader(), chunks = [];
+    let length = 0;
+    try {
+      for (; ; ) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        length += value.byteLength;
+        if (length > limit) {
+          await reader.cancel();
+          throw Error("Body bound");
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    const out = new Uint8Array(length);
+    let at = 0;
+    for (const b2 of chunks) {
+      out.set(b2, at);
+      at += b2.length;
+    }
+    return out;
+  }
+  const b = new Uint8Array(await response.arrayBuffer());
+  if (b.length > limit) throw Error("Body bound");
+  return b;
+}
+var failure = (code) => Object.assign(Error(code), { code });
+function createItemReferenceClient({ fetcher, enabled: enabled2 = false, isEnabled = () => true, now = Date.now, ttlMs = 3e4, timeoutMs = 1e4, maxItems = 32, maxBytes = 2097152, maxFlights = 4 } = {}) {
+  if (!Number.isInteger(ttlMs) || ttlMs < 0 || ttlMs > 6e4 || !Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 12e3 || !Number.isSafeInteger(maxItems) || maxItems < 1 || maxItems > 64 || !Number.isSafeInteger(maxBytes) || maxBytes < 3e5 || maxBytes > 8388608 || !Number.isSafeInteger(maxFlights) || maxFlights < 1 || maxFlights > 8) throw Error("Bounded client settings required");
+  let bytes4 = 0, blocked = false, fastSeen = false, fastEpoch = null, high = null, saturatedAt = 0;
+  const cache = /* @__PURE__ */ new Map(), flights = /* @__PURE__ */ new Map(), controllers = /* @__PURE__ */ new Map(), failures = /* @__PURE__ */ new Map(), tombstones = /* @__PURE__ */ new Map();
+  const active = () => enabled2 === true && isEnabled() === true;
+  const touch = (id2, value) => {
+    if (cache.has(id2)) bytes4 -= cache.get(id2).bytes;
+    cache.delete(id2);
+    cache.set(id2, value);
+    bytes4 += value.bytes;
+    while (cache.size > maxItems || bytes4 > maxBytes) {
+      const first = cache.keys().next().value;
+      bytes4 -= cache.get(first).bytes;
+      cache.delete(first);
+    }
+  };
+  const drop = (id2) => {
+    const old = cache.get(id2);
+    if (old) bytes4 -= old.bytes;
+    cache.delete(id2);
+  };
+  function recognize(response) {
+    const marked = hasFastItemHeaders(response.headers);
+    if (marked && !fastSeen) {
+      fastSeen = true;
+      for (const [id2, v] of [...cache]) if (!v.fast) drop(id2);
+    }
+    return marked;
+  }
+  function missing(id2, frame) {
+    if (!frame) return;
+    const old = tombstones.get(id2);
+    if (old && old.revision > frame.revision) return;
+    if (!old && tombstones.size >= 64) {
+      saturatedAt = Math.max(saturatedAt, frame.revision);
+      return;
+    }
+    tombstones.set(id2, frame);
+  }
+  function admit(frame, id2, negative = false, prior = null) {
+    if (fastEpoch !== null && frame.epoch !== fastEpoch) throw failure("invalid");
+    if (high && (frame.revision < high.revision || Date.parse(frame.capturedAt) < Date.parse(high.capturedAt) || frame.revision === high.revision && (frame.generation !== high.generation || frame.capturedAt !== high.capturedAt))) throw failure("invalid");
+    const absent = tombstones.get(id2);
+    if (!negative && (frame.revision <= saturatedAt || absent && frame.revision <= absent.revision)) throw failure("invalid");
+    if (!negative && prior?.fast && frame.revision === prior.fast.revision && (frame.bodySha256 !== prior.fast.bodySha256 || frame.generation !== prior.fast.generation || frame.capturedAt !== prior.fast.capturedAt)) throw failure("invalid");
+    if (!high || frame.revision > high.revision) {
+      for (const [k, v] of tombstones) if (v.revision < frame.revision) tombstones.delete(k);
+      if (saturatedAt < frame.revision) saturatedAt = 0;
+      for (const [k, v] of [...cache]) if (v.fast && v.fast.revision < frame.revision) touch(k, { ...v, mode: "retained", expires: 0 });
+    }
+    high = { epoch: frame.epoch, revision: frame.revision, generation: frame.generation, capturedAt: frame.capturedAt };
+    fastEpoch = frame.epoch;
+    if (negative) missing(id2, frame);
+    else tombstones.delete(id2);
+  }
+  const wait = (promise, signal) => new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(abort2());
+    const onAbort = () => {
+      cleanup();
+      reject(abort2());
+    }, cleanup = () => signal?.removeEventListener("abort", onAbort);
+    signal?.addEventListener("abort", onAbort, { once: true });
+    promise.then((v) => {
+      cleanup();
+      signal?.aborted ? reject(abort2()) : resolve(v);
+    }, (e) => {
+      cleanup();
+      reject(e);
+    });
+  });
+  async function read(id2) {
+    const prior = cache.get(id2), control = { controller: new AbortController(), cancelled: false, timedOut: false, fastDeadline: performance.now() + timeoutMs };
+    let captureFloor = prior?.data.sourceCapturedAt ?? failures.get(id2)?.capturedAtFloor ?? null, negativeSeen = false;
+    controllers.set(id2, control);
+    let timer;
+    const expired = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        control.timedOut = true;
+        control.controller.abort();
+        reject(failure("timeout"));
+      }, timeoutMs);
+    });
+    const deadline = (p) => Promise.race([p, expired]);
+    const fence = () => {
+      if (control.cancelled || !active()) throw abort2();
+      if (control.timedOut || performance.now() >= control.fastDeadline) {
+        control.timedOut = true;
+        control.controller.abort();
+        throw failure("timeout");
+      }
+      if (blocked) throw failure("access_denied");
+    };
+    function commit(action) {
+      const old = { bytes: bytes4, fastEpoch, high, saturatedAt, cache: new Map(cache), tombstones: new Map(tombstones), failures: new Map(failures) };
+      fence();
+      try {
+        action();
+        fence();
+      } catch (error) {
+        bytes4 = old.bytes;
+        fastEpoch = old.fastEpoch;
+        high = old.high;
+        saturatedAt = old.saturatedAt;
+        for (const [target, saved] of [[cache, old.cache], [tombstones, old.tombstones], [failures, old.failures]]) {
+          target.clear();
+          for (const [k, v] of saved) target.set(k, v);
+        }
+        throw error;
+      }
+    }
+    async function headerFrame(response, values) {
+      try {
+        const frame = await deadline(validateFastItemHeaders(response.headers, { ...values, now: now() }));
+        fence();
+        return frame;
+      } catch {
+        fence();
+        throw failure("invalid");
+      }
+    }
+    async function errorFrame(response, kind) {
+      const capturedAt = response.headers.get("X-Astra-API-Item-Captured-At"), generation = response.headers.get("X-Astra-API-Item-Generation"), etag = response.headers.get("ETag");
+      if (!/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? "") || !/^"api-item-[a-f0-9]{64}"$/.test(etag ?? "")) throw failure("invalid");
+      const raw = await deadline(boundedBytes(response, 4096));
+      fence();
+      const bodySha256 = await deadline(sha(raw));
+      fence();
+      if (etag !== '"api-item-' + bodySha256 + '"') throw failure("invalid");
+      try {
+        parseFastItemError(raw, { kind, itemId: id2, generation, capturedAt });
+      } catch {
+        throw failure("invalid");
+      }
+      return headerFrame(response, { generation, capturedAt, bodySha256 });
+    }
+    try {
+      let response;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const generation2 = attempt === 0 ? prior?.data.projectionGeneration : null, url = "/api-item-prices/" + id2 + ".json" + (generation2 ? "?generation=" + generation2 : "");
+        response = await deadline(fetcher(url, { method: "GET", credentials: "same-origin", cache: "no-cache", redirect: "error", signal: control.controller.signal, headers: prior ? { "If-None-Match": prior.etag } : {} }));
+        fence();
+        if (response.status === 401 || response.status === 403) throw failure("access_denied");
+        const marked = recognize(response);
+        fence();
+        if (response.status === 404) {
+          negativeSeen = true;
+          drop(id2);
+          missing(id2, prior?.fast);
+          if (fastSeen) {
+            if (!marked) throw failure("invalid");
+            const frame = await errorFrame(response, "membership_absent");
+            commit(() => admit(frame, id2, true));
+            if (captureFloor === null || Date.parse(frame.capturedAt) > Date.parse(captureFloor)) captureFloor = frame.capturedAt;
+          }
+          throw failure("not_found");
+        }
+        if (response.status !== 409) break;
+        if (fastSeen) {
+          if (!marked) throw failure("invalid");
+          const frame = await errorFrame(response, "generation_changed");
+          commit(() => admit(frame, id2));
+        }
+        if (attempt === 1) throw failure("generation_changed");
+      }
+      const mode = response.headers.get("X-Astra-API-Item-Mode"), captured = response.headers.get("X-Astra-API-Item-Captured-At"), generation = response.headers.get("X-Astra-API-Item-Generation"), etag = response.headers.get("ETag");
+      if (response.status !== 200 && response.status !== 304) throw failure("unavailable");
+      if (!["validated_cache", "retained"].includes(mode) || !/^"api-item-[a-f0-9]{64}"$/.test(etag ?? "")) throw failure("invalid");
+      if (response.status === 304) {
+        if (!prior || prior.etag !== etag || prior.data.sourceCapturedAt !== captured || prior.data.projectionGeneration !== generation) throw failure("invalid");
+        let fast2 = null;
+        if (fastSeen) {
+          if (!hasFastItemHeaders(response.headers)) throw failure("invalid");
+          fast2 = await headerFrame(response, { generation, capturedAt: captured, bodySha256: etag.slice(10, -1) });
+          fence();
+        }
+        const value2 = { ...prior, mode, fast: fast2, expires: now() + ttlMs };
+        commit(() => {
+          if (fast2) admit(fast2, id2, false, prior);
+          touch(id2, value2);
+          failures.delete(id2);
+        });
+        return value2;
+      }
+      if (!/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? "")) throw failure("invalid");
+      const body = await deadline(boundedBytes(response, 3e5));
+      fence();
+      if ('"api-item-' + await deadline(sha(body)) + '"' !== etag) throw failure("invalid");
+      fence();
+      let data;
+      try {
+        data = await deadline(validatePublicItemReference(parseStrictJson(body)));
+      } catch {
+        throw failure("invalid");
+      }
+      fence();
+      if (data.itemId !== id2 || data.sourceCapturedAt !== captured || data.projectionGeneration !== generation || captureFloor !== null && Date.parse(data.sourceCapturedAt) < Date.parse(captureFloor)) throw failure("invalid");
+      let fast = null;
+      if (fastSeen) {
+        if (!hasFastItemHeaders(response.headers)) throw failure("invalid");
+        fast = await headerFrame(response, { generation, capturedAt: captured, bodySha256: etag.slice(10, -1) });
+        fence();
+      }
+      const value = { data, mode, etag, fast, bytes: body.length, expires: now() + ttlMs };
+      commit(() => {
+        if (fast) admit(fast, id2, false, prior);
+        touch(id2, value);
+        failures.delete(id2);
+      });
+      return value;
+    } catch (error) {
+      if (control.cancelled || !active() || error?.name === "AbortError" && !control.timedOut) throw abort2();
+      const reason = control.timedOut ? "timeout" : ["timeout", "access_denied", "not_found", "generation_changed", "invalid", "unavailable"].includes(error?.code) ? error.code : "unavailable", old = failures.get(id2)?.count ?? 0;
+      failures.set(id2, { count: old + 1, reason, checkedAt: now(), retryAt: now() + Math.min(3e5, 3e4 * 2 ** Math.min(old, 4)), capturedAtFloor: captureFloor });
+      while (failures.size > 64) failures.delete(failures.keys().next().value);
+      if (reason === "access_denied") {
+        blocked = true;
+        throw failure(reason);
+      }
+      if (negativeSeen || reason === "not_found") {
+        drop(id2);
+        throw failure("not_found");
+      }
+      if (prior && active() && (!fastSeen || prior.fast)) {
+        const value = { ...prior, mode: "retained", expires: prior.fast && high && prior.fast.revision < high.revision ? 0 : prior.expires };
+        touch(id2, value);
+        return value;
+      }
+      throw failure(reason);
+    } finally {
+      clearTimeout(timer);
+      if (controllers.get(id2) === control) controllers.delete(id2);
+    }
+  }
+  return Object.freeze({
+    async loadItem({ itemId, signal } = {}) {
+      if (!Number.isSafeInteger(itemId) || itemId < 1 || itemId > 999999999) throw Error("Exact numeric ID required");
+      if (!active() || typeof fetcher !== "function") throw failure("disabled");
+      if (blocked) throw failure("access_denied");
+      let value = cache.get(itemId);
+      if (value && now() < value.expires) return { data: structuredClone(value.data), mode: value.mode };
+      if ((failures.get(itemId)?.retryAt ?? 0) > now()) {
+        if (value) return { data: structuredClone(value.data), mode: "retained" };
+        throw failure(failures.get(itemId).reason);
+      }
+      if (!flights.has(itemId)) {
+        if (flights.size >= maxFlights) throw failure("read_capacity");
+        const task = read(itemId);
+        flights.set(itemId, task);
+        task.finally(() => {
+          if (flights.get(itemId) === task) flights.delete(itemId);
+        }).catch(() => {
+        });
+      }
+      value = await wait(flights.get(itemId), signal);
+      return { data: structuredClone(value.data), mode: value.mode };
+    },
+    peekCachedReferences() {
+      return !active() || blocked ? { status: blocked ? "access_denied" : "disabled", references: [] } : { status: "cache_only", references: [...cache.values()].map((v) => ({ data: structuredClone(v.data), mode: now() < v.expires ? v.mode : "retained" })) };
+    },
+    state(id2) {
+      const value = cache.get(id2);
+      return value ? { mode: value.mode, capturedAt: value.data.sourceCapturedAt, generation: value.data.projectionGeneration } : null;
+    },
+    diagnostic(id2) {
+      const f = failures.get(id2), value = cache.get(id2);
+      return { blocked, reason: blocked ? "access_denied" : f?.reason ?? null, retryAt: f?.retryAt ?? 0, partial: !!value && (value.data.item.aggregate.sold === null || value.data.item.aggregate.asking === null || value.data.item.aggregate.reference === null) };
+    },
+    ordering() {
+      return Object.freeze({ protocolSeen: fastSeen, epoch: fastEpoch, revision: high?.revision ?? null, tombstones: tombstones.size, saturatedAt });
+    },
+    cancelItem(id2) {
+      const c = controllers.get(id2);
+      if (c) {
+        c.cancelled = true;
+        c.controller.abort();
+      }
+      return (flights.get(id2) ?? Promise.resolve()).catch(() => {
+      });
+    },
+    resetAccess() {
+      if (blocked) {
+        for (const [id2, value] of [...cache]) touch(id2, { ...value, expires: 0 });
+        failures.clear();
+      }
+      blocked = false;
+    },
+    clear() {
+      for (const c of controllers.values()) {
+        c.cancelled = true;
+        c.controller.abort();
+      }
+      cache.clear();
+      failures.clear();
+      bytes4 = 0;
+      blocked = false;
+    }
+  });
+}
+
+// ops/api-discovery-membership.mjs
+var NUMBER_PROTO = Object.getPrototypeOf(parseStrictJson("0.5"));
+var enc5 = new TextEncoder();
+var MembershipProfileError = class extends Error {
+};
+var check2 = (ok, code = "membership_profile") => {
+  if (!ok) throw new MembershipProfileError(code);
+};
+var int = (v, min = 0, max = Number.MAX_SAFE_INTEGER) => {
+  check2(Number.isSafeInteger(v) && v >= min && v <= max);
+  return v;
+};
+var shape2 = (v, keys) => check2(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === [...keys].sort().join(","));
+var clock = (v) => typeof v === "string" && Number.isFinite(Date.parse(v)) && new Date(v).toISOString() === v;
+var hash2 = async (value) => sha256(typeof value === "string" ? enc5.encode(value) : value);
+
+// ops/api-item-discovery-contract.mjs
+var HASH3 = /^[a-f0-9]{64}$/;
+async function validateManifest(m, p = null) {
+  shape2(m, ["schemaVersion", "kind", "scope", "sourceCreditUrl", "priceProjectionGeneration", "identityMetadata", "spriteBindingsSha256", "providerBindingsSha256", "sources", "itemCount", "pages", "indexHash"]);
+  check2(m.schemaVersion === 1 && m.kind === "api_item_identity_manifest" && m.scope === "accepted_api_identity_union_with_retained_api_memberships" && m.sourceCreditUrl === "https://maplestory.market/?ref=v6kkdvp6" && HASH3.test(m.priceProjectionGeneration) && HASH3.test(m.spriteBindingsSha256) && HASH3.test(m.providerBindingsSha256) && HASH3.test(m.indexHash) && Array.isArray(m.identityMetadata) && m.identityMetadata.length >= 1 && m.identityMetadata.length <= 4 && Array.isArray(m.sources) && m.sources.length >= 1 && m.sources.length <= 3 && Array.isArray(m.pages) && m.pages.length > 0 && m.pages.length <= 128);
+  int(m.itemCount, 1, 1e4);
+  let count2 = 0, last = 0, totalBytes = 0;
+  for (const [page, d] of m.pages.entries()) {
+    shape2(d, ["page", "firstItemId", "lastItemId", "itemCount", "sha256", "bytes", "url"]);
+    check2(d.page === page && HASH3.test(d.sha256) && d.url === "/api-item-identities/" + d.sha256 + ".json");
+    int(d.firstItemId, last + 1, 999999999);
+    int(d.lastItemId, d.firstItemId, 999999999);
+    int(d.itemCount, 1, 128);
+    int(d.bytes, 1, 131072);
+    count2 += d.itemCount;
+    last = d.lastItemId;
+    totalBytes += d.bytes;
+  }
+  check2(count2 === m.itemCount && totalBytes <= 8388608);
+  const ops = /* @__PURE__ */ new Set();
+  for (const s of m.sources) {
+    shape2(s, ["operation", "sourceUrl", "retrievedAt", "sourceObservedAt", "sourceGeneratedAt", "sourceGeneratedAtKind", "itemCount"]);
+    check2(["prices", "catalogue", "overview"].includes(s.operation) && !ops.has(s.operation) && s.sourceUrl === { prices: "https://maplestory.market/api/prices", catalogue: "https://maplestory.market/api/items", overview: "https://maplestory.market/api/market/overview" }[s.operation] && clock(s.retrievedAt) && s.sourceObservedAt === null);
+    ops.add(s.operation);
+    int(s.itemCount, 0, m.itemCount);
+    check2(s.sourceGeneratedAt === null ? s.sourceGeneratedAtKind === null : clock(s.sourceGeneratedAt) && s.sourceGeneratedAtKind === "publisher_generation_not_individual_sale_time" && Date.parse(s.sourceGeneratedAt) <= Date.parse(s.retrievedAt));
+  }
+  check2(ops.has("prices"));
+  for (const d of m.identityMetadata) {
+    shape2(d, ["expectedSha256", "sourceUrl", "format"]);
+    check2(HASH3.test(d.expectedSha256) && ["cash_client_catalog", "noncash_list"].includes(d.format) && d.sourceUrl === `https://maplestory.io/api/MCW/1/item/list?cashFilter=${d.format === "cash_client_catalog" ? "true" : "false"}&count=10000`);
+  }
+  const { indexHash, ...unsigned } = m;
+  check2(await hash2(JSON.stringify(unsigned)) === indexHash && (!p || p.indexHash === indexHash), "manifest_semantic_hash");
+  return m;
+}
+function validatePage(page, descriptor, manifest) {
+  shape2(page, ["schemaVersion", "kind", "rows"]);
+  check2(page.schemaVersion === 1 && page.kind === "api_item_identity_page" && Array.isArray(page.rows) && page.rows.length === descriptor.itemCount);
+  let last = descriptor.firstItemId - 1;
+  for (const r of page.rows) {
+    shape2(r, ["itemId", "name", "nameStatus", "sprite", "spriteStatus", "providerBindings", "memberships", "priceMembership"]);
+    int(r.itemId, last + 1, descriptor.lastItemId);
+    last = r.itemId;
+    check2(["unique_client_id", "unknown_client_id", "conflicting_client_id"].includes(r.nameStatus) && (r.nameStatus === "unique_client_id" ? typeof r.name === "string" && r.name.trim() && r.name.length <= 300 : r.name === null));
+    check2(r.sprite === null ? r.spriteStatus === "unavailable" : r.spriteStatus === "reviewed_local" && typeof r.sprite === "string" && /^assets\/[A-Za-z0-9._-]+\.(?:png|webp|gif|svg)$/.test(r.sprite));
+    check2(Array.isArray(r.providerBindings) && r.providerBindings.length <= 4 && Array.isArray(r.memberships) && r.memberships.length > 0 && r.memberships.length <= 3 && ["in_committed_price_snapshot", "retained_price_identity_only", "no_accepted_price_membership"].includes(r.priceMembership));
+    for (const b of r.providerBindings) {
+      shape2(b, ["slug", "name", "planHash"]);
+      check2(typeof b.slug === "string" && /^[a-z0-9][a-z0-9-]*$/.test(b.slug) && typeof b.name === "string" && b.name.length <= 300 && HASH3.test(b.planHash));
+    }
+    const ops = /* @__PURE__ */ new Set();
+    for (const m of r.memberships) {
+      shape2(m, ["operation", "presentInSnapshot", "lastSeenRetrievedAt", "latestSnapshotRetrievedAt", "sourceObservedAt"]);
+      const s = manifest.sources.find((s2) => s2.operation === m.operation);
+      check2(s && !ops.has(m.operation) && typeof m.presentInSnapshot === "boolean" && clock(m.lastSeenRetrievedAt) && m.latestSnapshotRetrievedAt === s.retrievedAt && Date.parse(m.lastSeenRetrievedAt) <= Date.parse(s.retrievedAt) && m.sourceObservedAt === null && (!m.presentInSnapshot || m.lastSeenRetrievedAt === m.latestSnapshotRetrievedAt));
+      ops.add(m.operation);
+    }
+    const priced = r.memberships.find((m) => m.operation === "prices");
+    check2(r.priceMembership === (priced?.presentInSnapshot ? "in_committed_price_snapshot" : priced ? "retained_price_identity_only" : "no_accepted_price_membership"));
+  }
+  check2(page.rows[0].itemId === descriptor.firstItemId && page.rows.at(-1).itemId === descriptor.lastItemId);
+  return page;
+}
+
+// ui-src/item-api/discovery-client.mjs
+var bytes2 = new TextEncoder();
+var abort3 = () => Object.assign(Error("aborted"), { name: "AbortError" });
+function createIdentityDiscoveryClient({ enabled: enabled2 = false, isEnabled = () => true, fetcher, now = Date.now, ttlMs = 3e4, timeoutMs = 1e4 } = {}) {
+  if (!Number.isSafeInteger(ttlMs) || ttlMs < 0 || ttlMs > 6e4 || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 12e3) throw TypeError("Bounded client settings required");
+  let good = null, flight = null, expires = 0, retryAt = 0, failures = 0;
+  const pages = /* @__PURE__ */ new Map();
+  let cacheBytes = 0;
+  const active = () => {
+    try {
+      return enabled2 === true && isEnabled() === true;
+    } catch {
+      return false;
+    }
+  };
+  const wait = (p, signal) => new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(abort3());
+    const clear = () => signal?.removeEventListener("abort", cancel), cancel = () => {
+      clear();
+      reject(abort3());
+    };
+    signal?.addEventListener("abort", cancel, { once: true });
+    p.then((v) => {
+      clear();
+      signal?.aborted ? reject(abort3()) : resolve(v);
+    }, (e) => {
+      clear();
+      reject(e);
+    });
+  });
+  async function get(url, limit, previous = null) {
+    const controller = new AbortController();
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        controller.abort();
+        reject(Error("read_deadline"));
+      }, timeoutMs);
+    });
+    const deadline = (p) => Promise.race([p, timeout]);
+    try {
+      const response = await deadline(fetcher(url, { method: "GET", credentials: "same-origin", cache: "no-cache", redirect: "error", signal: controller.signal, headers: previous ? { "If-None-Match": previous.etag } : {} }));
+      if (response.status === 409) throw Object.assign(Error("generation_changed"), { generationChanged: true });
+      const mode = response.headers.get("X-Astra-API-Identity-Mode"), generation = response.headers.get("X-Astra-API-Identity-Generation"), etag = response.headers.get("ETag");
+      if (!["validated_cache", "retained"].includes(mode) || !/^"api-identities-[a-f0-9]{64}"$/.test(etag ?? "")) throw Error("response_context");
+      if (response.status === 304) {
+        if (!previous || etag !== previous.etag || generation !== previous.generation) throw Error("invalid304");
+        return { ...previous, mode };
+      }
+      if (response.status !== 200 || !/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? "")) throw Error("unavailable");
+      const chunks = [], reader = response.body.getReader();
+      let size = 0;
+      try {
+        for (; ; ) {
+          const { done, value } = await deadline(reader.read());
+          if (done) break;
+          size += value.byteLength;
+          if (size > limit) {
+            await reader.cancel();
+            throw Error("body_bound");
+          }
+          chunks.push(value);
+        }
+      } finally {
+        reader.releaseLock();
+      }
+      const raw = new Uint8Array(size);
+      let offset = 0;
+      for (const c of chunks) {
+        raw.set(c, offset);
+        offset += c.length;
+      }
+      const sha2 = await hash2(raw);
+      if (etag !== '"api-identities-' + sha2 + '"') throw Error("body_hash");
+      return { text: new TextDecoder("utf-8", { fatal: true }).decode(raw), document: parseStrictJson(raw), etag, generation, mode, sha: sha2, bytes: size };
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  const remember = (key, value) => {
+    if (pages.has(key)) cacheBytes -= pages.get(key).bytes;
+    pages.delete(key);
+    pages.set(key, value);
+    cacheBytes += value.bytes;
+    while (pages.size > 8 || cacheBytes > 1048576) {
+      const first = pages.keys().next().value;
+      cacheBytes -= pages.get(first).bytes;
+      pages.delete(first);
+    }
+  };
+  async function collect() {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const manifestRecord = await get("/api-item-identities.json", 65536, good?.manifestRecord), manifest = await validateManifest(manifestRecord.document);
+        if (manifestRecord.generation !== manifest.indexHash) throw Error("manifest_context");
+        if (good) for (const old of good.manifest.sources) {
+          const next = manifest.sources.find((s) => s.operation === old.operation);
+          if (!next || Date.parse(next.retrievedAt) < Date.parse(old.retrievedAt)) throw Error("source_clock_regression");
+        }
+        const output = new Array(manifest.pages.length);
+        let cursor = 0, retained = manifestRecord.mode === "retained";
+        let cancelled = false;
+        const workers = Array.from({ length: Math.min(4, manifest.pages.length) }, async () => {
+          try {
+            for (; ; ) {
+              if (cancelled) return;
+              if (!active()) throw Error("disabled");
+              const i = cursor++;
+              if (i >= manifest.pages.length) return;
+              const d = manifest.pages[i];
+              let record = pages.get(d.sha256);
+              if (!record) {
+                record = await get(d.url + "?generation=" + manifest.indexHash, 131072);
+                if (record.generation !== manifest.indexHash || record.sha !== d.sha256 || record.bytes !== d.bytes) throw Error("page_context");
+              }
+              validatePage(record.document, d, manifest);
+              if (record.mode === "retained") retained = true;
+              remember(d.sha256, record);
+              output[i] = record.document.rows;
+            }
+          } catch (error) {
+            cancelled = true;
+            throw error;
+          }
+        });
+        const settled = await Promise.allSettled(workers), failed = settled.find((r) => r.status === "rejected");
+        if (failed) throw failed.reason;
+        const rows2 = output.flat();
+        if (rows2.length !== manifest.itemCount) throw Error("row_count");
+        for (const source of manifest.sources) if (rows2.filter((r) => r.memberships.some((m) => m.operation === source.operation && m.presentInSnapshot)).length !== source.itemCount) throw Error("membership_count");
+        if (!active()) throw Error("disabled");
+        const value = { manifest, rows: rows2, mode: retained ? "retained" : "validated_cache", manifestRecord };
+        good = value;
+        failures = 0;
+        retryAt = 0;
+        expires = now() + ttlMs;
+        return value;
+      } catch (error) {
+        if (error.generationChanged && attempt === 0) continue;
+        throw error;
+      }
+    }
+    throw Error("generation_retry_bound");
+  }
+  return Object.freeze({ async load({ signal } = {}) {
+    if (!active() || typeof fetcher !== "function") throw Error("not_connected");
+    if (good && (now() < expires || now() < retryAt)) return structuredClone({ manifest: good.manifest, rows: good.rows, mode: now() < retryAt ? "retained" : good.mode });
+    if (now() < retryAt) throw Error("read_backoff");
+    if (!flight) {
+      flight = collect().catch((error) => {
+        retryAt = now() + Math.min(3e5, 3e4 * 2 ** Math.min(failures++, 4));
+        if (good && active()) return { ...good, mode: "retained" };
+        throw error;
+      }).finally(() => flight = null);
+    }
+    const value = await wait(flight, signal);
+    return structuredClone({ manifest: value.manifest, rows: value.rows, mode: value.mode });
+  }, state() {
+    return good ? { mode: now() < retryAt ? "retained" : good.mode, indexHash: good.manifest.indexHash, sources: structuredClone(good.manifest.sources) } : null;
+  } });
+}
+
+// ui-src/item-api/discovery-bridge.mjs
+function searchIdentityView(value) {
+  const { manifest, rows: rows2, mode } = value;
+  return {
+    itemCount: manifest.itemCount,
+    pricedItemCount: manifest.sources.find((s) => s.operation === "prices").itemCount,
+    indexHash: manifest.indexHash,
+    priceProjectionGeneration: manifest.priceProjectionGeneration,
+    mode,
+    sourceSnapshots: manifest.sources.map((s) => ({ ...s, capturedAt: s.retrievedAt })),
+    rows: rows2.map((r) => ({
+      ...r,
+      name: r.name ?? `Item ${r.itemId} (name unavailable)`,
+      memberships: r.memberships.map((m) => ({ ...m, capturedAt: m.lastSeenRetrievedAt })),
+      hasRetainedPriceSnapshot: r.memberships.some((m) => m.operation === "prices"),
+      hasCurrentAcceptedPriceSnapshot: r.priceMembership === "in_committed_price_snapshot",
+      retainedPriceCapturedAt: r.memberships.find((m) => m.operation === "prices")?.lastSeenRetrievedAt ?? null
+    }))
+  };
+}
+function createSearchIdentityBridge(options = {}) {
+  const client2 = createIdentityDiscoveryClient(options);
+  return Object.freeze({
+    async load({ signal } = {}) {
+      return searchIdentityView(await client2.load({ signal }));
+    },
+    state: () => client2.state()
+  });
+}
+
+// ops/api-search-identity-definition.mjs
+var SEARCH_IDENTITY_DEFINITION = Object.freeze({
+  metadata: Object.freeze([
+    Object.freeze({ expectedSha256: "e66a5fb71974f55bad03130d2c3c8926f57ac8a5db949d58a369c4835ca6537f", sourceUrl: "https://maplestory.io/api/MCW/1/item/list?cashFilter=true&count=10000", format: "cash_client_catalog" }),
+    Object.freeze({ expectedSha256: "60166ef0713a547a73b81473fbfa43d5d63f5182c978f5194b16411cd5e88a92", sourceUrl: "https://maplestory.io/api/MCW/1/item/list?cashFilter=false&count=10000", format: "noncash_list" })
+  ]),
+  spriteBindingsSha256: "356280fac3d0b4719ce31aa9e263b5de5a2797e191600f178c3fa4e53d1711de"
+});
+function matchesSearchIdentityDefinition(manifest, definition = SEARCH_IDENTITY_DEFINITION) {
+  const sort = (rows2) => [...rows2].sort((a, b) => a.sourceUrl.localeCompare(b.sourceUrl));
+  return manifest.spriteBindingsSha256 === definition.spriteBindingsSha256 && JSON.stringify(sort(manifest.identityMetadata)) === JSON.stringify(sort(definition.metadata));
+}
+
+// ops/api-search-identity-contract.mjs
+var SEARCH_IDENTITY_PROFILE = "price_free_owned_membership_v2";
+var SEARCH_IDENTITY_ROUTE = "/api-search-identities/v2/";
+var SEARCH_IDENTITY_LIMITS = Object.freeze({ items: 1e4, pageRows: 128, pageBytes: 131072, rowBytes: 2048, pages: 128, collectionBytes: 8388608, manifestBytes: 65536 });
+var SEARCH_SOURCE_URLS = Object.freeze({ prices: "https://maplestory.market/api/prices", catalogue: "https://maplestory.market/api/items", overview: "https://maplestory.market/api/market/overview" });
+var SEARCH_OPERATIONS = Object.freeze(["prices", "catalogue", "overview"]);
+var HASH4 = /^[a-f0-9]{64}$/;
+var EPOCH = /^[a-z][a-z0-9-]{0,63}$/;
+var LOCAL = /^assets\/[A-Za-z0-9._-]+\.(?:png|webp|gif|svg)$/;
+var enc6 = new TextEncoder();
+var U8 = Uint8Array;
+var typed = Object.getPrototypeOf(Uint8Array.prototype);
+var typedBytes = Object.getOwnPropertyDescriptor(typed, "byteLength").get;
+var typedOffset = Object.getOwnPropertyDescriptor(typed, "byteOffset").get;
+var typedBuffer = Object.getOwnPropertyDescriptor(typed, "buffer").get;
+var typedKind = Object.getOwnPropertyDescriptor(typed, Symbol.toStringTag).get;
+var arrayBytes = Object.getOwnPropertyDescriptor(ArrayBuffer.prototype, "byteLength").get;
+var setBytes = Uint8Array.prototype.set;
+var SearchIdentityError = class extends Error {
+  constructor(code) {
+    super(code);
+    this.name = "SearchIdentityError";
+  }
+};
+function need4(ok, code = "identity_shape") {
+  if (!ok) throw new SearchIdentityError(code);
+}
+function closed(v, keys) {
+  need4(v !== null && typeof v === "object" && !Array.isArray(v));
+  need4(Object.keys(v).sort().join("|") === [...keys].sort().join("|"));
+  return v;
+}
+function integer3(v, min, max) {
+  need4(Number.isSafeInteger(v) && v >= min && v <= max, "identity_integer");
+  return v;
+}
+function identityHash(v) {
+  need4(typeof v === "string" && HASH4.test(v), "identity_hash");
+  return v;
+}
+function identityClock(v) {
+  need4(typeof v === "string" && Number.isFinite(Date.parse(v)) && Date.parse(v) >= 0 && new Date(v).toISOString() === v, "identity_clock");
+  return v;
+}
+function publicEpoch(v) {
+  need4(typeof v === "string" && EPOCH.test(v), "identity_epoch");
+  return v;
+}
+function identityByteLength(raw) {
+  try {
+    need4(typedKind.call(raw) === "Uint8Array", "identity_bytes");
+    const buffer = typedBuffer.call(raw);
+    arrayBytes.call(buffer);
+    return typedBytes.call(raw);
+  } catch {
+    throw new SearchIdentityError("identity_bytes");
+  }
+}
+function ownIdentityBytes(raw, max) {
+  const n = identityByteLength(raw);
+  need4(n > 0 && n <= max, "identity_bytes_bound");
+  const result = new U8(n), view = new U8(typedBuffer.call(raw), typedOffset.call(raw), n);
+  setBytes.call(result, view);
+  return result;
+}
+var jsonBytes = (v) => enc6.encode(JSON.stringify(v));
+function validateIdentityRow(r) {
+  closed(r, ["itemId", "name", "nameStatus", "sprite", "spriteStatus", "currentMemberships"]);
+  integer3(r.itemId, 1, 999999999);
+  need4(["unique_client_id", "unknown_client_id", "conflicting_client_id"].includes(r.nameStatus), "identity_name_status");
+  need4(r.nameStatus === "unique_client_id" ? typeof r.name === "string" && r.name.trim().length > 0 && r.name.length <= 300 : r.name === null, "identity_name");
+  need4(r.sprite === null ? r.spriteStatus === "unavailable" : r.spriteStatus === "reviewed_local" && typeof r.sprite === "string" && LOCAL.test(r.sprite), "identity_sprite");
+  need4(Array.isArray(r.currentMemberships) && r.currentMemberships.length <= 3, "identity_memberships");
+  let prior = -1;
+  for (const op of r.currentMemberships) {
+    const at = SEARCH_OPERATIONS.indexOf(op);
+    need4(at > prior, "identity_membership_order");
+    prior = at;
+  }
+  need4(jsonBytes(r).length <= SEARCH_IDENTITY_LIMITS.rowBytes, "identity_row_bound");
+  return r;
+}
+function validateIdentitySources(sources, itemCount) {
+  need4(Array.isArray(sources) && sources.length >= 1 && sources.length <= 3, "identity_sources");
+  let prior = -1;
+  for (const s of sources) {
+    closed(s, ["operation", "sourceUrl", "capturedAt", "sourceObservedAt", "setSha256", "itemCount"]);
+    const at = SEARCH_OPERATIONS.indexOf(s.operation);
+    need4(at > prior, "identity_source_order");
+    prior = at;
+    need4(s.sourceUrl === SEARCH_SOURCE_URLS[s.operation] && s.sourceObservedAt === null, "identity_source");
+    identityClock(s.capturedAt);
+    identityHash(s.setSha256);
+    integer3(s.itemCount, 0, itemCount);
+  }
+  need4(sources[0].operation === "prices", "identity_prices_required");
+  return sources;
+}
+function metadata(items) {
+  need4(Array.isArray(items) && items.length >= 1 && items.length <= 4, "identity_metadata");
+  const seen = /* @__PURE__ */ new Set();
+  for (const d of items) {
+    closed(d, ["expectedSha256", "sourceUrl", "format"]);
+    identityHash(d.expectedSha256);
+    need4(["cash_client_catalog", "noncash_list"].includes(d.format) && d.sourceUrl === `https://maplestory.io/api/MCW/1/item/list?cashFilter=${d.format === "cash_client_catalog" ? "true" : "false"}&count=10000` && !seen.has(d.sourceUrl), "identity_metadata");
+    seen.add(d.sourceUrl);
+  }
+  return items;
+}
+async function parseIdentityManifest(raw) {
+  raw = ownIdentityBytes(raw, SEARCH_IDENTITY_LIMITS.manifestBytes);
+  const m = parseStrictJson(raw);
+  closed(m, ["schemaVersion", "kind", "profile", "publicationEpoch", "publicationRevision", "sourceCreditUrl", "identityMetadata", "spriteBindingsSha256", "sources", "admittedItemLimit", "itemCount", "pages", "indexHash"]);
+  need4(m.schemaVersion === 2 && m.kind === "api_search_identity_manifest" && m.profile === SEARCH_IDENTITY_PROFILE && m.sourceCreditUrl === "https://maplestory.market/?ref=v6kkdvp6" && m.admittedItemLimit === 1e4, "identity_profile");
+  publicEpoch(m.publicationEpoch);
+  integer3(m.publicationRevision, 1, Number.MAX_SAFE_INTEGER);
+  integer3(m.itemCount, 1, 1e4);
+  metadata(m.identityMetadata);
+  identityHash(m.spriteBindingsSha256);
+  validateIdentitySources(m.sources, m.itemCount);
+  identityHash(m.indexHash);
+  need4(Array.isArray(m.pages) && m.pages.length >= 1 && m.pages.length <= 128, "identity_pages");
+  let count2 = 0, last = 0, total = 0;
+  for (const [i, d] of m.pages.entries()) {
+    closed(d, ["page", "firstItemId", "lastItemId", "itemCount", "sha256", "bytes", "url"]);
+    need4(d.page === i, "identity_page_order");
+    integer3(d.firstItemId, last + 1, 999999999);
+    integer3(d.lastItemId, d.firstItemId, 999999999);
+    integer3(d.itemCount, 1, 128);
+    integer3(d.bytes, 1, 131072);
+    identityHash(d.sha256);
+    need4(d.url === SEARCH_IDENTITY_ROUTE + d.sha256 + ".json", "identity_page_url");
+    last = d.lastItemId;
+    count2 += d.itemCount;
+    total += d.bytes;
+  }
+  need4(count2 === m.itemCount && total <= 8388608, "identity_collection_bound");
+  const { indexHash, ...unsigned } = m;
+  need4(await sha256(jsonBytes(unsigned)) === indexHash, "identity_index_hash");
+  return m;
+}
+async function parseIdentityPage(raw, d, m) {
+  raw = ownIdentityBytes(raw, 131072);
+  need4(raw.length === d.bytes && await sha256(raw) === d.sha256, "identity_page_hash");
+  const p = parseStrictJson(raw);
+  closed(p, ["schemaVersion", "kind", "rows"]);
+  need4(p.schemaVersion === 2 && p.kind === "api_search_identity_page" && Array.isArray(p.rows) && p.rows.length === d.itemCount, "identity_page");
+  let prior = d.firstItemId - 1;
+  for (const r of p.rows) {
+    validateIdentityRow(r);
+    need4(r.itemId > prior && r.itemId <= d.lastItemId, "identity_row_order");
+    prior = r.itemId;
+    for (const op of r.currentMemberships) need4(m.sources.some((s) => s.operation === op), "identity_unknown_source");
+  }
+  need4(p.rows[0].itemId === d.firstItemId && p.rows.at(-1).itemId === d.lastItemId, "identity_page_range");
+  return p;
+}
+function validateCompleteIdentityRows(m, rows2) {
+  need4(Array.isArray(rows2) && rows2.length === m.itemCount, "identity_rows");
+  let prior = 0;
+  const counts = { prices: 0, catalogue: 0, overview: 0 };
+  for (const r of rows2) {
+    validateIdentityRow(r);
+    need4(r.itemId > prior, "identity_duplicate_id");
+    prior = r.itemId;
+    for (const op of r.currentMemberships) counts[op]++;
+  }
+  for (const s of m.sources) need4(counts[s.operation] === s.itemCount, "identity_membership_count");
+  return rows2;
+}
+
+// ops/api-search-identity-protocol.mjs
+var SEARCH_IDENTITY_PROTOCOL = "search-identities-v2";
+var SEARCH_IDENTITY_PAGE_HEADER = "X-Astra-Search-Identity-Object";
+var SEARCH_IDENTITY_HEADERS = Object.freeze({ protocol: "X-Astra-Search-Identity-Protocol", epoch: "X-Astra-Search-Identity-Epoch", revision: "X-Astra-Search-Identity-Revision", index: "X-Astra-Search-Identity-Index", binding: "X-Astra-Search-Identity-Binding", mode: "X-Astra-Search-Identity-Mode" });
+var searchIdentityEtag = (sha2) => '"search-identities-v2-' + identityHash(sha2) + '"';
+function validateSearchIdentityPageHeaders(headers, { bodySha256 }) {
+  need4(headers?.get && headers.get(SEARCH_IDENTITY_PAGE_HEADER) === "page-v2" && headers.get("ETag") === searchIdentityEtag(bodySha256), "identity_http_page_protocol");
+  need4(Object.values(SEARCH_IDENTITY_HEADERS).every((k) => !headers.has(k)), "identity_page_not_current_revision");
+  return { objectProtocol: "page-v2" };
+}
+async function makeSearchIdentityHeaders({ publicationEpoch, publicationRevision, indexHash, bodySha256, mode = "validated_cache" }) {
+  publicEpoch(publicationEpoch);
+  integer3(publicationRevision, 1, Number.MAX_SAFE_INTEGER);
+  identityHash(indexHash);
+  identityHash(bodySha256);
+  need4(["validated_cache", "retained"].includes(mode), "identity_mode");
+  return { [SEARCH_IDENTITY_HEADERS.protocol]: SEARCH_IDENTITY_PROTOCOL, [SEARCH_IDENTITY_HEADERS.epoch]: publicationEpoch, [SEARCH_IDENTITY_HEADERS.revision]: String(publicationRevision), [SEARCH_IDENTITY_HEADERS.index]: indexHash, [SEARCH_IDENTITY_HEADERS.binding]: await sha256(jsonBytes([SEARCH_IDENTITY_PROTOCOL, publicationEpoch, String(publicationRevision), indexHash, bodySha256])), [SEARCH_IDENTITY_HEADERS.mode]: mode, ETag: searchIdentityEtag(bodySha256) };
+}
+async function validateSearchIdentityHeaders(headers, { expectedEpoch, bodySha256 }) {
+  need4(headers?.get && headers.get(SEARCH_IDENTITY_HEADERS.protocol) === SEARCH_IDENTITY_PROTOCOL, "identity_http_protocol");
+  const epoch = headers.get(SEARCH_IDENTITY_HEADERS.epoch), revision = headers.get(SEARCH_IDENTITY_HEADERS.revision), indexHash = headers.get(SEARCH_IDENTITY_HEADERS.index), mode = headers.get(SEARCH_IDENTITY_HEADERS.mode);
+  publicEpoch(epoch);
+  need4(epoch === expectedEpoch && /^[1-9][0-9]{0,15}$/.test(revision ?? ""), "identity_http_epoch_revision");
+  const n = integer3(Number(revision), 1, Number.MAX_SAFE_INTEGER);
+  need4(String(n) === revision, "identity_http_revision");
+  const expected = await makeSearchIdentityHeaders({ publicationEpoch: epoch, publicationRevision: n, indexHash, bodySha256, mode });
+  for (const [k, v] of Object.entries(expected)) need4(headers.get(k) === v, "identity_http_binding");
+  return { publicationEpoch: epoch, publicationRevision: n, indexHash, mode };
+}
+
+// ui-src/item-api/search-identity-client.mjs
+var clone = (v) => structuredClone(v);
+var abort4 = () => Object.assign(Error("identity_aborted"), { name: "AbortError" });
+function createSearchIdentityClient({ enabled: enabled2 = false, isEnabled = () => true, fetcher, expectedEpoch, expectedDefinition = SEARCH_IDENTITY_DEFINITION, now = Date.now, monotonic = () => performance.now(), ttlMs = 3e4, timeoutMs = 3e4, readTimeoutMs = 1e4 } = {}) {
+  if (enabled2 === true) publicEpoch(expectedEpoch);
+  for (const [n, v, max] of [["ttl", ttlMs, 6e4], ["deadline", timeoutMs, 3e4], ["read", readTimeoutMs, 1e4]]) if (!Number.isSafeInteger(v) || v < 1 || v > max) throw TypeError("identity_" + n + "_bound");
+  expectedDefinition = structuredClone(expectedDefinition);
+  let good = null, flight = null, epoch = 0, floor = 0, floorIndex = null, expires = 0, retryAt = 0, failures = 0, blocked = false, lastFailure = null;
+  const active = () => {
+    try {
+      return enabled2 === true && isEnabled() === true && !blocked;
+    } catch {
+      return false;
+    }
+  };
+  const view = (mode = good?.mode) => good ? clone({ manifest: good.manifest, rows: good.rows, mode }) : null;
+  function cancelTask() {
+    if (flight) {
+      flight.cancelled = true;
+      for (const c of flight.controllers) c.abort();
+    }
+  }
+  function revoke() {
+    epoch++;
+    good = null;
+    expires = 0;
+    cancelTask();
+  }
+  function failure2(latch, reason) {
+    if (latch.reported) return;
+    latch.reported = true;
+    lastFailure = reason;
+    expires = 0;
+    retryAt = now() + Math.min(3e5, 3e4 * 2 ** Math.min(failures++, 4));
+  }
+  function fence(latch, readEnd = Infinity) {
+    need4(active() && latch.epoch === epoch && !latch.cancelled, "identity_revoked");
+    need4(monotonic() < latch.end && monotonic() < readEnd, "identity_deadline");
+  }
+  async function read(latch, path, limit, previous = null) {
+    fence(latch);
+    need4(path === SEARCH_IDENTITY_ROUTE + "manifest.json" || new RegExp("^" + SEARCH_IDENTITY_ROUTE + "[a-f0-9]{64}\\.json$").test(path), "identity_fixed_path");
+    const controller = new AbortController(), end = Math.min(latch.end, monotonic() + readTimeoutMs);
+    latch.controllers.add(controller);
+    const timer = setTimeout(() => controller.abort(), Math.max(1, end - monotonic()));
+    let response, reader = null, finished = false;
+    try {
+      response = await fetcher(path, { method: "GET", credentials: "same-origin", redirect: "error", cache: "no-cache", signal: controller.signal, headers: previous ? { "If-None-Match": previous.etag } : {} });
+      fence(latch, end);
+      if (response.status === 401) {
+        blocked = true;
+        revoke();
+        throw Error("identity_authentication_withdrawn");
+      }
+      need4(response.status === 200 || response.status === 304, "identity_http_unavailable");
+      const etag = response.headers.get("ETag");
+      need4(/^"search-identities-v2-[a-f0-9]{64}"$/.test(etag ?? ""), "identity_http_etag");
+      if (response.status === 304) {
+        need4(previous && previous.etag === etag, "identity_http_304");
+        const context2 = await validateSearchIdentityHeaders(response.headers, { expectedEpoch, bodySha256: previous.sha });
+        fence(latch, end);
+        finished = true;
+        return { ...previous, ...context2, unchanged: true };
+      }
+      need4(/^application\/json(?:;|$)/i.test(response.headers.get("Content-Type") ?? ""), "identity_http_type");
+      const declared = response.headers.get("Content-Length");
+      need4(declared === null || /^[1-9][0-9]*$/.test(declared) && Number(declared) <= limit, "identity_http_length");
+      need4(response.body && typeof response.body.getReader === "function", "identity_http_body");
+      reader = response.body.getReader();
+      const chunks = [];
+      let n = 0, chunksRead = 0;
+      for (; ; ) {
+        const p = await reader.read();
+        fence(latch, end);
+        if (p.done) break;
+        need4(++chunksRead <= 1024, "identity_http_chunks");
+        if (identityByteLength(p.value) === 0) continue;
+        const owned = ownIdentityBytes(p.value, limit - n);
+        n += owned.byteLength;
+        chunks.push(owned);
+      }
+      need4(n > 0 && (declared === null || n === Number(declared)), "identity_http_length");
+      const raw = new Uint8Array(n);
+      let at = 0;
+      for (const p of chunks) {
+        raw.set(p, at);
+        at += p.length;
+      }
+      const sha2 = await sha256(raw);
+      fence(latch, end);
+      need4(etag === searchIdentityEtag(sha2), "identity_http_body_hash");
+      const context = path.endsWith("/manifest.json") ? await validateSearchIdentityHeaders(response.headers, { expectedEpoch, bodySha256: sha2 }) : validateSearchIdentityPageHeaders(response.headers, { bodySha256: sha2 });
+      fence(latch, end);
+      finished = true;
+      return { raw, sha: sha2, etag, ...context, unchanged: false };
+    } finally {
+      clearTimeout(timer);
+      latch.controllers.delete(controller);
+      try {
+        if (!finished) {
+          if (reader) await reader.cancel();
+          else if (response?.body && !response.body.locked) await response.body.cancel();
+        }
+      } finally {
+        reader?.releaseLock();
+      }
+    }
+  }
+  async function collect(latch) {
+    const record = await read(latch, SEARCH_IDENTITY_ROUTE + "manifest.json", 65536, good?.record), manifest = await parseIdentityManifest(record.raw);
+    fence(latch);
+    need4(matchesSearchIdentityDefinition(manifest, expectedDefinition), "identity_reviewed_metadata_definition");
+    need4(manifest.publicationEpoch === record.publicationEpoch && manifest.publicationRevision === record.publicationRevision && manifest.indexHash === record.indexHash, "identity_manifest_context");
+    need4(manifest.publicationRevision >= floor && (manifest.publicationRevision !== floor || floorIndex === null || manifest.indexHash === floorIndex), "identity_revision_regression");
+    if (good) for (const s of good.manifest.sources) {
+      const next = manifest.sources.find((v) => v.operation === s.operation);
+      need4(next && Date.parse(next.capturedAt) >= Date.parse(s.capturedAt), "identity_source_clock_regression");
+    }
+    floor = manifest.publicationRevision;
+    floorIndex = manifest.indexHash;
+    if (record.unchanged) {
+      need4(good?.manifest.indexHash === manifest.indexHash, "identity_304_collection");
+      fence(latch);
+      const value2 = { ...good, record, mode: record.mode };
+      good = value2;
+      expires = now() + ttlMs;
+      failures = 0;
+      retryAt = 0;
+      lastFailure = null;
+      return value2;
+    }
+    const prior = good?.pages ?? /* @__PURE__ */ new Map(), pages = /* @__PURE__ */ new Map(), parts2 = new Array(manifest.pages.length);
+    let cursor = 0, failed = false, retained = record.mode === "retained";
+    const workers = Array.from({ length: Math.min(4, manifest.pages.length) }, async () => {
+      try {
+        while (!failed) {
+          fence(latch);
+          const i = cursor++;
+          if (i >= manifest.pages.length) return;
+          const d = manifest.pages[i];
+          let page = prior.get(d.sha256);
+          if (page) {
+            need4(page.bytes === d.bytes && page.firstItemId === d.firstItemId && page.lastItemId === d.lastItemId && page.rows.length === d.itemCount, "identity_cached_page");
+          } else {
+            const r = await read(latch, d.url, 131072);
+            need4(r.sha === d.sha256 && r.raw.length === d.bytes, "identity_page_context");
+            const p = await parseIdentityPage(r.raw, d, manifest);
+            fence(latch);
+            page = { rows: p.rows, bytes: d.bytes, firstItemId: d.firstItemId, lastItemId: d.lastItemId };
+          }
+          for (const row of page.rows) for (const op of row.currentMemberships) need4(manifest.sources.some((s) => s.operation === op), "identity_page_source");
+          pages.set(d.sha256, page);
+          parts2[i] = page.rows;
+        }
+      } catch (error2) {
+        failed = true;
+        for (const c of latch.controllers) c.abort();
+        throw error2;
+      }
+    });
+    const results = await Promise.allSettled(workers), error = results.find((r) => r.status === "rejected");
+    if (error) throw error.reason;
+    const rows2 = validateCompleteIdentityRows(manifest, parts2.flat());
+    fence(latch);
+    need4(manifest.publicationRevision === floor && manifest.indexHash === floorIndex, "identity_late_revision");
+    const value = { manifest, rows: rows2, mode: retained ? "retained" : "validated_cache", record, pages };
+    good = value;
+    expires = now() + ttlMs;
+    retryAt = 0;
+    failures = 0;
+    lastFailure = null;
+    return value;
+  }
+  async function wait(latch, signal) {
+    if (signal?.aborted) throw abort4();
+    let timer, cancel;
+    const deadline = new Promise((resolve) => {
+      timer = setTimeout(() => {
+        latch.cancelled = true;
+        for (const c of latch.controllers) c.abort();
+        resolve({ error: Error("identity_deadline") });
+      }, Math.max(1, latch.end - monotonic()));
+    }), stop = new Promise((_, reject) => {
+      cancel = () => reject(abort4());
+      signal?.addEventListener("abort", cancel, { once: true });
+    });
+    try {
+      return await Promise.race([latch.promise, deadline, stop]);
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", cancel);
+    }
+  }
+  return Object.freeze({
+    async load({ signal } = {}) {
+      if (!active() || typeof fetcher !== "function") throw Error("identity_not_connected");
+      if (good && now() < expires && good.manifest.publicationRevision === floor) return view();
+      if (now() < retryAt) {
+        if (good) return view("retained");
+        throw Error("identity_read_backoff");
+      }
+      if (!flight) {
+        const latch2 = { epoch, end: monotonic() + timeoutMs, controllers: /* @__PURE__ */ new Set(), cancelled: false, reported: false, promise: null };
+        flight = latch2;
+        latch2.promise = collect(latch2).then((value) => ({ value }), (error) => ({ error })).finally(() => {
+          if (flight === latch2) flight = null;
+        });
+      }
+      const latch = flight, result = await wait(latch, signal);
+      if (result.error) {
+        failure2(latch, result.error.message);
+        if (good && active()) return view("retained");
+        throw result.error;
+      }
+      need4(active() && latch.epoch === epoch && !latch.cancelled, "identity_revoked");
+      return view(result.value.mode);
+    },
+    clear() {
+      revoke();
+      lastFailure = "identity_disabled";
+      retryAt = 0;
+    },
+    resetAccess() {
+      revoke();
+      blocked = false;
+      retryAt = 0;
+      lastFailure = null;
+    },
+    state() {
+      return { mode: blocked ? "authentication_unavailable" : good ? lastFailure || good.manifest.publicationRevision < floor ? "retained" : good.mode : "unavailable", itemCount: good?.manifest.itemCount ?? 0, indexHash: good?.manifest.indexHash ?? null, sourceSnapshots: clone(good?.manifest.sources ?? []), latestObservedRevision: floor, retainedRevision: good?.manifest.publicationRevision ?? null, physicalFlight: flight !== null, retryAt, blocked, lastFailure, priceAuthority: false };
+    }
+  });
+}
+
+// ui-src/item-api/search-identity-bridge.mjs
+function searchIdentityV2View({ manifest, rows: rows2, mode }) {
+  return { schemaVersion: 2, profile: manifest.profile, itemCount: manifest.itemCount, pricesMembershipCount: manifest.sources.find((s) => s.operation === "prices").itemCount, indexHash: manifest.indexHash, publicationEpoch: manifest.publicationEpoch, publicationRevision: manifest.publicationRevision, mode, sourceSnapshots: manifest.sources.map((s) => ({ ...s })), priceProjectionGeneration: null, priceProjectionMeaning: "not_part_of_price_free_identity_profile", rows: rows2.map((r) => ({ ...r, profile: manifest.profile, name: r.name ?? `Item ${r.itemId} (name unavailable)`, providerBindings: [], memberships: r.currentMemberships.map((operation) => ({ operation, presentInSnapshot: true, capturedAt: manifest.sources.find((s) => s.operation === operation).capturedAt, sourceObservedAt: null })), knownSourceId: true, retainedKnownId: r.currentMemberships.length === 0, collectionRetained: mode === "retained", priceState: "not_prefetched_by_search", hasCurrentAcceptedPriceSnapshot: false, hasRetainedPriceSnapshot: false, retainedPriceCapturedAt: null })) };
+}
+function createPriceFreeIdentityBridge(options = {}) {
+  let client2;
+  try {
+    client2 = createSearchIdentityClient(options);
+  } catch {
+    client2 = null;
+  }
+  return Object.freeze({ async load(args) {
+    if (!client2) throw Error("identity_profile_configuration");
+    return searchIdentityV2View(await client2.load(args));
+  }, state: () => client2?.state() ?? { mode: "invalid_profile", blocked: false }, clear: () => client2?.clear(), resetAccess: () => client2?.resetAccess() });
+}
+
+// ui-src/item-api/search-selected-price.mjs
+var FAST_SELECTION_REQUEST_HEADER = "X-Astra-Request-Item-Protocol";
+function createSearchSelectedPriceFetcher(fetcher, { expectedEpoch, isEnabled = () => true } = {}) {
+  return async (...args) => {
+    if (!validPublicEpoch(expectedEpoch) || isEnabled() !== true) throw Error("fast_selection_not_configured");
+    const options = { ...args[1] ?? {}, headers: new Headers(args[1]?.headers) };
+    options.headers.set(FAST_SELECTION_REQUEST_HEADER, FAST_ITEM_PROTOCOL);
+    const response = await fetcher(args[0], options);
+    if (isEnabled() !== true) {
+      if (response.body && !response.body.locked) await response.body.cancel();
+      throw Error("fast_selection_revoked");
+    }
+    if ([200, 304, 404, 409].includes(response.status) && (response.headers.get(FAST_ITEM_HEADERS.protocol) !== FAST_ITEM_PROTOCOL || response.headers.get(FAST_ITEM_HEADERS.epoch) !== expectedEpoch)) {
+      if (response.body && !response.body.locked) await response.body.cancel();
+      throw Error("ordered_fast_selection_required");
+    }
+    return response;
+  };
+}
+
+// ui-src/item-api/lifecycle.mjs
+function createItemPanelLifecycle({ container, mountPanel, loader, getTimezone = () => "UTC", spriteMap = {}, onStatus = () => {
+} } = {}) {
+  if (!container?.ownerDocument || typeof mountPanel !== "function") throw TypeError("Explicit item panel dependencies required");
+  let epoch = 0, controller = null, handle = null, currentId = null, timezone = null, lastCapture = null, lastDtoSha = null, flight = null;
+  const clear = () => {
+    handle?.destroy();
+    handle = null;
+  };
+  function load(itemId, preserveState) {
+    if (!Number.isSafeInteger(itemId) || itemId < 1 || itemId > 999999999) throw TypeError("Exact numeric item ID required");
+    if (flight?.itemId === itemId) return flight.promise;
+    const token = ++epoch;
+    controller?.abort();
+    controller = new AbortController();
+    const ownController = controller;
+    if (currentId !== itemId) {
+      clear();
+      lastCapture = null;
+      lastDtoSha = null;
+    }
+    currentId = itemId;
+    if (typeof loader !== "function") {
+      onStatus("not_connected");
+      return Promise.resolve({ status: "not_connected" });
+    }
+    onStatus("loading", { hasData: !!handle });
+    const task = { itemId };
+    task.promise = (async () => {
+      try {
+        const reply = await loader({ itemId, signal: ownController.signal });
+        if (token !== epoch || ownController.signal.aborted) return { status: "stale" };
+        const value = await validatePublicItemReference(reply);
+        if (token !== epoch || ownController.signal.aborted) return { status: "stale" };
+        if (value.itemId !== itemId || lastCapture !== null && Date.parse(value.sourceCapturedAt) < Date.parse(lastCapture)) throw Object.assign(TypeError("Wrong or older item reference"), { code: "invalid" });
+        const options = { timezone: timezone ?? getTimezone(), spriteMap };
+        if (handle) {
+          if (value.dtoSha256 !== lastDtoSha) handle.updateDto(value.item, { preserveState });
+          handle.updateTimezone(options.timezone);
+        } else handle = mountPanel(container, value.item, options);
+        lastCapture = value.sourceCapturedAt;
+        lastDtoSha = value.dtoSha256;
+        onStatus("shown", { hasData: true });
+        return { status: "shown", itemId, sourceCapturedAt: value.sourceCapturedAt, generation: value.projectionGeneration };
+      } catch (error) {
+        if (token !== epoch || ownController.signal.aborted) return { status: "stale" };
+        if (error?.code === "access_denied") {
+          clear();
+          onStatus("access_denied", { hasData: false, reason: "access_denied" });
+          return { status: "access_denied" };
+        }
+        if (error?.code === "not_found") {
+          clear();
+          onStatus("unavailable", { hasData: false, reason: "not_found" });
+          return { status: "unavailable", reason: "not_found" };
+        }
+        const status = handle ? "retained" : "unavailable";
+        onStatus(status, { hasData: !!handle, reason: error?.code ?? "unavailable" });
+        return { status };
+      } finally {
+        if (flight === task) flight = null;
+      }
+    })();
+    flight = task;
+    return task.promise;
+  }
+  return Object.freeze({
+    show: (itemId) => load(itemId, false),
+    refresh() {
+      return currentId === null ? Promise.resolve({ status: "not_connected" }) : load(currentId, true);
+    },
+    pause() {
+      epoch++;
+      controller?.abort();
+      controller = null;
+      flight = null;
+      onStatus("paused", { hasData: !!handle });
+    },
+    timezoneChanged(value) {
+      timezone = value;
+      handle?.updateTimezone(value);
+    },
+    hide() {
+      epoch++;
+      controller?.abort();
+      controller = null;
+      flight = null;
+      currentId = null;
+      lastCapture = null;
+      lastDtoSha = null;
+      clear();
+      onStatus("hidden");
+    }
+  });
+}
+
 // ops/portable-hash.mjs
 var encoder = new TextEncoder();
 
@@ -2028,7 +2630,7 @@ var MAX = Number.MAX_SAFE_INTEGER;
 
 // ops/api-raw-prices-decoder.mjs
 var MAX2 = BigInt(Number.MAX_SAFE_INTEGER);
-var fail2 = (ok, message) => {
+var fail3 = (ok, message) => {
   if (!ok) throw new TypeError(message);
 };
 var own3 = (value, key) => Object.prototype.hasOwnProperty.call(value, key);
@@ -2042,7 +2644,7 @@ function isOriginalJsonNumber(value) {
   return value instanceof JsonNumber;
 }
 function parseStrictJson2(text) {
-  fail2(typeof text === "string" && text.length <= 5e6, "Bounded UTF8 JSON text required");
+  fail3(typeof text === "string" && text.length <= 5e6, "Bounded UTF8 JSON text required");
   let i = 0, nodes = 0;
   const white = () => {
     while (i < text.length && [" ", "\n", "\r", "	"].includes(text[i])) i++;
@@ -2053,7 +2655,7 @@ function parseStrictJson2(text) {
       const char = text[i++];
       if (char === '"') {
         const value2 = JSON.parse(text.slice(start, i));
-        fail2(value2.length <= 4096, "JSON string too long");
+        fail3(value2.length <= 4096, "JSON string too long");
         return value2;
       }
       if (char === "\\") i++;
@@ -2065,27 +2667,27 @@ function parseStrictJson2(text) {
     if (text[i] === "-") i++;
     if (text[i] === "0") i++;
     else {
-      fail2(text[i] >= "1" && text[i] <= "9", "Invalid JSON number");
+      fail3(text[i] >= "1" && text[i] <= "9", "Invalid JSON number");
       while (text[i] >= "0" && text[i] <= "9") i++;
     }
     if (text[i] === ".") {
       i++;
       const digits = i;
       while (text[i] >= "0" && text[i] <= "9") i++;
-      fail2(i > digits, "Missing fractional digits");
+      fail3(i > digits, "Missing fractional digits");
     }
     if (text[i] === "e" || text[i] === "E") {
       i++;
       if (text[i] === "+" || text[i] === "-") i++;
       const digits = i;
       while (text[i] >= "0" && text[i] <= "9") i++;
-      fail2(i > digits, "Missing exponent digits");
+      fail3(i > digits, "Missing exponent digits");
     }
-    fail2(i - start <= 4096, "JSON number token too long");
+    fail3(i - start <= 4096, "JSON number token too long");
     return new JsonNumber(text.slice(start, i));
   }
   function value(depth) {
-    fail2(++nodes <= 1e6 && depth <= 64, "JSON complexity bound");
+    fail3(++nodes <= 1e6 && depth <= 64, "JSON complexity bound");
     white();
     const char = text[i];
     if (char === '"') return string();
@@ -2103,14 +2705,14 @@ function parseStrictJson2(text) {
         return Object.freeze(out);
       }
       while (true) {
-        fail2(out.length < 1e4, "JSON array bound");
+        fail3(out.length < 1e4, "JSON array bound");
         out.push(value(depth + 1));
         white();
         if (text[i] === "]") {
           i++;
           return Object.freeze(out);
         }
-        fail2(text[i++] === ",", "Expected array comma");
+        fail3(text[i++] === ",", "Expected array comma");
       }
     }
     if (char === "{") {
@@ -2124,26 +2726,26 @@ function parseStrictJson2(text) {
       }
       while (true) {
         white();
-        fail2(text[i] === '"', "Expected object key");
+        fail3(text[i] === '"', "Expected object key");
         const key = string();
-        fail2(!own3(out, key), "Duplicate JSON key");
-        fail2(++count2 <= 64, "JSON object bound");
+        fail3(!own3(out, key), "Duplicate JSON key");
+        fail3(++count2 <= 64, "JSON object bound");
         white();
-        fail2(text[i++] === ":", "Expected object colon");
+        fail3(text[i++] === ":", "Expected object colon");
         out[key] = value(depth + 1);
         white();
         if (text[i] === "}") {
           i++;
           return Object.freeze(out);
         }
-        fail2(text[i++] === ",", "Expected object comma");
+        fail3(text[i++] === ",", "Expected object comma");
       }
     }
     throw new TypeError("Invalid JSON token");
   }
   const result = value(0);
   white();
-  fail2(i === text.length, "Trailing JSON data");
+  fail3(i === text.length, "Trailing JSON data");
   return result;
 }
 
@@ -2154,8 +2756,8 @@ var check3 = (v, why) => {
   if (!v) throw new ItemHistoryContractError(why);
 };
 var MAX3 = BigInt(Number.MAX_SAFE_INTEGER);
-var enc5 = new TextEncoder();
-var exact = (v, keys) => check3(v && typeof v === "object" && !Array.isArray(v) && !isOriginalJsonNumber(v) && Object.keys(v).sort().join("|") === keys.split(" ").sort().join("|"), "history_fields");
+var enc7 = new TextEncoder();
+var exact2 = (v, keys) => check3(v && typeof v === "object" && !Array.isArray(v) && !isOriginalJsonNumber(v) && Object.keys(v).sort().join("|") === keys.split(" ").sort().join("|"), "history_fields");
 function decimal(v, positive) {
   check3(isOriginalJsonNumber(v) && v.token.length <= 256, "history_price_token");
   const token = v.token, m = /^(-?)([0-9]+)(?:\.([0-9]+))?(?:[eE]([+-]?[0-9]+))?$/.exec(token);
@@ -2176,7 +2778,7 @@ async function historyByteHash(bytes4) {
   return [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes4))].map((x) => x.toString(16).padStart(2, "0")).join("");
 }
 function validateProjectedHour(row) {
-  exact(row, "providerBucketEpochSeconds providerBucketTimestampUtc seen sold sourceObservedAt bucketCompletionKnown exactBucketStartAt exactBucketEndAt qualityConstant variantIdentity");
+  exact2(row, "providerBucketEpochSeconds providerBucketTimestampUtc seen sold sourceObservedAt bucketCompletionKnown exactBucketStartAt exactBucketEndAt qualityConstant variantIdentity");
   const at = row.providerBucketEpochSeconds;
   check3(Number.isSafeInteger(at) && at >= 946684800 && at < 4102444800 && at % 3600 === 0 && row.providerBucketTimestampUtc === new Date(at * 1e3).toISOString().replace(".000Z", "Z") && row.sourceObservedAt === null && row.bucketCompletionKnown === false && row.exactBucketStartAt === null && row.exactBucketEndAt === null && row.qualityConstant === false && row.variantIdentity === null, "history_saved_bucket");
   const price = (v, positive) => {
@@ -2186,7 +2788,7 @@ function validateProjectedHour(row) {
   for (const [kind, value] of [["seen", row.seen], ["sold", row.sold]]) {
     if (value === null) continue;
     const fields2 = kind === "seen" ? "reportedListingCount min_unit_price median_unit_price max_unit_price basis currentAvailabilityVerified" : "reportedBundles reportedUnits min_unit_price p25_unit_price median_unit_price p75_unit_price max_unit_price avg_unit_price basis bundlesEquivalentToSalesVerified";
-    exact(value, fields2);
+    exact2(value, fields2);
     const keys = kind === "seen" ? ["min_unit_price", "median_unit_price", "max_unit_price"] : ["min_unit_price", "p25_unit_price", "median_unit_price", "p75_unit_price", "max_unit_price"], prices = keys.map((k) => price(value[k], true));
     check3(prices.every((p, i) => !i || compare(prices[i - 1], p) <= 0), "history_saved_quantiles");
     const counts = kind === "seen" ? [value.reportedListingCount] : [value.reportedBundles, value.reportedUnits];
@@ -2204,13 +2806,13 @@ function validateProjectedHour(row) {
 var METHOD = "retained-whole-item-hour-public-v1";
 var LIMITS = Object.freeze({ pages: 128, rowsPerPage: 128, manifestBytes: 131072, pageBytes: 262144, totalBytes: 8388608, rows: 16384 });
 var HASH5 = /^[a-f0-9]{64}$/;
-var need3 = (v, c = "invalid_history_contract") => {
+var need5 = (v, c = "invalid_history_contract") => {
   if (!v) throw Error(c);
 };
-var shape3 = (v, keys) => need3(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join("|") === keys.split(" ").sort().join("|"), "history_closed_fields");
-var int2 = (v, min = 0, max = Number.MAX_SAFE_INTEGER) => need3(Number.isSafeInteger(v) && v >= min && v <= max, "history_integer");
+var shape3 = (v, keys) => need5(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join("|") === keys.split(" ").sort().join("|"), "history_closed_fields");
+var int2 = (v, min = 0, max = Number.MAX_SAFE_INTEGER) => need5(Number.isSafeInteger(v) && v >= min && v <= max, "history_integer");
 var clock2 = (v) => {
-  need3(typeof v === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(v) && Number.isFinite(Date.parse(v)) && new Date(v).toISOString() === v, "history_original_clock");
+  need5(typeof v === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(v) && Number.isFinite(Date.parse(v)) && new Date(v).toISOString() === v, "history_original_clock");
   return v;
 };
 var freeze2 = (v) => {
@@ -2221,7 +2823,7 @@ var freeze2 = (v) => {
   return v;
 };
 var bytes3 = (v) => new TextEncoder().encode(typeof v === "string" ? v : JSON.stringify(v));
-var hash2 = async (v) => historyByteHash(v instanceof Uint8Array ? v : bytes3(v));
+var hash3 = async (v) => historyByteHash(v instanceof Uint8Array ? v : bytes3(v));
 var sourceUrl = (id2) => `https://maplestory.market/api/items/${id2}/history`;
 var creditUrl = (id2) => `https://maplestory.market/items/${id2}?ref=v6kkdvp6`;
 var manifestPath = (id2) => `/api-item-history/${id2}/manifest.json`;
@@ -2243,71 +2845,71 @@ function validateRevision(r) {
   canonicalHour(r.hour);
   clock2(r.originalRetrievedAt);
   int2(r.revisionOrder, 1, LIMITS.rows);
-  need3(typeof r.latest === "boolean");
+  need5(typeof r.latest === "boolean");
   return r;
 }
 async function validateManifest2(input, id2) {
   const m = structuredClone(input);
   shape3(m, "schemaVersion kind methodVersion itemId identityScope source priceRepresentation priceUnitMeaning sourceObservedAt individualTradesQualified qualityConstant variantIdentity bucketCompletionKnown completeTradeHistory missingBucketMeansZero nullSoldMeansVerifiedZero firstHourUtc lastHourUtc oldestOriginalRetrievedAt latestOriginalRetrievedAt retainedHours retainedRevisionRows pages generation");
-  need3(m.schemaVersion === 1 && m.kind === "retained_item_hour_manifest" && m.methodVersion === METHOD && m.itemId === id2 && m.identityScope === "whole_item_unknown_roll_identity");
+  need5(m.schemaVersion === 1 && m.kind === "retained_item_hour_manifest" && m.methodVersion === METHOD && m.itemId === id2 && m.identityScope === "whole_item_unknown_roll_identity");
   int2(id2, 1, 999999999);
   shape3(m.source, "provider sourceUrl creditUrl");
-  need3(m.source.provider === "maplestory.market" && m.source.sourceUrl === sourceUrl(id2) && m.source.creditUrl === creditUrl(id2));
-  need3(m.priceRepresentation === "original_JSON_decimal_lexeme_not_binary64_price" && m.priceUnitMeaning === "source_unit_price_fields_physical_stack_conversion_unverified" && m.sourceObservedAt === null && m.individualTradesQualified === 0 && m.qualityConstant === false && m.variantIdentity === null && m.bucketCompletionKnown === false && m.completeTradeHistory === false && m.missingBucketMeansZero === false && m.nullSoldMeansVerifiedZero === false);
+  need5(m.source.provider === "maplestory.market" && m.source.sourceUrl === sourceUrl(id2) && m.source.creditUrl === creditUrl(id2));
+  need5(m.priceRepresentation === "original_JSON_decimal_lexeme_not_binary64_price" && m.priceUnitMeaning === "source_unit_price_fields_physical_stack_conversion_unverified" && m.sourceObservedAt === null && m.individualTradesQualified === 0 && m.qualityConstant === false && m.variantIdentity === null && m.bucketCompletionKnown === false && m.completeTradeHistory === false && m.missingBucketMeansZero === false && m.nullSoldMeansVerifiedZero === false);
   int2(m.retainedHours, 0, LIMITS.rows);
   int2(m.retainedRevisionRows, m.retainedHours, LIMITS.rows);
-  need3(Array.isArray(m.pages) && m.pages.length <= LIMITS.pages);
+  need5(Array.isArray(m.pages) && m.pages.length <= LIMITS.pages);
   if (!m.retainedHours) {
-    need3(!m.pages.length && m.retainedRevisionRows === 0 && m.firstHourUtc === null && m.lastHourUtc === null && m.oldestOriginalRetrievedAt === null && m.latestOriginalRetrievedAt === null);
+    need5(!m.pages.length && m.retainedRevisionRows === 0 && m.firstHourUtc === null && m.lastHourUtc === null && m.oldestOriginalRetrievedAt === null && m.latestOriginalRetrievedAt === null);
   } else {
     for (const k of ["oldestOriginalRetrievedAt", "latestOriginalRetrievedAt"]) clock2(m[k]);
-    need3(m.oldestOriginalRetrievedAt <= m.latestOriginalRetrievedAt);
-    for (const k of ["firstHourUtc", "lastHourUtc"]) need3(typeof m[k] === "string" && /^\d{4}-\d\d-\d\dT\d\d:00:00Z$/.test(m[k]) && Number.isFinite(Date.parse(m[k])) && new Date(m[k]).toISOString().replace(".000Z", "Z") === m[k]);
-    need3(m.firstHourUtc <= m.lastHourUtc && m.pages.length > 0);
+    need5(m.oldestOriginalRetrievedAt <= m.latestOriginalRetrievedAt);
+    for (const k of ["firstHourUtc", "lastHourUtc"]) need5(typeof m[k] === "string" && /^\d{4}-\d\d-\d\dT\d\d:00:00Z$/.test(m[k]) && Number.isFinite(Date.parse(m[k])) && new Date(m[k]).toISOString().replace(".000Z", "Z") === m[k]);
+    need5(m.firstHourUtc <= m.lastHourUtc && m.pages.length > 0);
   }
   let total = 0, rows2 = 0, last = "", part = 0;
   const paths = /* @__PURE__ */ new Set();
   for (const d of m.pages) {
     shape3(d, "weekStart part path sha256 bytes revisionRows firstEpoch lastEpoch");
-    need3(typeof d.weekStart === "string" && /^\d{4}-\d\d-\d\d$/.test(d.weekStart) && Number.isFinite(Date.parse(d.weekStart)) && weekStart(Date.parse(d.weekStart) / 1e3) === d.weekStart && HASH5.test(d.sha256));
+    need5(typeof d.weekStart === "string" && /^\d{4}-\d\d-\d\d$/.test(d.weekStart) && Number.isFinite(Date.parse(d.weekStart)) && weekStart(Date.parse(d.weekStart) / 1e3) === d.weekStart && HASH5.test(d.sha256));
     int2(d.part, 0, LIMITS.pages - 1);
-    need3(d.weekStart >= last && d.part === (d.weekStart === last ? part + 1 : 0));
+    need5(d.weekStart >= last && d.part === (d.weekStart === last ? part + 1 : 0));
     last = d.weekStart;
     part = d.part;
-    need3(d.path === `/api-item-history/${id2}/week/${d.weekStart}-${d.part}-${d.sha256}.json` && !paths.has(d.path));
+    need5(d.path === `/api-item-history/${id2}/week/${d.weekStart}-${d.part}-${d.sha256}.json` && !paths.has(d.path));
     paths.add(d.path);
     int2(d.bytes, 1, LIMITS.pageBytes);
     int2(d.revisionRows, 1, LIMITS.rowsPerPage);
     int2(d.firstEpoch, 946684800, 4102444799);
     int2(d.lastEpoch, d.firstEpoch, 4102444799);
-    need3(weekStart(d.firstEpoch) === d.weekStart && weekStart(d.lastEpoch) === d.weekStart && d.firstEpoch % 3600 === 0 && d.lastEpoch % 3600 === 0);
+    need5(weekStart(d.firstEpoch) === d.weekStart && weekStart(d.lastEpoch) === d.weekStart && d.firstEpoch % 3600 === 0 && d.lastEpoch % 3600 === 0);
     total += d.bytes;
     rows2 += d.revisionRows;
   }
-  need3(total <= LIMITS.totalBytes && rows2 === m.retainedRevisionRows);
+  need5(total <= LIMITS.totalBytes && rows2 === m.retainedRevisionRows);
   const { generation, ...unsigned } = m;
-  need3(HASH5.test(generation) && await hash2(unsigned) === generation, "history_generation_hash");
+  need5(HASH5.test(generation) && await hash3(unsigned) === generation, "history_generation_hash");
   return freeze2(m);
 }
 function validatePage2(input, d, m) {
   const p = structuredClone(input);
   shape3(p, "schemaVersion kind methodVersion itemId weekStart part rows");
-  need3(p.schemaVersion === 1 && p.kind === "retained_item_hour_revisions" && p.methodVersion === METHOD && p.itemId === m.itemId && p.weekStart === d.weekStart && p.part === d.part && Array.isArray(p.rows) && p.rows.length === d.revisionRows);
+  need5(p.schemaVersion === 1 && p.kind === "retained_item_hour_revisions" && p.methodVersion === METHOD && p.itemId === m.itemId && p.weekStart === d.weekStart && p.part === d.part && Array.isArray(p.rows) && p.rows.length === d.revisionRows);
   let at = -1, order = 0;
   for (const r of p.rows) {
     validateRevision(r);
     const epoch = r.hour.providerBucketEpochSeconds;
-    need3(weekStart(epoch) === d.weekStart && (epoch > at || epoch === at && r.revisionOrder === order + 1));
+    need5(weekStart(epoch) === d.weekStart && (epoch > at || epoch === at && r.revisionOrder === order + 1));
     if (epoch > at) order = r.revisionOrder;
     else order++;
     at = epoch;
-    need3(r.originalRetrievedAt >= m.oldestOriginalRetrievedAt && r.originalRetrievedAt <= m.latestOriginalRetrievedAt);
+    need5(r.originalRetrievedAt >= m.oldestOriginalRetrievedAt && r.originalRetrievedAt <= m.latestOriginalRetrievedAt);
   }
-  need3(p.rows[0].hour.providerBucketEpochSeconds === d.firstEpoch && p.rows.at(-1).hour.providerBucketEpochSeconds === d.lastEpoch);
+  need5(p.rows[0].hour.providerBucketEpochSeconds === d.firstEpoch && p.rows.at(-1).hour.providerBucketEpochSeconds === d.lastEpoch);
   return freeze2(p);
 }
 function parseBody(raw, max) {
-  need3(raw instanceof Uint8Array && raw.length > 0 && raw.length <= max, "history_bytes");
+  need5(raw instanceof Uint8Array && raw.length > 0 && raw.length <= max, "history_bytes");
   return parseStrictJson(raw);
 }
 function validateSelection(pages, m, { fromEpoch = 0, toEpoch = 4102444800 } = {}) {
@@ -2323,12 +2925,12 @@ function validateSelection(pages, m, { fromEpoch = 0, toEpoch = 4102444800 } = {
   }
   for (const list of hours.values()) {
     list.sort((a, b) => a.revisionOrder - b.revisionOrder);
-    need3(list.every((r, i) => r.revisionOrder === i + 1) && list.filter((r) => r.latest).length === 1 && list.at(-1).latest, "history_revision_selection");
-    need3(list.every((r, i) => !i || r.originalRetrievedAt >= list[i - 1].originalRetrievedAt), "history_revision_capture_order");
+    need5(list.every((r, i) => r.revisionOrder === i + 1) && list.filter((r) => r.latest).length === 1 && list.at(-1).latest, "history_revision_selection");
+    need5(list.every((r, i) => !i || r.originalRetrievedAt >= list[i - 1].originalRetrievedAt), "history_revision_capture_order");
   }
   if (fromEpoch === 0 && toEpoch === 4102444800) {
-    need3(pages.length === m.pages.length && hours.size === m.retainedHours && records.length === m.retainedRevisionRows, "history_full_selection_coverage");
-    if (records.length) need3(records[0].hour.providerBucketTimestampUtc === m.firstHourUtc && records.at(-1).hour.providerBucketTimestampUtc === m.lastHourUtc, "history_full_selection_bounds");
+    need5(pages.length === m.pages.length && hours.size === m.retainedHours && records.length === m.retainedRevisionRows, "history_full_selection_coverage");
+    if (records.length) need5(records[0].hour.providerBucketTimestampUtc === m.firstHourUtc && records.at(-1).hour.providerBucketTimestampUtc === m.lastHourUtc, "history_full_selection_bounds");
   }
   return freeze2({ itemId: m.itemId, generation: m.generation, source: m.source, sourceObservedAt: null, identityScope: m.identityScope, latestOriginalRetrievedAt: m.latestOriginalRetrievedAt, rows: [...hours.values()].map((list) => list.at(-1)), revisions: records.filter((r) => r.hour.providerBucketEpochSeconds >= fromEpoch && r.hour.providerBucketEpochSeconds < toEpoch), individualTradesQualified: 0, qualityConstant: false, variantIdentity: null, bucketCompletionKnown: false, completeTradeHistory: false });
 }
@@ -2337,8 +2939,8 @@ function validateSelection(pages, m, { fromEpoch = 0, toEpoch = 4102444800 } = {
 function createItemHourClient({ origin = globalThis.location?.origin, fetcher = globalThis.fetch, enabled: enabled2 = false, onChange = () => {
 }, maxSelections = 8 } = {}) {
   const own4 = new URL(origin);
-  need3(own4.origin === origin && ["https:", "http:"].includes(own4.protocol) && (!globalThis.location || globalThis.location.origin === origin), "history_own_origin");
-  need3(Number.isInteger(maxSelections) && maxSelections >= 1 && maxSelections <= 16);
+  need5(own4.origin === origin && ["https:", "http:"].includes(own4.protocol) && (!globalThis.location || globalThis.location.origin === origin), "history_own_origin");
+  need5(Number.isInteger(maxSelections) && maxSelections >= 1 && maxSelections <= 16);
   let active = enabled2 === true, epoch = 0, controller = null, model = freeze2({ status: active ? "idle" : "off", data: null }), flightCount = 0;
   const lastgood = /* @__PURE__ */ new Map();
   const emit = (value) => {
@@ -2347,43 +2949,43 @@ function createItemHourClient({ origin = globalThis.location?.origin, fetcher = 
     return model;
   };
   async function get(path, signal, max) {
-    need3(path.startsWith("/api-item-history/") && !path.startsWith("//") && new URL(path, origin).origin === origin, "history_own_path");
+    need5(path.startsWith("/api-item-history/") && !path.startsWith("//") && new URL(path, origin).origin === origin, "history_own_path");
     flightCount++;
     try {
       const response = await fetcher(path, { method: "GET", credentials: "same-origin", cache: "no-store", redirect: "error", signal, headers: { Accept: "application/json" } });
       if (response.status === 409) throw Object.assign(Error("generation_changed"), { generationChanged: true });
-      need3(response.status === 200, "history_response_status");
-      need3(response.headers.get("content-type")?.toLowerCase().startsWith("application/json"), "history_response_mime");
+      need5(response.status === 200, "history_response_status");
+      need5(response.headers.get("content-type")?.toLowerCase().startsWith("application/json"), "history_response_mime");
       const length = response.headers.get("content-length");
-      if (length !== null) need3(/^[1-9][0-9]*$/.test(length) && Number(length) <= max, "history_response_length");
+      if (length !== null) need5(/^[1-9][0-9]*$/.test(length) && Number(length) <= max, "history_response_length");
       const raw = new Uint8Array(await response.arrayBuffer());
-      need3(raw.length <= max && raw.length > 0, "history_response_bound");
-      const sha2 = await hash2(raw);
-      need3(response.headers.get("etag") === `"item-hour-${sha2}"` && ["current", "retained"].includes(response.headers.get("X-Astra-History-Mode")), "history_response_hash");
+      need5(raw.length <= max && raw.length > 0, "history_response_bound");
+      const sha2 = await hash3(raw);
+      need5(response.headers.get("etag") === `"item-hour-${sha2}"` && ["current", "retained"].includes(response.headers.get("X-Astra-History-Mode")), "history_response_hash");
       return { raw, generation: response.headers.get("X-Astra-History-Generation"), mode: response.headers.get("X-Astra-History-Mode"), retrieved: response.headers.get("X-Astra-History-Source-Retrieved") };
     } finally {
       flightCount--;
     }
   }
   async function transaction(id2, range, signal) {
-    const local = new AbortController(), abort4 = () => local.abort();
-    signal.addEventListener("abort", abort4, { once: true });
+    const local = new AbortController(), abort5 = () => local.abort();
+    signal.addEventListener("abort", abort5, { once: true });
     if (signal.aborted) local.abort();
     try {
       const result = await get(manifestPath(id2), local.signal, LIMITS.manifestBytes), m = await validateManifest2(parseBody(result.raw, LIMITS.manifestBytes), id2);
-      need3(result.generation === m.generation && result.retrieved === (m.latestOriginalRetrievedAt ?? "none"), "history_response_clock_binding");
+      need5(result.generation === m.generation && result.retrieved === (m.latestOriginalRetrievedAt ?? "none"), "history_response_clock_binding");
       const descriptors = m.pages.filter((d) => d.lastEpoch >= range.fromEpoch && d.firstEpoch < range.toEpoch), loaded = new Array(descriptors.length);
       let cursor = 0, total = 0, retained = result.mode === "retained", failure2 = null;
       async function worker() {
         try {
           for (; ; ) {
-            need3(!local.signal.aborted, "history_selection_aborted");
+            need5(!local.signal.aborted, "history_selection_aborted");
             const n = cursor++;
             if (n >= descriptors.length) return;
             const d = descriptors[n], p = await get(`${d.path}?generation=${m.generation}`, local.signal, LIMITS.pageBytes);
-            need3(p.generation === m.generation && p.retrieved === (m.latestOriginalRetrievedAt ?? "none") && p.raw.length === d.bytes && await hash2(p.raw) === d.sha256, "history_page_binding");
+            need5(p.generation === m.generation && p.retrieved === (m.latestOriginalRetrievedAt ?? "none") && p.raw.length === d.bytes && await hash3(p.raw) === d.sha256, "history_page_binding");
             total += p.raw.length;
-            need3(total <= LIMITS.totalBytes);
+            need5(total <= LIMITS.totalBytes);
             loaded[n] = validatePage2(parseBody(p.raw, LIMITS.pageBytes), d, m);
             retained ||= p.mode === "retained";
           }
@@ -2397,7 +2999,7 @@ function createItemHourClient({ origin = globalThis.location?.origin, fetcher = 
       const data = validateSelection(loaded, m, range);
       return { data, retained };
     } finally {
-      signal.removeEventListener("abort", abort4);
+      signal.removeEventListener("abort", abort5);
       local.abort();
     }
   }
@@ -2475,12 +3077,12 @@ function safeZone(value) {
     return "UTC";
   }
 }
-function parts(iso3, zone2) {
-  return Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: safeZone(zone2), month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date(iso3)).map((p) => [p.type, p.value]));
+function parts(iso4, zone2) {
+  return Object.fromEntries(new Intl.DateTimeFormat("en-US", { timeZone: safeZone(zone2), month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23" }).formatToParts(new Date(iso4)).map((p) => [p.type, p.value]));
 }
-function historyClock(iso3, zone2 = "UTC") {
-  if (!Number.isFinite(Date.parse(iso3))) return "Unknown";
-  const p = parts(iso3, zone2);
+function historyClock(iso4, zone2 = "UTC") {
+  if (!Number.isFinite(Date.parse(iso4))) return "Unknown";
+  const p = parts(iso4, zone2);
   return `${p.month} ${p.day} ${p.hour}:${p.minute}:${p.second} ${safeZone(zone2)} (${p.year})`;
 }
 var quote = (v) => '"' + String(v ?? "").replaceAll('"', '""') + '"';
@@ -2501,8 +3103,8 @@ function historyPlotModel(data) {
 }
 function mountItemHistoryPreview(container, { itemId, fetcher = globalThis.fetch, timezone = "UTC", parentActive = () => true, isCurrent = () => true, download = null } = {}) {
   if (!container?.ownerDocument || !Number.isSafeInteger(itemId) || itemId < 1 || itemId > 999999999) throw TypeError("Exact item history context required");
-  const doc2 = container.ownerDocument, win = doc2.defaultView, el = (tag, text, cls) => {
-    const n = doc2.createElement(tag);
+  const doc2 = container.ownerDocument, win = doc2.defaultView, el = (tag2, text, cls) => {
+    const n = doc2.createElement(tag2);
     if (text !== void 0) n.textContent = text;
     if (cls) n.className = cls;
     return n;
@@ -2543,8 +3145,8 @@ function mountItemHistoryPreview(container, { itemId, fetcher = globalThis.fetch
     return own4;
   }
   client2 = makeClient();
-  function svgNode(tag, attributes, text) {
-    const n = doc2.createElementNS(NS, tag);
+  function svgNode(tag2, attributes, text) {
+    const n = doc2.createElementNS(NS, tag2);
     for (const [k, v] of Object.entries(attributes || {})) n.setAttribute(k, String(v));
     if (text !== void 0) n.textContent = text;
     return n;
@@ -2558,7 +3160,7 @@ function mountItemHistoryPreview(container, { itemId, fetcher = globalThis.fetch
       chart2.append(el("p", "No plottable source medians in this retained selection. Missing fields are not zero; any exact values remain in the table and CSV.", "item-hour-context"));
       return chart2;
     }
-    const W = Math.max(320, Math.min(960, Math.round(container.clientWidth || 760))), H2 = 360, L = 85, R = 22, T = 48, B = 105, plotW = W - L - R, plotH = H2 - T - B, center = (L + W - R) / 2;
+    const W = Math.max(320, Math.min(960, Math.round(container.clientWidth || 760))), H2 = 360, L = 85, R = 22, T = 48, B2 = 105, plotW = W - L - R, plotH = H2 - T - B2, center = (L + W - R) / 2;
     const svg = svgNode("svg", { viewBox: `0 0 ${W} ${H2}`, role: "img", tabindex: 0, "aria-label": "Whole-item hourly medians: source-labelled sold and seen asking; no quality-matched history" });
     chart2.append(svg, help, tip);
     svg.append(svgNode("title", {}, "Retained whole-item hourly aggregate medians"), svgNode("text", { x: center, y: 20, "text-anchor": "middle", class: "item-hour-axis-title" }, "Price (mesos / source unit)"));
@@ -2570,9 +3172,9 @@ function mountItemHistoryPreview(container, { itemId, fetcher = globalThis.fetch
     const ticks = first === last ? 1 : W < 480 ? 2 : 4;
     for (let i = 0; i < ticks; i++) {
       const epoch = ticks === 1 ? first : first + Math.round((last - first) * i / (ticks - 1)), at = x(epoch), date = parts(new Date(epoch * 1e3).toISOString(), zone2), anchor = ticks === 1 ? "middle" : i === 0 ? "start" : i === ticks - 1 ? "end" : "middle";
-      svg.append(svgNode("line", { x1: at, x2: at, y1: T, y2: H2 - B, class: "item-hour-grid item-hour-grid-vertical" }), svgNode("line", { x1: at, x2: at, y1: H2 - B, y2: H2 - B + 6, class: "item-hour-tick-line" }), svgNode("text", { x: at, y: H2 - B + 25, "text-anchor": anchor, class: "item-hour-tick" }, `${date.month} ${date.day}`), svgNode("text", { x: at, y: H2 - B + 45, "text-anchor": anchor, class: "item-hour-tick" }, `${date.hour}:${date.minute}`));
+      svg.append(svgNode("line", { x1: at, x2: at, y1: T, y2: H2 - B2, class: "item-hour-grid item-hour-grid-vertical" }), svgNode("line", { x1: at, x2: at, y1: H2 - B2, y2: H2 - B2 + 6, class: "item-hour-tick-line" }), svgNode("text", { x: at, y: H2 - B2 + 25, "text-anchor": anchor, class: "item-hour-tick" }, `${date.month} ${date.day}`), svgNode("text", { x: at, y: H2 - B2 + 45, "text-anchor": anchor, class: "item-hour-tick" }, `${date.hour}:${date.minute}`));
     }
-    svg.append(svgNode("text", { x: center, y: H2 - B + 76, "text-anchor": "middle", class: "item-hour-axis-title" }, "Source hour (" + zone2 + ")"));
+    svg.append(svgNode("text", { x: center, y: H2 - B2 + 76, "text-anchor": "middle", class: "item-hour-axis-title" }, "Source hour (" + zone2 + ")"));
     const targets = [];
     for (const s of p.series) {
       let previous = null;
@@ -2772,8 +3374,8 @@ var refreshEpoch = 0;
 var started = false;
 var pausedRead = null;
 var zone = () => doc.getElementById("display-timezone")?.value || "UTC";
-var make = (tag, text) => {
-  const n = doc.createElement(tag);
+var make = (tag2, text) => {
+  const n = doc.createElement(tag2);
   if (text !== void 0) n.textContent = text;
   return n;
 };
@@ -2782,6 +3384,126 @@ var priceFreeIdentities = doc.body.dataset.searchIdentityProfile === "price_free
 var itemFetcher = priceFreeIdentities ? createSearchSelectedPriceFetcher((...args) => fetch(...args), { expectedEpoch: doc.body.dataset.fastItemEpoch, isEnabled: () => enabled }) : (...args) => fetch(...args);
 var client = createItemReferenceClient({ fetcher: itemFetcher, enabled: available, isEnabled: () => enabled });
 var discovery = priceFreeIdentities ? createPriceFreeIdentityBridge({ fetcher: (...args) => fetch(...args), enabled: available, isEnabled: () => enabled, expectedEpoch: doc.body.dataset.searchIdentityEpoch }) : createSearchIdentityBridge({ fetcher: (...args) => fetch(...args), enabled: available, isEnabled: () => enabled });
+var basicClient = null;
+var basicClientEnabled = false;
+var basicAccessBlocked = false;
+var basicClientEpoch = null;
+var basicProfile = null;
+var basicFlight = null;
+var basicAuthEpoch = 0;
+var basicRenderEpoch = 0;
+var basicTarget = null;
+var basicValue = null;
+var basicState = "unavailable";
+var basicProfiles = createBasicProfileClient({ fetcher: (...args) => fetch(...args), isEnabled: () => available && enabled });
+var basicEvent = () => doc.dispatchEvent(new Event("astrabasicitemcache"));
+function drawBasic() {
+  if (basicTarget) renderBasicReference(basicTarget, basicValue, { status: basicState, timezone: zone(), visible: !doc.hidden, online: navigator.onLine !== false });
+}
+function withdrawBasicAccess() {
+  basicAuthEpoch++;
+  basicRenderEpoch++;
+  basicAccessBlocked = true;
+  basicProfiles.clear();
+  basicFlight = null;
+  basicClient?.setEnabled(false);
+  basicClientEnabled = false;
+  basicProfile = null;
+  basicValue = null;
+  basicState = "access_denied";
+  drawBasic();
+  basicEvent();
+}
+function retainBasic() {
+  if (basicValue) basicValue = { ...basicValue, mode: basicValue.data.state === "absent_in_generation" ? "retained_absent" : "retained", quoteAuthority: false, currentAgainstProvidedPins: false };
+}
+async function loadBasicConfiguration() {
+  if (!available || !enabled) return null;
+  if (basicFlight) return basicFlight;
+  const auth = basicAuthEpoch;
+  const task = (async () => {
+    const profile = await basicProfiles.load();
+    if (!enabled || auth !== basicAuthEpoch) return null;
+    if (!profile) {
+      basicProfile = null;
+      basicClient?.setEnabled(false);
+      basicClientEnabled = false;
+      basicValue = null;
+      basicState = "disabled";
+      drawBasic();
+      basicEvent();
+      return null;
+    }
+    basicProfile = profile;
+    if (basicClient && basicClientEpoch !== profile.publicEpoch) {
+      basicClient.setEnabled(false);
+      basicClientEnabled = false;
+      basicValue = null;
+      if (basicClient.diagnostic().physicalPending) {
+        basicState = "settlement_pending";
+        drawBasic();
+        basicEvent();
+        return null;
+      }
+      basicClient = null;
+    }
+    if (!basicClient) {
+      const expectedEpoch = profile.publicEpoch;
+      basicClientEpoch = expectedEpoch;
+      basicClientEnabled = true;
+      basicClient = createBasicItemReferenceClient({ fetcher: (...args) => fetch(...args), enabled: true, expectedEpoch, isEnabled: () => available && enabled && basicProfile?.publicEpoch === expectedEpoch });
+    }
+    if (!basicClientEnabled) {
+      basicClient.setEnabled(true);
+      basicClientEnabled = true;
+    }
+    basicClient.resume();
+    return basicClient;
+  })().catch((error) => {
+    if (enabled && auth === basicAuthEpoch) {
+      if (error?.code === "access_denied") {
+        withdrawBasicAccess();
+      } else {
+        basicClient?.pause();
+        retainBasic();
+        basicState = "unavailable";
+      }
+      drawBasic();
+      basicEvent();
+    }
+    return null;
+  }).finally(() => {
+    if (basicFlight === task) basicFlight = null;
+  });
+  basicFlight = task;
+  return task;
+}
+async function refreshBasicCurrent(id2) {
+  const own4 = basicRenderEpoch, target = basicTarget;
+  if (!target || !current() || !visibleOnline() || basicAccessBlocked || basicClient?.diagnostic().blocked) return;
+  basicState = "loading";
+  drawBasic();
+  const client2 = await loadBasicConfiguration();
+  if (!client2 || own4 !== basicRenderEpoch || target !== basicTarget || lastId !== id2 || !current() || !visibleOnline()) return;
+  try {
+    const value = await client2.loadItem({ itemId: id2 });
+    if (own4 !== basicRenderEpoch || target !== basicTarget || lastId !== id2 || !current() || !visibleOnline()) return;
+    basicValue = value;
+    basicState = value.mode;
+  } catch (error) {
+    if (own4 !== basicRenderEpoch || target !== basicTarget || !enabled) return;
+    if (error?.code === "access_denied") withdrawBasicAccess();
+    else {
+      basicValue = null;
+      basicState = "unavailable";
+    }
+  } finally {
+    if (own4 === basicRenderEpoch && target === basicTarget) {
+      drawBasic();
+      basicEvent();
+    }
+  }
+}
 var visibleOnline = () => !doc.hidden && navigator.onLine !== false;
 function sameItemRoute() {
   try {
@@ -2815,6 +3537,12 @@ function pauseRefresh() {
   refreshEpoch++;
   refreshFlight = null;
   life?.pause();
+  basicRenderEpoch++;
+  basicClient?.pause();
+  retainBasic();
+  basicState = "paused";
+  drawBasic();
+  basicEvent();
   if (validId(lastId)) pausedRead = { id: lastId, promise: client.cancelItem(lastId) };
 }
 function refreshCurrentItem() {
@@ -2828,6 +3556,7 @@ function refreshCurrentItem() {
   const ownLife = life, id2 = lastId, epoch = refreshEpoch, task = {};
   task.promise = (async () => {
     try {
+      void refreshBasicCurrent(id2);
       if (pausedRead?.id === id2) await pausedRead.promise;
       if (epoch !== refreshEpoch || life !== ownLife || lastId !== id2 || !current() || !visibleOnline()) return;
       if (!started) {
@@ -2854,6 +3583,10 @@ function resolveId(record, slug) {
 }
 function hide() {
   pauseRefresh();
+  if (visibleOnline() && enabled) basicClient?.resume();
+  basicTarget = null;
+  basicValue = null;
+  basicState = "unavailable";
   started = false;
   hourHistory?.destroy();
   hourHistory = null;
@@ -2927,7 +3660,12 @@ function showItem(args) {
   status.className = "api-item-preview-status";
   status.setAttribute("role", "status");
   const body = make("div");
-  host.append(status, body);
+  basicTarget = make("section");
+  basicTarget.className = "api-basic-section";
+  basicValue = null;
+  basicState = "loading";
+  host.append(status, body, basicTarget);
+  drawBasic();
   args.container.append(host);
   life = createItemPanelLifecycle({ container: body, mountPanel: mountItemPricingPanel, loader: async (query) => {
     try {
@@ -2938,6 +3676,7 @@ function showItem(args) {
       doc.dispatchEvent(new Event("astrapiitemcache"));
     }
   }, getTimezone: zone, spriteMap: { ...args.spriteMap, ...Object.fromEntries(rows().filter((r) => r.sprite).map((r) => [r.itemId, r.sprite])) }, onStatus: (value, meta = {}) => {
+    if (value === "access_denied") withdrawBasicAccess();
     identityStatusRefresh = () => {
       const state = client.state(id2), d = client.diagnostic(id2), reason = meta.reason || d.reason, retained = value === "retained" || value === "shown" && state?.mode === "retained";
       status.dataset.status = value;
@@ -3003,17 +3742,29 @@ function mergeSearchRecords(input) {
   }
   return out;
 }
-var api = { available, peekCachedReferences: () => client.peekCachedReferences(), get enabled() {
+var api = { available, peekCachedReferences: () => client.peekCachedReferences(), peekCachedBasicReferences: () => basicAccessBlocked ? { status: "access_denied", references: [] } : enabled && basicClient ? basicClient.peekCachedReferences() : { status: "disabled", references: [] }, get enabled() {
   return enabled;
 }, async setEnabled(value) {
   if (!available) return;
-  const next = value === true;
+  const basicWasEnabled = enabled, next = value === true;
   if (next !== enabled) identityEpoch++;
   if (next && !enabled) {
     client.resetAccess();
     if (priceFreeIdentities) discovery.resetAccess();
   }
   enabled = next;
+  if (!enabled) {
+    basicAuthEpoch++;
+    basicAccessBlocked = false;
+    basicProfiles.clear();
+    basicFlight = null;
+    basicProfile = null;
+    basicClient?.setEnabled(false);
+    basicClientEnabled = false;
+    basicEvent();
+  } else if (!basicWasEnabled && basicClient && basicClientEpoch === basicProfile?.publicEpoch) {
+    basicClient.setEnabled(true);
+  }
   if (button) {
     button.textContent = "Item API details: " + (enabled ? "On" : "Off");
     button.setAttribute("aria-pressed", String(enabled));
@@ -3026,12 +3777,14 @@ var api = { available, peekCachedReferences: () => client.peekCachedReferences()
     if (location.hash.startsWith("#item/")) window.dispatchEvent(new Event("hashchange"));
     return;
   }
+  const basicSetup = loadBasicConfiguration();
   try {
     const loaded = await loadIdentities();
     if (loaded && enabled && location.hash.startsWith("#item/")) window.dispatchEvent(new Event("hashchange"));
   } catch {
     if (note) note.textContent = "API identity collection unavailable; prior-source search remains available.";
   }
+  await basicSetup;
 }, loadIdentities, resolveId, disabledIdentity(slug) {
   const match = /^id-([1-9][0-9]{0,8})$/.exec(slug ?? "");
   return available && !enabled && !!(match && byId(Number(match[1])));
@@ -3067,11 +3820,16 @@ if (available && scope) {
 doc.getElementById("display-timezone")?.addEventListener("change", () => {
   life?.timezoneChanged(zone());
   hourHistory?.updateTimezone(zone());
+  drawBasic();
 });
 window.addEventListener("hashchange", () => {
   if (!location.hash.startsWith("#item/") || host && !sameItemRoute()) hide();
 });
 function resumeRefresh() {
+  if (enabled && visibleOnline()) {
+    basicClient?.resume();
+    basicEvent();
+  }
   if (current() && visibleOnline()) void refreshCurrentItem();
 }
 doc.addEventListener("visibilitychange", () => {

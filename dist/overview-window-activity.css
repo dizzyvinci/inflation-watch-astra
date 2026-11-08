@@ -1,0 +1,6 @@
+.overview-window-activity { min-width: 0; max-width: 100%; }
+.overview-window-activity dd { overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.overview-window-activity .source-status-dot { display: inline-block; width: .5em; height: .5em; margin-right: .4em; border-radius: 50%; background: currentColor; }
+.overview-window-activity [data-status-tone="green"] { color: var(--source-ok, #28794c); }
+.overview-window-activity [data-status-tone="amber"] { color: var(--muted, #6b604e); }
+.overview-window-activity [data-status-tone="red"] { color: var(--danger, #a43d31); }

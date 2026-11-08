@@ -1645,10 +1645,10 @@ var need2 = (v, c) => {
   if (!v) throw Error(c);
 };
 var iso = (t) => new Date(t).toISOString();
-function createApiCalculationClient({ origin, parse, expectedDefinitionHash, fetcher = fetch, now = () => Date.now(), timeoutMs = 8e3, onChange = () => {
+function createApiCalculationClient({ origin, parse: parse2, expectedDefinitionHash, fetcher = fetch, now = () => Date.now(), timeoutMs = 8e3, onChange = () => {
 }, onAccessDenied = () => {
 } }) {
-  need2(allowed.has(origin) && typeof parse === "function" && /^[a-f0-9]{64}$/.test(expectedDefinitionHash), "invalid_own_reader_configuration");
+  need2(allowed.has(origin) && typeof parse2 === "function" && /^[a-f0-9]{64}$/.test(expectedDefinitionHash), "invalid_own_reader_configuration");
   need2(Number.isFinite(timeoutMs) && timeoutMs > 0 && timeoutMs <= 8e3, "invalid_own_reader_deadline");
   const selection = createCalculationSelection();
   let flight = null, etag = null, nextCheck = 0, failures = 0, blocked = false, readerMode = null, evidenceReaderMode = null, reason = null;
@@ -1728,9 +1728,9 @@ function createApiCalculationClient({ origin, parse, expectedDefinitionHash, fet
         raw.set(chunk, at);
         at += chunk.length;
       }
-      const digest = await wait(sha(raw)), nextEtag = '"api-calculations-' + digest + '"';
+      const digest2 = await wait(sha(raw)), nextEtag = '"api-calculations-' + digest2 + '"';
       need2(response.headers.get("ETag") === nextEtag, "body_hash");
-      const snapshot = await wait(parse(raw, { expectedDefinitionHash })), previousEvidenceHash = selection.state().evidenceSnapshot?.snapshotHash;
+      const snapshot = await wait(parse2(raw, { expectedDefinitionHash })), previousEvidenceHash = selection.state().evidenceSnapshot?.snapshotHash;
       const routeMode = context(response, snapshot);
       const accepted = selection.accept(snapshot, { checkedAt: iso(now()), readerMode: routeMode }), evidenceAccepted = selection.state().evidenceSnapshot?.snapshotHash === snapshot.snapshotHash;
       if (evidenceAccepted) etag = nextEtag;
@@ -1765,12 +1765,12 @@ function createApiCalculationClient({ origin, parse, expectedDefinitionHash, fet
 }
 
 // ui-src/api-calculations/runtime.mjs
-function createCalculationRuntime({ origin, available: available2, parse, definitionHash, unpackDaily, itemDefinitions = null, fetcher = fetch, now = () => Date.now(), selection = () => ({ mode: "rolling", windowDays: 7 }), notify = () => {
+function createCalculationRuntime({ origin, available: available2, parse: parse2, definitionHash, unpackDaily, itemDefinitions = null, fetcher = fetch, now = () => Date.now(), selection = () => ({ mode: "rolling", windowDays: 7 }), notify = () => {
 } }) {
   let legacy = null, view = null, cacheKey = null, bindingError = null, notificationKey = null, itemView = null, itemKey = null, itemBindingError = null;
   const captured = [];
   const definitions = available2 === true && itemDefinitions ? structuredClone(itemDefinitions) : null;
-  const client = available2 === true ? createApiCalculationClient({ origin, parse, expectedDefinitionHash: definitionHash, fetcher, now, onChange: (state) => {
+  const client = available2 === true ? createApiCalculationClient({ origin, parse: parse2, expectedDefinitionHash: definitionHash, fetcher, now, onChange: (state) => {
     const key = [state.snapshot?.snapshotHash ?? null, state.status, state.readerMode, state.reason, state.evidenceSnapshot?.snapshotHash ?? null, state.evidenceStatus, state.evidenceReaderMode, state.evidenceReason];
     const changed = !notificationKey || key.some((value, i) => value !== notificationKey[i]);
     if (changed) {
@@ -1877,12 +1877,763 @@ function createCalculationRuntime({ origin, available: available2, parse, defini
   return Object.freeze(api);
 }
 
+// ui-src/overview-activity/contract.mjs
+var PROTOCOL = "overview-window-activity-v1";
+var DEFINITION_SHA = "65bf9403902e24eb6ab24a9d9b3d1f2ec4c49304ec57671869208e45335f8b36";
+var PROFILE_PATH = "/api-overview-window-activity/profile.json";
+var CURRENT_PATH = "/api-overview-window-activity/current.json";
+var REQUEST_HEADER = "X-Astra-Request-Overview-Activity-Protocol";
+var HEADERS = Object.freeze({ hash: "X-Astra-Overview-Activity-Body-Sha256", epoch: "X-Astra-Overview-Activity-Epoch", state: "X-Astra-Overview-Activity-State", capture: "X-Astra-Overview-Activity-Captured-At", generated: "X-Astra-Overview-Activity-Generated-At" });
+var SEMANTICS = Object.freeze({ grain: "source_reported_overview_window_not_daily", coverageUniverse: "received_overview_rows", counterSums: Object.freeze({ sourceRecordedSalesCounterSumLexeme: "source_reported_counts_not_unique_or_verified_trades", sourceReportedUnitCounterSumLexeme: "reported_unit_counters_not_standardized_market_volume", sourceReportedMesosSumLexeme: "source_labelled_mesos_not_verified_trade_value", medianCountProxySumLexeme: "median_unit_price_times_recorded_sales_count_not_actual_traded_mesos" }), exactObservationBoundsKnown: false, sinceLaunch: false, dailyLedgerIncluded: false, itemRowsPublished: false, uniqueParticipantsKnown: false, marketInventoryKnown: false, upstreamLatestInspected: false });
+var need3 = (v) => {
+  if (!v) throw Error("overview_activity_unavailable");
+};
+var hash3 = (v) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+var publicEpoch = (v) => typeof v === "string" && /^[a-z][a-z0-9-]{0,63}$/.test(v);
+var integer = (v, max) => Number.isSafeInteger(v) && v >= 0 && v <= max;
+var shape2 = (v, keys) => need3(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length === keys.length && keys.every((k) => Object.hasOwn(v, k)));
+function clock3(v) {
+  need3(typeof v === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(v) && v >= "1970-01-01T00:00:00.000Z" && Number.isFinite(Date.parse(v)) && new Date(v).toISOString() === v);
+  return v;
+}
+function freeze2(v) {
+  if (v && typeof v === "object") {
+    for (const x of Object.values(v)) freeze2(x);
+    Object.freeze(v);
+  }
+  return v;
+}
+var own = (v) => structuredClone(v);
+var ta = Object.getPrototypeOf(Uint8Array.prototype);
+var lengthOf = Object.getOwnPropertyDescriptor(ta, "byteLength").get;
+var bufferOf = Object.getOwnPropertyDescriptor(ta, "buffer").get;
+var offsetOf = Object.getOwnPropertyDescriptor(ta, "byteOffset").get;
+function copyBytes(v, limit) {
+  need3(v instanceof Uint8Array);
+  const n2 = lengthOf.call(v);
+  need3(n2 > 0 && n2 <= limit);
+  const view = new Uint8Array(bufferOf.call(v), offsetOf.call(v), n2), out = new Uint8Array(n2);
+  out.set(view);
+  return out;
+}
+function parse(raw, limit) {
+  const s = new TextDecoder("utf-8", { fatal: true }).decode(copyBytes(raw, limit));
+  let i = 0, tokens = 0;
+  const ws = () => {
+    while (/[ \n\r\t]/.test(s[i] ?? "x")) i++;
+  };
+  function value(depth) {
+    need3(depth <= 12 && ++tokens <= 512);
+    ws();
+    const c = s[i];
+    if (c === '"') {
+      const a = i++;
+      while (i < s.length) {
+        if (s[i] === "\\") {
+          i += 2;
+          continue;
+        }
+        if (s[i++] === '"') return JSON.parse(s.slice(a, i));
+      }
+      need3(false);
+    }
+    if (c === "{") {
+      i++;
+      ws();
+      const o = /* @__PURE__ */ Object.create(null);
+      if (s[i] === "}") {
+        i++;
+        return o;
+      }
+      for (; ; ) {
+        ws();
+        need3(s[i] === '"');
+        const k = value(depth + 1);
+        need3(!Object.hasOwn(o, k));
+        ws();
+        need3(s[i++] === ":");
+        o[k] = value(depth + 1);
+        ws();
+        if (s[i] === "}") {
+          i++;
+          return o;
+        }
+        need3(s[i++] === ",");
+      }
+    }
+    for (const [word, v3] of [["true", true], ["false", false], ["null", null]]) if (s.startsWith(word, i)) {
+      i += word.length;
+      return v3;
+    }
+    const n2 = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/.exec(s.slice(i));
+    need3(n2 && n2[0].length <= 32);
+    i += n2[0].length;
+    const v2 = Number(n2[0]);
+    need3(Number.isFinite(v2));
+    return v2;
+  }
+  const v = value(0);
+  ws();
+  need3(i === s.length);
+  return v;
+}
+function profile(raw) {
+  const v = parse(raw, 512);
+  shape2(v, ["schemaVersion", "kind", "protocol", "definitionHash", "publicEpoch", "available"]);
+  need3(v.schemaVersion === 1 && v.kind === "overview_activity_public_profile" && v.protocol === PROTOCOL && v.definitionHash === DEFINITION_SHA && publicEpoch(v.publicEpoch) && v.available === true);
+  return freeze2(v);
+}
+var amount = (v, int = false) => need3(typeof v === "string" && v.length <= 192 && (int ? /^(?:0|[1-9][0-9]*)$/ : /^(?:0|[1-9][0-9]*)(?:\.[0-9]*[1-9])?$/).test(v));
+function frame(raw, status2, epoch2) {
+  need3([200, 409].includes(status2) && publicEpoch(epoch2));
+  const v = parse(raw, 8192);
+  shape2(v, ["schemaVersion", "kind", "protocol", "definitionHash", "publicEpoch", "state", "currentAgainstPublishedPointer", "upstreamLatestInspected", "reference"]);
+  need3(v.schemaVersion === 1 && v.kind === "overview_window_activity_response" && v.protocol === PROTOCOL && v.definitionHash === DEFINITION_SHA && v.publicEpoch === epoch2 && v.upstreamLatestInspected === false && v.state === (status2 === 200 ? "current" : "retained") && v.currentAgainstPublishedPointer === (status2 === 200));
+  const r = v.reference;
+  shape2(r, ["schemaVersion", "kind", "profile", "definitionHash", "generation", "sourceWitnessSha256", "derivedBodySha256", "source", "window", "coverage", "counterSums", "semantics"]);
+  need3(r.schemaVersion === 1 && r.kind === "overview_window_activity" && r.profile === "overview_window_aggregate_v1" && r.definitionHash === DEFINITION_SHA && hash3(r.generation) && hash3(r.sourceWitnessSha256) && hash3(r.derivedBodySha256));
+  const s = r.source;
+  shape2(s, ["operation", "sourceUrl", "rawBodySha256", "capturedAt", "sourceObservedAt", "captureTimeKind", "sourceGeneratedAt"]);
+  need3(s.operation === "overview" && s.sourceUrl === "https://maplestory.market/api/market/overview" && hash3(s.rawBodySha256) && s.sourceObservedAt === null && s.captureTimeKind === "http_response_completed");
+  clock3(s.capturedAt);
+  clock3(s.sourceGeneratedAt);
+  need3(s.sourceGeneratedAt <= s.capturedAt);
+  const w = r.window;
+  shape2(w, ["windowHours", "scannedHours", "previousScannedHours", "comparable", "exactStartAt", "exactEndAt"]);
+  need3(["windowHours", "scannedHours", "previousScannedHours"].every((k) => integer(w[k], 1e5)) && typeof w.comparable === "boolean" && w.exactStartAt === null && w.exactEndAt === null);
+  const c = r.coverage;
+  shape2(c, ["receivedItemRows", "countEligibleItemRows", "reportedUnitEligibleItemRows", "sourceReportedMesosEligibleItemRows", "medianCountProxyEligibleItemRows", "medianCountProxyMissingPriceRows"]);
+  need3(Object.values(c).every((n2) => integer(n2, 2e4)) && ["countEligibleItemRows", "reportedUnitEligibleItemRows", "sourceReportedMesosEligibleItemRows"].every((k) => c[k] === c.receivedItemRows) && c.medianCountProxyEligibleItemRows + c.medianCountProxyMissingPriceRows === c.receivedItemRows);
+  const a = r.counterSums;
+  shape2(a, Object.keys(SEMANTICS.counterSums));
+  amount(a.sourceRecordedSalesCounterSumLexeme, true);
+  amount(a.sourceReportedUnitCounterSumLexeme, true);
+  amount(a.sourceReportedMesosSumLexeme);
+  need3(a.medianCountProxySumLexeme === null === (c.medianCountProxyEligibleItemRows === 0));
+  if (a.medianCountProxySumLexeme !== null) amount(a.medianCountProxySumLexeme);
+  shape2(r.semantics, Object.keys(SEMANTICS));
+  for (const k of Object.keys(SEMANTICS)) {
+    if (k === "counterSums") {
+      shape2(r.semantics[k], Object.keys(SEMANTICS[k]));
+      for (const key of Object.keys(SEMANTICS[k])) need3(r.semantics[k][key] === SEMANTICS[k][key]);
+    } else need3(r.semantics[k] === SEMANTICS[k]);
+  }
+  return freeze2(v);
+}
+async function digest(raw, cryptoImpl = globalThis.crypto) {
+  return [...new Uint8Array(await cryptoImpl.subtle.digest("SHA-256", raw))].map((x) => x.toString(16).padStart(2, "0")).join("");
+}
+function headers(response, expected) {
+  const h = response.headers, record = { hash: h.get(HEADERS.hash), epoch: h.get(HEADERS.epoch), state: h.get(HEADERS.state), capture: h.get(HEADERS.capture), generated: h.get(HEADERS.generated), etag: h.get("ETag") };
+  need3(record.hash === expected.hash && record.epoch === expected.publicEpoch && record.state === expected.state && record.capture === expected.capture && record.generated === expected.generated && record.etag === '"overview-activity-' + expected.hash + '"');
+  need3(h.get("Cache-Control") === "private, no-store, no-transform" && h.get("CDN-Cache-Control") === "no-store" && h.get("Cloudflare-CDN-Cache-Control") === "no-store");
+  return freeze2(record);
+}
+
+// ui-src/overview-activity/client.mjs
+var codes = /* @__PURE__ */ new Set(["configuration", "clock", "access_disabled", "cancelled", "body", "access_denied", "off", "unavailable", "disabled", "busy", "profile", "epoch_changed", "conditional", "status", "physical_unknown", "timed_out"]);
+var fail2 = (code) => Object.assign(Error("overview_activity_unavailable"), { code: codes.has(code) ? code : "unavailable" });
+var errorCode = (error) => {
+  try {
+    return codes.has(error?.code) ? error.code : "unavailable";
+  } catch {
+    return "unavailable";
+  }
+};
+function createOverviewActivityClient({ fetcher, isEnabled = () => false, origin = globalThis.location?.origin, timeoutMs = 1e4, monotonic = () => performance.now(), wall = () => Date.now(), cryptoImpl = globalThis.crypto } = {}) {
+  if (typeof fetcher !== "function" || !["https://inflation.gg", "https://www.inflation.gg", "http://127.0.0.1:8765", "http://localhost:8765"].includes(origin) || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 12e3) throw fail2("configuration");
+  let enabled = false, paused = false, pauseReason = "paused", epoch2 = 0, flight = null, last = null, profileEpoch = null, status2 = "off", quarantined = false;
+  const allowed2 = () => {
+    try {
+      return isEnabled() === true;
+    } catch {
+      return false;
+    }
+  };
+  const mono = () => {
+    const n2 = monotonic();
+    if (!Number.isFinite(n2) || n2 < 0) throw fail2("clock");
+    return n2;
+  };
+  const wallTime = () => {
+    const n2 = wall();
+    if (!Number.isFinite(n2) || n2 < 0) throw fail2("clock");
+    return n2;
+  };
+  const live = (c) => {
+    const yes = allowed2(), at = mono();
+    if (!yes || !enabled || paused || c.epoch !== epoch2 || c.cancelled || at >= c.deadline) throw fail2(!yes ? "access_disabled" : "cancelled");
+  };
+  function cancel(c) {
+    c.cancelled = true;
+    c.controller.abort();
+    if (c.reader && !c.cancel) c.cancel = Promise.resolve().then(() => c.reader.cancel()).catch(() => {
+      quarantined = true;
+    });
+  }
+  function revoke(next, drop = true) {
+    epoch2++;
+    status2 = next;
+    if (drop) last = null;
+    if (flight) cancel(flight);
+  }
+  function snapshot() {
+    const before = epoch2, selected = last, prepared = selected ? own(selected.record.reference) : null, displayNow = wallTime(), yes = allowed2(), at = mono();
+    const same = selected === last, active = yes && enabled && !paused && before === epoch2 && same, fresh = selected && at - selected.checkedMono < 3e4 && at >= selected.checkedMono, shown = status2 === "current" && !fresh ? "retained" : status2;
+    return { status: !enabled || !yes ? "off" : paused ? "paused" : shown, pauseReason: paused ? pauseReason : null, reference: enabled && yes && same ? prepared : null, currentAgainstPublishedPointer: active && shown === "current" && selected?.record.currentAgainstPublishedPointer === true, upstreamLatestInspected: false, displayNow, lastVerifiedAt: same ? selected?.verifiedAt ?? null : null, physicalPending: flight !== null, quarantined };
+  }
+  async function body(r, limit, c) {
+    const declared = r.headers.get("Content-Length");
+    if (declared !== null && (!/^[1-9][0-9]*$/.test(declared) || Number(declared) > limit)) throw fail2("body");
+    if (!/^application\/json(?:;|$)/i.test(r.headers.get("Content-Type") ?? "") || !r.body) throw fail2("body");
+    live(c);
+    const storage = new Uint8Array(limit);
+    let n2 = 0;
+    c.reader = r.body.getReader();
+    for (; ; ) {
+      const chunk = await c.reader.read();
+      live(c);
+      if (chunk.done) break;
+      const owned = copyBytes(chunk.value, limit - n2);
+      storage.set(owned, n2);
+      n2 += owned.byteLength;
+    }
+    c.reader.releaseLock();
+    c.reader = null;
+    if (n2 === 0 || declared !== null && n2 !== Number(declared)) throw fail2("body");
+    return storage.slice(0, n2);
+  }
+  async function request(path, limit, c, conditions = {}) {
+    live(c);
+    const r = await fetcher(path, { method: "GET", credentials: "same-origin", cache: "no-store", redirect: "error", headers: { [REQUEST_HEADER]: PROTOCOL, ...conditions }, signal: c.controller.signal });
+    c.response = r;
+    live(c);
+    if (r.status === 401 || r.status === 403) {
+      revoke("access_denied");
+      throw fail2("access_denied");
+    }
+    if (r.status === 404) {
+      revoke("unavailable");
+      throw fail2("off");
+    }
+    if (r.status === 503) throw fail2("unavailable");
+    return r;
+  }
+  async function closeBody(c) {
+    if (c.reader) {
+      if (!c.cancel) c.cancel = Promise.resolve().then(() => c.reader.cancel()).catch(() => {
+        quarantined = true;
+      });
+      await c.cancel;
+      try {
+        c.reader.releaseLock();
+      } catch {
+      }
+      c.reader = null;
+    } else if (c.response?.body && !c.response.body.locked) {
+      try {
+        await c.response.body.cancel();
+      } catch {
+        quarantined = true;
+      }
+    }
+    c.response = null;
+  }
+  function delivered(c, candidate) {
+    const prepared = { status: candidate.record.state, reference: own(candidate.record.reference), currentAgainstPublishedPointer: candidate.record.currentAgainstPublishedPointer, upstreamLatestInspected: false, lastVerifiedAt: candidate.verifiedAt, physicalPending: flight !== null, quarantined };
+    live(c);
+    if (last !== candidate || quarantined) throw fail2("cancelled");
+    return prepared;
+  }
+  return Object.freeze({
+    setEnabled(value) {
+      if (value !== true) {
+        enabled = false;
+        revoke("off");
+      } else {
+        enabled = true;
+        status2 = last ? "retained" : "idle";
+      }
+    },
+    setPaused(value, reason = "paused") {
+      if (!["paused", "hidden", "offline"].includes(reason)) throw fail2("configuration");
+      if (value === true) {
+        paused = true;
+        pauseReason = reason;
+        revoke("paused", false);
+      } else {
+        paused = false;
+        status2 = last ? "retained" : enabled ? "idle" : "off";
+      }
+    },
+    clear() {
+      revoke(enabled ? "idle" : "off");
+    },
+    withdraw() {
+      revoke("access_denied");
+    },
+    state: snapshot,
+    refresh() {
+      if (!enabled || paused || !allowed2()) return Promise.reject(fail2("disabled"));
+      if (flight || quarantined) return Promise.reject(fail2("busy"));
+      const before = last, c = { epoch: epoch2, deadline: mono() + timeoutMs, controller: new AbortController(), cancelled: false, reader: null, response: null, cancel: null }, startEpoch = epoch2;
+      flight = c;
+      status2 = "loading";
+      let rejectTimeout, timer2;
+      const stopped = new Promise((_, reject) => rejectTimeout = reject);
+      const task = (async () => {
+        try {
+          const pr = await request(PROFILE_PATH, 512, c);
+          if (pr.status !== 200) throw fail2("profile");
+          const p = profile(await body(pr, 512, c));
+          await closeBody(c);
+          live(c);
+          if (profileEpoch !== null && profileEpoch !== p.publicEpoch) {
+            revoke("unavailable");
+            throw fail2("epoch_changed");
+          }
+          profileEpoch = p.publicEpoch;
+          const prior = last?.record.state === "current" && last.record.publicEpoch === p.publicEpoch ? last : null;
+          const r = await request(CURRENT_PATH, 8192, c, prior ? { "If-None-Match": prior.etag } : {});
+          let candidate;
+          if (r.status === 304) {
+            if (!prior) throw fail2("conditional");
+            headers(r, { hash: prior.responseHash, publicEpoch: p.publicEpoch, state: "current", capture: prior.record.reference.source.capturedAt, generated: prior.record.reference.source.sourceGeneratedAt });
+            live(c);
+            candidate = prior;
+          } else {
+            if (![200, 409].includes(r.status)) throw fail2("status");
+            const bytes = await body(r, 8192, c), record = frame(bytes, r.status, p.publicEpoch), responseHash = await digest(bytes, cryptoImpl);
+            live(c);
+            const checked = headers(r, { hash: responseHash, publicEpoch: p.publicEpoch, state: record.state, capture: record.reference.source.capturedAt, generated: record.reference.source.sourceGeneratedAt });
+            live(c);
+            candidate = { record, responseHash, etag: checked.etag };
+          }
+          await closeBody(c);
+          candidate = { ...candidate, checkedMono: mono(), verifiedAt: wallTime() };
+          live(c);
+          if (quarantined) throw fail2("physical_unknown");
+          last = candidate;
+          status2 = candidate.record.state;
+          return candidate;
+        } catch (error) {
+          if (last !== null && last !== before && epoch2 === startEpoch) last = before;
+          if (epoch2 === startEpoch) status2 = before ? "retained" : "unavailable";
+          throw fail2(errorCode(error));
+        } finally {
+          await closeBody(c);
+          clearTimeout(timer2);
+          if (!quarantined && flight === c) flight = null;
+        }
+      })();
+      timer2 = setTimeout(() => {
+        cancel(c);
+        if (epoch2 === startEpoch) {
+          last = before;
+          status2 = before ? "retained" : "unavailable";
+        }
+        rejectTimeout(fail2("timed_out"));
+      }, timeoutMs);
+      task.catch(() => {
+      });
+      return Promise.race([task, stopped]).then((candidate) => delivered(c, candidate)).catch((error) => {
+        if (epoch2 === startEpoch) {
+          last = before;
+          status2 = before ? "retained" : "unavailable";
+        }
+        throw fail2(errorCode(error));
+      });
+    },
+    dispose() {
+      enabled = false;
+      revoke("off");
+    }
+  });
+}
+
+// ui-src/item-api/reference-status.mjs
+var known = /* @__PURE__ */ new Set(["current", "ready", "shown", "validated", "accepted_cache", "validated_cache"]);
+function describeReferenceStatus({ capturedAt = null, status: status2 = "idle", hasData = false, available: available2 = true, retained = false, partial = false, visible: visible2 = true, online = true, bandMinutes = 20, now = Date.now() } = {}) {
+  const stamp = typeof capturedAt === "string" && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.test(capturedAt) ? Date.parse(capturedAt) : NaN;
+  const age = Number.isFinite(stamp) && Number.isFinite(now) ? now - stamp : null;
+  let phase, tone = "amber", label;
+  if (status2 === "site_access" || status2 === "access_denied") {
+    phase = "access_blocked";
+    tone = "red";
+    label = "Site access unavailable";
+  } else if (status2 === "off" || status2 === "disabled" || status2 === "hidden") {
+    phase = "off";
+    label = "Reference display inactive";
+  } else if (!visible2 || !online || status2 === "paused") {
+    phase = "paused";
+    label = hasData ? "Checks paused; original retrieval retained" : "Checks paused; no validated reference yet";
+  } else if (status2 === "loading") {
+    phase = "loading";
+    label = hasData ? "Checking cache; displayed reference keeps its original retrieval" : "Awaiting a validated cache response";
+  } else if (!hasData) {
+    phase = status2 === "not_published" || status2 === "not_found" ? "not_published" : ["unavailable", "failure", "failed", "error"].includes(status2) ? "unavailable" : "unverified";
+    tone = phase === "unavailable" ? "red" : "amber";
+    label = phase === "not_published" ? "Reference not published here" : phase === "unavailable" ? "No validated reference available" : "Reference not yet verified";
+  } else if (retained || status2 === "retained" || ["unavailable", "failure", "failed", "error"].includes(status2)) {
+    phase = "retained";
+    label = "Retained reference; original retrieval unchanged";
+  } else if (age === null) {
+    phase = "clock_unknown";
+    label = "Retrieval clock unavailable; age unknown";
+  } else if (age < 0) {
+    phase = "clock_uncertain";
+    label = "Capture clock ahead; retrieval age uncertain";
+  } else if (!available2) {
+    phase = "unavailable";
+    label = "Selected reference unavailable; missing values are not zero";
+  } else if (partial && age <= bandMinutes * 6e4) {
+    phase = "partial";
+    label = "Partial item evidence; original retrieval retained";
+  } else if (!known.has(status2)) {
+    phase = "unverified";
+    label = "Reference state not yet verified";
+  } else if (!Number.isFinite(bandMinutes) || bandMinutes <= 0) {
+    phase = "clock_unknown";
+    label = "Retrieval display band unavailable";
+  } else if (age <= bandMinutes * 6e4) {
+    phase = "recent";
+    tone = "green";
+    label = `Retrieved within ${bandMinutes}-minute display band; not verified fresh trades`;
+  } else {
+    phase = "aged";
+    label = `Retrieval older than ${bandMinutes}-minute display band${partial ? "; partial item evidence remains incomplete" : ""}`;
+  }
+  return Object.freeze({ tone, phase, label, capturedAt: Number.isFinite(stamp) ? capturedAt : null, ageMs: age, bandMinutes });
+}
+function decorateReferenceStatus(node, state, text = node.textContent) {
+  const icon = node.ownerDocument.createElement("i");
+  icon.className = "source-status-dot status-" + state.tone;
+  icon.setAttribute("aria-hidden", "true");
+  const copy = node.ownerDocument.createElement("span");
+  copy.textContent = text;
+  node.replaceChildren(icon, copy);
+  node.dataset.statusTone = state.tone;
+  node.dataset.retrievalState = state.phase;
+  node.title = state.label + "; retrieval is not individual sale or scan time.";
+  if (state.capturedAt) node.dataset.rawCapturedAt = state.capturedAt;
+  else delete node.dataset.rawCapturedAt;
+}
+
+// ui-src/overview-activity/view.mjs
+function displayClock(iso2) {
+  return typeof iso2 === "string" ? `(${iso2.slice(5, 7)}-${iso2.slice(8, 10)}-${iso2.slice(0, 4)} ${iso2.slice(11, 19)} UTC)` : "Unknown";
+}
+function exactAmount(lexeme) {
+  if (lexeme === null) return "Unknown";
+  const [a, b] = lexeme.split(".");
+  return a.replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (b === void 0 ? "" : "." + b);
+}
+function overviewActivityView(state, { now = Date.now() } = {}) {
+  const r = state.reference, s = r?.source, hasData = !!r;
+  const mode = state.status === "current" && state.currentAgainstPublishedPointer !== true ? "retained" : state.status;
+  let indicator = describeReferenceStatus({ status: mode, capturedAt: s?.capturedAt, hasData, retained: mode === "retained", online: state.pauseReason !== "offline", visible: state.pauseReason !== "hidden", now });
+  if (state.pauseReason === "offline") indicator = { ...indicator, label: "Offline; checks paused and original evidence retained." };
+  if (indicator.tone === "green" && s && now - Date.parse(s.sourceGeneratedAt) > 20 * 6e4) indicator = { ...indicator, tone: "amber", phase: "publisher_aged", label: "Capture is recent; publisher clock remains older than the 20-minute display band." };
+  const counts = r ? [
+    ["Recorded-sales counters", exactAmount(r.counterSums.sourceRecordedSalesCounterSumLexeme), "Source counters; not unique or independently verified trades."],
+    ["Reported-unit counters", exactAmount(r.counterSums.sourceReportedUnitCounterSumLexeme), "Reported counters; not standardized market volume."],
+    ["Source-labelled mesos", exactAmount(r.counterSums.sourceReportedMesosSumLexeme), "Not independently verified completed trade value."],
+    ["Median \xD7 count proxy", exactAmount(r.counterSums.medianCountProxySumLexeme), "Median unit price \xD7 recorded sales count; not actual traded mesos."]
+  ] : [];
+  return Object.freeze({
+    title: "Reported overview window activity",
+    status: indicator,
+    counts,
+    sourceCapture: s ? displayClock(s.capturedAt) : "Unknown",
+    publisherTime: s ? displayClock(s.sourceGeneratedAt) : "Unknown",
+    rawCapture: s?.capturedAt ?? null,
+    window: r ? `${r.window.windowHours}h reported window; scanned ${r.window.scannedHours}h (previous ${r.window.previousScannedHours}h); comparable: ${r.window.comparable ? "yes" : "no"}. Exact start/end unknown.` : "No validated window available.",
+    coverage: r ? `${r.coverage.receivedItemRows} received source rows; eligible counters: ${r.coverage.countEligibleItemRows} sales, ${r.coverage.reportedUnitEligibleItemRows} units, ${r.coverage.sourceReportedMesosEligibleItemRows} source mesos; ${r.coverage.medianCountProxyEligibleItemRows} proxy-eligible, ${r.coverage.medianCountProxyMissingPriceRows} missing median. Received rows are not whole-market coverage.` : "Coverage unknown.",
+    publication: state.currentAgainstPublishedPointer ? "Matches the published cache pointer; upstream latest was not inspected." : hasData ? "Retained evidence; it is not current against the published pointer." : "No current published evidence admitted.",
+    disclaimer: "Not since-launch totals or a daily ledger. Stock, turnover, unique participants and optimal trade window are unknown."
+  });
+}
+function createOverviewActivityPanel({ document: document2, client } = {}) {
+  if (!document2?.createElement || !client?.refresh || !client?.state) throw Error("overview_activity_view_unavailable");
+  const root = document2.createElement("section");
+  root.className = "overview-window-activity";
+  root.setAttribute("aria-label", "Optional reported overview window activity");
+  const title = document2.createElement("h3"), status2 = document2.createElement("p"), window2 = document2.createElement("p"), coverage = document2.createElement("p"), clocks = document2.createElement("p"), publication = document2.createElement("p"), list = document2.createElement("dl"), note = document2.createElement("p"), button = document2.createElement("button");
+  button.type = "button";
+  button.textContent = "Refresh cached window activity";
+  root.append(title, status2, window2, coverage, clocks, publication, list, note, button);
+  let disposed = false;
+  function render({ now = Date.now() } = {}) {
+    if (disposed) return;
+    const state = client.state(), v = overviewActivityView(state, { now });
+    root.hidden = state.status === "off";
+    title.textContent = v.title;
+    decorateReferenceStatus(status2, v.status, v.status.label);
+    window2.textContent = v.window;
+    coverage.textContent = v.coverage;
+    clocks.textContent = `Publisher time ${v.publisherTime}; capture ${v.sourceCapture}.`;
+    if (v.rawCapture) clocks.dataset.rawCapturedAt = v.rawCapture;
+    else delete clocks.dataset.rawCapturedAt;
+    publication.textContent = v.publication;
+    note.textContent = v.disclaimer;
+    list.replaceChildren();
+    for (const [label, value, explanation] of v.counts) {
+      const term = document2.createElement("dt"), detail = document2.createElement("dd");
+      term.textContent = label;
+      detail.textContent = value;
+      detail.title = explanation;
+      list.append(term, detail);
+    }
+    button.disabled = state.physicalPending || ["off", "paused", "access_denied", "loading"].includes(state.status);
+  }
+  async function refresh() {
+    if (disposed) return;
+    try {
+      const promise = client.refresh();
+      render();
+      await promise;
+    } catch {
+    }
+    if (!disposed) render();
+  }
+  button.addEventListener("click", refresh);
+  render();
+  return Object.freeze({ element: root, render, refresh, setEnabled(value) {
+    client.setEnabled(value);
+    render();
+  }, setPaused(value, reason = "paused") {
+    client.setPaused(value, reason);
+    render();
+  }, withdraw() {
+    client.withdraw();
+    render();
+  }, clear() {
+    client.clear();
+    render();
+  }, dispose() {
+    disposed = true;
+    client.setPaused?.(true, "hidden");
+    button.removeEventListener("click", refresh);
+    root.replaceChildren();
+  } });
+}
+
+// ui-src/overview-activity/integration.mjs
+var origins = /* @__PURE__ */ new Set(["https://inflation.gg", "https://www.inflation.gg", "http://127.0.0.1:8765", "http://localhost:8765"]);
+var epoch = (v) => typeof v === "string" && /^[a-z][a-z0-9-]{0,63}$/.test(v);
+function createOverviewActivityIntegration({ document: doc2, window: win, parentAvailable = false, parentState, fetcher } = {}) {
+  const origin = win.location.origin, local = origin.startsWith("http:"), marker = () => local ? [doc2.body.dataset.overviewActivityProfile, doc2.body.dataset.overviewActivityEnabled, doc2.body.dataset.overviewActivityEpoch].join("|") : "host-profile-on-demand";
+  const initial = marker(), markerReady = !local || doc2.body.dataset.overviewActivityProfile === "overview_window_aggregate_v1" && doc2.body.dataset.overviewActivityEnabled === "true" && epoch(doc2.body.dataset.overviewActivityEpoch);
+  const available2 = parentAvailable === true && origins.has(origin) && markerReady;
+  let intent = false, blocked = false, contextChanged = false, disposed = false, working = false, queued = null, lastKey = null, receiptKey = "", pausedState = false, pausedReason = "paused", workspaceKey = null;
+  const state = () => {
+    try {
+      return parentState();
+    } catch {
+      return { blocked: true, reason: "parent_unavailable" };
+    }
+  };
+  const workspaceSnapshot = () => {
+    try {
+      const authority = win.AstraPrivateWorkspace;
+      if (!authority) return { allowed: true, key: "outer-host" };
+      const p = authority.current();
+      return { allowed: p?.verified === true && p.mode === "private_workspace" && Number.isFinite(p.expiresAt) && p.expiresAt > win.Date.now(), key: p?.mode + "|" + p?.expiresAt };
+    } catch {
+      return { allowed: false, key: null };
+    }
+  };
+  const workspaceAllows = () => {
+    const p = workspaceSnapshot();
+    return p.allowed && (workspaceKey === null || p.key === workspaceKey);
+  };
+  const parentAllows = () => {
+    const p = state();
+    return available2 && !disposed && !contextChanged && marker() === initial && p.blocked !== true && p.reason !== "access_denied" && workspaceAllows();
+  };
+  const visible2 = () => !doc2.hidden && win.navigator.onLine !== false && win.location.hash === "#highlights";
+  const client = available2 ? createOverviewActivityClient({ origin, fetcher, isEnabled: () => intent && !blocked && parentAllows() }) : null;
+  let panel = null, root = null, toggle = null, note = null;
+  function mount() {
+    if (!available2 || disposed || root) return;
+    const host = doc2.getElementById("view-highlights"), before = doc2.getElementById("highlights-fact-grid");
+    if (!host || !before || !host.contains(before)) return;
+    root = doc2.createElement("section");
+    root.className = "overview-window-activity-integration";
+    root.dataset.overviewActivity = "optional";
+    toggle = doc2.createElement("button");
+    toggle.type = "button";
+    toggle.dataset.overviewActivityToggle = "";
+    toggle.setAttribute("aria-controls", "overview-window-activity-data");
+    note = doc2.createElement("p");
+    note.className = "small muted";
+    note.textContent = "Optional own-site window summary. It does not replace retained since-launch totals, daily histories or item evidence.";
+    panel = createOverviewActivityPanel({ document: doc2, client: Object.freeze({ ...client, state: snapshot, refresh: () => refreshOwned(true) }) });
+    panel.element.id = "overview-window-activity-data";
+    root.append(toggle, note, panel.element);
+    host.insertBefore(root, before);
+    toggle.addEventListener("click", () => setEnabled(!intent));
+  }
+  function render() {
+    mount();
+    if (!root) return;
+    toggle.textContent = "Overview window activity: " + (intent ? "On" : "Off");
+    toggle.setAttribute("aria-pressed", String(intent));
+    toggle.disabled = !parentAllows() && !intent;
+    panel.render();
+    if (contextChanged) note.textContent = "Overview context changed. Reload an authenticated page before enabling this data again.";
+    else if (blocked) note.textContent = "Own-site access was withdrawn. Data is cleared; re-enable only after access is restored.";
+  }
+  function snapshot() {
+    const value = client?.state() ?? { status: "off", reference: null, currentAgainstPublishedPointer: false, physicalPending: false };
+    return blocked && intent ? { ...value, status: "access_denied" } : value;
+  }
+  function withdraw() {
+    if (!client) return;
+    blocked = true;
+    queued = null;
+    lastKey = null;
+    client.withdraw();
+    render();
+  }
+  function checkParent() {
+    if (!client || disposed) return false;
+    if (marker() !== initial) {
+      contextChanged = true;
+      withdraw();
+      return false;
+    }
+    const p = state();
+    if (p.blocked === true || p.reason === "access_denied") {
+      withdraw();
+      return false;
+    }
+    if (!workspaceAllows()) {
+      if (intent) withdraw();
+      return false;
+    }
+    return parentAllows();
+  }
+  function key() {
+    const p = state(), v = p.evidenceSnapshot ?? p.snapshot;
+    return JSON.stringify([p.checkedAt ?? null, v?.snapshotHash ?? null, v?.sources?.overview?.capturedAt ?? null, receiptKey]);
+  }
+  async function refreshOwned(force = false) {
+    if (!client || !intent || blocked || !checkParent() || !visible2()) return;
+    const wanted = key();
+    if (!force && wanted === lastKey) return;
+    if (working || client.state().physicalPending || client.state().quarantined) {
+      queued = wanted;
+      return;
+    }
+    working = true;
+    lastKey = wanted;
+    queued = null;
+    try {
+      const task = client.refresh();
+      render();
+      await task;
+    } catch {
+      if (client.state().status === "access_denied") withdraw();
+    } finally {
+      working = false;
+      render();
+      if (queued !== null && queued !== lastKey && !client.state().physicalPending && !client.state().quarantined) {
+        queued = null;
+        void refreshOwned();
+      }
+    }
+  }
+  function lifetime() {
+    if (!client || disposed) return;
+    checkParent();
+    const paused = !visible2(), reason = doc2.hidden || win.location.hash !== "#highlights" ? "hidden" : win.navigator.onLine === false ? "offline" : "paused";
+    if (paused !== pausedState || paused && reason !== pausedReason) {
+      pausedState = paused;
+      pausedReason = reason;
+      client.setPaused(paused, reason);
+    }
+    if (paused) queued = null;
+    render();
+  }
+  function setEnabled(value) {
+    if (!client || disposed) return false;
+    if (value !== true) {
+      intent = false;
+      blocked = false;
+      queued = null;
+      lastKey = null;
+      workspaceKey = null;
+      client.setEnabled(false);
+      render();
+      return false;
+    }
+    if (blocked && intent || !checkParent()) return false;
+    const proof = workspaceSnapshot();
+    if (!proof.allowed) return false;
+    workspaceKey = proof.key;
+    blocked = false;
+    intent = true;
+    lastKey = null;
+    client.setEnabled(true);
+    lifetime();
+    if (visible2()) void refreshOwned(true);
+    return true;
+  }
+  function afterOwnedCheck() {
+    if (!client || disposed) return;
+    checkParent();
+    lifetime();
+    if (intent && !blocked) void refreshOwned();
+  }
+  function receipt(event) {
+    const d = event.detail, stamp = typeof d?.sourceUpdatedAt === "string" && d.sourceUpdatedAt.length <= 40 && Number.isFinite(Date.parse(d.sourceUpdatedAt)) ? d.sourceUpdatedAt : "";
+    receiptKey = stamp;
+    afterOwnedCheck();
+  }
+  function wake() {
+    const wasPaused = client?.state().status === "paused";
+    lifetime();
+    if (wasPaused && visible2()) lastKey = null;
+    afterOwnedCheck();
+  }
+  function workspace() {
+    if (!workspaceAllows()) withdraw();
+    else render();
+  }
+  doc2.addEventListener("astramarkethighlightsready", render);
+  doc2.addEventListener("astramarketsnapshot", receipt);
+  doc2.addEventListener("astracalculationagetick", render);
+  doc2.addEventListener("astraprivateworkspace", workspace);
+  doc2.addEventListener("visibilitychange", wake);
+  for (const name of ["online", "offline", "hashchange"]) win.addEventListener(name, wake);
+  render();
+  return Object.freeze({ available: available2, setEnabled, afterOwnedCheck, observeParent() {
+    checkParent();
+    render();
+  }, withdraw, render, state: snapshot, dispose() {
+    disposed = true;
+    intent = false;
+    queued = null;
+    client?.dispose();
+    panel?.dispose();
+    root?.remove();
+    doc2.removeEventListener("astramarkethighlightsready", render);
+    doc2.removeEventListener("astramarketsnapshot", receipt);
+    doc2.removeEventListener("astracalculationagetick", render);
+    doc2.removeEventListener("astraprivateworkspace", workspace);
+    doc2.removeEventListener("visibilitychange", wake);
+    for (const name of ["online", "offline", "hashchange"]) win.removeEventListener(name, wake);
+  } });
+}
+
 // ui-src/api-calculations/entry.mjs
 var doc = document;
 var available = doc.body.dataset.apiCalculationsAvailable === "true";
 var EXPECTED = "865944dc992219e01b2aad45a6191174d112f3f1902e4ac86c79a6d23a481e17";
 var timer = null;
 var running = false;
+var activity = null;
 var runtime = createCalculationRuntime({
   origin: location.origin,
   available,
@@ -1894,9 +2645,14 @@ var runtime = createCalculationRuntime({
     const s = window.AstraRollingBenchmark?.getState();
     return { mode: s?.mode || "rolling", windowDays: s?.windowDays || 7 };
   },
-  notify: (state) => doc.dispatchEvent(new CustomEvent("astracalculationchange", { detail: { status: state.status, readerMode: state.readerMode, snapshotHash: state.snapshot?.snapshotHash ?? null, evidenceSnapshotHash: state.evidenceSnapshot?.snapshotHash ?? null } }))
+  notify: (state) => {
+    activity?.observeParent();
+    doc.dispatchEvent(new CustomEvent("astracalculationchange", { detail: { status: state.status, readerMode: state.readerMode, snapshotHash: state.snapshot?.snapshotHash ?? null, evidenceSnapshotHash: state.evidenceSnapshot?.snapshotHash ?? null } }));
+  }
 });
 window.AstraApiCalculations = runtime;
+activity = createOverviewActivityIntegration({ document: doc, window, parentAvailable: available, parentState: () => runtime.state(), fetcher: (...args) => fetch(...args) });
+window.AstraOverviewWindowActivity = activity;
 var visible = () => !doc.hidden && navigator.onLine !== false;
 async function poll() {
   if (!available || running || !visible()) return;
@@ -1905,6 +2661,7 @@ async function poll() {
     await runtime.refresh();
   } finally {
     running = false;
+    activity.afterOwnedCheck();
     doc.dispatchEvent(new Event("astracalculationcheck"));
     clearTimeout(timer);
     if (!runtime.state().blocked && visible()) timer = setTimeout(poll, Math.max(1e3, runtime.state().nextCheckAt - Date.now()));

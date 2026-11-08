@@ -1,0 +1,6 @@
+// Test-only closed-name synthetic receipts; never a canonical/project path.
+import {mkdtempSync,realpathSync,existsSync,unlinkSync,rmdirSync} from 'node:fs';
+import {tmpdir} from 'node:os';import path from 'node:path';import {pathToFileURL} from 'node:url';import {after} from 'node:test';
+const ALLOWED=new Set(['INDEPENDENT_ARRAY_COPY_BOUNDARY.json','INDEPENDENT_WAITER_DEADLINE.json','INDEPENDENT_LATE_WAITER_FENCE.json','INDEPENDENT_GETPINS_TTL.json']);let dir=null;const used=new Set();
+export function basicReadProofURL(name){if(typeof name!=='string'||!ALLOWED.has(name))throw Error('unknown_basic_read_test_proof');if(dir===null){const base=realpathSync(tmpdir());dir=mkdtempSync(path.join(base,'astra-basic-read-proof-'));if(!path.resolve(dir).startsWith(base+path.sep)||!path.basename(dir).startsWith('astra-basic-read-proof-'))throw Error('unsafe_basic_read_proof_root');}used.add(name);return pathToFileURL(path.join(dir,name));}
+after(()=>{if(dir===null)return;const base=realpathSync(tmpdir());if(!path.resolve(dir).startsWith(base+path.sep)||!path.basename(dir).startsWith('astra-basic-read-proof-'))throw Error('unsafe_basic_read_proof_cleanup');for(const name of used){if(!ALLOWED.has(name))throw Error('unknown_proof_cleanup');const file=path.join(dir,name);if(existsSync(file))unlinkSync(file);}rmdirSync(dir);});

@@ -44,6 +44,11 @@ async function open(html,{immediate=false,activeManifest=manifest,appFailure=fal
   const click=selector=>{const node=doc.querySelector(selector);assert(node,selector);node.click();return node;};
   if(appFailure){assert(w.AstraDatePresentation,'Last after-app module initialized despite app failure');assert.equal(errors.length,1,'Only the deliberately unguarded app reports an exception');assert.deepEqual(calls.fetch,['/api-cash-items.json','/api-nx-offers.json'],'Independent cached readers do not require the main app');assert.equal(calls.provider+calls.xhr+calls.beacon,0);assert.deepEqual(calls.moduleFailures,[]);return{appFailureIsolated:true,resources:calls.resources.length,scripts:calls.resources.filter(n=>n.endsWith('.js')).length,styles:calls.resources.filter(n=>n.endsWith('.css')).length};}
   const model=w.AstraRollingBenchmark.calculate(report);assert(model.available,model.reason);assert.equal(doc.getElementById('main-rate').textContent,model.rate.toFixed(2));
+  // Current captured report stays current here; no historical fixture/golden.
+  assert.equal(doc.getElementById('rate-kind').dataset.marketAt,report.sourceUpdatedAt);
+  const currentCpi=report.latest.cpi,delta=Math.abs(currentCpi-100).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
+  assert(Number.isFinite(currentCpi));assert(doc.getElementById('mpi-explanation').textContent.includes(delta+'% '+(currentCpi>=100?'higher':'lower')));
+
   assert.equal(doc.querySelectorAll('#category-cards .category-card').length,report.categories.length);
   assert(doc.querySelector('#category-cards .category-main img').getAttribute('src').startsWith('assets/'));
   assert.equal(doc.querySelectorAll('#basket-table tbody tr').length,50);assert.equal(doc.querySelectorAll('#cash-table tbody tr').length,29);

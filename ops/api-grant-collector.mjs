@@ -1,3 +1,6 @@
+import {createOverviewActivityRegistration} from './api-overview-activity-registration.mjs';
+import {createBasicCurrentRegistration} from './api-basic-current-registration.mjs';
+import {createProviderFairnessRegistration} from './api-provider-fairness-registration.mjs';
 import {createSearchIdentityRegistration} from './api-search-identity-registration.mjs';
 import {createFastCurrentRegistryRegistration} from './api-fast-current-registration.mjs';
 import {FixedFashionPilotOwner} from './fixed-fashion-pilot-owner.mjs';
@@ -28,7 +31,7 @@ export class ApiGrantCollector extends DurableObject {
       if(apiIndexOwnerConfiguration(env).status==='ready'){
         // A failed optional compiled definition closes this feature, never the raw owner.
         try{const definition=await loadApiIndexDefinition();const registry=this.recurring.registry;
-          if(registry){let stampReferences=null;try{const stampCfg=stampReferenceConfiguration(env);if(stampCfg.status==='ready'){const stampDefinition=await loadStampReferenceDefinition();if(stampDefinition.definitionHash===stampCfg.definitionHash)stampReferences=new StampReferenceOwner(ctx,env,this.core,registry,stampDefinition,{enabled:true});else this.core.stampReferenceInitialization='definition_review';}}catch{this.core.stampReferenceInitialization='optional_initialization_review';}this.core.indexBridge=new ApiIndexOwnerBridge(ctx,env,this.core,{definition,api:indexApi,registry,stampReferences});registry.setCalculationSink(this.core.indexBridge);}}catch{this.core.indexBridgeInitialization='definition_or_scope_review';}
+          if(registry){let overviewActivity=null;const activityRegistration=await createOverviewActivityRegistration(ctx,env,this.core,this.recurring);if(activityRegistration){this.overviewActivityRegistration=activityRegistration;overviewActivity=activityRegistration.sink;}let stampReferences=null;try{const stampCfg=stampReferenceConfiguration(env);if(stampCfg.status==='ready'){const stampDefinition=await loadStampReferenceDefinition();if(stampDefinition.definitionHash===stampCfg.definitionHash)stampReferences=new StampReferenceOwner(ctx,env,this.core,registry,stampDefinition,{enabled:true});else this.core.stampReferenceInitialization='definition_review';}}catch{this.core.stampReferenceInitialization='optional_initialization_review';}this.core.indexBridge=new ApiIndexOwnerBridge(ctx,env,this.core,{definition,api:indexApi,registry,stampReferences,overviewActivity});registry.setCalculationSink(this.core.indexBridge);}}catch{this.core.indexBridgeInitialization='definition_or_scope_review';}
       }
       try{this.core.fixedFashionPilot=new FixedFashionPilotOwner(ctx,env,this.core);}catch{this.core.fixedFashionPilotInitialization='unavailable';}
       this.privateHealth = new ApiPrivateHealth(ctx, env, this.core);
@@ -36,11 +39,17 @@ export class ApiGrantCollector extends DurableObject {
       if(fastRegistration){this.fastCurrentRegistration=fastRegistration;this.privateHealth.fastCurrentDelegate=fastRegistration.delegate;}
       const searchRegistration=await createSearchIdentityRegistration(ctx,env,this.core,this.recurring,{baseDelegate:fastRegistration?.delegate??this.recurring});
       if(searchRegistration?.delegate){this.searchIdentityRegistration=searchRegistration;this.privateHealth.searchIdentityDelegate=searchRegistration.delegate;}
-      const registryDelegate=searchRegistration?.delegate??fastRegistration?.delegate;
+      const basicRegistration=await createBasicCurrentRegistration(ctx,env,this.core,this.recurring,{baseDelegate:searchRegistration?.delegate??fastRegistration?.delegate??this.recurring});
+      if(basicRegistration){this.basicCurrentRegistration=basicRegistration;this.privateHealth.basicCurrentDelegate=basicRegistration.delegate??null;}
+      const baseRegistryDelegate=basicRegistration?.delegate??searchRegistration?.delegate??fastRegistration?.delegate;
+      const registryDelegate=this.overviewActivityRegistration?.wrap(baseRegistryDelegate??this.recurring)??baseRegistryDelegate;
       this.privateCash = registryDelegate
         ? new ApiPrivateCashAlarm(ctx,env,this.core,{registryDelegate})
         : new ApiPrivateCashAlarm(ctx, env, this.core);
       await this.privateCash.initialize();
+      this.providerFairnessRegistration=createProviderFairnessRegistration(this,env,enableProviderFairnessForWork);
+      this.core.providerFairnessRegistration=this.providerFairnessRegistration;
+      this.privateHealth.providerFairnessDelegate=this.providerFairnessRegistration?Object.freeze({registration:this.providerFairnessRegistration,mux:this.privateCash}):null;
       this.scheduler = new ApiAlarmScheduler(ctx, env, this.core,{firstPass:this.firstPass,recurring:this.recurring,...(this.privateCash.hasMux?{alarmControl:this.privateCash.providerControl}:{})});
     });
   }
@@ -76,6 +85,7 @@ export class ApiGrantCollector extends DurableObject {
   }
   async ownerAlarmEvent(recurringFrame){
     const kind=this.privateCash.chooseAlarm();
+    this.privateCash.noteChosenDispatch(kind);
     if(kind==='private')return this.privateCash.runPrivateAlarm();
     if(kind==='public')return this.privateCash.runPublicAlarm();
     if(kind==='nx')return this.privateCash.runNxAlarm();
@@ -104,3 +114,9 @@ export class ApiGrantCollector extends DurableObject {
 
 // No public administration route; the default fallback remains closed.
 export default {fetch() {return new Response('Not found', {status: 404});}};
+
+// Unwired trusted WORK setup function, not a Durable Object RPC method.
+export function enableProviderFairnessForWork(owner){
+ const core=owner?.core,mux=owner?.privateCash;if(!(owner instanceof ApiGrantCollector)||!core||!mux||core.ctx!==owner.ctx||mux.ctx!==owner.ctx||mux.core!==core)throw TypeError('provider_fairness_ready_same_owner');if(core.config().enabled!==true)throw TypeError('provider_fairness_requires_enabled_grant');
+ owner.ctx.storage.transactionSync(()=>{core.prepareFairClaimsForWork();mux.prepareFairProviderTurnsForWork();});core.fairClaims=true;core.fairMuxClaims=true;mux.fairProviderTurns=true;return Object.freeze({enabled:true,maxDerivedBeforeClaim:2,claimPolicy:'three_bulk_one_registered_oldest_available',runtimeSettingsChanged:0});
+}

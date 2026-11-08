@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 import unittest
+from historical_market_fixture import historical_market
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from market_catalog import MarketCatalog
 from portable_hash import HASH_METHOD,portable_hash
@@ -16,7 +17,7 @@ class IdentityAdoptionTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.old=READ('catalog-identities-v1.json');cls.current=READ('catalog-identities-v2.json')
-        cls.proof=READ('catalogue-identity-provenance-v2.json');cls.feed=READ('cache/market.json')
+        cls.proof=READ('catalogue-identity-provenance-v2.json');cls.feed=historical_market()
 
     def test_immutable_prior_exact_entries_unique_ids_and_exact_provider_names(self):
         self.assertEqual(hashlib.sha256((ROOT/'catalog-identities-v1.json').read_bytes()).hexdigest(),'c7b56e5744ec4e94514a17caf68f1a136e7c2148186a6b5d1048b46da2a5b2bd')

@@ -7,7 +7,8 @@ import {createCachedProjectionFactory,createMarketCatalog} from '../ops/market-c
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 const read=name=>JSON.parse(readFileSync(new URL('../'+name,import.meta.url),'utf8'));
-const feed=read('cache/market.json'),ids=read('catalog-identities-v2.json'),proof=read('catalogue-identity-provenance-v2.json');
+import {historical} from './fixtures/worker-historical-inputs.mjs';
+const feed=historical('feed'),ids=read('catalog-identities-v2.json'),proof=read('catalogue-identity-provenance-v2.json');
 
 test('adopted1381 identities produce full Python/Worker index and metadata parity without changing provider values',async()=>{
   const expected=JSON.parse(execFileSync(process.env.PYTHON||'python',['-B','-c',`
@@ -15,7 +16,7 @@ import json
 from market_catalog import MarketCatalog
 from portable_hash import HASH_METHOD,portable_hash
 read=lambda name:json.load(open(name,encoding='utf-8'))
-feed=read('cache/market.json');ids=read('catalog-identities-v2.json');catalog=MarketCatalog(feed,ids)
+feed=read('tests/fixtures/worker-historical-market-20261104.json');ids=read('catalog-identities-v2.json');catalog=MarketCatalog(feed,ids)
 meta={'schemaVersion':1,'hashMethod':HASH_METHOD,'catalogHash':catalog.catalog_hash,'sourceProjectionHash':catalog.source_projection_hash,'sourceUpdatedAt':catalog.source_updated_at,'itemCount':len(feed['items']),'identityVersion':portable_hash({'hashMethod':HASH_METHOD,'identityMap':ids})}
 print(json.dumps({'index':catalog.build_index(),'metadata':meta},ensure_ascii=True,allow_nan=False))
 `],{cwd:root,encoding:'utf8',maxBuffer:2_000_000}));

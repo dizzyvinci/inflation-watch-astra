@@ -45,7 +45,62 @@
     const result = appearances / (participation * multiplicity);
     return Number.isFinite(result) ? result : null;
   }
-  window.AstraSpeculation = Object.freeze({ activityModel, scenario });
+  // Consumes only the accepted calculation snapshot carried by the app event.
+  const DAY = 86400000;
+  const validDay = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s) && Number.isFinite(Date.parse(s + 'T00:00:00Z')) && new Date(s + 'T00:00:00Z').toISOString().slice(0, 10) === s;
+  const shiftDay = (s, n) => new Date(Date.parse(s + 'T00:00:00Z') + n * DAY).toISOString().slice(0, 10);
+  function windowSensitivity(data, selection = '2040801', custom = 3) {
+    const unavailable = reason => ({ available: false, reason });
+    if (!Number.isInteger(custom) || custom < 1 || custom > 30) return unavailable('Custom window must be a whole number from 1 through 30.');
+    const view = data?.apiCalculationView, items = data?.apiDailyItems, publisher = view?.clocks?.dailyPublisher;
+    if (clock(publisher) === null || !validDay(publisher.slice(0, 10)) || clock(view?.clocks?.dailyCapture) === null) return unavailable('Accepted daily source publication and receipt clocks are required.');
+    if (!Array.isArray(items) || items.length !== 79 || items.filter(r => r?.role === 'goods').length !== 50 || items.filter(r => r?.role === 'cash').length !== 29 || new Set(items.map(r => r?.itemId)).size !== 79 || new Set(items.map(r => r?.slug)).size !== 79 || items.some(r => !Number.isSafeInteger(r?.itemId) || r.itemId < 1 || typeof r.slug !== 'string' || !Array.isArray(r.points) || r.points.length > 31)) return unavailable('The accepted fixed 50-goods / 29-cash daily cohort is unavailable.');
+    const basket = selection === 'basket', selected = basket ? items.filter(r => r.role === 'goods') : items.filter(r => r.role === 'goods' && String(r.itemId) === selection);
+    if (!basket && selected.length !== 1) return unavailable('Selected fixed-basket item is unavailable.');
+    const endDay = shiftDay(publisher.slice(0, 10), -1), specs = new Map();
+    if (basket) {
+      if (!Array.isArray(data.rows) || data.rows.length !== 50) return unavailable('Fixed basket calibration is unavailable.');
+      for (const r of data.rows) {
+        const reference = r?.currentApiReference, id = reference?.itemId;
+        if (!Number.isSafeInteger(id) || id < 1 || specs.has(id) || reference.slug !== r.slug || (r.canonicalId != null && r.canonicalId !== id) || !Number.isFinite(r.weight) || r.weight <= 0 || !Number.isFinite(r.basePrice) || r.basePrice <= 0 || reference.weight !== r.weight || reference.basePrice !== r.basePrice) return unavailable('Fixed basket calibration is invalid.');
+        specs.set(id, r);
+      }
+      if (selected.some(r => !specs.has(r.itemId))) return unavailable('Fixed basket membership does not match daily evidence.');
+    }
+    const maps = [];
+    for (const row of selected) {
+      const m = new Map();
+      for (const p of row.points) {
+        if (!p || !validDay(p.day) || m.has(p.day)) return unavailable('Malformed or duplicate source days; no comparison substituted.');
+        m.set(p.day, p);
+      }
+      maps.push({ row, m });
+    }
+    const observation = day => {
+      let level = 0; const receipts = [];
+      for (const { row, m } of maps) {
+        const p = m.get(day);
+        if (!p || p.qualified !== true || p.partialCalendarDay !== false || !Number.isSafeInteger(p.recordedSalesCount) || p.recordedSalesCount < 5 || clock(p.source?.capturedAt) === null || typeof p.medianUnitPriceLexeme !== 'string' || !/^\d+(?:\.\d+)?$/.test(p.medianUnitPriceLexeme)) return null;
+        const price = Number(p.medianUnitPriceLexeme);
+        if (!Number.isFinite(price) || price <= 0) return null;
+        if (basket) { const s = specs.get(row.itemId); if (!Number.isFinite(p.linkedPrice) || p.linkedPrice <= 0) return null; level += 100 * s.weight * p.linkedPrice / s.basePrice; }
+        else level = price;
+        receipts.push(p.source.capturedAt);
+      }
+      return Number.isFinite(level) && level > 0 ? { day, value: level, receipts: [...new Set(receipts)].sort() } : null;
+    };
+    const compare = n => {
+      const days = Array.from({ length: Math.max(n + 1, 2 * n) }, (_, i) => shiftDay(endDay, -i)), observations = days.map(observation);
+      const endpointDays = observations.slice(0, n + 1), meanDays = observations.slice(0, 2 * n);
+      const endpoint = endpointDays.every(Boolean) ? 100 * (observations[0].value / observations[n].value - 1) : null;
+      const recentMean = meanDays.every(Boolean) ? meanDays.slice(0, n).reduce((s, p) => s + p.value, 0) / n : null;
+      const priorMean = meanDays.every(Boolean) ? meanDays.slice(n).reduce((s, p) => s + p.value, 0) / n : null;
+      const period = recentMean !== null && priorMean > 0 ? 100 * (recentMean / priorMean - 1) : null;
+      return { days: n, startDay: shiftDay(endDay, -n), endDay, priorStart: shiftDay(endDay, -(2 * n - 1)), priorEnd: shiftDay(endDay, -n), recentStart: shiftDay(endDay, -(n - 1)), endpointPercent: Number.isFinite(endpoint) ? endpoint : null, periodPercent: Number.isFinite(period) ? period : null, recentMean, priorMean, receipts: [...new Set(observations.filter(Boolean).flatMap(p => p.receipts))].sort(), endpointReason: 'Requires every one of the N+1 actual qualified complete source days.', periodReason: 'Requires all 2N actual qualified complete source days; no partial weighting.' };
+    };
+    return { available: true, selection, name: basket ? 'Fixed 50-goods basket' : selected[0].name, units: basket ? 'linked MPI index points' : 'mesos per reported source unit', endDay, dailyPublisher: publisher, dailyCapture: view.clocks.dailyCapture, comparisons: [...new Set([1, 3, 7, custom])].map(compare) };
+  }
+  window.AstraSpeculation = Object.freeze({ activityModel, scenario, windowSensitivity });
   const options = document.getElementById('display-options'), content = document.getElementById('content'), nav = document.querySelector('.nav-wrap nav');
   if (!options || !content || !nav || document.getElementById('view-speculation')) return;
   const make = (tag, text, className) => { const n = document.createElement(tag); if (text !== undefined) n.textContent = text; if (className) n.className = className; return n; };
@@ -81,7 +136,37 @@
   policy.append(make('p', 'Nexon’s November 4, 2026 Classic World maintenance notice adds megaphone restrictions during the 96-hour period after a first NX purchase, alongside bot-detection changes. That can change who is able to post, even if the active population is unchanged. Treating a change in offer counts as a measured loss of players or bots would confound participation and population.'));
   const primary = make('a', 'Official Classic World maintenance notice ↗'); primary.href = 'https://steamstore-a.akamaihd.net/news/externalpost/steam_community_announcements/1848557880480504'; primary.target = '_blank'; primary.rel = 'noopener noreferrer'; policy.append(primary);
   policy.append(make('p', 'No numeric Classic World CCU series or independently verified active-bot denominator was identified in the reviewed primary sources (research: November 5, 2026). Ban totals count sanctioned accounts over a stated period, not the stock of active bots or unique humans. Sanction categories, repeat accounts, detection delays and reversals matter. High prices, large volumes or bulk trading alone do not identify a bot. Modern GMS or MapleStory Worlds totals must not be substituted for Classic World.'));
-  view.append(policy); content.append(view);
+  view.append(policy);
+  const sensitivity = make('details', undefined, 'speculation-window'); sensitivity.id = 'speculation-window';
+  sensitivity.append(make('summary', 'Window sensitivity · optional daily-source comparison'));
+  const windowBody = make('div', undefined, 'speculation-window-body'); windowBody.hidden = true;
+  windowBody.append(make('p', 'Compare endpoints and separate arithmetic means of daily medians. These are descriptive sensitivities, not an optimal window, forecast, executable return or recommendation. This view retains at most 31 daily observations per item: an N-day endpoint needs N+1 observations and disjoint N-day means need 2N, so mean comparisons above 15 days remain unavailable here.'));
+  const windowControls = make('div', undefined, 'speculation-selectors'), itemLabel = make('label', 'Daily evidence '), itemSelect = make('select'); itemSelect.id = 'speculation-window-item';
+  for (const [id, label] of [['2040801', 'Gloves Attack Scroll: Intermediate'], ['basket', 'Fixed 50-goods basket']]) { const o = make('option', label); o.value = id; itemSelect.append(o); } itemLabel.append(itemSelect);
+  const customLabel = make('label', 'Custom source days (1–30) '), customInput = make('input'); customInput.type = 'number'; customInput.min = '1'; customInput.max = '30'; customInput.step = '1'; customInput.value = '3'; customInput.id = 'speculation-window-custom'; customLabel.append(customInput); windowControls.append(itemLabel, customLabel); windowBody.append(windowControls);
+  const windowResult = make('div'); windowResult.id = 'speculation-window-result'; windowResult.setAttribute('role', 'status'); windowBody.append(windowResult); sensitivity.append(windowBody); view.append(sensitivity); content.append(view);
+  const dateLabel = day => { if (!validDay(day)) return 'unknown'; const d = new Date(day + 'T00:00:00Z'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) + ', ' + d.getUTCFullYear(); };
+  const receiptLabel = s => { if (clock(s) === null) return 'unknown'; const zone = document.getElementById('display-timezone')?.value || 'UTC'; try { const d = new Date(s); return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: zone }) + ' ' + zone + ' ' + d.toLocaleDateString('en-US', { year: 'numeric', timeZone: zone }); } catch { return 'unknown'; } };
+  function drawWindow() {
+    windowBody.hidden = !enabled || !sensitivity.open;
+    windowResult.replaceChildren();
+    if (windowBody.hidden) return;
+    const model = windowSensitivity(report, itemSelect.value, customInput.value.trim() ? Number(customInput.value) : NaN);
+    if (!model.available) { windowResult.append(make('p', 'Unavailable · ' + model.reason)); return; }
+    windowResult.append(make('h2', model.name));
+    windowResult.append(make('p', `${model.units}; complete UTC source days through (${dateLabel(model.endDay)}), the day before source publication. Original overview receipt (${receiptLabel(model.dailyCapture)}); publisher (${receiptLabel(model.dailyPublisher)}). Newer reported three-day price references are not daily observations.`));
+    const table = make('table'), head = make('tr'); for (const text of ['Source days', 'Endpoint change · %', 'Disjoint daily-mean change · %']) head.append(make('th', text)); const thead = make('thead'); thead.append(head); table.append(thead); const tbody = make('tbody');
+    const percent = n => n === null ? 'Unavailable' : (n > 0 ? '+' : '') + n.toLocaleString('en-US', { maximumFractionDigits: 4 }) + '%';
+    for (const r of model.comparisons) {
+      const tr = make('tr'); tr.append(make('th', String(r.days)));
+      const endpoint = make('td', percent(r.endpointPercent)); endpoint.append(make('small', `(${dateLabel(r.startDay)}) → (${dateLabel(r.endDay)}). ${r.endpointPercent === null ? r.endpointReason : 'N+1 complete days present.'}`));
+      const mean = make('td', percent(r.periodPercent)); mean.append(make('small', `(${dateLabel(r.priorStart)})–(${dateLabel(r.priorEnd)}) versus (${dateLabel(r.recentStart)})–(${dateLabel(r.endDay)}). ${r.periodPercent === null ? r.periodReason : 'Equal-day arithmetic means, not a pooled-sale median.'}`));
+      if (r.receipts.length) mean.append(make('small', `Available checked-day receipts (${receiptLabel(r.receipts[0])})–(${receiptLabel(r.receipts.at(-1))}). Receipt times are retrieval clocks, not individual sale times.`));
+      tr.append(endpoint, mean); tbody.append(tr);
+    }
+    table.append(tbody); const wrap = make('div', undefined, 'table-wrap'); wrap.append(table); windowResult.append(wrap);
+    windowResult.append(make('p', 'Missing, duplicate, thin, partial or unknown-receipt days remain unavailable; no carry, interpolation or shorter substitute. Whole-item medians can mix quality; reported sale counts are not verified individual trades. Basket levels keep all 50 frozen weights and bases without renormalizing. Retained days alone cannot identify an optimal window.'));
+  }
   const number = (n, decimals = 0) => Number.isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: decimals }) : '—';
   function selectedRows() { const profile = profiles.find(p => p.sourceUrl === sourceSelect.value); return { profile, rows: profile ? period.value === 'all' ? profile.rows : profile.rows.slice(-Number(period.value)) : [] }; }
   function parameters() { return { p: participation.value.trim() && participation.validity.valid ? Number(participation.value) / 100 : NaN, m: repeat.value.trim() && repeat.validity.valid ? Number(repeat.value) : NaN }; }
@@ -103,9 +188,12 @@
     if (!rows.length) { const tr = make('tr'), td = make('td', 'No hourly observations; no values imputed.'); td.colSpan = 6; tr.append(td); body.append(tr); }
     table.append(body); tableRoot.append(table); previous.disabled = pageNumber === 0; next.disabled = pageNumber + 1 >= pages; pageState.textContent = `${pageNumber + 1} / ${pages}`;
   }
-  function publish(data) { report = data; const prior = sourceSelect.value; profiles = activityModel(data); sourceSelect.replaceChildren(); for (const profile of profiles) { const option = make('option', profile.sourceUrl); option.value = profile.sourceUrl; sourceSelect.append(option); } if (profiles.some(p => p.sourceUrl === prior)) sourceSelect.value = prior; draw(); }
+  function publish(data) { report = data; const prior = sourceSelect.value; profiles = activityModel(data); sourceSelect.replaceChildren(); for (const profile of profiles) { const option = make('option', profile.sourceUrl); option.value = profile.sourceUrl; sourceSelect.append(option); } if (profiles.some(p => p.sourceUrl === prior)) sourceSelect.value = prior; draw(); drawWindow(); }
   function choice() { link.hidden = !enabled; toggle.textContent = 'Speculation tab: ' + (enabled ? 'On' : 'Off'); toggle.setAttribute('aria-pressed', String(enabled)); if (!enabled) { view.hidden = true; if (location.hash === '#speculation') location.hash = '#index'; } }
-  toggle.addEventListener('click', () => { enabled = !enabled; try { localStorage.setItem(key, enabled ? 'on' : 'off'); } catch {} choice(); });
+  toggle.addEventListener('click', () => { enabled = !enabled; try { localStorage.setItem(key, enabled ? 'on' : 'off'); } catch {} choice(); if (!enabled) sensitivity.open = false; drawWindow(); });
+  sensitivity.addEventListener('toggle', drawWindow);
+  itemSelect.addEventListener('change', drawWindow); customInput.addEventListener('input', drawWindow);
+  document.addEventListener('change', event => { if (event.target?.id === 'display-timezone') drawWindow(); });
   for (const select of [sourceSelect, period]) select.addEventListener('change', () => { pageNumber = 0; draw(); });
   for (const input of [participation, repeat]) input.addEventListener('input', draw);
   previous.addEventListener('click', () => { pageNumber = Math.max(0, pageNumber - 1); draw(); }); next.addEventListener('click', () => { ++pageNumber; draw(); });

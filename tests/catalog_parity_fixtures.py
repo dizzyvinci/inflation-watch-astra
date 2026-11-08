@@ -10,7 +10,7 @@ from portable_hash import canonical_bytes,portable_hash,HASH_METHOD
 root=Path(__file__).resolve().parents[1]
 if len(sys.argv)!=2:raise SystemExit('Pass a temporary fixture output directory')
 out=Path(sys.argv[1]);out.mkdir(exist_ok=True)
-feed=json.loads((root/'cache/market.json').read_text(encoding='utf-8'))
+feed=json.loads((root/'tests/fixtures/worker-historical-market-20261104.json').read_text(encoding='utf-8'))
 identities=json.loads((root/'catalog-identities-v1.json').read_text(encoding='utf-8'))
 catalog=MarketCatalog(feed,identities)
 actual={'feed':feed,'identities':identities,'index':catalog.build_index(),'items':{r['s']:catalog.resolve_item(r['s']) for r in feed['items']}}

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from historical_market_fixture import historical_market
 from unittest.mock import patch
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -76,6 +77,7 @@ class MarketTests(unittest.TestCase):
         self.assertAlmostEqual(sum(p['basketMesos'] for p in points),sum(r['recentTurnoverProxy'] for r in report['rows']))
         self.assertTrue(all(p['allMesos']>=p['basketMesos'] for p in points))
     def test_recent_volume_rolls_while_basket_and_nx_base_stay_frozen(self):
+        self.feed = historical_market()
         before=self.compute()
         feed=copy.deepcopy(self.feed);feed['updatedAt']='2026-11-05T00:01:00Z'
         for item in feed['items']:

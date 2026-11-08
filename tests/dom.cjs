@@ -1,12 +1,13 @@
 const fs=require('fs'),path=require('path'),assert=require('node:assert/strict');
 const {JSDOM,VirtualConsole}=require('jsdom');
 const project=path.resolve(__dirname,'..');
+const historical=require('./fixtures/dom-historical-inputs.cjs').createHistoricalDomInputs(project);
 const vc=new VirtualConsole();const errors=[];
 vc.on('jsdomError',e=>errors.push(e.message));vc.on('error',(...args)=>errors.push(args.join(' ')));
 const dom=new JSDOM(fs.readFileSync(path.join(project,'web/index.html'),'utf8'),{url:'http://127.0.0.1:8765/',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc});
 const w=dom.window;w.scrollTo=()=>{};w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false};
 w.HTMLElement.prototype.scrollIntoView=function(){};
-w.fetch=async url=>{const p=path.join(project,'dist',url);return {ok:fs.existsSync(p),status:200,json:async()=>JSON.parse(fs.readFileSync(p,'utf8'))}};
+w.fetch=async url=>{const fixture=historical.response(url);if(fixture!==null)return fixture;const p=path.join(project,'dist',url);return {ok:fs.existsSync(p),status:200,json:async()=>JSON.parse(fs.readFileSync(p,'utf8'))}};
 w.AbortSignal.timeout=()=>undefined;
 w.eval(fs.readFileSync(path.join(project,'web/community.js'),'utf8'));
 w.eval(fs.readFileSync(path.join(project,'web/rolling-benchmark-preview.js'),'utf8'));
@@ -16,7 +17,7 @@ const until=async predicate=>{const deadline=Date.now()+1500;while(!predicate()&
 (async()=>{
  await new Promise(r=>setTimeout(r,30));
  const doc=w.document;
- const published=JSON.parse(fs.readFileSync(path.join(project,'dist/data.json'),'utf8'));
+ const published=historical.report();
  const benchmark=w.AstraRollingBenchmark.calculate(published).rate,benchmarkDisplay=benchmark.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}),benchmarkExact=(benchmark*1000).toLocaleString('en-US',{maximumFractionDigits:0})+' modelled mesos per 1,000 NX';
  const initialSeries=[...new Set([...doc.querySelectorAll('#main-chart circle[data-chart-series]')].map(point=>point.dataset.chartSeries))];assert.deepEqual(initialSeries,['Prior-7-day cash-anchored goods NX benchmark']);
  assert([...doc.querySelectorAll('[data-main-overlay]')].every(button=>button.getAttribute('aria-pressed')==='false'));assert(doc.getElementById('reported-content').hidden);assert(doc.getElementById('reported-heading').hidden);assert.equal(doc.querySelector('[data-reported-history-toggle]').textContent,'Show NiaDB reported history (optional)');assert.equal(doc.querySelectorAll('#reported-chart svg').length,0);

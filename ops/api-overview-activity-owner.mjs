@@ -32,13 +32,15 @@ export class OverviewActivityRegistrySink{
  guard(){check(this.active,'activity_paused');}
  source(job){this.guard();this.registry.fence(job);const s=ownedCalculationSource(this.core,{receiptKey:job.receipt_key,jobKey:job.job_key});check(s.operation==='overview'&&job.operation==='overview'&&s.sourceAttemptId===job.source_attempt&&s.requestAt===job.request_at&&s.rawSha256===job.raw_sha,'activity_owned_overview');check(bytes(JSON.stringify(s))<=4096,'activity_source_metadata_capacity');return s;}
  capacity(){const v=this.core.row('SELECT COUNT(*)n,COALESCE(SUM(length(CAST(source_json AS BLOB))),0)m,COALESCE(SUM(length(CAST(summary_body AS BLOB))),0)b FROM overview_activity_receipts');check(integer(v.n,0,64)&&integer(v.m,0,64*4096)&&integer(v.b,0,64*65536),'activity_existing_capacity_review');return v;}
+ beforeReservation(){/* Finite default preserves all original reservations. */}
+ allocateSlot(){return this.core.row('SELECT COALESCE(MAX(slot),0)+1 n FROM overview_activity_receipts').n;}
  reserve(job){
   const s=this.source(job),sourceJson=JSON.stringify(s),lease=this.core.row('SELECT claim,lease_until FROM recurring_registry_jobs WHERE receipt_key=?',s.receiptKey);check(lease.claim===job.claim&&integer(lease.lease_until,this.core.clock()+1,this.core.clock()+130000),'activity_registry_lease');
   return this.ctx.storage.transactionSync(()=>{
-   this.source(job);const n=this.capacity(),r=this.core.row('SELECT * FROM overview_activity_receipts WHERE receipt_key=?',s.receiptKey);
+   this.source(job);this.beforeReservation(s);const n=this.capacity(),r=this.core.row('SELECT * FROM overview_activity_receipts WHERE receipt_key=?',s.receiptKey);
    if(r){check(r.source_json===sourceJson&&r.source_attempt===s.sourceAttemptId&&r.raw_sha===s.rawSha256,'activity_reservation_rebound');if(r.state==='admitted'||r.state==='held')return{status:'activity_existing'};check(r.state==='reserved'&&integer(r.registry_claim,1)&&r.registry_claim<job.claim,'activity_reservation_claim');}
    else if(n.n>=64)return{status:'activity_capacity_hold'};
-   const slot=r?.slot??this.core.row('SELECT COALESCE(MAX(slot),0)+1 n FROM overview_activity_receipts').n;check(integer(slot,1,64),'activity_slots');
+   const slot=r?.slot??this.allocateSlot();check(integer(slot,1,64),'activity_slots');
    this.core.sql.exec("INSERT INTO overview_activity_receipts(slot,receipt_key,source_json,source_attempt,raw_sha,epoch,registry_claim,registry_lease,state)VALUES(?,?,?,?,?,?,?,?,'reserved')ON CONFLICT(receipt_key)DO UPDATE SET epoch=excluded.epoch,registry_claim=excluded.registry_claim,registry_lease=excluded.registry_lease",slot,s.receiptKey,sourceJson,s.sourceAttemptId,s.rawSha256,this.epoch,job.claim,lease.lease_until);
    this.#starts.set(s.receiptKey,{claim:job.claim,deadline:performance.now()+this.waitMs});return{status:'activity_reserved'};
   });

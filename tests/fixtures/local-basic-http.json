@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 1,
+  "fixtureKind": "synthetic_actual1500_basic_public_http_v1",
+  "profile": {
+    "schemaVersion": 1,
+    "enabled": true,
+    "profile": "basic_aggregate_v1",
+    "publicEpoch": "basic-local-golden-v1"
+  },
+  "originalCapture": "2026-11-06T12:00:00.000Z",
+  "wanted": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "packets": {
+    "profile": {
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store, no-transform",
+        "cdn-cache-control": "no-store",
+        "cloudflare-cdn-cache-control": "no-store",
+        "content-length": "225",
+        "content-type": "application/json; charset=utf-8",
+        "x-astra-basic-definition": "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705",
+        "x-astra-basic-protocol": "basic-aggregate-v1",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex, nofollow, noarchive",
+        "x-astra-preview": "password"
+      },
+      "body": "eyJzY2hlbWFWZXJzaW9uIjoxLCJraW5kIjoiYmFzaWNfaXRlbV9wdWJsaWNfcHJvZmlsZSIsInByb3RvY29sIjoiYmFzaWMtYWdncmVnYXRlLXYxIiwiZGVmaW5pdGlvbkhhc2giOiIzZDdmODI1N2RkYTg1NjhhYjk5ZTc0M2E0ZTZhZGVlOGNhOTExNzg2NTI4YjVlNTY5MTlkNjU2NzVhNzI0NzA1IiwicHVibGljRXBvY2giOiJiYXNpYy1sb2NhbC1nb2xkZW4tdjEiLCJhdmFpbGFibGUiOnRydWV9"
+    },
+    "present": {
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store, no-transform",
+        "cdn-cache-control": "no-store",
+        "cloudflare-cdn-cache-control": "no-store",
+        "content-length": "994",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "\"basic-item-d251d58f5c766cd95228e0450e6d5cbbe6e7a46328d09cecc55aa94f69623abf\"",
+        "last-modified": "Fri, 06 Nov 2026 12:00:00 GMT",
+        "x-astra-basic-body-sha256": "e63fd20a39882e822b1b175918b5d4e291bb03670e74615cca396f7f88b6100b",
+        "x-astra-basic-body-verification": "producer-sql-attested-not-recomputed",
+        "x-astra-basic-captured-at": "2026-11-06T12:00:00.000Z",
+        "x-astra-basic-definition": "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705",
+        "x-astra-basic-epoch": "basic-local-golden-v1",
+        "x-astra-basic-generation": "2d23c1c6023b69da71eb25913f722946b29a9baca83561842383013adb4ffbd2",
+        "x-astra-basic-mode": "current",
+        "x-astra-basic-protocol": "basic-aggregate-v1",
+        "x-astra-basic-revision": "cac189b444b167d7ba8e556b690195b9c4b748a04ebf245be6ee859f7f36a3c1",
+        "x-astra-basic-verification": "committed-sql-and-selected-page",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex, nofollow, noarchive",
+        "x-astra-preview": "password"
+      },
+      "body": "eyJzY2hlbWFWZXJzaW9uIjoxLCJraW5kIjoiYmFzaWNfY3VycmVudF9pdGVtX3JlZmVyZW5jZSIsInByb2ZpbGUiOiJiYXNpY19hZ2dyZWdhdGVfdjEiLCJkZWZpbml0aW9uSGFzaCI6IjNkN2Y4MjU3ZGRhODU2OGFiOTllNzQzYTRlNmFkZWU4Y2E5MTE3ODY1MjhiNWU1NjkxOWQ2NTY3NWE3MjQ3MDUiLCJpdGVtSWQiOjIwNDA4MDEsImdlbmVyYXRpb24iOiIyZDIzYzFjNjAyM2I2OWRhNzFlYjI1OTEzZjcyMjk0NmIyOWE5YmFjYTgzNTYxODQyMzgzMDEzYWRiNGZmYmQyIiwic291cmNlQm9keVNoYTI1NiI6IjY2Y2VkNjQ2MjljZDE4MmE2ZDI1NGRjMzk3NGMyNWI0ZDYxNWMxZTkyYWM1MzRkMmQwNzI1OGYwN2Q3OGE2NzgiLCJjYXB0dXJlZEF0IjoiMjAyNi0xMS0wNlQxMjowMDowMC4wMDBaIiwic291cmNlT2JzZXJ2ZWRBdCI6bnVsbCwiY2FwdHVyZVRpbWVLaW5kIjoiaHR0cF9yZXNwb25zZV9jb21wbGV0ZWQiLCJyZXBvcnRlZFdpbmRvd0RheXMiOjMsImV4YWN0U3RhcnRBdCI6bnVsbCwiZXhhY3RFbmRBdCI6bnVsbCwic3RhdGUiOiJwcmVzZW50X2luX2dlbmVyYXRpb24iLCJzb2xkIjp7Im1lZGlhblVuaXRQcmljZSI6IjM0NTY3Ljg5IiwiYXZlcmFnZVVuaXRQcmljZSI6Ijk5OTk5OSIsInJlcG9ydGVkU2FsZXNDb3VudCI6MTIsInJlcG9ydGVkVW5pdENvdW50Ijo5OSwicmVwb3J0ZWREYXlTYWxlc0NvdW50IjoxLCJyZXBvcnRlZERheVVuaXRDb3VudCI6Mn0sImFza2luZyI6eyJtZWRpYW5Vbml0UHJpY2UiOiIyNTAwMC4wNDk5OTk5OTk5OTk5OTk5OSIsInJlcG9ydGVkTGlzdGluZ0NvdW50Ijo5LCJyZXBvcnRlZFNlbGxlckNvdW50IjoyfSwidXBzdHJlYW1MYXRlc3RJbnNwZWN0ZWQiOmZhbHNlLCJmdWxsVmFyaWFudEZyZXNobmVzcyI6ZmFsc2UsImF2YWlsYWJpbGl0eUtub3duIjpmYWxzZSwibG93ZXN0TGlzdGluZ0tub3duIjpmYWxzZSwicXVhbGl0eU1hdGNoZWQiOmZhbHNlLCJ2ZXJpZmllZEluZGl2aWR1YWxUcmFkZXMiOmZhbHNlfQ=="
+    },
+    "notModified": {
+      "status": 304,
+      "headers": {
+        "cache-control": "private, no-store, no-transform",
+        "cdn-cache-control": "no-store",
+        "cloudflare-cdn-cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "\"basic-item-d251d58f5c766cd95228e0450e6d5cbbe6e7a46328d09cecc55aa94f69623abf\"",
+        "last-modified": "Fri, 06 Nov 2026 12:00:00 GMT",
+        "x-astra-basic-body-sha256": "e63fd20a39882e822b1b175918b5d4e291bb03670e74615cca396f7f88b6100b",
+        "x-astra-basic-body-verification": "producer-sql-attested-not-recomputed",
+        "x-astra-basic-captured-at": "2026-11-06T12:00:00.000Z",
+        "x-astra-basic-definition": "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705",
+        "x-astra-basic-epoch": "basic-local-golden-v1",
+        "x-astra-basic-generation": "2d23c1c6023b69da71eb25913f722946b29a9baca83561842383013adb4ffbd2",
+        "x-astra-basic-mode": "current",
+        "x-astra-basic-protocol": "basic-aggregate-v1",
+        "x-astra-basic-revision": "cac189b444b167d7ba8e556b690195b9c4b748a04ebf245be6ee859f7f36a3c1",
+        "x-astra-basic-verification": "committed-sql-and-selected-page",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex, nofollow, noarchive",
+        "x-astra-preview": "password"
+      },
+      "body": ""
+    },
+    "absent": {
+      "status": 404,
+      "headers": {
+        "cache-control": "private, no-store, no-transform",
+        "cdn-cache-control": "no-store",
+        "cloudflare-cdn-cache-control": "no-store",
+        "content-length": "753",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "\"basic-item-0edcb7745656cf626b0a2769a3136c29d4a22479e8417e939544dc6e06c63fdb\"",
+        "last-modified": "Fri, 06 Nov 2026 12:00:00 GMT",
+        "x-astra-basic-body-sha256": "b67aa160e2b4a5c9a36928957eba5d3445e669d8c3ba9b1242403a90816dd5cc",
+        "x-astra-basic-body-verification": "producer-sql-attested-not-recomputed",
+        "x-astra-basic-captured-at": "2026-11-06T12:00:00.000Z",
+        "x-astra-basic-definition": "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705",
+        "x-astra-basic-epoch": "basic-local-golden-v1",
+        "x-astra-basic-generation": "2d23c1c6023b69da71eb25913f722946b29a9baca83561842383013adb4ffbd2",
+        "x-astra-basic-mode": "absent",
+        "x-astra-basic-protocol": "basic-aggregate-v1",
+        "x-astra-basic-revision": "cac189b444b167d7ba8e556b690195b9c4b748a04ebf245be6ee859f7f36a3c1",
+        "x-astra-basic-verification": "committed-sql-and-selected-page",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex, nofollow, noarchive",
+        "x-astra-preview": "password"
+      },
+      "body": "eyJzY2hlbWFWZXJzaW9uIjoxLCJraW5kIjoiYmFzaWNfY3VycmVudF9pdGVtX3JlZmVyZW5jZSIsInByb2ZpbGUiOiJiYXNpY19hZ2dyZWdhdGVfdjEiLCJkZWZpbml0aW9uSGFzaCI6IjNkN2Y4MjU3ZGRhODU2OGFiOTllNzQzYTRlNmFkZWU4Y2E5MTE3ODY1MjhiNWU1NjkxOWQ2NTY3NWE3MjQ3MDUiLCJpdGVtSWQiOjk5OTk5OTk5OSwiZ2VuZXJhdGlvbiI6IjJkMjNjMWM2MDIzYjY5ZGE3MWViMjU5MTNmNzIyOTQ2YjI5YTliYWNhODM1NjE4NDIzODMwMTNhZGI0ZmZiZDIiLCJzb3VyY2VCb2R5U2hhMjU2IjoiNjZjZWQ2NDYyOWNkMTgyYTZkMjU0ZGMzOTc0YzI1YjRkNjE1YzFlOTJhYzUzNGQyZDA3MjU4ZjA3ZDc4YTY3OCIsImNhcHR1cmVkQXQiOiIyMDI2LTExLTA2VDEyOjAwOjAwLjAwMFoiLCJzb3VyY2VPYnNlcnZlZEF0IjpudWxsLCJjYXB0dXJlVGltZUtpbmQiOiJodHRwX3Jlc3BvbnNlX2NvbXBsZXRlZCIsInJlcG9ydGVkV2luZG93RGF5cyI6MywiZXhhY3RTdGFydEF0IjpudWxsLCJleGFjdEVuZEF0IjpudWxsLCJzdGF0ZSI6ImFic2VudF9pbl9nZW5lcmF0aW9uIiwic29sZCI6bnVsbCwiYXNraW5nIjpudWxsLCJ1cHN0cmVhbUxhdGVzdEluc3BlY3RlZCI6ZmFsc2UsImZ1bGxWYXJpYW50RnJlc2huZXNzIjpmYWxzZSwiYXZhaWxhYmlsaXR5S25vd24iOmZhbHNlLCJsb3dlc3RMaXN0aW5nS25vd24iOmZhbHNlLCJxdWFsaXR5TWF0Y2hlZCI6ZmFsc2UsInZlcmlmaWVkSW5kaXZpZHVhbFRyYWRlcyI6ZmFsc2V9"
+    },
+    "conflict": {
+      "status": 409,
+      "headers": {
+        "cache-control": "private, no-store, no-transform",
+        "cdn-cache-control": "no-store",
+        "cloudflare-cdn-cache-control": "no-store",
+        "content-length": "245",
+        "content-type": "application/json; charset=utf-8",
+        "x-astra-basic-captured-at": "2026-11-06T12:00:00.000Z",
+        "x-astra-basic-definition": "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705",
+        "x-astra-basic-epoch": "basic-local-golden-v1",
+        "x-astra-basic-generation": "2d23c1c6023b69da71eb25913f722946b29a9baca83561842383013adb4ffbd2",
+        "x-astra-basic-protocol": "basic-aggregate-v1",
+        "x-astra-basic-revision": "cac189b444b167d7ba8e556b690195b9c4b748a04ebf245be6ee859f7f36a3c1",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex, nofollow, noarchive",
+        "x-astra-preview": "password"
+      },
+      "body": "eyJzY2hlbWFWZXJzaW9uIjoxLCJraW5kIjoiYmFzaWNfaXRlbV9yZWZlcmVuY2VfZXJyb3IiLCJlcnJvciI6ImdlbmVyYXRpb25fY2hhbmdlZCIsInNvdXJjZU9ic2VydmVkQXQiOm51bGwsIml0ZW1JZCI6MjA0MDgwMSwiZ2VuZXJhdGlvbiI6IjJkMjNjMWM2MDIzYjY5ZGE3MWViMjU5MTNmNzIyOTQ2YjI5YTliYWNhODM1NjE4NDIzODMwMTNhZGI0ZmZiZDIiLCJjYXB0dXJlZEF0IjoiMjAyNi0xMS0wNlQxMjowMDowMC4wMDBaIn0="
+    },
+    "retained": {
+      "status": 200,
+      "headers": {
+        "cache-control": "private, no-store, no-transform",
+        "cdn-cache-control": "no-store",
+        "cloudflare-cdn-cache-control": "no-store",
+        "content-length": "994",
+        "content-type": "application/json; charset=utf-8",
+        "etag": "\"basic-item-d251d58f5c766cd95228e0450e6d5cbbe6e7a46328d09cecc55aa94f69623abf\"",
+        "last-modified": "Fri, 06 Nov 2026 12:00:00 GMT",
+        "x-astra-basic-body-sha256": "e63fd20a39882e822b1b175918b5d4e291bb03670e74615cca396f7f88b6100b",
+        "x-astra-basic-body-verification": "producer-sql-attested-not-recomputed",
+        "x-astra-basic-captured-at": "2026-11-06T12:00:00.000Z",
+        "x-astra-basic-definition": "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705",
+        "x-astra-basic-epoch": "basic-local-golden-v1",
+        "x-astra-basic-generation": "2d23c1c6023b69da71eb25913f722946b29a9baca83561842383013adb4ffbd2",
+        "x-astra-basic-mode": "retained",
+        "x-astra-basic-protocol": "basic-aggregate-v1",
+        "x-astra-basic-revision": "cac189b444b167d7ba8e556b690195b9c4b748a04ebf245be6ee859f7f36a3c1",
+        "x-astra-basic-verification": "committed-sql-and-selected-page",
+        "x-content-type-options": "nosniff",
+        "x-robots-tag": "noindex, nofollow, noarchive",
+        "x-astra-preview": "password"
+      },
+      "body": "eyJzY2hlbWFWZXJzaW9uIjoxLCJraW5kIjoiYmFzaWNfY3VycmVudF9pdGVtX3JlZmVyZW5jZSIsInByb2ZpbGUiOiJiYXNpY19hZ2dyZWdhdGVfdjEiLCJkZWZpbml0aW9uSGFzaCI6IjNkN2Y4MjU3ZGRhODU2OGFiOTllNzQzYTRlNmFkZWU4Y2E5MTE3ODY1MjhiNWU1NjkxOWQ2NTY3NWE3MjQ3MDUiLCJpdGVtSWQiOjIwNDA4MDEsImdlbmVyYXRpb24iOiIyZDIzYzFjNjAyM2I2OWRhNzFlYjI1OTEzZjcyMjk0NmIyOWE5YmFjYTgzNTYxODQyMzgzMDEzYWRiNGZmYmQyIiwic291cmNlQm9keVNoYTI1NiI6IjY2Y2VkNjQ2MjljZDE4MmE2ZDI1NGRjMzk3NGMyNWI0ZDYxNWMxZTkyYWM1MzRkMmQwNzI1OGYwN2Q3OGE2NzgiLCJjYXB0dXJlZEF0IjoiMjAyNi0xMS0wNlQxMjowMDowMC4wMDBaIiwic291cmNlT2JzZXJ2ZWRBdCI6bnVsbCwiY2FwdHVyZVRpbWVLaW5kIjoiaHR0cF9yZXNwb25zZV9jb21wbGV0ZWQiLCJyZXBvcnRlZFdpbmRvd0RheXMiOjMsImV4YWN0U3RhcnRBdCI6bnVsbCwiZXhhY3RFbmRBdCI6bnVsbCwic3RhdGUiOiJwcmVzZW50X2luX2dlbmVyYXRpb24iLCJzb2xkIjp7Im1lZGlhblVuaXRQcmljZSI6IjM0NTY3Ljg5IiwiYXZlcmFnZVVuaXRQcmljZSI6Ijk5OTk5OSIsInJlcG9ydGVkU2FsZXNDb3VudCI6MTIsInJlcG9ydGVkVW5pdENvdW50Ijo5OSwicmVwb3J0ZWREYXlTYWxlc0NvdW50IjoxLCJyZXBvcnRlZERheVVuaXRDb3VudCI6Mn0sImFza2luZyI6eyJtZWRpYW5Vbml0UHJpY2UiOiIyNTAwMC4wNDk5OTk5OTk5OTk5OTk5OSIsInJlcG9ydGVkTGlzdGluZ0NvdW50Ijo5LCJyZXBvcnRlZFNlbGxlckNvdW50IjoyfSwidXBzdHJlYW1MYXRlc3RJbnNwZWN0ZWQiOmZhbHNlLCJmdWxsVmFyaWFudEZyZXNobmVzcyI6ZmFsc2UsImF2YWlsYWJpbGl0eUtub3duIjpmYWxzZSwibG93ZXN0TGlzdGluZ0tub3duIjpmYWxzZSwicXVhbGl0eU1hdGNoZWQiOmZhbHNlLCJ2ZXJpZmllZEluZGl2aWR1YWxUcmFkZXMiOmZhbHNlfQ=="
+    }
+  },
+  "passwordMarker": "Synthetic transport setup only; no actual login/session or cookie",
+  "actualNetworkCalls": 0,
+  "providerCalls": 0
+}

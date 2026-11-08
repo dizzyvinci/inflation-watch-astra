@@ -1,4 +1,6 @@
 import copy
+import datetime as dt
+import hashlib
 import json
 from pathlib import Path
 import sys
@@ -8,6 +10,17 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import engine
+
+
+def expected_complete_source_window(feed):
+    # Independent test oracle from the original source publication, not engine
+    # output, wall-clock today, UI formatting, or the current 3-day reference.
+    published = dt.datetime.fromisoformat(feed['updatedAt'].replace('Z', '+00:00'))
+    if published.tzinfo is None:
+        raise ValueError('Source publication must have an explicit timezone')
+    end = published.astimezone(dt.timezone.utc).date()
+    start = end - dt.timedelta(days=7)
+    return start, end, [(start + dt.timedelta(days=i)).isoformat() for i in range(7)]
 
 
 class BasketV2Tests(unittest.TestCase):
@@ -143,8 +156,42 @@ class BasketV2Tests(unittest.TestCase):
         self.assertAlmostEqual(sum(row['changeContribution'] for row in report['rows']), report['latest']['cpi'] - 100)
         self.assertEqual(context['history'], next(item['h'] for item in self.real_feed['items'] if item['s'] == context['slug']))
         self.assertEqual(report['historyKind'], 'reconstructed')
-        self.assertEqual(report['recentStart'], '2026-10-28')
-        self.assertEqual(report['recentEndExclusive'], '2026-11-04')
+        start, end, complete_days = expected_complete_source_window(self.real_feed)
+        self.assertEqual(report['recentStart'], start.isoformat())
+        self.assertEqual(report['recentEndExclusive'], end.isoformat())
+        self.assertEqual((end - start).days, 7)
+        self.assertEqual(len(complete_days), 7)
+        self.assertEqual(complete_days[0], report['recentStart'])
+        self.assertEqual(complete_days[-1], (end - dt.timedelta(days=1)).isoformat())
+        self.assertNotIn(report['recentEndExclusive'], complete_days)
+        complete_quantity = sum(quantity for item in self.real_feed['items']
+                                for day, price, quantity in item['h']
+                                if day in complete_days)
+        partial_quantity = sum(quantity for item in self.real_feed['items']
+                               for day, price, quantity in item['h']
+                               if day == end.isoformat())
+        self.assertEqual(report['allRecentQuantity'], complete_quantity)
+        if partial_quantity > 0:
+            self.assertNotEqual(report['allRecentQuantity'], complete_quantity + partial_quantity)
+
+    def test_original_frozen_public_source_retains_historical_cpi_golden(self):
+        fixtures = Path(__file__).parent / 'fixtures'
+        raw = (fixtures / 'basket-v2-public-source-20261104.json').read_bytes()
+        plan_raw = (fixtures / 'basket-v2-public-plan-20261104.json').read_bytes()
+        self.assertEqual(len(raw), 898617)
+        self.assertEqual(hashlib.sha256(raw).hexdigest(), '0aa5f6abdd337f7c7448d4ef0ca93859f8e12e5705fb6642fc9ef4efcb125ce6')
+        self.assertEqual(hashlib.sha256(plan_raw).hexdigest(), 'efc9dba67121521d430d9fc0576c88f87bbb907a2c0f0ff37ea17fb2a3f3d26a')
+        frozen, plan = json.loads(raw), json.loads(plan_raw)
+        canonical = json.dumps(frozen, sort_keys=True, ensure_ascii=False,
+                               separators=(',', ':'), allow_nan=False).encode('utf-8')
+        self.assertEqual(hashlib.sha256(canonical).hexdigest(), '4c8b9d962f8d9801f7d73a55a4b7800711fe4ea277d84f028f017fcb205a65c9')
+        self.assertEqual(plan['sourceSnapshotHash'], hashlib.sha256(canonical).hexdigest())
+        self.assertEqual(plan['specificationHash'], '7bce8989052777865b0aba8c2c11dee2ed432c1f248330a4f47e56d3ddf74bf6')
+        self.assertEqual(frozen['updatedAt'], '2026-11-04T08:30:56+00:00')
+        self.assertFalse((self.root / 'cache' / 'basket-v2.json').exists())
+        report = engine.compute(copy.deepcopy(frozen), {'status': 'cached'})
+        self.assertEqual(report['sourceSnapshotHash'], plan['sourceSnapshotHash'])
+        self.assertEqual(report['specificationHash'], plan['specificationHash'])
         self.assertAlmostEqual(next(point['cpi'] for point in report['history'] if point['day'] == '2026-11-03'), 135.26395762542154)
 
     def test_site_only_copies_allowlisted_public_history(self):
@@ -153,7 +200,7 @@ class BasketV2Tests(unittest.TestCase):
         engine.atomic(self.root / 'history' / 'private-source.json', {'secret': 'private'})
         web = self.root / 'web'
         web.mkdir()
-        for filename in ('nx-stamp-finder.js', 'nx-stamp-finder.css', 'inventory-preview.js', 'inventory-preview.css', 'nx-history-browser.js', 'nx-history-browser.css', 'upcoming-announcements.js', 'upcoming-announcements.css', 'item-api-preview.js', 'api-calculations.js', 'api-item-panel.css', 'item-api-preview.css', 'index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', 'privacy-controls.js', 'privacy-controls.css', 'analytics-config.json', 'preview-runtime.js', 'preview-runtime.css', 'full-market-client.js', 'api-nx-protocol.js', 'api-nx-client.js', 'api-nx-ui.js', 'api-nx-ui.css', 'api-cash-protocol.js', 'api-cash-client.js', 'api-cash-ui.js', 'api-cash-ui.css', 'cash-activity-ranking.js', 'review-section-covers.js', 'review-section-covers.css', 'author-portrait.js', 'author-portrait.css', 'market-highlights.js', 'market-highlights.css', 'brand-preview.js', 'brand-preview.css', 'banner-art.js', 'banner-art.css', 'theme-preview.js', 'theme-preview.css', 'preview-controls.css', 'cash-catalog.js', 'cash-catalog.css', 'nx-benchmark.js', 'nx-benchmark.css', 'cash-client-catalog.js', 'cash-client-catalog.css', 'rate-arrival.js', 'rate-arrival.css', 'panel-size-preview.js', 'panel-size-preview.css', 'price-check.js', 'price-check.css', 'cash-highlights.js', 'cash-highlights.css', 'basket-history-layout.js', 'basket-history-layout.css', 'rate-clock.js', 'rate-clock.css', 'overview-basket.js', 'overview-basket.css', 'nav-preview.js', 'nav-preview.css', 'site-music.js', 'site-music.css', 'viewer-preview.js', 'viewer-preview.css', 'rate-title-preview.js', 'category-link-preview.js', 'category-link-preview.css', 'date-presentation.js', 'mystery-boxes.js', 'mystery-boxes.css', 'speculation.js', 'speculation.css', 'popular-fashion.js', 'popular-fashion.css', 'volatility-preview.js', 'volatility-preview.css', 'fm-backdrop-preview.js', 'fm-backdrop-preview.css', 'category-reference-preview.js', 'category-reference-preview.css', 'rolling-benchmark-preview.js', 'rolling-benchmark-preview.css', 'fee-preview.js', 'fee-preview.css', 'short-window-preview.js', 'short-window-preview.css', 'ellinia-backdrop-preview.js', 'ellinia-backdrop-preview.css', 'local-preview-refresh.js', '_headers', 'sw.js'):
+        for filename in ('nx-stamp-finder.js', 'nx-stamp-finder.css', 'inventory-preview.js', 'inventory-preview.css', 'nx-history-browser.js', 'nx-history-browser.css', 'upcoming-announcements.js', 'upcoming-announcements.css', 'item-api-preview.js', 'api-calculations.js', 'api-item-panel.css', 'item-api-preview.css', 'overview-window-activity.css', 'index.html', 'app.js', 'style.css', 'community.js', 'community.css', 'layout-preview.js', 'layout-preview.css', 'chart-interaction.js', 'chart-interaction.css', 'privacy-controls.js', 'privacy-controls.css', 'analytics-config.json', 'preview-runtime.js', 'preview-runtime.css', 'full-market-client.js', 'api-nx-protocol.js', 'api-nx-client.js', 'api-nx-ui.js', 'api-nx-ui.css', 'api-cash-protocol.js', 'api-cash-client.js', 'api-cash-ui.js', 'api-cash-ui.css', 'cash-activity-ranking.js', 'review-section-covers.js', 'review-section-covers.css', 'author-portrait.js', 'author-portrait.css', 'market-highlights.js', 'market-highlights.css', 'brand-preview.js', 'brand-preview.css', 'banner-art.js', 'banner-art.css', 'theme-preview.js', 'theme-preview.css', 'preview-controls.css', 'cash-catalog.js', 'cash-catalog.css', 'nx-benchmark.js', 'nx-benchmark.css', 'cash-client-catalog.js', 'cash-client-catalog.css', 'rate-arrival.js', 'rate-arrival.css', 'panel-size-preview.js', 'panel-size-preview.css', 'price-check.js', 'price-check.css', 'cash-highlights.js', 'cash-highlights.css', 'basket-history-layout.js', 'basket-history-layout.css', 'rate-clock.js', 'rate-clock.css', 'overview-basket.js', 'overview-basket.css', 'nav-preview.js', 'nav-preview.css', 'site-music.js', 'site-music.css', 'viewer-preview.js', 'viewer-preview.css', 'rate-title-preview.js', 'category-link-preview.js', 'category-link-preview.css', 'date-presentation.js', 'mystery-boxes.js', 'mystery-boxes.css', 'speculation.js', 'speculation.css', 'popular-fashion.js', 'popular-fashion.css', 'volatility-preview.js', 'volatility-preview.css', 'fm-backdrop-preview.js', 'fm-backdrop-preview.css', 'category-reference-preview.js', 'category-reference-preview.css', 'rolling-benchmark-preview.js', 'rolling-benchmark-preview.css', 'fee-preview.js', 'fee-preview.css', 'short-window-preview.js', 'short-window-preview.css', 'ellinia-backdrop-preview.js', 'ellinia-backdrop-preview.css', 'local-preview-refresh.js', '_headers', 'sw.js'):
             (web / filename).write_text('fixture', encoding='utf-8')
         # This file-copy test uses intentionally non-executable dummy HTML/JS.
         # The separate bundle/footer-lock suites exercise opt-ins using actual UI sources.

@@ -137,8 +137,9 @@
     add('line', { class: 'cash-highlight-reference', x1: rx1, y1: ry1, x2: rx2, y2: ry2, stroke: '#e3e4d6', 'stroke-width': 2 });
     add('line', { class: 'cash-highlight-needle', x1: 70, y1: 66, x2: x, y2: y, stroke: '#e3e4d6', 'stroke-width': 2 });
     add('circle', { class: 'cash-highlight-pivot', cx: 70, cy: 66, r: 4, fill: '#e3e4d6' });
-    add('text', { x: Math.max(12, Math.min(128, tx)), y: Math.max(8, ty - 2), 'text-anchor': 'middle' }).textContent = number(reference);
-    add('text', { x: 14, y: 84 }).textContent = '0'; add('text', { x: 126, y: 84, 'text-anchor': 'end' }).textContent = number(upper, 0);
+    const referenceLabel=number(reference),labelInset=Math.min(64,Math.max(20,referenceLabel.length*6+2));
+    add('text', { x: Math.max(labelInset, Math.min(140-labelInset, tx)), y: Math.max(14, Math.min(60, ty - 2)), 'text-anchor': 'middle' }).textContent = referenceLabel;
+    add('text', { x: 14, y: 82 }).textContent = '0'; add('text', { x: 126, y: 82, 'text-anchor': 'end' }).textContent = number(upper, 0);
     return svg;
   }
   function drawReference() {

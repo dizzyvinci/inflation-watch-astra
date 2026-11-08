@@ -1,12 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import worker, { collect, calculationFingerprint, referenceFingerprint, retainHistories, CALCULATION_MODEL_VERSION, MAX_PUBLIC_READ_FLIGHTS, MAX_SHARED_REPORT_BYTES } from '../ops/worker.mjs';
+import {historical,historicalWorker} from './fixtures/worker-historical-inputs.mjs';
+const {default:worker,collect,calculationFingerprint,referenceFingerprint,retainHistories,CALCULATION_MODEL_VERSION,MAX_PUBLIC_READ_FLIGHTS,MAX_SHARED_REPORT_BYTES}=await historicalWorker();
 import {createCachedProjectionFactory} from '../ops/market-catalog.mjs';
 
-const seed = JSON.parse(readFileSync(new URL('../dist/data.json', import.meta.url), 'utf8'));
-const compiledVersion = JSON.parse(readFileSync(new URL('../dist/version.json', import.meta.url), 'utf8'));
-const feed = JSON.parse(readFileSync(new URL('../cache/market.json', import.meta.url), 'utf8'));
+const seed = historical('report');
+const compiledVersion = historical('version');
+const feed = historical('feed');
 const cfg = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf8'));
 const catalogIdentities = JSON.parse(readFileSync(new URL('../catalog-identities-v2.json', import.meta.url), 'utf8'));
 const POINTER = 'version.json';

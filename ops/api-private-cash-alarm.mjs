@@ -1,3 +1,5 @@
+import {isOwnedOverviewActivityDelegate} from './api-overview-activity-registration.mjs';
+import {isOwnedBasicCurrentRegistryDelegate} from './api-basic-current-registration.mjs';
 import {isOwnedSearchIdentityRegistryDelegate} from './api-search-identity-registration.mjs';
 import {isOwnedFastCurrentRegistryDelegate} from './api-fast-current-registration.mjs';
 // WORK proposal: one existing owner/alarm, separate raw-provider and private-decode events.
@@ -30,7 +32,7 @@ export function privateCashConfig(env){
 
 export class ApiPrivateCashAlarm{
   constructor(ctx,env,core,{registryDelegate=null}={}){
-    if(registryDelegate!==null&&!isOwnedFastCurrentRegistryDelegate(registryDelegate,ctx,core,core.recurring)&&!isOwnedSearchIdentityRegistryDelegate(registryDelegate,ctx,core,core.recurring))throw TypeError('fast_registration_same_owner_delegate');
+    if(registryDelegate!==null&&!isOwnedFastCurrentRegistryDelegate(registryDelegate,ctx,core,core.recurring)&&!isOwnedSearchIdentityRegistryDelegate(registryDelegate,ctx,core,core.recurring)&&!isOwnedBasicCurrentRegistryDelegate(registryDelegate,ctx,core,core.recurring)&&!isOwnedOverviewActivityDelegate(registryDelegate,ctx,core,core.recurring))throw TypeError('fast_registration_same_owner_delegate');
     this.ctx=ctx;this.env=env;this.core=core;this.flight=null;this.recurringWork=registryDelegate??core.recurring;this.indexWork=core.indexBridge;this.fashionPilot=core.fixedFashionPilot;
     // A retained mux must keep tracking legacy provider set/delete operations
     // while the private feature is off. Never create one just for default-off.
@@ -195,7 +197,47 @@ export class ApiPrivateCashAlarm{
     }
   }
   async afterProviderEvent(recurringFrame){return this.scheduleStoredWork(recurringFrame);} // SQL only; never decode here.
-  chooseAlarm(){
+  // Explicit WORK opt-in only. No new flags, schema or reads on the Off path.
+  prepareFairProviderTurnsForWork(){
+    if(!this.hasMux||this.core.ctx!==this.ctx||this.core.env!==this.env)throw TypeError('provider_fairness_same_owner');
+    const columns=this.core.sql.exec('PRAGMA table_info(api_cash_alarm_mux)').toArray().map(r=>r.name),a=columns.includes('provider_turn_debt'),b=columns.includes('last_derived_kind');if(a!==b)throw TypeError('provider_fairness_schema_review');if(!a){this.core.sql.exec('ALTER TABLE api_cash_alarm_mux ADD COLUMN provider_turn_debt INTEGER NOT NULL DEFAULT 0');this.core.sql.exec('ALTER TABLE api_cash_alarm_mux ADD COLUMN last_derived_kind TEXT');this.core.sql.exec("UPDATE api_cash_alarm_mux SET last_derived_kind=CASE WHEN last_kind IN ('private','public','nx','nx-r2','items','history','discovery','registry','nx-history','calculations') THEN last_kind ELSE NULL END WHERE id=1");}this.fairState(this.row());
+  }
+  enableFairProviderTurnsForWork(){this.ctx.storage.transactionSync(()=>this.prepareFairProviderTurnsForWork());this.fairProviderTurns=true;this.core.fairMuxClaims=true;}
+  fairState(row){const kinds=['private','public','nx','nx-r2','items','history','discovery','registry','nx-history','calculations'];if(!Number.isSafeInteger(row.provider_turn_debt)||row.provider_turn_debt<0||row.provider_turn_debt>2||row.last_derived_kind!==null&&!kinds.includes(row.last_derived_kind))throw TypeError('provider_fairness_state_review');return kinds;}
+  fairPhysicalPending(){
+    const slot=this.recurringWork;let base=slot;
+    if(isOwnedOverviewActivityDelegate(base,this.ctx,this.core,this.core.recurring)){try{if(base.physicalPending!==false)return true;base=base.base;}catch{return true;}}
+    if(isOwnedBasicCurrentRegistryDelegate(base,this.ctx,this.core,this.core.recurring)){try{if(base.physicalPending!==false)return true;base=base.base;}catch{return true;}}
+    const fast=base?.base??base,w=fast?.inner,stamp=this.core.indexBridge?.stampReferences;
+    return !!(this.core.flight||this.flight||this.materializer?.flight||this.publisher?.flight||this.nxProducer?.flight||this.nxPublisher?.flight||this.itemWork?.producer?.flight||this.historyWork?.flight||this.discoveryWork?.flight||this.nxArchiveWork?.flight||this.indexWork?.flight||this.fashionPilot?.flight||this.fashionPilot?.pending||stamp?.pendingAction||stamp?.physical?.size||slot?.registry?.flight||slot?.owner?.busy||base?.owner?.busy||w?.journal?.gate?.task||w?.journal?.control()?.action_token||w?.writer?.pendingAction||w?.writer?.physical?.size||w?.publication?.pending||w?.publication?.reservation?.physical);
+  }
+  fairSourceReady(){return !this.fairPhysicalPending()&&this.core.hasReadyClaimForWork();}
+  chooseAlarm(){return this.fairProviderTurns?this.chooseFairAlarm():this.chooseLegacyAlarm();}
+  chooseFairAlarm(){
+    if(!this.active)return'provider';
+    const row=this.row(),now=this.core.clock();
+    const recoveryDue=row.recovery_at!==null&&row.recovery_at<=now;
+    const privateDue=this.cashActive&&([row.private_at].some(at=>at!==null&&at<=now)||recoveryDue);
+    const nxAt=this.nxActive?this.nxProducer.nextDue():null,nxDue=this.nxActive&&(nxAt!==null&&nxAt<=now||!this.cashActive&&recoveryDue);
+    const providerDue=row.provider_at!==null&&row.provider_at<=now;
+    const publicAt=this.cashActive?this.publisher?.nextDue()??null:null,publicDue=publicAt!==null&&publicAt<=now;
+    const nxR2At=this.nxR2Active?this.nxPublisher.nextDue():null,nxR2Due=nxR2At!==null&&nxR2At<=now;
+    const itemsAt=this.itemsActive?this.itemWork.nextDue():null,itemsDue=itemsAt!==null&&itemsAt<=now;
+    const historyAt=this.historyActive?this.historyWork.nextDue():null,historyDue=historyAt!==null&&historyAt<=now;
+    const discoveryAt=this.discoveryActive?this.discoveryWork.nextDue():null,discoveryDue=discoveryAt!==null&&discoveryAt<=now;
+    const registryAt=this.recurringActive?this.registryNextDue:null,registryDue=registryAt!==null&&registryAt<=now;
+    const nxArchiveAt=this.nxArchiveActive?this.nxArchiveWork.nextDue():null,nxArchiveDue=nxArchiveAt!==null&&nxArchiveAt<=now;
+    const indexAt=this.indexActive?this.indexWork.nextDue():null,indexDue=indexAt!==null&&indexAt<=now;
+    if(!indexDue&&!privateDue&&!providerDue&&!publicDue&&!nxDue&&!nxR2Due&&!itemsDue&&!historyDue&&!discoveryDue&&!registryDue&&!nxArchiveDue)return'early';
+    if(!providerDue||!this.fairSourceReady())return this.chooseLegacyAlarm();
+    const order=this.fairState(row),start=(order.indexOf(row.last_derived_kind)+1)%order.length,due={private:privateDue,public:publicDue,nx:nxDue,'nx-r2':nxR2Due,items:itemsDue,history:historyDue,discovery:discoveryDue,registry:registryDue,'nx-history':nxArchiveDue,calculations:indexDue};
+    const derived=[...order.slice(start),...order.slice(0,start)].find(k=>due[k]);return row.provider_turn_debt>=2||!derived?'provider':derived;
+  }
+  noteChosenDispatch(kind){
+    if(!this.fairProviderTurns||kind==='early')return;
+    this.ctx.storage.transactionSync(()=>{const row=this.row(),kinds=this.fairState(row);if(kind==='provider'){this.core.sql.exec("UPDATE api_cash_alarm_mux SET last_kind='provider',provider_at=NULL WHERE id=1");return;}if(!kinds.includes(kind))throw TypeError('provider_fairness_dispatch_kind');const eligible=row.provider_at!==null&&row.provider_at<=this.core.clock()&&this.fairSourceReady(),debt=eligible?Math.min(2,row.provider_turn_debt+1):row.provider_turn_debt;this.core.sql.exec(kind==='private'?"UPDATE api_cash_alarm_mux SET last_kind=?,last_derived_kind=?,provider_turn_debt=?,private_at=NULL,recovery_at=NULL WHERE id=1":"UPDATE api_cash_alarm_mux SET last_kind=?,last_derived_kind=?,provider_turn_debt=? WHERE id=1",kind,kind,debt);});
+  }
+  chooseLegacyAlarm(){
     if(!this.active)return'provider';
     const row=this.row(),now=this.core.clock();
     const recoveryDue=row.recovery_at!==null&&row.recovery_at<=now;

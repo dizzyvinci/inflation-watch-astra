@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {JSDOM,VirtualConsole}=require('jsdom');
-const root=path.resolve(__dirname,'..'),saved=JSON.parse(fs.readFileSync(path.join(root,'dist/data.json'),'utf8'));
+const root=path.resolve(__dirname,'..'),saved=require('./fixtures/dom-historical-inputs.cjs').createHistoricalDomInputs(root).report();
 const script=fs.readFileSync(path.join(root,'web/cash-highlights.js'),'utf8'),css=fs.readFileSync(path.join(root,'web/cash-highlights.css'),'utf8');
 const viewer=fs.readFileSync(path.join(root,'web/viewer-preview.css'),'utf8'),markers=fs.readFileSync(path.join(root,'web/preview-controls.css'),'utf8');
 const key='astra-cash-highlights-v1';

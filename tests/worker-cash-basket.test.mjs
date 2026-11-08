@@ -6,15 +6,16 @@ import { fileURLToPath } from 'node:url';
 import { computeCashBasket, computeReport } from '../ops/worker-core.mjs';
 
 const project = fileURLToPath(new URL('../', import.meta.url));
-const feed = JSON.parse(readFileSync(new URL('../cache/market.json', import.meta.url), 'utf8'));
-const seed = JSON.parse(readFileSync(new URL('../dist/data.json', import.meta.url), 'utf8'));
+import {historical} from './fixtures/worker-historical-inputs.mjs';
+const feed = historical('feed');
+const seed = historical('report');
 const cfg = JSON.parse(readFileSync(new URL('../config.json', import.meta.url), 'utf8'));
 // This pure Python call creates no canonical cache/build artifacts. It compares
 // both implementations from one identical frozen definition, before a rebuild.
 const expected = JSON.parse(execFileSync(process.env.PYTHON || 'python', ['-c', `
 import json
 from cash_basket import make_definition, compute_from_definition
-feed=json.load(open('cache/market.json',encoding='utf-8'))
+feed=json.load(open('tests/fixtures/worker-historical-market-20261104.json',encoding='utf-8'))
 cfg=json.load(open('config.json',encoding='utf-8'))
 print(json.dumps(compute_from_definition(feed,make_definition(feed,cfg),cfg),allow_nan=False))
 `], { cwd: project, encoding: 'utf8', maxBuffer: 5_000_000 }));

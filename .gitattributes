@@ -3,3 +3,4 @@
 assets/** -text
 dist/assets/** -text
 dist/data-*.json -text
+tests/fixtures/basic-settlement-original-owner.source.txt -text

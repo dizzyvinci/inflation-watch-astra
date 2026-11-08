@@ -149,6 +149,21 @@ export class ApiCollectorCore {
     });
   }
 
+  // Unwired WORK opt-in. Absence preserves the old schema and claim policy.
+  prepareFairClaimsForWork() {const columns=this.sql.exec('PRAGMA table_info(api_control)').toArray().map(r=>r.name);if(columns.includes('last_claim_class')!==columns.includes('bulk_claim_streak'))throw new TypeError('provider_fairness_partial_state');if(!columns.includes('last_claim_class')){this.sql.exec('ALTER TABLE api_control ADD COLUMN last_claim_class TEXT');this.sql.exec('ALTER TABLE api_control ADD COLUMN bulk_claim_streak INTEGER NOT NULL DEFAULT 0');}const row=this.row('SELECT last_claim_class,bulk_claim_streak FROM api_control WHERE id=1');if(row.last_claim_class!==null&&!['bulk','registered'].includes(row.last_claim_class)||!Number.isSafeInteger(row.bulk_claim_streak)||row.bulk_claim_streak<0||row.bulk_claim_streak>3)throw new TypeError('provider_fairness_state_review');}
+  enableFairClaimsForWork() {this.ctx.storage.transactionSync(()=>this.prepareFairClaimsForWork());this.fairClaims=true;}
+  fairPending(config,eligible,bulkStreak,limit=1,preview=false,at=this.clock()) {
+    if(![1,129].includes(limit)||limit===129&&!preview||typeof preview!=='boolean'||!finiteTime(at))throw new TypeError('provider_fairness_preview_bound');
+    if(!Number.isSafeInteger(bulkStreak)||bulkStreak<0||bulkStreak>3)throw new TypeError('provider_fairness_state_review');
+    const fields=preview?"CASE WHEN typeof(job_key)='text' AND length(CAST(job_key AS BLOB))<=160 THEN job_key END job_key,CASE WHEN typeof(operation)='text' AND length(CAST(operation AS BLOB))<=64 THEN operation END operation,CASE WHEN typeof(round_ref)='text' AND length(CAST(round_ref AS BLOB))<=64 THEN round_ref END round_ref,CASE WHEN typeof(attempts)='integer' AND attempts>=0 AND attempts<=9007199254740991 THEN attempts END attempts,CASE WHEN typeof(available_at)='integer' AND available_at>=0 AND available_at<8640000000000000 THEN available_at END available_at":'*';const staticOps=Object.keys(OPERATIONS),first=bulkStreak>=3?'registered':'bulk',out=[];
+    for(const cls of [first,first==='bulk'?'registered':'bulk']){const remaining=limit-out.length;if(remaining<=0)break;const classSql=`operation ${cls==='bulk'?'IN':'NOT IN'} (${staticOps.map(()=>'?').join(',')})`;const rows=this.sql.exec(`SELECT ${fields} FROM api_jobs WHERE state='pending' AND available_at<=? AND round_ref=? AND ${eligible.sql} AND ${classSql} ORDER BY api_jobs.available_at,api_jobs.job_key LIMIT ?`,at,config.probeRound,...eligible.args,...staticOps,remaining).toArray();out.push(...rows);if(limit===1&&out.length)break;}return out;
+  }
+  // A bounded read-only preview, never a physical permit or a charge. The real
+  // runOne/claim repeats authorization, quota, lease and identity checks.
+  hasReadyClaimForWork() {
+    try{const config=this.config(),now=this.clock(),c=this.row('SELECT * FROM api_control WHERE id=1');if(!config.enabled||this.flight||c.auth_stopped||now<c.blocked_until||now<c.next_allowed)return false;if(this.row("SELECT 1 n FROM api_jobs WHERE state='running' LIMIT 1"))return false;for(const[window,cap]of[[60000,config.grantedPerMinute],[86400000,this.dailyCap(config)]])if(this.row('SELECT COUNT(*) n FROM api_attempts WHERE at>?',now-window).n>=cap)return false;if(this.authorizationStatus()!=='ready')return false;const finiteScope=this.observed?.firstPass??(this.observed?.plan?this.observed:null);if(finiteScope&&finiteScope.ready!==true||this.observed?.recurring&&this.observed.recurring.ready!==true)return false;const required=this.observed?.plan?['api_observed_plans','api_observed_jobs']:[];if(this.observed?.recurring)required.push('api_recurring_policies','api_recurring_targets','api_recurring_jobs');if(required.some(name=>!this.row("SELECT 1 n FROM sqlite_master WHERE type='table' AND name=?",name)))return false;const eligible=this.eligible(config),rows=this.fairClaims?this.fairPending(config,eligible,c.bulk_claim_streak,129,true,now):this.sql.exec(`SELECT CASE WHEN typeof(job_key)='text' AND length(CAST(job_key AS BLOB))<=160 THEN job_key END job_key,CASE WHEN typeof(operation)='text' AND length(CAST(operation AS BLOB))<=64 THEN operation END operation,CASE WHEN typeof(round_ref)='text' AND length(CAST(round_ref AS BLOB))<=64 THEN round_ref END round_ref,CASE WHEN typeof(attempts)='integer' AND attempts>=0 AND attempts<=9007199254740991 THEN attempts END attempts,CASE WHEN typeof(available_at)='integer' AND available_at>=0 AND available_at<8640000000000000 THEN available_at END available_at FROM api_jobs WHERE state='pending' AND available_at<=? AND round_ref=? AND ${eligible.sql} ORDER BY job_key LIMIT 129`,now,config.probeRound,...eligible.args).toArray();for(const job of rows){if(typeof job.job_key!=='string'||job.job_key.length>160||typeof job.operation!=='string'||job.operation.length>64||job.round_ref!==config.probeRound||!Number.isSafeInteger(job.attempts)||job.attempts<0||!finiteTime(job.available_at))continue;const maximum=this.observed?.maxAttempts(job.operation,config);if(maximum&&job.attempts>=maximum)continue;if(own(OPERATIONS,job.operation)||this.observed?.registeredJobValid(job,config))return true;}return false;}catch{return false;}
+  }
+
   clock() {const now = this.now(); if (!finiteTime(now)) throw new TypeError('Invalid clock'); return now;}
   row(query, ...args) {return this.sql.exec(query, ...args).toArray()[0];}
   config() {return grantConfig(this.env);}
@@ -280,7 +295,7 @@ export class ApiCollectorCore {
       }
       let job=null;
       for(let checked=0;checked<129;checked++){
-        job=this.row(`SELECT * FROM api_jobs WHERE state='pending' AND available_at<=?
+        job=this.fairClaims?this.fairPending(config,eligible,control.bulk_claim_streak,1,false,now)[0]??null:this.row(`SELECT * FROM api_jobs WHERE state='pending' AND available_at<=?
           AND round_ref=? AND ${eligible.sql} ORDER BY job_key LIMIT 1`,now,config.probeRound,...eligible.args);
         if(!job||own(OPERATIONS,job.operation)||this.observed?.registeredJobValid(job,config))break;
         this.sql.exec("UPDATE api_jobs SET state='unavailable',last_result='invalid_registered_identity' WHERE job_key=?",job.job_key);
@@ -289,7 +304,8 @@ export class ApiCollectorCore {
       if (!job) return {status: 'idle'};
       const attempt = this.row('INSERT INTO api_attempts(job_key,at,grant_ref) VALUES(?,?,?) RETURNING id', job.job_key, now, config.grantReference).id;
       this.sql.exec("UPDATE api_jobs SET state='running',attempts=attempts+1,lease_until=?,attempt_id=? WHERE job_key=?", now+LEASE_MS, attempt, job.job_key);
-      this.sql.exec('UPDATE api_control SET next_allowed=? WHERE id=1', now+config.minimumRequestIntervalSeconds*1000);
+      if(this.fairClaims)this.sql.exec('UPDATE api_control SET next_allowed=?,last_claim_class=?,bulk_claim_streak=? WHERE id=1',now+config.minimumRequestIntervalSeconds*1000,own(OPERATIONS,job.operation)?'bulk':'registered',own(OPERATIONS,job.operation)?Math.min(3,control.bulk_claim_streak+1):0);else this.sql.exec('UPDATE api_control SET next_allowed=? WHERE id=1', now+config.minimumRequestIntervalSeconds*1000);
+      if(this.fairMuxClaims)this.sql.exec('UPDATE api_cash_alarm_mux SET provider_turn_debt=0 WHERE id=1');
       return {status: 'claimed', job: {...job, attempts: job.attempts+1, attempt_id: attempt}, startedAt: now};
     });
   }

@@ -88,7 +88,17 @@ function referencePeriodLabel(start=snapshot.baseStart,end=snapshot.baseEnd){
 }
 let displayTimeZone='UTC';
 try{const saved=localStorage.getItem('astra-display-timezone');if(saved){new Intl.DateTimeFormat('en-US',{timeZone:saved});displayTimeZone=saved;}}catch{}
-const utc=v=>v?new Date(v).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false,timeZone:displayTimeZone})+' '+displayTimeZone:'Not available';
+let instantLabelZone,instantLabelFormatter;
+function instantLabel(value,zone=displayTimeZone){
+ if(!value)return 'Not available';
+ const date=new Date(value);if(!Number.isFinite(date.valueOf()))return 'Not available';
+ // A source-calendar day has no viewing-zone conversion or invented time.
+ if(typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value))return date.toISOString().slice(0,10)===value?'('+value.slice(5,7)+'-'+value.slice(8,10)+'-'+value.slice(0,4)+')':'Not available';
+ if(zone!==instantLabelZone){try{instantLabelFormatter=new Intl.DateTimeFormat('en-US',{timeZone:zone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZoneName:'shortOffset'});instantLabelZone=zone;}catch{return zone==='UTC'?'Not available':instantLabel(value,'UTC');}}
+ const parts=Object.fromEntries(instantLabelFormatter.formatToParts(date).filter(part=>part.type!=='literal').map(part=>[part.type,part.value]));
+ return '('+parts.month+'-'+parts.day+'-'+parts.year+' '+parts.hour+':'+parts.minute+' '+zone+(zone==='UTC'?'':' '+parts.timeZoneName)+')';
+}
+const utc=v=>instantLabel(v);
 const zones=[...new Set(['UTC',...(Intl.supportedValuesOf?Intl.supportedValuesOf('timeZone'):['America/Chicago','America/New_York','America/Los_Angeles','Europe/London','Asia/Seoul','Asia/Tokyo']),displayTimeZone])];
 $('display-timezone').innerHTML=zones.map(zone=>`<option value="${esc(zone)}">${esc(zone.replaceAll('_',' '))}</option>`).join('');
 $('display-timezone').value=displayTimeZone;
@@ -313,7 +323,7 @@ function categoryGauge(index,scaleMax){
  const point=(v,r=52)=>{const angle=-Math.PI+v/upper*Math.PI;return [70+r*Math.cos(angle),66+r*Math.sin(angle)];};
  const [x,y]=point(value,43),[rx1,ry1]=point(100,46),[rx2,ry2]=point(100,58),[tx,ty]=point(100,65),[bx,by]=point(value);
  const endLabel=upper>=1e6?upper.toExponential(2).replace('e+','e'):number(upper);
- return `<svg class="category-gauge" viewBox="0 0 140 88" role="img" aria-label="MPI ${number(index,1)}; reference 100; shared scale 0 to ${number(upper)}; arc fills from 0 to ${number(index,1)}" data-index="${index}" data-scale-max="${upper}"><defs><linearGradient id="${gradient}" gradientUnits="userSpaceOnUse" x1="18" y1="66" x2="122" y2="66"><stop offset="0" stop-color="#40c9d6"/><stop offset="0.5" stop-color="#f3d44a"/><stop offset="0.8" stop-color="#ed8a37"/><stop offset="1" stop-color="#ef5350"/></linearGradient></defs><path d="M18 66A52 52 0 0 1 122 66" fill="none" stroke="#3c4c40" stroke-width="8"/><path class="category-value-arc" data-start-value="0" data-end-value="${value}" d="M18 66${value>0?`A52 52 0 0 1 ${bx} ${by}`:''}" fill="none" stroke="url(#${gradient})" stroke-width="8"/><line class="category-reference" x1="${rx1}" y1="${ry1}" x2="${rx2}" y2="${ry2}" stroke="#e3e4d6" stroke-width="2"/><line class="category-needle" x1="70" y1="66" x2="${x}" y2="${y}" stroke="#e3e4d6" stroke-width="2"/><circle cx="70" cy="66" r="4" fill="#e3e4d6"/><text x="${Math.max(12,Math.min(128,tx))}" y="${Math.max(8,ty-2)}" text-anchor="middle">100</text><text x="14" y="84">0</text><text class="category-scale-end" x="126" y="84" text-anchor="end">${endLabel}</text></svg>`;
+ return `<svg class="category-gauge" viewBox="0 0 140 88" role="img" aria-label="MPI ${number(index,1)}; reference 100; shared scale 0 to ${number(upper)}; arc fills from 0 to ${number(index,1)}" data-index="${index}" data-scale-max="${upper}"><defs><linearGradient id="${gradient}" gradientUnits="userSpaceOnUse" x1="18" y1="66" x2="122" y2="66"><stop offset="0" stop-color="#40c9d6"/><stop offset="0.5" stop-color="#f3d44a"/><stop offset="0.8" stop-color="#ed8a37"/><stop offset="1" stop-color="#ef5350"/></linearGradient></defs><path d="M18 66A52 52 0 0 1 122 66" fill="none" stroke="#3c4c40" stroke-width="8"/><path class="category-value-arc" data-start-value="0" data-end-value="${value}" d="M18 66${value>0?`A52 52 0 0 1 ${bx} ${by}`:''}" fill="none" stroke="url(#${gradient})" stroke-width="8"/><line class="category-reference" x1="${rx1}" y1="${ry1}" x2="${rx2}" y2="${ry2}" stroke="#e3e4d6" stroke-width="2"/><line class="category-needle" x1="70" y1="66" x2="${x}" y2="${y}" stroke="#e3e4d6" stroke-width="2"/><circle cx="70" cy="66" r="4" fill="#e3e4d6"/><text x="${Math.max(20,Math.min(120,tx))}" y="${Math.max(14,Math.min(60,ty-2))}" text-anchor="middle">100</text><text x="14" y="82">0</text><text class="category-scale-end" x="126" y="82" text-anchor="end">${endLabel}</text></svg>`;
 }
 
 function renderCategoryCards(){
@@ -935,4 +945,4 @@ document.addEventListener('astrahourlyhistorychange',()=>{if(snapshot)renderSmeg
 document.addEventListener('astranxhistorychange',()=>{if(snapshot)renderSmega();});
 document.addEventListener('astrabenchmarkmodechange',()=>{if(snapshot)render();});
 window.addEventListener('resize',()=>{if(snapshot&&$('view-highlights')&&!$('view-highlights').hidden)renderSmega();});
-route();focusRouteAnchor();checkSnapshot();setInterval(()=>{if(snapshot){if(!benchmarkHeadline(snapshot).live&&$('rate-kind').dataset.observationKind==='live')render();else{renderFreshness();renderSources();}}},30000);
+route();focusRouteAnchor();checkSnapshot();setInterval(()=>{if(snapshot){if(!benchmarkHeadline(snapshot).live&&$('rate-kind').dataset.observationKind==='live')render();else{renderFreshness();renderSources();}}document.dispatchEvent(new Event('astracalculationagetick'));},30000);

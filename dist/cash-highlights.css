@@ -10,7 +10,7 @@
 .cash-highlight-card h3 a{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--text);text-decoration:underline;text-underline-offset:3px}
 .cash-highlight-card h3 img{flex:none;width:40px;height:40px;object-fit:contain;image-rendering:pixelated}
 .cash-highlight-gauge{display:block;width:140px;max-width:100%;height:auto;margin:8px auto}
-.cash-highlight-gauge text{fill:var(--text);font:10px var(--font)}
+.cash-highlight-gauge text{fill:var(--text);font:12px var(--font);font-size:12px}
 .cash-highlight-arc-backplate{stroke:var(--text)}
 .cash-highlight-arc-track{stroke:var(--bg)}
 .cash-highlight-reference,.cash-highlight-needle{stroke:var(--text)}

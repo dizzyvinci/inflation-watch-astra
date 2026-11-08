@@ -24,7 +24,7 @@
     },
     {
       "path": "ui-src/api-calculations/entry.mjs",
-      "sha256": "8c0ef75b5730c81d1c2d34bd7610fe91d3bdf39d1e7831f6b750c6d2baea06bf"
+      "sha256": "66a93c2113961d06d598610959f4a197cb04fbef5c920a206002cf5ca106a06c"
     },
     {
       "path": "ui-src/api-calculations/runtime.mjs",
@@ -33,11 +33,37 @@
     {
       "path": "ui-src/api-calculations/view-model.mjs",
       "sha256": "5b72328fce8dd3268b2c395734b06d12914e7027348745397f77638b400f6ab4"
+    },
+    {
+      "path": "ui-src/item-api/reference-status.mjs",
+      "sha256": "d314ad72f628779cd972d92b5fa87bac17ec4ae818b87c3095319062480ff687"
+    },
+    {
+      "path": "ui-src/overview-activity/client.mjs",
+      "sha256": "a0ca5f9570c7fa354377cf7982c9b4fd0845afc40e671698483b117bdb887c88"
+    },
+    {
+      "path": "ui-src/overview-activity/contract.mjs",
+      "sha256": "c5da2b508638527cf0864734ffaa8cb690a261cda31b5d4571c741fdd2d37bad"
+    },
+    {
+      "path": "ui-src/overview-activity/integration.mjs",
+      "sha256": "9e57f61f5c7a8ae30667b1b9ff2697aa13adbc586a5ee78a34f08adca26d61da"
+    },
+    {
+      "path": "ui-src/overview-activity/view.mjs",
+      "sha256": "b2b201e21182af8a1c7812fe935a58436e001a8a8011d3d7a10996ba2a06d212"
     }
   ],
+  "style": {
+    "path": "ui-src/overview-activity/view.css",
+    "sha256": "5452ac0d914bd93dd0f4f537bd53e283d88e0f1a2e32a07f0ba4f73fd151b446",
+    "output": "web/overview-window-activity.css",
+    "bytes": 584
+  },
   "output": {
     "path": "web/api-calculations.js",
-    "sha256": "e04a0b46e531809d5415baf799670da2aa2704acb1fb74770e8035321517e4a4",
-    "bytes": 79867
+    "sha256": "72dc8204fbed4339172c5e45602f1b8bd4943e712cd23fe9e24564f1fa59dcab",
+    "bytes": 117544
   }
 }

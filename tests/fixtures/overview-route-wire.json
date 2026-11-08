@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "kind": "synthetic_actual_owner_overview_activity_route_wire",
+  "backendAccepted": false,
+  "actualNetworkOrProviderCalls": 0,
+  "sourceDeclaration": {
+    "scope": "Actual current constructor/Core.finish/registry SQL/shared one-parse summary/immutable write+readback/fake own-cache route; synthetic source only",
+    "capturedAt": "2026-11-06T12:00:01.000Z",
+    "rawBodySha256": "3db2dfd5a55abab7c009daa784fe08377079b8d2bdc9776c67b50c77c2755a3c",
+    "receivedItemRows": 2,
+    "sourceActorsPublished": false,
+    "sinceLaunchOrDaily": false
+  },
+  "profile": {
+    "status": 200,
+    "headers": {
+      "cache-control": "private, no-store, no-transform",
+      "cdn-cache-control": "no-store",
+      "cloudflare-cdn-cache-control": "no-store",
+      "content-length": "238",
+      "content-type": "application/json; charset=utf-8",
+      "x-content-type-options": "nosniff",
+      "x-robots-tag": "noindex, nofollow, noarchive"
+    },
+    "body": "{\"schemaVersion\":1,\"kind\":\"overview_activity_public_profile\",\"protocol\":\"overview-window-activity-v1\",\"definitionHash\":\"65bf9403902e24eb6ab24a9d9b3d1f2ec4c49304ec57671869208e45335f8b36\",\"publicEpoch\":\"activity-public-v1\",\"available\":true}"
+  },
+  "current": {
+    "status": 200,
+    "headers": {
+      "cache-control": "private, no-store, no-transform",
+      "cdn-cache-control": "no-store",
+      "cloudflare-cdn-cache-control": "no-store",
+      "content-length": "2288",
+      "content-type": "application/json; charset=utf-8",
+      "etag": "\"overview-activity-d23ddb572c88ac8340f45f6fd56f252914241a7a6694b592897d50a7281799df\"",
+      "x-astra-overview-activity-body-sha256": "d23ddb572c88ac8340f45f6fd56f252914241a7a6694b592897d50a7281799df",
+      "x-astra-overview-activity-captured-at": "2026-11-06T12:00:01.000Z",
+      "x-astra-overview-activity-epoch": "activity-public-v1",
+      "x-astra-overview-activity-generated-at": "2026-11-06T12:00:00.000Z",
+      "x-astra-overview-activity-state": "current",
+      "x-content-type-options": "nosniff",
+      "x-robots-tag": "noindex, nofollow, noarchive"
+    },
+    "body": "{\"schemaVersion\":1,\"kind\":\"overview_window_activity_response\",\"protocol\":\"overview-window-activity-v1\",\"definitionHash\":\"65bf9403902e24eb6ab24a9d9b3d1f2ec4c49304ec57671869208e45335f8b36\",\"publicEpoch\":\"activity-public-v1\",\"state\":\"current\",\"currentAgainstPublishedPointer\":true,\"upstreamLatestInspected\":false,\"reference\":{\"schemaVersion\":1,\"kind\":\"overview_window_activity\",\"profile\":\"overview_window_aggregate_v1\",\"definitionHash\":\"65bf9403902e24eb6ab24a9d9b3d1f2ec4c49304ec57671869208e45335f8b36\",\"generation\":\"296767d61b89633b351efc7031147c8202aa8b3b5b75f1414d3467e51c0e74bf\",\"sourceWitnessSha256\":\"b096781b5a6cc27471f7d419d2ce4997f3070fb0e5807159adb9d2cd9f248882\",\"derivedBodySha256\":\"f48db5e55cd285e714d1fed0f24aa4f22840d4ac0bc83f4d32568e12ea818dd3\",\"source\":{\"operation\":\"overview\",\"sourceUrl\":\"https://maplestory.market/api/market/overview\",\"rawBodySha256\":\"3db2dfd5a55abab7c009daa784fe08377079b8d2bdc9776c67b50c77c2755a3c\",\"capturedAt\":\"2026-11-06T12:00:01.000Z\",\"sourceObservedAt\":null,\"captureTimeKind\":\"http_response_completed\",\"sourceGeneratedAt\":\"2026-11-06T12:00:00.000Z\"},\"window\":{\"windowHours\":24,\"scannedHours\":23,\"previousScannedHours\":22,\"comparable\":true,\"exactStartAt\":null,\"exactEndAt\":null},\"coverage\":{\"receivedItemRows\":2,\"countEligibleItemRows\":2,\"reportedUnitEligibleItemRows\":2,\"sourceReportedMesosEligibleItemRows\":2,\"medianCountProxyEligibleItemRows\":1,\"medianCountProxyMissingPriceRows\":1},\"counterSums\":{\"sourceRecordedSalesCounterSumLexeme\":\"5\",\"sourceReportedUnitCounterSumLexeme\":\"15\",\"sourceReportedMesosSumLexeme\":\"22\",\"medianCountProxySumLexeme\":\"6.5\"},\"semantics\":{\"grain\":\"source_reported_overview_window_not_daily\",\"coverageUniverse\":\"received_overview_rows\",\"counterSums\":{\"sourceRecordedSalesCounterSumLexeme\":\"source_reported_counts_not_unique_or_verified_trades\",\"sourceReportedUnitCounterSumLexeme\":\"reported_unit_counters_not_standardized_market_volume\",\"sourceReportedMesosSumLexeme\":\"source_labelled_mesos_not_verified_trade_value\",\"medianCountProxySumLexeme\":\"median_unit_price_times_recorded_sales_count_not_actual_traded_mesos\"},\"exactObservationBoundsKnown\":false,\"sinceLaunch\":false,\"dailyLedgerIncluded\":false,\"itemRowsPublished\":false,\"uniqueParticipantsKnown\":false,\"marketInventoryKnown\":false,\"upstreamLatestInspected\":false}}}"
+  },
+  "head": {
+    "status": 200,
+    "headers": {
+      "cache-control": "private, no-store, no-transform",
+      "cdn-cache-control": "no-store",
+      "cloudflare-cdn-cache-control": "no-store",
+      "content-length": "2288",
+      "content-type": "application/json; charset=utf-8",
+      "etag": "\"overview-activity-d23ddb572c88ac8340f45f6fd56f252914241a7a6694b592897d50a7281799df\"",
+      "x-astra-overview-activity-body-sha256": "d23ddb572c88ac8340f45f6fd56f252914241a7a6694b592897d50a7281799df",
+      "x-astra-overview-activity-captured-at": "2026-11-06T12:00:01.000Z",
+      "x-astra-overview-activity-epoch": "activity-public-v1",
+      "x-astra-overview-activity-generated-at": "2026-11-06T12:00:00.000Z",
+      "x-astra-overview-activity-state": "current",
+      "x-content-type-options": "nosniff",
+      "x-robots-tag": "noindex, nofollow, noarchive"
+    },
+    "body": ""
+  },
+  "notModified": {
+    "status": 304,
+    "headers": {
+      "cache-control": "private, no-store, no-transform",
+      "cdn-cache-control": "no-store",
+      "cloudflare-cdn-cache-control": "no-store",
+      "content-length": "2288",
+      "content-type": "application/json; charset=utf-8",
+      "etag": "\"overview-activity-d23ddb572c88ac8340f45f6fd56f252914241a7a6694b592897d50a7281799df\"",
+      "x-astra-overview-activity-body-sha256": "d23ddb572c88ac8340f45f6fd56f252914241a7a6694b592897d50a7281799df",
+      "x-astra-overview-activity-captured-at": "2026-11-06T12:00:01.000Z",
+      "x-astra-overview-activity-epoch": "activity-public-v1",
+      "x-astra-overview-activity-generated-at": "2026-11-06T12:00:00.000Z",
+      "x-astra-overview-activity-state": "current",
+      "x-content-type-options": "nosniff",
+      "x-robots-tag": "noindex, nofollow, noarchive"
+    },
+    "body": ""
+  }
+}

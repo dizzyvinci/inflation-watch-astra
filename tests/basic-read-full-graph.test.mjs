@@ -1,0 +1,58 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';import vm from 'node:vm';
+import {fixture} from './basic-read-matrix-fixture.mjs';
+import {BASIC_CURRENT_CONTRACT_SHA} from '../ops/api-basic-current-registration.mjs';
+import {verifyBasicPrivateGraph,projectBasicPublicItem} from '../ops/api-basic-current-public-projection.mjs';
+import {parseBasicPublicItem,BASIC_PUBLIC_DEFINITION_SHA,BASIC_PRIVATE_CONTRACT_SHA,BASIC_PUBLIC_MAX_BYTES,ownBasicBytes} from '../ops/api-basic-current-public-contract.mjs';
+const enc=new TextEncoder(),sha=b=>createHash('sha256').update(b).digest('hex'),encode=v=>enc.encode(JSON.stringify(v)),clone=structuredClone;
+const cfg={schemaVersion:1,enabled:true,approvalRecorded:true,profile:'basic_aggregate_v1',contractSha256:BASIC_CURRENT_CONTRACT_SHA,grantReference:'synthetic-grant',roundReference:'synthetic-r1',epoch:'synthetic-basic-v1',publicationEnabled:false};
+async function produced(t,{extraItems=1239,change=null}={}){
+ const f=await fixture(t,{fast:false,extraItems,basicRegistrationConfig:cfg}),owner=f.owner.basicCurrentRegistration.owner,a=f.seed(change?change(f.prices()):f.prices());f.registry.reconcile(8);assert.equal((await f.registry.drainOne(async()=>{})).status,'registry_capture_accepted');
+ for(let i=0;i<200&&!f.row("SELECT gid FROM basic_generations WHERE role='current'");i++){await owner.drainOne(async()=>{});f.now[0]=Math.max(f.now[0]+1,owner.nextDue()??0);}const r=f.row("SELECT * FROM basic_generations WHERE role='current'");assert(r);
+ // Independent source/SQL expected witness is captured BEFORE any graph bytes.
+ const source=JSON.parse(r.source_json),job=f.row('SELECT state,attempt_id,lease_until,receipt_key FROM api_jobs WHERE job_key=?',source.jobKey),attempt=f.row('SELECT result FROM api_attempts WHERE id=?',source.attempt);f.registry.owned({receipt_key:source.receiptKey,job_key:source.jobKey,source_attempt:source.attempt,raw_sha:source.rawSha,request_at:Date.parse(source.requestAt),operation:'prices'});
+ assert.equal(job.state,'complete');assert.equal(job.attempt_id,null);assert.equal(job.lease_until,null);assert.equal(attempt.result,'success');assert.equal(job.receipt_key,source.receiptKey);
+ const e={schemaVersion:1,kind:'root_recorded_basic_private_graph_expected_v1',profile:'basic_aggregate_v1',privateContractSha256:BASIC_PRIVATE_CONTRACT_SHA,definitionHash:BASIC_PUBLIC_DEFINITION_SHA,generation:r.gid,pointerSha256:sha(enc.encode(r.pointer_raw)),manifestSha256:r.manifest_sha,manifestBytes:enc.encode(r.manifest_raw).length,bodySha256:r.body_sha,source,scope:JSON.parse(owner.control().scope_json),sourceJobState:job.state,sourceAttemptResult:attempt.result,sourceLiveAttemptId:job.attempt_id,sourceLeaseCleared:job.lease_until===null,basicGenerationRole:r.role,basicGenerationPhase:r.phase};
+ const expectedRaw=encode(e),expectedOriginalSha256=sha(expectedRaw),originalManifest=JSON.parse(r.manifest_raw),get=key=>{const b=f.objects.get(key)?.body;assert(b,key);return typeof b==='string'?enc.encode(b):new Uint8Array(b);};
+ const inputs={expectedRaw,expectedOriginalSha256,pointerRaw:get('_private/provider-api/v1/basic-current/v1/current.json'),manifestRaw:get('_private/provider-api/v1/basic-current/v1/objects/'+r.manifest_sha+'.json'),pagesRaw:originalManifest.pages.map(p=>get('_private/provider-api/v1/basic-current/v1/objects/'+p.sha+'.json'))};
+ assert.equal(f.reads.filter(k=>k===a.receiptKey).length,1);assert.equal(f.provider.length,0);return{f,a,e,inputs,owner};
+}
+const parse=out=>parseBasicPublicItem(out.raw,{expectedItemId:out.value.itemId,expectedDefinitionHash:BASIC_PUBLIC_DEFINITION_SHA,expectedPayloadSha256:sha(out.raw),expectedGeneration:out.value.generation,expectedCapturedAt:out.value.capturedAt});
+
+test('actual full1537 producer→originalSQL/source pins→all graph SHA/member/body validation→selected thin typed reader',async t=>{
+ const {f,a,inputs}=await produced(t),verified=await verifyBasicPrivateGraph(inputs);assert.equal(verified.itemCount,1537);const id=[...f.names.keys()].at(-1),out=projectBasicPublicItem(verified,id),dto=await parse(out);
+ assert.equal(dto.capturedAt,a.e.capturedAt);assert.equal(dto.state,'present_in_generation');assert.equal(dto.sold.medianUnitPrice,'34567.89');assert.equal(dto.sold.averageUnitPrice,'999999');assert.equal(dto.asking.medianUnitPrice,'25000.04999999999999999');assert.equal(dto.sold.reportedSalesCount,12);assert.equal(dto.sold.reportedUnitCount,99);assert.equal(dto.sold.reportedDaySalesCount,1);assert.equal(dto.sold.reportedDayUnitCount,2);assert.equal(dto.asking.reportedListingCount,9);assert.equal(dto.asking.reportedSellerCount,2);assert(out.raw.length<=BASIC_PUBLIC_MAX_BYTES);
+ assert.equal(dto.upstreamLatestInspected,false);assert.equal(dto.fullVariantFreshness,false);assert.equal(dto.availabilityKnown,false);assert.equal(dto.lowestListingKnown,false);assert.equal(dto.qualityMatched,false);assert.equal(dto.exactStartAt,null);assert.equal(dto.exactEndAt,null);assert.equal(dto.sourceObservedAt,null);assert.equal(dto.reportedWindowDays,3);const text=new TextDecoder().decode(out.raw);for(const privateField of ['grantReference','receiptKey','jobKey','roundReference','by_stats','by_scrolls','_private/','name','synthetic-grant'])assert(!text.includes(privateField),privateField);assert.equal(f.provider.length,0);
+});
+
+test('absence is specific generation null evidence, not zero; no fullprofile/stat/daily metadata merge',async t=>{
+ const {inputs}=await produced(t,{extraItems:0}),v=await verifyBasicPrivateGraph(inputs),old={capturedAt:'2020-01-01T00:00:00.000Z',by_stats:[{clock:'old'}],daily:[['2019-12-31',12]]},before=JSON.stringify(old),out=projectBasicPublicItem(v,999999999),dto=await parse(out);assert.equal(dto.state,'absent_in_generation');assert.equal(dto.itemId,999999999);assert.equal(dto.sold,null);assert.equal(dto.asking,null);assert.equal(dto.upstreamLatestInspected,false);assert.equal(JSON.stringify(old),before);assert(!('daily'in dto));assert(!('by_stats'in dto));assert.throws(()=>projectBasicPublicItem({...v},1),/verified_graph/);
+});
+
+test('genuine normalized known zero prices/counts survive while missing aggregate remains null and never becomes stock',async t=>{
+ const {f,inputs}=await produced(t,{extraItems:0,change:text=>{const rows=JSON.parse(text);rows[0].sold={...rows[0].sold,median_unit_price:0,avg_unit_price:null,sales:0,units:0,day_sales:0,day_units:0};rows[0].seen={...rows[0].seen,median_unit_price:0,listings:0,sellers:0};rows[1].sold=null;rows[1].seen=null;return JSON.stringify(rows);}}),v=await verifyBasicPrivateGraph(inputs),ids=[...f.names.keys()],zero=await parse(projectBasicPublicItem(v,ids[0])),missing=await parse(projectBasicPublicItem(v,ids[1]));
+ assert.equal(zero.sold.medianUnitPrice,'0');assert.equal(zero.sold.averageUnitPrice,null);assert.equal(zero.sold.reportedSalesCount,0);assert.equal(zero.asking.medianUnitPrice,'0');assert.equal(zero.asking.reportedListingCount,0);assert.equal(zero.asking.reportedSellerCount,0);assert.equal(zero.availabilityKnown,false);assert.equal(zero.lowestListingKnown,false);assert.equal(missing.state,'present_in_generation');assert.equal(missing.sold,null);assert.equal(missing.asking,null);
+});
+
+test('original expectations cannot come from changed pointer/body/source/definition; all-pages proof required',async t=>{
+ const {e,inputs}=await produced(t,{extraItems:0});
+ for(const mutate of [x=>x.bodySha256='0'.repeat(64),x=>x.definitionHash='0'.repeat(64),x=>x.privateContractSha256='0'.repeat(64),x=>x.sourceJobState='pending',x=>x.sourceAttemptResult='retry',x=>x.sourceLiveAttemptId=7,x=>x.sourceLeaseCleared=false,x=>x.basicGenerationRole='active',x=>x.basicGenerationPhase='readback',x=>x.source.jobKey+='-foreign']){const expected=clone(e);mutate(expected);const raw=encode(expected);await assert.rejects(verifyBasicPrivateGraph({...inputs,expectedRaw:raw,expectedOriginalSha256:sha(raw)}));}
+ const stale=clone(inputs);stale.expectedRaw[0]^=1;await assert.rejects(verifyBasicPrivateGraph(stale),/original_sha/);
+ const changed=clone(inputs);changed.pointerRaw[10]^=1;await assert.rejects(verifyBasicPrivateGraph(changed));const page=clone(inputs);page.pagesRaw[0][100]^=1;await assert.rejects(verifyBasicPrivateGraph(page));await assert.rejects(verifyBasicPrivateGraph({...inputs,pagesRaw:[]}));
+});
+
+test('caller buffer mutation after first await cannot rewrite owned graph authority; intrinsic subview sizes ignore shadows',async t=>{
+ const {inputs}=await produced(t,{extraItems:0}),data=clone(inputs),task=verifyBasicPrivateGraph(data);for(const b of [data.expectedRaw,data.pointerRaw,data.manifestRaw,...data.pagesRaw])b.fill(0);const verified=await task;assert(verified.itemCount>0);
+ const out=projectBasicPublicItem(verified,2040801),foreign=vm.runInNewContext('new Uint8Array(bytes)',{bytes:Array.from(out.raw)});Object.defineProperty(foreign,'byteLength',{value:999999999});Object.defineProperty(foreign,Symbol.iterator,{value(){throw Error('no iterator');}});assert.equal(ownBasicBytes(foreign,8192).length,out.raw.length);assert.equal((await parse({...out,raw:foreign})).itemId,2040801);
+});
+
+test('strict8192 body and8MiB page aggregate preflight; mismatched payload/hash/id/falsefreshness/privacy refuse',async t=>{
+ const {inputs}=await produced(t,{extraItems:0}),v=await verifyBasicPrivateGraph(inputs),out=projectBasicPublicItem(v,2040801);await assert.rejects(parseBasicPublicItem(new Uint8Array(8193),{expectedItemId:2040801,expectedDefinitionHash:BASIC_PUBLIC_DEFINITION_SHA,expectedPayloadSha256:sha(out.raw),expectedGeneration:out.value.generation,expectedCapturedAt:out.value.capturedAt}),/byte_bound/);
+ const original=crypto.subtle.digest.bind(crypto.subtle);let hashes=0;crypto.subtle.digest=(...a)=>{hashes++;return original(...a);};try{await assert.rejects(verifyBasicPrivateGraph({...inputs,pagesRaw:Array(33).fill(new Uint8Array(262144))}),/graph_total/);assert.equal(hashes,0);}finally{crypto.subtle.digest=original;}
+ for(const change of [d=>d.upstreamLatestInspected=true,d=>d.fullVariantFreshness=true,d=>d.lowestListingKnown=true,d=>d.reportedWindowDays=1,d=>d.grantReference='private-canary',d=>d.itemId=7,d=>d.sold.reportedSalesCount=-1]){const dto=clone(out.value);change(dto);const raw=encode(dto);await assert.rejects(parseBasicPublicItem(raw,{expectedItemId:2040801,expectedDefinitionHash:BASIC_PUBLIC_DEFINITION_SHA,expectedPayloadSha256:sha(raw),expectedGeneration:out.value.generation,expectedCapturedAt:out.value.capturedAt}));}
+ await assert.rejects(parseBasicPublicItem(out.raw,{expectedItemId:2040801,expectedDefinitionHash:BASIC_PUBLIC_DEFINITION_SHA,expectedPayloadSha256:'0'.repeat(64),expectedGeneration:out.value.generation,expectedCapturedAt:out.value.capturedAt}),/body_hash/);
+});
+
+test('post-digest original budget and cancellation reject without result/no new timer or I/O',async t=>{
+ const {inputs}=await produced(t,{extraItems:0}),original=crypto.subtle.digest.bind(crypto.subtle);let mono=0;crypto.subtle.digest=async(...args)=>{const b=await original(...args);mono=21;return b;};try{await assert.rejects(verifyBasicPrivateGraph({...inputs,monotonic:()=>mono,waitMs:20}),/deadline/);}finally{crypto.subtle.digest=original;}
+ const c=new AbortController();c.abort();await assert.rejects(verifyBasicPrivateGraph({...inputs,signal:c.signal}),/deadline/);const v=await verifyBasicPrivateGraph(inputs),out=projectBasicPublicItem(v,2040801);await assert.rejects(parseBasicPublicItem(out.raw,{expectedItemId:2040801,expectedDefinitionHash:BASIC_PUBLIC_DEFINITION_SHA,expectedPayloadSha256:sha(out.raw),expectedGeneration:out.value.generation,expectedCapturedAt:out.value.capturedAt,signal:c.signal}),/deadline/);
+});

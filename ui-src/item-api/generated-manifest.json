@@ -7,6 +7,22 @@
   "target": "es2022",
   "inputs": [
     {
+      "path": "ops/api-basic-current-public-contract.mjs",
+      "sha256": "77c30fd7450457a521f19f1def513a19a48ff7749b88205990d99a5fac79c843"
+    },
+    {
+      "path": "ops/api-basic-current-public-definition-v1.json",
+      "sha256": "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705"
+    },
+    {
+      "path": "ops/api-basic-item-http-protocol.mjs",
+      "sha256": "de59234b40ef0086301a29244e7516c0c6bb72dfa1317d0f9ddacd9f1302ceb1"
+    },
+    {
+      "path": "ops/api-basic-public-structure.mjs",
+      "sha256": "4ccc21cccdc4e3a857a37681916f18a79c910083ede274d4fce76cfec6d552ba"
+    },
+    {
       "path": "ops/api-cash-projection.mjs",
       "sha256": "9dc60f5e94236ec4f8f3ba37d50b698a9ef0bfb3edb9892f343d3ece8375f525"
     },
@@ -67,6 +83,18 @@
       "sha256": "97549f7ff3aae7e67352ff811505eb8bac246ecf65ec5c3601182e378342680e"
     },
     {
+      "path": "ui-src/item-api/basic-loader.mjs",
+      "sha256": "b164f4b7746777b5985aa58d4370b19a093c8fb4b06d3d4063fac3ce54af6fc3"
+    },
+    {
+      "path": "ui-src/item-api/basic-panel.mjs",
+      "sha256": "a3346e98865a9804d350513681217dc5d522d1ae529e65cac0f4e1d1c960e14d"
+    },
+    {
+      "path": "ui-src/item-api/basic-profile.mjs",
+      "sha256": "24a940a165644137fdb07f409777a49a05edbe96c3da4345e258828a90d49d8c"
+    },
+    {
       "path": "ui-src/item-api/discovery-bridge.mjs",
       "sha256": "8ebf1dbb8a702bc843e7671c5d462db6fca2e9fa79cd5eb5f485be1aeaba2c5a"
     },
@@ -76,7 +104,7 @@
     },
     {
       "path": "ui-src/item-api/entry.mjs",
-      "sha256": "34dee62d36a3a773c6279fd84838e7da003f7fb0b776be3498a251a50f6138f6"
+      "sha256": "3b8adfd2e1657c1f9a8e5f9750a93f7390acdbbee5fa4c3c9e6ec8fa70e0733b"
     },
     {
       "path": "ui-src/item-api/history.mjs",
@@ -117,7 +145,7 @@
   ],
   "output": {
     "path": "web/item-api-preview.js",
-    "sha256": "85a44b0f0f4f434f97b8f98207769f8c1dc44724476c4e1a82b12e3aeca3b667",
-    "bytes": 168079
+    "sha256": "ed1988ad0c12d4531a8dc7fc2abde4f0263fa5a81f569df09080d2eba9ed595f",
+    "bytes": 206270
   }
 }

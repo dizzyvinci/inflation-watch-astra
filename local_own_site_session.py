@@ -32,6 +32,10 @@ def metadata(h,status):
     return out
 def route_limit(path):
     need(type(path) is str and len(path)<=250 and '%' not in path and '\\' not in path)
+    if path=='/api-overview-window-activity/profile.json':return 512
+    if path=='/api-overview-window-activity/current.json':return 8192
+    if path=='/api-basic-item-prices/profile.json':return 512
+    if re.fullmatch(r'/api-basic-item-prices/[1-9][0-9]{0,8}\.json(?:\?generation=[a-f0-9]{64})?',path):return 8192
     if path in {'/api-cash-items.json','/api-nx-offers.json','/api-market-calculations.json'}:return 100000 if path=='/api-cash-items.json' else 600000
     if path in {'/api-nx-history.json','/api-item-history/1082002/manifest.json','/api-stamp-references.json'}:return 131072
     if path=='/api-search-identities/v2/manifest.json':return 65536
@@ -44,8 +48,11 @@ def route_limit(path):
     if re.fullmatch(r'/api-item-history/1082002/week/[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{1,3}-[a-f0-9]{64}\.json\?generation=[a-f0-9]{64}',path):return 262144
     raise AuthenticationUnavailable()
 def valid_conditions(path,conditions):
-    need(type(conditions)is dict and set(conditions)<={'If-None-Match','X-Astra-Request-Item-Protocol'})
+    need(type(conditions)is dict and set(conditions)<={'If-None-Match','X-Astra-Request-Item-Protocol','X-Astra-Request-Basic-Protocol','X-Astra-Request-Overview-Activity-Protocol'})
     need(all(type(v)is str and len(v)<=160 and '\r'not in v and '\n'not in v for v in conditions.values()))
+    if path in {'/api-overview-window-activity/profile.json','/api-overview-window-activity/current.json'}:need(conditions.get('X-Astra-Request-Overview-Activity-Protocol')=='overview-window-activity-v1')
+    if 'X-Astra-Request-Overview-Activity-Protocol'in conditions:need(conditions['X-Astra-Request-Overview-Activity-Protocol']=='overview-window-activity-v1'and path in {'/api-overview-window-activity/profile.json','/api-overview-window-activity/current.json'})
+    if 'X-Astra-Request-Basic-Protocol'in conditions:need(conditions['X-Astra-Request-Basic-Protocol']=='basic-aggregate-v1' and re.fullmatch(r'/api-basic-item-prices/[1-9][0-9]{0,8}\.json(?:\?generation=[a-f0-9]{64})?',path)is not None)
     if 'X-Astra-Request-Item-Protocol'in conditions:need(conditions['X-Astra-Request-Item-Protocol']=='fast-current-v1' and re.fullmatch(r'/api-item-prices/[1-9][0-9]{0,8}\.json(?:\?generation=[a-f0-9]{64})?',path)is not None)
 
 @dataclass(frozen=True)
@@ -120,7 +127,7 @@ class OwnSiteSession:
             need(self.enabled and epoch==self.epoch and job['done'])
             if job['error'] is not None:raise job['error']
             return job['value']
-    def _request(self,path,*,timeout,limit,login_password=None,conditions=None,on_fast_withdrawal=None):
+    def _request(self,path,*,timeout,limit,login_password=None,conditions=None,on_fast_withdrawal=None,on_basic_withdrawal=None,on_overview_withdrawal=None):
         valid_conditions(path,conditions if conditions is not None else {})
         if login_password is not None:need(path=='/__preview_login' and not conditions and limit==0)
         else:need((path==STATUS and limit==4096 and not conditions) or (path!=STATUS and route_limit(path)==limit))
@@ -146,7 +153,11 @@ class OwnSiteSession:
                 return jar
             need('set-cookie' not in h)
             fast_negative=(conditions or {}).get('X-Astra-Request-Item-Protocol')=='fast-current-v1' and status in (404,409)
-            if status!=200 and not fast_negative:return RawResponse(status,h,b'')
+            basic_negative=(conditions or {}).get('X-Astra-Request-Basic-Protocol')=='basic-aggregate-v1' and status in (404,409)
+            overview_negative=(conditions or {}).get('X-Astra-Request-Overview-Activity-Protocol')=='overview-window-activity-v1'and status in (404,409)
+            if status==404 and overview_negative and on_overview_withdrawal is not None:on_overview_withdrawal(dict(h))
+            if status==404 and basic_negative and on_basic_withdrawal is not None:on_basic_withdrawal(dict(h))
+            if status!=200 and not fast_negative and not basic_negative and not overview_negative:return RawResponse(status,h,b'')
             if fast_negative:limit=4096
             if status==404 and fast_negative and h.get('x-astra-api-item-protocol')=='fast-current-v1' and re.fullmatch(r'[a-z][a-z0-9-]{0,63}',h.get('x-astra-api-item-epoch','')) and on_fast_withdrawal is not None:on_fast_withdrawal(dict(h))
             need(h.get('content-encoding','identity')=='identity');length=h.get('content-length');need(length is None or length.isdigit() and int(length)<=limit)
@@ -184,11 +195,15 @@ class OwnSiteSession:
                         if h.get('x-astra-preview')=='review':self._review(epoch)
             def read():
                 # Private request helper owns all headers, with only a bounded ETag condition.
+                if conditions.get('X-Astra-Request-Overview-Activity-Protocol')=='overview-window-activity-v1':return self._request(path,conditions=conditions,timeout=timeout,limit=limit,on_overview_withdrawal=observe)
+                if conditions.get('X-Astra-Request-Basic-Protocol')=='basic-aggregate-v1':return self._request(path,conditions=conditions,timeout=timeout,limit=limit,on_basic_withdrawal=observe)
                 if conditions.get('X-Astra-Request-Item-Protocol')=='fast-current-v1':return self._request(path,conditions=conditions,timeout=timeout,limit=limit,on_fast_withdrawal=observe)
                 return self._request(path,conditions=conditions,timeout=timeout,limit=limit)
             left=deadline-self.clock();need(left>0)
             key=('data',path,conditions.get('If-None-Match'))
+            if 'X-Astra-Request-Overview-Activity-Protocol'in conditions:key+=('overview-window-activity-v1',)
             if 'X-Astra-Request-Item-Protocol'in conditions:key+=('fast-current-v1',)
+            if 'X-Astra-Request-Basic-Protocol'in conditions:key+=('basic-aggregate-v1',)
             try:r=self._run(key,read,left,epoch)
             except AuthenticationUnavailable as e:
                 with self.cv:
@@ -206,7 +221,11 @@ class OwnSiteSession:
                     with self.cv:self._failure(self.epoch,401)
                     raise AuthenticationUnavailable(401)
                 raise AuthenticationUnavailable()
-            if r.status in (200,304) or conditions.get('X-Astra-Request-Item-Protocol')=='fast-current-v1' and r.status in (404,409):
+            if conditions.get('X-Astra-Request-Overview-Activity-Protocol')=='overview-window-activity-v1'and r.status in (404,409):
+                need(r.headers.get('x-astra-preview')in {'review','password'}and r.headers.get('content-type','').split(';')[0].strip().lower()=='application/json')
+                if r.headers.get('x-astra-preview')!='password':
+                    with self.cv:self._review(epoch)
+            if r.status in (200,304) or conditions.get('X-Astra-Request-Item-Protocol')=='fast-current-v1' and r.status in (404,409) or conditions.get('X-Astra-Request-Basic-Protocol')=='basic-aggregate-v1' and r.status in (404,409):
                 need(r.headers.get('x-astra-preview') in {'review','password'})
                 if r.status!=304:need(r.headers.get('content-type','').split(';')[0].strip().lower()=='application/json')
                 if r.headers.get('x-astra-preview')!='password':

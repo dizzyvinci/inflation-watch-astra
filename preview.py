@@ -21,6 +21,9 @@ from local_item_hour_reader import LocalItemHourReader
 from local_calculations_reader import LocalCalculationsReader, inject_local_availability
 from local_stamp_reference_reader import LocalStampReferenceReader, inject_local_availability as inject_stamp_availability
 from local_current_search_reader import LocalCurrentSearchReader, attach_current_search_reader, inject_local_availability as inject_current_search_availability
+from local_basic_item_reader import LocalBasicItemReader, attach_basic_item_reader
+from local_overview_activity_reader import LocalOverviewActivityReader, attach_overview_activity_reader, inject_overview_availability
+from local_login import LocalBrowserLogin, PATH as LOCAL_LOGIN_PATH, is_login_target as is_local_login_target
 from local_own_site_session import (OwnSiteSession, AuthenticationUnavailable, attach_readers, control_response,
                                    local_request_allowed, read_password)
 
@@ -36,14 +39,64 @@ _item_hours = LocalItemHourReader(ROOT)
 _calculations = LocalCalculationsReader(ROOT, enabled=lambda: os.environ.get("LOCAL_API_CALCULATIONS") == "1")
 _stamps = LocalStampReferenceReader(ROOT, enabled=lambda: os.environ.get("LOCAL_STAMP_REFERENCES") == "1")
 _own_session = OwnSiteSession()
+_basic_items = LocalBasicItemReader(config=lambda: os.environ.get("LOCAL_BASIC_ITEM_PRICES_JSON"))
 _current_search = LocalCurrentSearchReader(ROOT, config=lambda: os.environ.get("LOCAL_CURRENT_SEARCH_JSON"))
+_overview_activity = LocalOverviewActivityReader(ROOT, config=lambda: os.environ.get("LOCAL_OVERVIEW_WINDOW_ACTIVITY_JSON"))
 
 def enable_private_own_site(password):
     _own_session.configure(password)
+    _attach_private_readers()
+
+def _attach_private_readers():
     attach_readers(_own_session, cash=_cash, nx=_nx, items=_items, nx_history=_nx_history,
                    item_hours=_item_hours, calculations=_calculations, stamp_references=_stamps)
     attach_current_search_reader(_own_session, _current_search)
+    attach_basic_item_reader(_own_session, _basic_items)
+    attach_overview_activity_reader(_own_session, _overview_activity)
 
+
+
+_browser_login = LocalBrowserLogin(_own_session, _attach_private_readers)
+
+def _serve_browser_login(handler):
+    if not is_local_login_target(handler.path):return False
+    def read_body(size, timeout):
+        previous = handler.connection.gettimeout()
+        deadline = time.monotonic() + timeout
+        parts = [];remaining = size
+        try:
+            while remaining:
+                left = deadline - time.monotonic()
+                if left <= 0:raise TimeoutError('local_login_body_timeout')
+                handler.connection.settimeout(left)
+                chunk = handler.rfile.read1(remaining)
+                if not chunk:break
+                parts.append(chunk);remaining -= len(chunk)
+            return b''.join(parts)
+        finally:handler.connection.settimeout(previous)
+    result = _browser_login.handle(handler.command, handler.path, handler.headers,
+                                  bind_host=handler.server.server_address[0], client_host=handler.client_address[0],
+                                  port=handler.server.server_address[1], read_body=read_body)
+    handler._catalog_response = True
+    handler._local_login_response = True
+    handler.close_connection = True
+    handler.send_response(result.status)
+    for name, value in result.headers.items():handler.send_header(name, value)
+    handler.end_headers()
+    if handler.command != 'HEAD':handler.wfile.write(result.body)
+    return True
+
+
+def _serve_overview_activity(handler):
+    if type(handler.path)is not str or not handler.path.startswith('/api-overview-window-activity/'):return False
+    response = _overview_activity.handle(handler.command,handler.path,handler.headers,bind_host=handler.server.server_address[0],client_host=handler.client_address[0],port=handler.server.server_address[1])
+    if response is None:return False
+    handler._catalog_response=True
+    handler.send_response(response.status)
+    for name,value in response.headers.items():handler.send_header(name,value)
+    handler.end_headers()
+    if response.body and handler.command!='HEAD':handler.wfile.write(response.body)
+    return True
 
 
 class PreviewBuildError(RuntimeError):
@@ -180,6 +233,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self,*args,**kwargs):
         super().__init__(*args,directory=str(ROOT/'dist'),**kwargs)
     def do_GET(self):
+        if _serve_browser_login(self):return
         if self._serve_private_control():return
         if self._serve_catalog():return
         if self._serve_calculation_index():return
@@ -207,6 +261,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self._etag=tag
         super().do_GET()
     def do_HEAD(self):
+        if _serve_browser_login(self):return
         if self._serve_private_control():return
         if self._serve_catalog():return
         if self._serve_calculation_index():return
@@ -232,7 +287,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             path = ROOT / 'dist' / 'index.html'
             if path.stat().st_size > 2_000_000:return False
             raw = path.read_bytes()
-            body = inject_current_search_availability(inject_stamp_availability(inject_local_availability(raw, _calculations.active()), _stamps.active()), _current_search.available())
+            body = inject_overview_availability(inject_current_search_availability(inject_stamp_availability(inject_local_availability(raw, _calculations.active()), _stamps.active()), _current_search.available()), _overview_activity.available())
         except (OSError, ValueError):return False
         if body == raw:return False
         self.send_response(200)
@@ -241,7 +296,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.end_headers()
         if self.command != 'HEAD':self.wfile.write(body)
         return True
+    def _serve_basic_items(self):
+        response = _basic_items.handle(self.command, self.path, self.headers,
+                                      bind_host=self.server.server_address[0], client_host=self.client_address[0],
+                                      port=self.server.server_address[1])
+        if response is None:return False
+        self._catalog_response = True
+        self.send_response(response.status)
+        for name, value in response.headers.items():self.send_header(name, value)
+        self.end_headers()
+        if response.body and self.command != "HEAD":self.wfile.write(response.body)
+        return True
     def _serve_catalog(self):
+        if _serve_overview_activity(self):return True
+        if self._serve_basic_items():return True
         self._catalog_response = False
         response = _current_search.handle(self.command, self.path, self.headers,
                                bind_host=self.server.server_address[0],client_host=self.client_address[0],port=self.server.server_address[1])
@@ -268,6 +336,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if response.body:self.wfile.write(response.body)
         return True
     def _catalog_or_unsupported(self):
+        if _serve_browser_login(self):return
         if self._serve_private_control():return
         if not self._serve_catalog():self.send_error(501, 'Unsupported method')
     do_POST = do_PUT = do_DELETE = do_PATCH = do_OPTIONS = _catalog_or_unsupported
@@ -285,6 +354,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         try:return _own_session.verified_profile()['unlocked'] is True
         except AuthenticationUnavailable:return False
     def end_headers(self):
+        if getattr(self, '_local_login_response', False):
+            super().end_headers();return
         if getattr(self,'_etag',None):self.send_header('ETag',self._etag);self._etag=None
         if not getattr(self, '_catalog_response', False):
             private_candidate = self._private_json_candidate()
@@ -300,6 +371,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Referrer-Policy','strict-origin-when-cross-origin')
         super().end_headers()
     def log_message(self,fmt,*args):
+        if is_local_login_target(getattr(self, 'path', '')):return
         if args and str(args[0]).startswith(('GET /version.json', 'GET /__ui_version')):return
         super().log_message(fmt,*args)
 
@@ -312,20 +384,35 @@ def collector():
         except PreviewBuildError as error:
             print(json.dumps({'refresh':'failed','reason':str(error),'retainedNamedSnapshots':True}),flush=True)
 
-if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8765);parser.add_argument('--offline',action='store_true');parser.add_argument('--no-collector',action='store_true');parser.add_argument('--private-own-site',action='store_true');parser.add_argument('--private-password-stdin',action='store_true');args=parser.parse_args()
+def parse_arguments(argv=None):
+    parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8765);parser.add_argument('--offline',action='store_true');parser.add_argument('--no-collector',action='store_true');parser.add_argument('--private-own-site',action='store_true');parser.add_argument('--private-password-stdin',action='store_true')
+    parser.add_argument('--private-own-site-browser-login',action='store_true')
+    parser.add_argument('--existing-build',action='store_true')
+    args=parser.parse_args(argv)
     if args.private_password_stdin and not args.private_own_site:raise SystemExit('Private password input requires explicit private own-site mode')
+    if args.private_own_site_browser_login and (args.private_own_site or args.private_password_stdin or args.port != 8765):raise SystemExit('Browser sign-in requires its own explicit local8765 mode')
+    if args.existing_build and (not args.no_collector or args.offline):raise SystemExit('Existing build requires no collector and no build request')
+    return args
+
+
+if __name__=='__main__':
+    args=parse_arguments()
     if args.private_own_site:
         try:enable_private_own_site(read_password(stdin=sys.stdin.buffer if args.private_password_stdin else None))
         except Exception:raise SystemExit('Private own-site credentials unavailable') from None
-    try:
-        report,version=build(args.offline)
-    except PreviewBuildError as error:
-        # A startup failure can still serve a verified previous completed build;
-        # no immediate retry or second provider call is made.
+    if args.private_own_site_browser_login:_browser_login.enable()
+    if args.existing_build:
         try:report,version=verified_output(ROOT)
-        except (OSError,ValueError,TypeError,KeyError):raise SystemExit('Preview build unavailable: '+str(error)) from None
-        print(json.dumps({'initialBuild':'failed','reason':str(error),'retaining':version}),flush=True)
+        except (OSError,ValueError,TypeError,KeyError):raise SystemExit('Existing preview build unavailable') from None
+    else:
+        try:
+            report,version=build(args.offline)
+        except PreviewBuildError as error:
+            # A startup failure can still serve a verified previous completed build;
+            # no immediate retry or second provider call is made.
+            try:report,version=verified_output(ROOT)
+            except (OSError,ValueError,TypeError,KeyError):raise SystemExit('Preview build unavailable: '+str(error)) from None
+            print(json.dumps({'initialBuild':'failed','reason':str(error),'retaining':version}),flush=True)
     if not args.no_collector:threading.Thread(target=collector,daemon=True).start()
     server=http.server.ThreadingHTTPServer(('127.0.0.1',args.port),Handler)
     print(f'Local: http://127.0.0.1:{args.port}',flush=True)
