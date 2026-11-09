@@ -1,5 +1,5 @@
 import {privateNormalizedSourceReceiptHealth} from './api-normalized-source-receipt-health.mjs';
-import {privateBasicCurrentHealth} from './api-basic-current-health.mjs';
+import {privateBasicCurrentHealth,privateBasicPilotBudgetHealth} from './api-basic-current-health.mjs';
 import {privateProviderFairnessHealth} from './api-provider-fairness-health.mjs';
 import {privateSearchIdentityHealth} from './api-search-identity-health.mjs';
 import {privateFastCurrentVerificationHealth} from './api-fast-current-verification-health.mjs';
@@ -127,6 +127,7 @@ export class ApiPrivateHealth{
     const fastCurrent=await privateFastCurrentVerificationHealth(this.core,{delegate:this.fastCurrentDelegate,checkedAt});
     const providerService=privateProviderFairnessHealth(this.core,this.env,{delegate:this.providerFairnessDelegate,checkedAt});
     const basicCurrent=await privateBasicCurrentHealth(this.core,this.env,{delegate:this.basicCurrentDelegate,checkedAt});
+    const basicPilot=await privateBasicPilotBudgetHealth(this.core,this.env,{delegate:this.basicCurrentDelegate,checkedAt});
     const caps=[config.grantedPerDay,config.operatorDailyRequestCap].filter(value=>integer(value)&&value>0);
     const safe={schemaVersion:1,kind:'private_api_collector_health',providerAlarmRecoveryVersion:1,checkedAt,
       checkedAtMeaning:'owner_check_completion_not_market_observation',
@@ -159,6 +160,7 @@ export class ApiPrivateHealth{
       ...(searchIdentities===null?{}:{privateSearchIdentities:searchIdentities}),
       ...(providerService===null?{}:{privateProviderService:providerService}),
       ...(basicCurrent===null?{}:{privateBasicCurrent:basicCurrent}),
+      ...(basicPilot===null?{}:{privateBasicPilotBudget:basicPilot}),
       dailyCeilingMeaning:'configured_restriction_not_an_inferred_provider_daily_grant'};
     this.ctx.storage.transactionSync(()=>{
       const row=this.core.row('SELECT revision FROM api_private_health WHERE id=1');

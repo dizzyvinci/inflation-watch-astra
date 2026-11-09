@@ -130,13 +130,16 @@ export class ApiIndexOwnerBridge{
  finalizeOverviewActivity(ticket,phase){const activityTicket=this.#activityFinalTickets.get(ticket);check(activityTicket,'activity_final_calculation_ticket');const result=this.overviewActivity.finalize(activityTicket,{bridge:this,phase,calculationTicket:ticket});this.#activityFinalTickets.delete(ticket);return result;}
  indexNextDue(){if(!this.active)return null;const running=this.row("SELECT lease_until FROM api_index_inputs WHERE state='running' ORDER BY id LIMIT 1");if(running)return running.lease_until;return this.nextPending()?.available_at??null;}
  nextDue(){const current=this.indexNextDue();if(!this.stampReferences?.active)return current;const stamp=this.stampReferences.nextDue();return current===null?stamp:stamp===null?current:Math.min(current,stamp);}
- nextPending(){const g=this.core.config();return this.row(`SELECT i.* FROM api_index_inputs i WHERE i.state='pending'
-  ORDER BY CASE WHEN i.phase NOT IN ('normalize','archive') THEN 0 ELSE 1 END,
+ nextPending(){const g=this.core.config(),now=this.core.clock(),preModel="i.phase IN ('normalize','archive','apply','compute') AND i.publication_ordinal IS NULL AND i.model_body IS NULL AND i.model_sha IS NULL AND i.model_key IS NULL AND i.snapshot_hash IS NULL AND i.price_capture_hash IS NULL AND i.overview_capture_hash IS NULL AND i.calculated_at IS NULL AND i.public_body IS NULL AND i.public_sha IS NULL AND i.public_key IS NULL AND i.prices_captured_at IS NULL AND i.overview_captured_at IS NULL";return this.row(`SELECT i.* FROM api_index_inputs i WHERE i.state='pending'
+  ORDER BY CASE WHEN ${preModel} THEN 1 ELSE 0 END,
+   CASE WHEN ${preModel} AND i.available_at<=? THEN 0 ELSE 1 END,
+   CASE WHEN ${preModel} AND i.available_at>? THEN i.available_at ELSE 0 END,
+   CASE WHEN i.phase NOT IN ('normalize','archive') THEN 0 ELSE 1 END,
    CASE WHEN i.source_attempt=(SELECT MAX(a.id) FROM api_jobs j JOIN api_attempts a ON a.job_key=j.job_key
     WHERE j.operation=i.operation AND j.state='complete' AND j.round_ref=? AND a.grant_ref=? AND a.result='success'
      AND j.receipt_key=('_private/provider-api/v1/receipts/'||printf('%012d',a.id)||'-'||j.operation||'-'||substr(j.receipt_key,-69))) THEN 0 ELSE 1 END,
    CASE WHEN i.operation='overview' AND CAST(i.request_at/86400000 AS INTEGER)<(SELECT CAST(MAX(a.at)/86400000 AS INTEGER) FROM api_jobs j JOIN api_attempts a ON a.job_key=j.job_key WHERE j.operation='overview' AND j.state='complete' AND j.round_ref=? AND a.grant_ref=? AND a.result='success') THEN 0 ELSE 1 END,
-   CASE WHEN i.operation='overview' THEN 0 ELSE 1 END,i.source_attempt DESC,i.id DESC LIMIT 1`,g.probeRound,g.grantReference,g.probeRound,g.grantReference);}
+   CASE WHEN i.operation='overview' THEN 0 ELSE 1 END,i.source_attempt DESC,i.id DESC LIMIT 1`,now,now,g.probeRound,g.grantReference,g.probeRound,g.grantReference);}
  defer(){if(!this.active)return null;const at=this.core.clock()+30000;if(this.stampReferences?.active)this.stampReferences.defer();this.core.sql.exec("UPDATE api_index_inputs SET available_at=MAX(available_at,?) WHERE state='pending'",at);return at;}
  claim(){return this.ctx.storage.transactionSync(()=>{
   this.core.sql.exec("UPDATE api_index_inputs SET state='pending',lease_until=NULL,last_result='interrupted' WHERE state='running' AND lease_until<=?",this.core.clock());if(this.row("SELECT 1 FROM api_index_inputs WHERE state='running' LIMIT 1"))return null;

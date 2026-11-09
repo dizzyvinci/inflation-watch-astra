@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "repository": "dizzyvinci/inflation-watch-astra",
-  "exportedAt": "2026-11-09T03:14:56+00:00",
+  "exportedAt": "2026-11-09T05:46:55+00:00",
   "basketVersion": 2,
   "textNormalization": "LF except upstream assets, immutable reports, and exact tests/fixtures/basic-settlement-original-owner.source.txt (26404 bytes; SHA256 998863f147f15f19ca2255c1cc8e15e7a8ef9a3262dd2ca91f6c78c38ed112c7) preserved byte-for-byte",
   "files": [
@@ -17322,13 +17322,13 @@
     },
     {
       "path": "ops/api-basic-current-health.mjs",
-      "bytes": 11378,
-      "sha256": "bfea0a052a1ac3d8defbfa122f2d2477ce236a7f5fc511cec16eec9b3b746ded"
+      "bytes": 15517,
+      "sha256": "e716d1b292e872efa7801ccc3bf7fa7f2b7dfe222d0a68975b7ba3ac52949bf2"
     },
     {
       "path": "ops/api-basic-current-owner.mjs",
-      "bytes": 31838,
-      "sha256": "50d8030fe0e233ba9b4b1e38e121eef14011dd51530a4e9fccc6191db34b1d05"
+      "bytes": 42845,
+      "sha256": "1b2459196578db052414e0c0b10f48565fae0d0f6411c2a68d6ee07a41a44901"
     },
     {
       "path": "ops/api-basic-current-pin-export.mjs",
@@ -17357,8 +17357,8 @@
     },
     {
       "path": "ops/api-basic-current-registration.mjs",
-      "bytes": 7018,
-      "sha256": "daaa1d443602fbf55698925e302f694c5d889a548cb00025134196e5c63efc8b"
+      "bytes": 10791,
+      "sha256": "08074a2a56706096febcfc6c1612f7f736c348902b8d072a8ab51bc28b9d06f3"
     },
     {
       "path": "ops/api-basic-current-selected-proof.mjs",
@@ -17382,8 +17382,8 @@
     },
     {
       "path": "ops/api-basic-public-host.mjs",
-      "bytes": 6441,
-      "sha256": "2725982a92f6f20060baa0a04af83c082f138092d8df960de68efbec35ed6f9c"
+      "bytes": 6541,
+      "sha256": "b414048fb3b22528305f1204b9b5b0a269b9bb6f8a82ec15b986d77f86353386"
     },
     {
       "path": "ops/api-basic-public-structure.mjs",
@@ -17527,8 +17527,8 @@
     },
     {
       "path": "ops/api-index-owner-bridge.mjs",
-      "bytes": 40361,
-      "sha256": "7ebba922cb4aaa5a821c2f2e400e2b72a74f6625aee15faef1476191fde77115"
+      "bytes": 41019,
+      "sha256": "6459663abfd9508733bf8bfed4e223956131a6f15180ae568605aa681fecf8c4"
     },
     {
       "path": "ops/api-index-public-contract.mjs",
@@ -17737,8 +17737,8 @@
     },
     {
       "path": "ops/api-private-health.mjs",
-      "bytes": 15985,
-      "sha256": "3ba70ca514b46c95c459826f382eabe4648e4775cc06f3e12c6bfefb4f1bf6b6"
+      "bytes": 16210,
+      "sha256": "a0effb37e607475f93ca1f98f14a29dbf1b49b2e113f8962c1154f9e1740db91"
     },
     {
       "path": "ops/api-private-item-discovery-health.mjs",
@@ -18027,8 +18027,8 @@
     },
     {
       "path": "ops/item-recurring-registry.mjs",
-      "bytes": 31305,
-      "sha256": "b5a26a8c65431a5fe7fd7dc9ba14a7d63dc24a1a20ccd00bd20bea1428e15381"
+      "bytes": 31478,
+      "sha256": "348e3fe9503b206e359baccff8f01a5bec753e64e7befd6c7ceed6e17c7145d9"
     },
     {
       "path": "ops/market-catalog.mjs",
@@ -18132,8 +18132,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 24394,
-      "sha256": "a364cf6113214bac7f9fd74e82e5f132d864bb22103641110a9dc490bf69e04e"
+      "bytes": 24471,
+      "sha256": "55f986c70845ec4ccdeff443b2b6d8c23bc68adeddb8e68b84565928fdec79f3"
     },
     {
       "path": "portable_hash.py",
@@ -18357,8 +18357,8 @@
     },
     {
       "path": "tests/api-index-owner.test.mjs",
-      "bytes": 6202,
-      "sha256": "184e9921e49f704eb31714feabf5f09bf215da9a0a61830e51665d34a4db16d1"
+      "bytes": 15475,
+      "sha256": "ec74a72ce72af74d9495c9021f2c853ddd282972362730e68cc606da1489960b"
     },
     {
       "path": "tests/api-index-test-helpers.mjs",
@@ -18801,6 +18801,16 @@
       "sha256": "341161d40f9b9dbd485f9462b161ffa22463c39bf3f473713187f96ccbd3cc51"
     },
     {
+      "path": "tests/basic-pilot-budget.test.mjs",
+      "bytes": 25579,
+      "sha256": "c83ab77fdec809c60d1dbf3833fb81bc6d69b786bc8a60bfec1c76718d3ef2cf"
+    },
+    {
+      "path": "tests/basic-pilot-latest-registry.test.mjs",
+      "bytes": 13047,
+      "sha256": "9dc25a7202d79e48300ea1650f75a5883adb8db3b94a69fa745a8cefb3594035"
+    },
+    {
       "path": "tests/basic-profile.test.mjs",
       "bytes": 2356,
       "sha256": "457a994744d008350ec061e4582e7fb9e52a52e6c3920e98b82e0ea7bfecd114"
@@ -18917,8 +18927,8 @@
     },
     {
       "path": "tests/basic-read-waiter-final-original.test.mjs",
-      "bytes": 1688,
-      "sha256": "ce589c5d2d08d74cb79e4c98760aa1d835456f0a00ca692b9d3cc28c6aa99055"
+      "bytes": 2443,
+      "sha256": "c3dfb1d7a6f5c89b742fc01a1c2335948dc2af40b59cf4f365e96f894ff3c521"
     },
     {
       "path": "tests/basic-read-waiter-original.test.mjs",

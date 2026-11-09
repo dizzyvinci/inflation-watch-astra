@@ -1,6 +1,6 @@
 // Strict optional public selector; private capture alone never publishes this path.
 import {grantConfig,OWNER_NAME} from './api-collector-core.mjs';
-import {basicCurrentConfiguration,BASIC_CURRENT_CONTRACT_SHA} from './api-basic-current-registration.mjs';
+import {basicCurrentConfiguration,basicPilotBudgetConfiguration,BASIC_CURRENT_CONTRACT_SHA} from './api-basic-current-registration.mjs';
 import {createBasicSelectedReadService} from './api-basic-current-read-service.mjs';
 import {createBasicPublicItemHttpRoute} from './api-basic-item-http-route.mjs';
 import {BASIC_PUBLIC_DEFINITION_SHA} from './api-basic-current-public-contract.mjs';
@@ -17,7 +17,7 @@ export function publicBasicConfiguration(env){try{
  if(typeof v.privateEpoch!=='string'||!/^[a-z][a-z0-9-]{0,63}$/.test(v.privateEpoch)||v.grantReference===OWNER_NAME)return{status:'invalid'};
  return{status:'ready',value:Object.freeze({...v})};
 }catch{return{status:'invalid'};}}
-function admit(env){const p=publicBasicConfiguration(env);if(p.status!=='ready')return null;try{const b=basicCurrentConfiguration(env),raw=env.API_GRANT_JSON;if(typeof raw!=='string'||raw.length>8192)return null;const g=grantConfig({API_GRANT_JSON:raw}),v=p.value;if(b.status!=='ready'||g.enabled!==true||!g.allowedOperations.includes('prices')||g.grantReference===OWNER_NAME||v.grantReference!==g.grantReference||v.roundReference!==g.probeRound||v.grantReference!==b.value.grantReference||v.roundReference!==b.value.roundReference||v.privateEpoch!==b.value.epoch)return null;return{policy:v,scope:Object.freeze({grantReference:g.grantReference,roundReference:g.probeRound,epoch:b.value.epoch}),signature:JSON.stringify([v,b.value,g])};}catch{return null;}}
+function admit(env){const p=publicBasicConfiguration(env);if(p.status!=='ready')return null;if(basicPilotBudgetConfiguration(env).status!=='disabled')return null;try{const b=basicCurrentConfiguration(env),raw=env.API_GRANT_JSON;if(typeof raw!=='string'||raw.length>8192)return null;const g=grantConfig({API_GRANT_JSON:raw}),v=p.value;if(b.status!=='ready'||g.enabled!==true||!g.allowedOperations.includes('prices')||g.grantReference===OWNER_NAME||v.grantReference!==g.grantReference||v.roundReference!==g.probeRound||v.grantReference!==b.value.grantReference||v.roundReference!==b.value.roundReference||v.privateEpoch!==b.value.epoch)return null;return{policy:v,scope:Object.freeze({grantReference:g.grantReference,roundReference:g.probeRound,epoch:b.value.epoch}),signature:JSON.stringify([v,b.value,g])};}catch{return null;}}
 const denied=req=>basicHttpError(req,404,'not_published');
 function stop(entry){if(entry&&!entry.revoked){entry.revoked=true;entry.route.setEnabled(false);}}
 export function createBasicPublicHostRoute({monotonic=MONO,now=NOW,waitMs=2500}={}){

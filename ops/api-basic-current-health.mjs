@@ -1,5 +1,5 @@
 // SQL-owned private Basic expectations only; no page/raw/R2 reads or source work.
-import {basicCurrentConfiguration,isOwnedBasicCurrentRegistryDelegate,BASIC_CURRENT_CONTRACT_SHA} from './api-basic-current-registration.mjs';
+import {basicCurrentConfiguration,basicPilotBudgetConfiguration,admitBasicPilotPolicy,isOwnedBasicCurrentRegistryDelegate,BASIC_CURRENT_CONTRACT_SHA} from './api-basic-current-registration.mjs';
 const MAX=8640000000000000,tm=x=>Number.isSafeInteger(x)&&x>=0&&x<MAX,ni=x=>Number.isSafeInteger(x)&&x>=0,PHASES=['compile','write','replay','base','pointer','readback','review','committed'];
 const text=(c,n)=>`CASE WHEN typeof(${c})='text' AND length(CAST(${c} AS BLOB))<=${n} THEN ${c} END ${c}`;
 const number=c=>`CASE WHEN typeof(${c})='integer' AND ${c}>=0 AND ${c}<=9007199254740991 THEN ${c} END ${c}`;
@@ -66,4 +66,26 @@ export async function privateBasicCurrentHealth(core,env,options={}){
   const output={...base,status:pins?'committed':'awaiting_current',control:{ownerEpoch:first.control.owner_epoch,retryAt:new Date(first.control.retry_at).toISOString(),actionPending:first.control.action_pending===1,physicalPendingInCurrentInstance:physical,physicalSettlementUnknown:unknown,capturePreparationPending:owner.capturePending===true,basicIntentPresent:intents.length>0,newerBasicObservedIntentPresent:newer,upstreamLatestInspected:false},current:by('current'),active:by('active'),pending:by('pending'),verificationPins:pins,sourceBindings:first.proofs.map(w=>({completedOwnedApiReceipt:true,normalRegistryState:w.registry_state,normalizedRegistryCaptureBound:w.normalized_capture===1})),verificationScope:'original_completed_owned_source_and_committed_sql_metadata_not_remote_pages'};
   need(new TextEncoder().encode(JSON.stringify(output)).length<=16384);return output;
  }catch{if(basicCurrentConfiguration(env).status!=='ready')return null;return fail('diagnostic_unavailable');}
+}
+
+// Separate optional namespace; the original Basic21-key/SQL14 diagnostic above
+// is unchanged. Policy-only requires_private performs no Core/SQL/bucket access.
+export async function privateBasicPilotBudgetHealth(core,env,{delegate=null,checkedAt=null}={}){
+ const cfg=basicCurrentConfiguration(env),p=basicPilotBudgetConfiguration(env,cfg.status==='ready'?cfg.value:null);
+ if(p.status==='disabled')return null;
+ const iso=x=>typeof x==='string'&&/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(x)&&Number.isFinite(Date.parse(x))&&new Date(x).toISOString()===x;
+ const out={schemaVersion:1,kind:'private_basic_pilot_budget_v1',status:'diagnostic_unavailable',operatorCheckedAt:iso(checkedAt)?checkedAt:null,policySha256:null,scope:null,limits:null,sourceNotBefore:null,activatedAt:null,expiresAt:null,effectiveSourceFloor:null,usedGenerations:null,reservedPutBodyBytes:null,reservationRows:null,physicalPendingInCurrentInstance:null,physicalSettlementUnknown:null,remoteObjectsEnumerated:false,rawHistoryDeleted:false,publicServiceAuthorized:false,continuousServiceReady:false};
+ const unavailable=()=>({...out,status:'diagnostic_unavailable',activatedAt:null,expiresAt:null,effectiveSourceFloor:null,usedGenerations:null,reservedPutBodyBytes:null,reservationRows:null,physicalPendingInCurrentInstance:null,physicalSettlementUnknown:null});
+ // Every delivery branch re-admits current config. Budget Off omits even when
+ // the private producer was Off initially; an On rebound is a review result.
+ const finish=value=>{const c=basicCurrentConfiguration(env),q=basicPilotBudgetConfiguration(env,c.status==='ready'?c.value:null);if(q.status==='disabled')return null;if(q.status!=='ready'||p.status!=='ready'||JSON.stringify(c)!==JSON.stringify(cfg)||JSON.stringify(q.value)!==JSON.stringify(p.value))return unavailable();return value;};
+ try{if(p.status!=='ready'||!iso(checkedAt))return finish(out);const policy=await admitBasicPilotPolicy(p);const afterHash=finish(out);if(afterHash!==out)return afterHash;out.policySha256=policy.sha256;out.scope={grantReference:p.value.grantReference,roundReference:p.value.roundReference,epoch:p.value.privateEpoch};out.limits={maxCapturedGenerations:p.value.maxCapturedGenerations,maxReservedRemoteBytes:p.value.maxReservedRemoteBytes,maxReservationRows:p.value.maxReservationRows,windowMs:p.value.windowMs};out.sourceNotBefore=p.value.sourceNotBefore;
+  if(cfg.status!=='ready'){out.status=cfg.status==='disabled'?'requires_private':'diagnostic_unavailable';return finish(out);}
+  if(!isOwnedBasicCurrentRegistryDelegate(delegate,core.ctx,core,core.recurring)||delegate.status!=='ready'||!delegate.owner)return finish(out);
+  const o=delegate.owner;if(!o.active||o.ctx!==core.ctx||o.core!==core||o.registry!==core.recurring.registry||o.pilot?.sha256!==policy.sha256||o.pilot.text!==policy.text||o.bucket!==env.API_RAW_RECEIPTS)return finish(out);
+  const r=o.pilotState(false),at=Date.parse(checkedAt);if(at<r.high_water||at>core.clock())return finish(out);
+  out.status=r.state!=='ready'?r.state:at>=r.expires_at?'expired':r.used_generations>=p.value.maxCapturedGenerations||r.used_bytes>=p.value.maxReservedRemoteBytes||r.used_rows>=p.value.maxReservationRows?'exhausted':'ready';
+  out.activatedAt=new Date(r.started_at).toISOString();out.expiresAt=new Date(r.expires_at).toISOString();out.effectiveSourceFloor=new Date(Math.max(r.started_at,Date.parse(p.value.sourceNotBefore))).toISOString();out.usedGenerations=r.used_generations;out.reservedPutBodyBytes=r.used_bytes;out.reservationRows=r.used_rows;out.physicalPendingInCurrentInstance=!!o.pool.task;out.physicalSettlementUnknown=o.pool.unknown===true||o.control().action_token!==null&&!out.physicalPendingInCurrentInstance;if(out.physicalSettlementUnknown)out.status='physical_unknown_hold';else if(out.physicalPendingInCurrentInstance)out.status='physical_pending';
+  const closing=basicPilotBudgetConfiguration(env,cfg.value);if(closing.status!=='ready'||JSON.stringify(closing.value)!==policy.text||!o.active)throw Error();return finish(out);
+ }catch{return finish(unavailable());}
 }

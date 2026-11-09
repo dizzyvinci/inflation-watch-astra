@@ -14,7 +14,7 @@ export function basicCurrentConfiguration(env){try{
 }catch{return{status:'invalid'};}}
 export function isOwnedBasicCurrentRegistryDelegate(v,ctx,core,original){const b=BRAND.get(v);return!!b&&b.ctx===ctx&&b.core===core&&b.original===original;}
 class BasicRegistrySlot{
- constructor(ctx,core,original,base,Implementation,enabled,cfg){this.ctx=ctx;this.core=core;this.original=original;this.base=base;this.Implementation=Implementation;this.enabled=enabled;this.cfg=cfg;this.owner=null;this.review=false;this.status='awaiting_initialization';this.last='base';}
+ constructor(ctx,core,original,base,Implementation,enabled,cfg,pilot=null){this.pilot=pilot;this.ctx=ctx;this.core=core;this.original=original;this.base=base;this.Implementation=Implementation;this.enabled=enabled;this.cfg=cfg;this.owner=null;this.review=false;this.status='awaiting_initialization';this.last='base';}
  get active(){return this.original.active===true;}get registry(){return this.original.registry;}
  eventFrame(){return this.original.eventFrame();}nextProviderDue(){return this.original.nextProviderDue();}
  ensure(){
@@ -22,13 +22,17 @@ class BasicRegistrySlot{
   if(this.owner){if(this.owner.active)return this.owner;this.status='paused_or_review';return null;}
   if(this.review||this.core.row('SELECT auth_stopped FROM api_control WHERE id=1')?.auth_stopped!==0)return null;
   let live=true;
-  try{const owner=new this.Implementation(this.ctx,this.core,this.registry,{enabled:true,isEnabled:()=>live&&this.enabled(),epoch:this.cfg.epoch});
+  try{const owner=new this.Implementation(this.ctx,this.core,this.registry,{enabled:true,isEnabled:()=>live&&this.enabled(),epoch:this.cfg.epoch,...(this.pilot?{pilotPolicy:this.pilot}:{})});
    if(!this.enabled()||!owner.active)throw Error('basic_initialization_gate');
    const c=owner.control();if(c.mux_turn!==null&&!['base','basic'].includes(c.mux_turn))throw Error('basic_mux_state');
    this.registry.setBasicCurrentSink(owner);this.owner=owner;this.status='ready';return owner;
   }catch{live=false;this.review=true;this.status='initialization_review';return null;}
  }
- reconcile(limit=8,frame){this.ensure();return this.base.reconcile(limit,frame);}
+ reconcile(limit=8,frame){const owner=this.ensure();if(!owner?.pricePriorityEligible())return this.base.reconcile(limit,frame);if(!Number.isSafeInteger(limit)||limit<1||limit>8)throw TypeError('bounded_basic_registry_handoff');
+  // Consume the original owned frame once: latest first, FIFO remainder. If an
+  // existing FAST delegate also offers latest, that second handoff is a no-op.
+  const latest=this.original.reconcileLatestPrice(frame),remaining=limit-latest.queued,ordinary=remaining>0?this.base.reconcile(remaining,frame):{queued:0};return{status:'basic_pilot_latest_fifo_handoff',queued:latest.queued+ordinary.queued};
+ }
  nextDue(){const base=this.base.nextDue(),owner=this.ensure();if(!owner)return base;const basic=owner.nextDue();return base===null?basic:basic===null?base:Math.min(base,basic);}
  defer(){const owner=this.ensure();if(this.last!=='basic'||!owner)return this.base.defer();return owner.nextDue();}
  // Reports only known in-slot signals, never a new cross-domain physical permit.
@@ -47,16 +51,38 @@ class BasicRegistrySlot{
 }
 export async function createBasicCurrentRegistration(ctx,env,core,original,{baseDelegate=original}={}){
  const cfg=basicCurrentConfiguration(env);if(cfg.status!=='ready')return null;
+ const pilot=basicPilotBudgetConfiguration(env,cfg.value);if(pilot.status==='invalid')return{status:'scope_review',delegate:null};
  try{
   if(core?.ctx!==ctx||core.env!==env||original?.ctx!==ctx||original.core!==core)return{status:'scope_review',delegate:null};
-  const text=JSON.stringify(cfg.value),prior=CACHE.get(original);if(prior)return prior.text===text&&prior.ctx===ctx&&prior.core===core&&prior.env===env&&prior.base===baseDelegate?await prior.promise:{status:'scope_review',delegate:null};
-  const enabled=()=>{const c=basicCurrentConfiguration(env);return c.status==='ready'&&JSON.stringify(c.value)===text;};
+  const text=JSON.stringify(cfg.value)+(pilot.status==='ready'?'|'+JSON.stringify(pilot.value):''),prior=CACHE.get(original);if(prior)return prior.text===text&&prior.ctx===ctx&&prior.core===core&&prior.env===env&&prior.base===baseDelegate?await prior.promise:{status:'scope_review',delegate:null};
+  const enabled=()=>{const c=basicCurrentConfiguration(env);if(c.status!=='ready')return false;const p=basicPilotBudgetConfiguration(env,c.value);return p.status!=='invalid'&&JSON.stringify(c.value)+(p.status==='ready'?'|'+JSON.stringify(p.value):'')===text;};
   const entry={text,ctx,core,env,base:baseDelegate,promise:null};CACHE.set(original,entry);
   entry.promise=(async()=>{
    const [{BasicCurrentOwner},{isOwnedFastCurrentRegistryDelegate},{isOwnedSearchIdentityRegistryDelegate}]=await Promise.all([import('./api-basic-current-owner.mjs'),import('./api-fast-current-registration.mjs'),import('./api-search-identity-registration.mjs')]);
    if(!enabled())return null;const g=core.config();
    if(g.enabled!==true||g.grantReference!==cfg.value.grantReference||g.probeRound!==cfg.value.roundReference||baseDelegate!==original&&!isOwnedFastCurrentRegistryDelegate(baseDelegate,ctx,core,original)&&!isOwnedSearchIdentityRegistryDelegate(baseDelegate,ctx,core,original))return{status:'scope_review',delegate:null};
-   const delegate=new BasicRegistrySlot(ctx,core,original,baseDelegate,BasicCurrentOwner,enabled,cfg.value);BRAND.set(delegate,{ctx,core,original});delegate.ensure();return Object.freeze({get status(){return delegate.status;},delegate,get owner(){return delegate.owner;},publicRouteRegistered:false,upstreamLatestInspected:false});
+   const delegate=new BasicRegistrySlot(ctx,core,original,baseDelegate,BasicCurrentOwner,enabled,cfg.value,pilot.status==='ready'?await admitBasicPilotPolicy(pilot):null);BRAND.set(delegate,{ctx,core,original});delegate.ensure();return Object.freeze({get status(){return delegate.status;},delegate,get owner(){return delegate.owner;},publicRouteRegistered:false,upstreamLatestInspected:false});
   })().catch(()=>({status:'initialization_review',delegate:null}));return await entry.promise;
  }catch{return{status:'initialization_review',delegate:null};}
 }
+
+// Optional finite PRIVATE pilot. Absence/Off retains the original v1 path.
+const PILOT_BRAND=new WeakSet();
+export function basicPilotBudgetConfiguration(env,privateConfig=null){try{
+ const raw=env?.API_BASIC_PILOT_BUDGET_JSON;if(raw===undefined)return{status:'disabled'};
+ if(typeof raw!=='string'||raw.length>4096)return{status:'invalid'};const v=JSON.parse(raw);
+ if(JSON.stringify(v)!==compact(raw))return{status:'invalid'};
+ if(v&&Object.keys(v).join(',')==='enabled'&&v.enabled===false)return{status:'disabled'};
+ const fields='approvalRecorded|enabled|grantReference|maxCapturedGenerations|maxReservationRows|maxReservedRemoteBytes|policy|privateEpoch|publicationEnabled|roundReference|schemaVersion|sourceNotBefore|windowMs';
+ const integer=(x,max)=>Number.isSafeInteger(x)&&x>=1&&x<=max;
+ if(!v||Array.isArray(v)||Object.keys(v).sort().join('|')!==fields||v.schemaVersion!==1||v.enabled!==true||v.approvalRecorded!==true||v.policy!=='private_basic_finite_pilot_v1'||v.publicationEnabled!==false||!integer(v.maxCapturedGenerations,4)||!integer(v.maxReservedRemoteBytes,67108864)||!integer(v.maxReservationRows,256)||v.maxReservationRows<v.maxCapturedGenerations||!integer(v.windowMs,900000)||typeof v.grantReference!=='string'||!REF.test(v.grantReference)||v.grantReference==='maplestory-market-account-primary-v1'||typeof v.roundReference!=='string'||!REF.test(v.roundReference)||typeof v.privateEpoch!=='string'||!EPOCH.test(v.privateEpoch)||typeof v.sourceNotBefore!=='string'||!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(v.sourceNotBefore)||!Number.isFinite(Date.parse(v.sourceNotBefore))||new Date(v.sourceNotBefore).toISOString()!==v.sourceNotBefore)return{status:'invalid'};
+ if(privateConfig&&(v.grantReference!==privateConfig.grantReference||v.roundReference!==privateConfig.roundReference||v.privateEpoch!==privateConfig.epoch))return{status:'invalid'};
+ const pub=env.API_PUBLIC_BASIC_ITEM_PRICES_JSON;
+ if(pub!==undefined&&(typeof pub!=='string'||compact(pub)!=='{"enabled":false}'))return{status:'invalid'};
+ return{status:'ready',value:Object.freeze({...v})};
+}catch{return{status:'invalid'};}}
+export async function admitBasicPilotPolicy(config){if(config?.status!=='ready')throw Error('basic_pilot_policy');
+ // Revalidate through the exact JSON interface; never brand caller-owned data.
+ const c=basicPilotBudgetConfiguration({API_BASIC_PILOT_BUDGET_JSON:JSON.stringify(config.value)});if(c.status!=='ready')throw Error('basic_pilot_policy');
+ const {sha256}=await import('./api-price-item-dto.mjs'),text=JSON.stringify(c.value),p=Object.freeze({value:c.value,text,sha256:await sha256(new TextEncoder().encode(text))});PILOT_BRAND.add(p);return p;}
+export function isAdmittedBasicPilotPolicy(p){return PILOT_BRAND.has(p);}
