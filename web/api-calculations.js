@@ -1545,7 +1545,7 @@ function calculationView(legacy, snapshot, selection = {}) {
       availableItems: snapshot.current.availableItems,
       expectedItems: 50
     },
-    daily: { ...structuredClone(snapshot.daily), latestDay: latestDaily?.day ?? null },
+    daily: { ...structuredClone(snapshot.daily), latestDay: latestDaily?.day ?? null, recordedDays: snapshot.daily.history.length, observedEligibleDays: snapshot.daily.history.filter((p) => p.status === "available" && !p.partialCalendarDay && Number.isFinite(p.index) && p.observedWeight >= 0.8).length, latestObservedDay: snapshot.daily.history.filter((p) => p.status === "available" && !p.partialCalendarDay && Number.isFinite(p.index) && p.observedWeight >= 0.8).at(-1)?.day ?? null },
     clocks: {
       currentPrices: snapshot.sources.prices?.capturedAt ?? null,
       dailyCapture: snapshot.sources.overview?.capturedAt ?? null,
@@ -1867,7 +1867,7 @@ function createCalculationRuntime({ origin, available: available2, parse: parse2
       const chosen = selection();
       if (metric === "observed-nx" || metric === "cpi") {
         const observed = metric === "observed-nx";
-        const points = dto.daily.history.filter((p) => Number.isFinite(observed ? p.nxRate : p.index) && (!observed || p.cashItems >= 3)).map((p) => ({ at: p.day + "T12:00:00Z", day: p.day, value: observed ? p.nxRate : p.index, kind: observed ? "api_overview_daily_cash_reference" : "api_linked_daily_mpi", datePrecision: "day", partial: p.partialCalendarDay, backcast: p.backcast, referenceNote: observed ? "API source-day cash-item sale-median reference; not individual trades." : "Retrospectively linked API daily price index; not a live trade observation." }));
+        const points = dto.daily.history.filter((p) => (observed || p.status === "available" && !p.partialCalendarDay && p.observedWeight >= 0.8) && Number.isFinite(observed ? p.nxRate : p.index) && (!observed || p.cashItems >= 3)).map((p) => ({ at: p.day + "T12:00:00Z", day: p.day, value: observed ? p.nxRate : p.index, kind: observed ? "api_overview_daily_cash_reference" : "api_linked_daily_mpi", datePrecision: "day", partial: p.partialCalendarDay, backcast: p.backcast, referenceNote: observed ? "API source-day cash-item sale-median reference; not individual trades." : "Retrospectively linked API daily price index; not a live trade observation." }));
         return [{ id: observed ? "api-observed-nx" : "api-linked-mpi", name: observed ? "API daily cash-sale reference" : "API-linked daily MPI", color: observed ? "#edc471" : "#87bdcf", fill: false, dash: true, maxGapMs: 1296e5, points }];
       }
       const modes = chosen.mode === "compare" ? ["fixed", "rolling" + chosen.windowDays] : [chosen.mode === "fixed" ? "fixed" : "rolling" + chosen.windowDays];

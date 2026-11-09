@@ -27,9 +27,12 @@ export async function exportBasicSelectedPinSnapshot(options={}){
   need(meta.schemaVersion===1&&meta.kind==='root_recorded_basic_private_graph_expected_v1'&&meta.profile==='basic_aggregate_v1'&&meta.definitionHash===BASIC_PUBLIC_DEFINITION_SHA&&o.expectedPrivateContractSha256===BASIC_PRIVATE_CONTRACT_SHA&&hash(o.expectedHealthSha256));
   iso(o.expectedCheckedAt);iso(o.observedAt);need(integer(o.maxHealthAgeMs,0,86400000));const checked=Date.parse(o.expectedCheckedAt),observed=Date.parse(o.observedAt);need(checked<=observed&&observed-checked<=o.maxHealthAgeMs);
   const raw=ownBasicBytes(o.healthRaw,99999),deadline=performance.now()+30000,fence=()=>need(performance.now()<deadline);
-  need(await sha256(raw)===o.expectedHealthSha256);fence();const h=parseStrictJson(raw);
+  need(await sha256(raw)===o.expectedHealthSha256);fence();
+  const text=new TextDecoder('utf-8',{fatal:true}).decode(raw),seal=/,"healthSha256":"([a-f0-9]{64})"}$/.exec(text);
+  need(seal&&seal.index+seal[0].length===text.length);const unsigned=raw.slice(0,raw.length-seal[0].length+1);unsigned[unsigned.length-1]=125;need(await sha256(unsigned)===seal[1]);fence();
+  const h=parseStrictJson(raw);
   need(h&&typeof h==='object'&&!Array.isArray(h)&&h.schemaVersion===1&&h.kind==='private_api_collector_health'&&h.providerAlarmRecoveryVersion===1&&integer(h.revision,1)&&h.checkedAt===o.expectedCheckedAt&&h.checkedAtMeaning==='owner_check_completion_not_market_observation'&&h.authenticationStopped===false&&h.sourceObservedAt===null&&h.schemaVerified===false&&h.publicationEligible===false&&hash(h.healthSha256));
-  const unsigned=Object.fromEntries(Object.entries(h).filter(([k])=>k!=='healthSha256'));need(await sha256(encode(unsigned))===h.healthSha256);fence();
+  need(h.healthSha256===seal[1]);fence();
   const d=h.privateBasicCurrent;need(d&&['committed','awaiting_current'].includes(d.status));exact(d,SECTION);
   need(d.diagnosticVersion===1&&d.profile===meta.profile&&d.privateContractSha256===o.expectedPrivateContractSha256&&d.operatorCheckedAt===o.expectedCheckedAt&&d.sourceObservedAt===null&&d.remoteGraphVerification==='not_checked'&&d.pagePayloadsRehashed===false&&d.rawReceiptReparsed===false&&d.bodyShaVerification==='producer_sql_attested_not_recomputed'&&d.upstreamLatestInspected===false&&d.fullVariantFreshness===false&&d.availabilityVerified===false&&d.nativeResourceHeadroom==='not_checked'&&d.verificationScope==='original_completed_owned_source_and_committed_sql_metadata_not_remote_pages');
   const c=d.control;exact(c,CONTROL);need(integer(c.ownerEpoch,1)&&c.upstreamLatestInspected===false);iso(c.retryAt);for(const k of ['actionPending','physicalPendingInCurrentInstance','physicalSettlementUnknown','capturePreparationPending','basicIntentPresent'])need(typeof c[k]==='boolean');

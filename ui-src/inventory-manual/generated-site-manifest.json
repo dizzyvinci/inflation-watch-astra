@@ -47,11 +47,11 @@
     },
     {
       "path": "ui-src/inventory-manual/multipage.mjs",
-      "sha256": "9a5d2e9553e02ebaabff6f89c4751c0ba7cf9fcb7cc253772b67150affec5490"
+      "sha256": "74b2ff8d2b886e2f996715f66bf185d51d1f7b351be89dc881187fa55fe7ea3d"
     },
     {
       "path": "ui-src/inventory-manual/page.mjs",
-      "sha256": "093699807101367d5608e07a0427eafa0d88a44648919986b1f3310ae3dffd4d"
+      "sha256": "522eff352c9eaa5b5d010180a069f9c07d8b85ca3ccd042a8b3786e58777eaed"
     },
     {
       "path": "ui-src/inventory-manual/physical-fetch.mjs",
@@ -62,8 +62,16 @@
       "sha256": "75d7abd48304afc68bfd645d03b7f88474c25078d5ea66467936388b444c072f"
     },
     {
+      "path": "ui-src/inventory-manual/screenshot-image.mjs",
+      "sha256": "c76d64e2870f10e13d4dc036fa8959e0fb16bcc93b73bfc14c8a8c14bbd74362"
+    },
+    {
+      "path": "ui-src/inventory-manual/screenshot-review.mjs",
+      "sha256": "b1a1035ad3b907c08a627bcf55d03cedc7324f2d4b046461ea794bcb1a306d64"
+    },
+    {
       "path": "ui-src/inventory-manual/site-entry.mjs",
-      "sha256": "b51614cdc455416d9f410343559936511dabac1bef1760f6355ffdc1fb5fd587"
+      "sha256": "b18e75cb1ac79494290890ab10c6273c1130c1b3025b799f18490747b315fdc3"
     },
     {
       "path": "ui-src/item-api/item-loader.mjs",
@@ -88,8 +96,8 @@
   ],
   "output": {
     "path": "web/inventory-preview.js",
-    "bytes": 136928,
-    "sha256": "04621538a5703471decebc1e572e86cec5409c8101cba7f77b9dd7847da28137"
+    "bytes": 158697,
+    "sha256": "d61391b7f6de47a5eb9dc0ec0e862bfef2dea5b0b2111088be9d448fb348fe11"
   },
   "defaultEnabled": false,
   "automaticInventoryRequests": 0,

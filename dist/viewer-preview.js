@@ -22,11 +22,15 @@
   exit.title = 'Return to editing. Design choices and privacy settings stay unchanged.';
   document.body.append(exit);
   let viewing = false, previousFocus = null;
+  const previewControlsCurrent=()=>Object.freeze({unlocked:controlsUnlocked===true,viewing:viewing===true});
+  Object.defineProperty(window,'AstraPreviewControls',{value:Object.freeze({current:previewControlsCurrent}),writable:false,configurable:false});
+  const publishPreviewControls=()=>document.dispatchEvent(new CustomEvent('astrapreviewcontrols'));
 
   function setViewer(enabled,focus=true) {
     if(!enabled&&!controlsUnlocked)return;
     if (enabled === viewing) return;
     viewing = enabled;
+    publishPreviewControls();
     if (enabled) {
       previousFocus = document.activeElement && document.activeElement !== document.body ? document.activeElement : enter;
       document.body.dataset.viewerPreview = 'on'; entry.hidden = true; exit.hidden = false;
@@ -61,14 +65,14 @@
     let attempt=0,controller=null,timeout=null;
     const cancelAttempt=()=>{attempt++;controller?.abort();controller=null;clearTimeout(timeout);timeout=null;input.value='';submit.disabled=false;form.removeAttribute('aria-busy');};
     const closeDialog=(focus=true)=>{cancelAttempt();if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}if(focus)gate.focus({preventScroll:true});};
-    const lock=(manual=true)=>{if(manual){workspaceManualLock=true;workspaceRenewPending=false;cancelWorkspaceProbe();}controlsUnlocked=false;cancelAttempt();document.body.dataset.previewControlsLocked='true';setViewer(true,false);entry.hidden=true;exit.hidden=true;gate.textContent='Preview controls';gate.setAttribute('aria-expanded','false');if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}};
+    const lock=(manual=true)=>{if(manual){workspaceManualLock=true;workspaceRenewPending=false;cancelWorkspaceProbe();}controlsUnlocked=false;cancelAttempt();document.body.dataset.previewControlsLocked='true';setViewer(true,false);entry.hidden=true;exit.hidden=true;gate.textContent='Preview controls';gate.setAttribute('aria-expanded','false');publishPreviewControls();if(dialog.open){if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');}};
     const workspaceCandidate=()=>window.astraPreviewSession?.privateWorkspaceCandidate?.()===true;
     let workspaceManualLock=false,workspaceEpoch=0,workspaceController=null,workspaceDeadline=null,workspaceExpiry=null,workspaceUnderlying=null,workspaceWorking=false,workspaceRetryWanted=false,workspaceRenewPending=false;
     const workspaceNote=document.createElement('small');workspaceNote.setAttribute('role','status');if(workspaceCandidate())access.append(workspaceNote);
     const localWorkspace=()=>location.protocol==='http:'&&['localhost','127.0.0.1'].includes(location.hostname);
     const canProbe=(renewOnly=false)=>workspaceCandidate()&&(renewOnly?workspaceRenewPending&&localWorkspace():!workspaceManualLock)&&!document.hidden&&navigator.onLine!==false;
     const cancelWorkspaceProbe=()=>{workspaceEpoch++;workspaceRetryWanted=false;workspaceController?.abort();workspaceController=null;clearTimeout(workspaceDeadline);workspaceDeadline=null;};
-    const unlockControls=(automatic=false)=>{controlsUnlocked=true;delete document.body.dataset.previewControlsLocked;closeDialog(!automatic);setViewer(false,false);exit.textContent='Exit viewer preview';exit.title='Return to unlocked editing. Escape relocks preview controls.';gate.textContent='Lock preview controls';if(!automatic){options.open=true;options.querySelector('summary')?.focus({preventScroll:true});}};
+    const unlockControls=(automatic=false)=>{controlsUnlocked=true;delete document.body.dataset.previewControlsLocked;closeDialog(!automatic);setViewer(false,false);exit.textContent='Exit viewer preview';exit.title='Return to unlocked editing. Escape relocks preview controls.';gate.textContent='Lock preview controls';if(!automatic){options.open=true;options.querySelector('summary')?.focus({preventScroll:true});}publishPreviewControls();};
     const revokeWorkspace=(mode='unknown')=>{workspaceExpiresAt=null;workspaceMode=mode;workspaceRenewPending=false;workspaceNote.textContent='';clearTimeout(workspaceExpiry);workspaceExpiry=null;lock(false);publishWorkspace();};
     function retryWorkspaceWhenSettled(){const renewOnly=workspaceRetryWanted==='local-renew';if(workspaceRetryWanted&&!workspaceUnderlying&&!workspaceWorking&&canProbe(renewOnly)){workspaceRetryWanted=false;void probeWorkspace(renewOnly);}}
     function expireWorkspace(){const mayRenew=localWorkspace();cancelWorkspaceProbe();revokeWorkspace();workspaceNote.textContent='Private session expired. Reload to sign in again.';if(mayRenew){workspaceRenewPending=true;void probeWorkspace(true);}}

@@ -3,6 +3,18 @@
   "buildVersion": "0.28.2",
   "inputs": [
     {
+      "path": "ops/api-basic-current-public-contract.mjs",
+      "sha256": "77c30fd7450457a521f19f1def513a19a48ff7749b88205990d99a5fac79c843"
+    },
+    {
+      "path": "ops/api-basic-current-public-definition-v1.json",
+      "sha256": "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705"
+    },
+    {
+      "path": "ops/api-basic-public-structure.mjs",
+      "sha256": "4ccc21cccdc4e3a857a37681916f18a79c910083ede274d4fce76cfec6d552ba"
+    },
+    {
       "path": "ops/api-item-reference-protocol.mjs",
       "sha256": "ff6544350f45f5b6da9b8121537d0d0dc68a382f6282740caaa84356f66ea31e"
     },
@@ -20,11 +32,11 @@
     },
     {
       "path": "ui-src/nx-stamp/entry.mjs",
-      "sha256": "7689ffa36eb24c07dcbe3d7f7f469bcba93759e82503843f3f44fa913fd3457c"
+      "sha256": "83f08f747ea8e1e80fa5e86b8b250d08b4cba4f5916ef2cac7cbdff1ae5ee66b"
     },
     {
       "path": "ui-src/nx-stamp/model.mjs",
-      "sha256": "5a2788e252d876041acb9a5c0fb57299db44bcf655835318d9cbe16c32744cf6"
+      "sha256": "8a6d84b2f759d8f1cdb7e01b1377a52a50248971b3e93937c26a46ab0ef00d56"
     },
     {
       "path": "ui-src/nx-stamp/registry.mjs",
@@ -37,7 +49,7 @@
   ],
   "output": {
     "path": "web/nx-stamp-finder.js",
-    "sha256": "1ac3c3e2aa7a023c93663d38d31d84fd7428dd69edda1caa9b2bf1e4e0dc6569",
-    "bytes": 205227
+    "sha256": "73e34845929135d2a2bb0fba9329c38da67a5febedebe23e009dc155b62b5973",
+    "bytes": 218583
   }
 }

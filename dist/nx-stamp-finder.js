@@ -4392,7 +4392,7 @@
     iso(dto.source.retrievedAt);
     shape(dto.source.window, ["reportedDays", "exactStartAt", "exactEndAt"]);
     if (dto.source.window.reportedDays !== 3 || dto.source.window.exactStartAt !== null || dto.source.window.exactEndAt !== null) fail("dto_window");
-    function money(v, nullable = true) {
+    function money2(v, nullable = true) {
       if (v === null && nullable) return;
       if (typeof v !== "string" || v.length > 160 || !/^\d+(?:\.\d+)?$/.test(v)) fail("dto_price");
     }
@@ -4400,8 +4400,8 @@
       if (v === null) return;
       shape(v, ["reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount", "averageUnitPrice", "medianUnitPrice", "basis", "dayCounterBoundsKnown"]);
       for (const k of ["reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount"]) integer(v[k]);
-      money(v.averageUnitPrice);
-      money(v.medianUnitPrice);
+      money2(v.averageUnitPrice);
+      money2(v.medianUnitPrice);
       if (v.basis !== "source_labelled_sold_not_independently_confirmed_transactions" || v.dayCounterBoundsKnown !== false) fail("dto_sold");
     }
     function a(v) {
@@ -4409,13 +4409,13 @@
       shape(v, ["reportedListingCount", "reportedSellerCount", "medianUnitPrice", "p25UnitPrice", "p75UnitPrice", "basis", "currentAvailabilityVerified"]);
       integer(v.reportedListingCount);
       integer(v.reportedSellerCount);
-      for (const k of ["medianUnitPrice", "p25UnitPrice", "p75UnitPrice"]) money(v[k]);
+      for (const k of ["medianUnitPrice", "p25UnitPrice", "p75UnitPrice"]) money2(v[k]);
       if (v.basis !== "source_seen_asking_prices" || v.currentAvailabilityVerified !== false) fail("dto_asking");
     }
     function r(v, scopes, isItem = false) {
       if (v === null) return;
       shape(v, ["unitPrice", "basis", "reportedSamples", "scope", "aggregation", "exactVariantValue", "isNearFallback"]);
-      money(v.unitPrice, false);
+      money2(v.unitPrice, false);
       integer(v.reportedSamples);
       if (!["sold", "listed"].includes(v.basis) || !scopes.includes(v.scope) || v.aggregation !== (isItem ? v.basis === "sold" ? "average" : "median" : "unknown") || v.exactVariantValue !== false || v.isNearFallback !== (v.scope === "near")) fail("dto_reference");
     }
@@ -4573,6 +4573,56 @@
     return validateStampReferenceCapture(parseStrictJson(new Uint8Array(raw)), options);
   }
 
+  // ops/api-basic-current-public-definition-v1.json
+  var api_basic_current_public_definition_v1_default = { schemaVersion: 1, profile: "basic_aggregate_v1", rowColumns: ["itemId", "presenceMask", "soldMedianUnitPriceLexeme", "soldAverageUnitPriceLexeme", "reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount", "askingMedianUnitPriceLexeme", "reportedListingCount", "reportedSellerCount"], moneyUnit: "mesos_per_reported_source_unit", reportedWindowDays: 3, exactWindowBoundsKnown: false, sourceObservedAtKnown: false, qualityMatched: false, lowestListingKnown: false, availabilityKnown: false, verifiedIndividualTrades: false, fullVariantFreshness: false, upstreamLatestInspected: false };
+
+  // ops/api-basic-public-structure.mjs
+  var B = Object.freeze({ totalBytes: 8388608 });
+  var enc3 = new TextEncoder();
+  var need2 = (v, c = "basic_contract_hold") => {
+    if (!v) throw Error(c);
+  };
+  var integer3 = (n, a = 0, b = Number.MAX_SAFE_INTEGER) => Number.isSafeInteger(n) && n >= a && n <= b;
+  function exact(v, keys) {
+    need2(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join("|") === keys.slice().sort().join("|"), "basic_shape");
+  }
+  var hash = (s) => typeof s === "string" && /^[a-f0-9]{64}$/.test(s);
+  function iso2(s) {
+    need2(typeof s === "string" && s.length === 24 && Number.isFinite(Date.parse(s)) && new Date(s).toISOString() === s, "basic_clock");
+    return s;
+  }
+
+  // ops/api-basic-current-public-contract.mjs
+  var BASIC_PUBLIC_DEFINITION_SHA = "3d7f8257dda8568ab99e743a4e6adee8ca911786528b5e56919d65675a724705";
+  var BASIC_PUBLIC_MAX_BYTES = 8192;
+  Object.freeze(api_basic_current_public_definition_v1_default.rowColumns);
+  Object.freeze(api_basic_current_public_definition_v1_default);
+  var proto = Object.getPrototypeOf(Uint8Array.prototype);
+  var byteLength = Object.getOwnPropertyDescriptor(proto, "byteLength").get;
+  var tag = Object.getOwnPropertyDescriptor(proto, Symbol.toStringTag).get;
+  var money = (v) => v === null || typeof v === "string" && v.length <= 160 && /^\d+(?:\.\d+)?$/.test(v);
+  function basicPublicShape(v) {
+    exact(v, ["schemaVersion", "kind", "profile", "definitionHash", "itemId", "generation", "sourceBodySha256", "capturedAt", "sourceObservedAt", "captureTimeKind", "reportedWindowDays", "exactStartAt", "exactEndAt", "state", "sold", "asking", "upstreamLatestInspected", "fullVariantFreshness", "availabilityKnown", "lowestListingKnown", "qualityMatched", "verifiedIndividualTrades"]);
+    need2(v.schemaVersion === 1 && v.kind === "basic_current_item_reference" && v.profile === "basic_aggregate_v1" && v.definitionHash === BASIC_PUBLIC_DEFINITION_SHA && integer3(v.itemId, 1, 999999999) && hash(v.generation) && hash(v.sourceBodySha256), "basic_public_profile");
+    iso2(v.capturedAt);
+    need2(v.sourceObservedAt === null && v.captureTimeKind === "http_response_completed" && v.reportedWindowDays === 3 && v.exactStartAt === null && v.exactEndAt === null, "basic_public_source_clock");
+    for (const k of ["upstreamLatestInspected", "fullVariantFreshness", "availabilityKnown", "lowestListingKnown", "qualityMatched", "verifiedIndividualTrades"]) need2(v[k] === false, "basic_public_false_claim");
+    need2(["present_in_generation", "absent_in_generation"].includes(v.state), "basic_public_state");
+    if (v.state === "absent_in_generation") need2(v.sold === null && v.asking === null, "basic_public_absence");
+    if (v.sold !== null) {
+      exact(v.sold, ["medianUnitPrice", "averageUnitPrice", "reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount"]);
+      need2(money(v.sold.medianUnitPrice) && money(v.sold.averageUnitPrice), "basic_public_sold_money");
+      for (const k of ["reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount"]) need2(integer3(v.sold[k]), "basic_public_sold_count");
+      Object.freeze(v.sold);
+    }
+    if (v.asking !== null) {
+      exact(v.asking, ["medianUnitPrice", "reportedListingCount", "reportedSellerCount"]);
+      need2(money(v.asking.medianUnitPrice) && integer3(v.asking.reportedListingCount) && integer3(v.asking.reportedSellerCount), "basic_public_asking");
+      Object.freeze(v.asking);
+    }
+    return Object.freeze(v);
+  }
+
   // ui-src/nx-stamp/model.mjs
   var DEC = /^\d+(?:\.\d+)?$/;
   function rational(text) {
@@ -4598,6 +4648,14 @@
     const asking = a?.medianUnitPrice ?? null, sold = s?.medianUnitPrice ?? null;
     return { ...rule, askingLexeme: asking, soldLexeme: sold, reportedListingCount: a?.reportedListingCount ?? null, reportedSalesCount: s?.reportedSalesCount ?? null, capturedAt: ref.sourceCapturedAt, generation: ref.projectionGeneration, dtoSha256: ref.dtoSha256, mode, currentAvailabilityVerified: false, copyState: "unknown", sourceUrl: ref.sourceCreditUrl, reportedWindowDays: 3, exactWindowBoundsKnown: false };
   };
+  var BASIC_KEYS = ["data", "mode", "evidenceKind", "quoteAuthority", "currentAgainstProvidedPins", "globalLatestVerified", "verificationScope", "bodyHashVerification", "upstreamLatestInspected"].sort().join("|");
+  function basicStampRow(rule, entry) {
+    if (!entry || Object.keys(entry).sort().join("|") !== BASIC_KEYS || !["current", "retained", "absent", "retained_absent"].includes(entry.mode) || entry.evidenceKind !== "basic_aggregate" || entry.globalLatestVerified !== false || entry.upstreamLatestInspected !== false || entry.verificationScope !== "committed_sql_attestation_and_selected_page" || entry.bodyHashVerification !== "producer_sql_attested_not_recomputed") throw TypeError("Selected aggregate cache context");
+    if (new TextEncoder().encode(JSON.stringify(entry.data)).length > BASIC_PUBLIC_MAX_BYTES) throw TypeError("Selected aggregate bytes");
+    const value = basicPublicShape(entry.data), present = value.state === "present_in_generation", current = ["current", "absent"].includes(entry.mode);
+    if (present !== ["current", "retained"].includes(entry.mode) || entry.currentAgainstProvidedPins !== current || entry.quoteAuthority !== (entry.mode === "current" && present && [value.sold?.medianUnitPrice, value.sold?.averageUnitPrice, value.asking?.medianUnitPrice].some((x) => typeof x === "string"))) throw TypeError("Selected aggregate mode");
+    return { ...rule, askingLexeme: value.asking?.medianUnitPrice ?? null, soldLexeme: value.sold?.medianUnitPrice ?? null, reportedListingCount: value.asking?.reportedListingCount ?? null, reportedSalesCount: value.sold?.reportedSalesCount ?? null, capturedAt: value.capturedAt, generation: value.generation, dtoSha256: null, mode: current ? "validated_cache" : "retained", referenceKind: "selected_basic_cache", basicState: value.state, currentAvailabilityVerified: false, copyState: "unknown", sourceUrl: "https://maplestory.market/items/" + value.itemId + "?ref=v6kkdvp6", reportedWindowDays: 3, exactWindowBoundsKnown: false };
+  }
   function createStampReferenceStore(registry) {
     if (registry?.kind !== "verified_conditional_stamp_item_types" || registry.rows.length > 512) throw TypeError("Verified registry required");
     const registryArtifactHash = () => "9544096e01cef5fc19300dc554875ffd6e703acb97736e1a018f914f0a4ef421";
@@ -4606,7 +4664,7 @@
       return [r.itemId, structuredClone(r)];
     }));
     if (rules.size !== registry.rows.length) throw TypeError("Duplicate rule");
-    let epoch = 0, refs = /* @__PURE__ */ new Map(), conflicts = /* @__PURE__ */ new Set(), shared = null;
+    let epoch = 0, refs = /* @__PURE__ */ new Map(), basicRefs = /* @__PURE__ */ new Map(), conflicts = /* @__PURE__ */ new Set(), shared = null;
     return Object.freeze({
       async ingest(values) {
         if (shared) return false;
@@ -4651,18 +4709,37 @@
         shared = { capturedAt: value.source.capturedAt, coverage: value.coverage, sourcePricesSnapshotItemCount: value.sourcePricesSnapshotItemCount, publicationOrdinal, bodySha256, mode };
         return true;
       },
+      replaceBasicReferences(values) {
+        if (shared) return false;
+        if (!Array.isArray(values) || values.length > 64) throw TypeError("Selected aggregate batch");
+        const ticket = epoch, owned = structuredClone(values);
+        if (new TextEncoder().encode(JSON.stringify(owned)).length > 1048576) throw TypeError("Selected aggregate batch bytes");
+        const next = /* @__PURE__ */ new Map();
+        for (const entry of owned) {
+          const id2 = entry?.data?.itemId, rule = rules.get(id2);
+          if (!rule) continue;
+          if (next.has(id2)) throw TypeError("Duplicate selected aggregate");
+          next.set(id2, basicStampRow(rule, entry));
+        }
+        if (ticket !== epoch) return false;
+        basicRefs = next;
+        return true;
+      },
       clear() {
         epoch++;
         refs = /* @__PURE__ */ new Map();
+        basicRefs = /* @__PURE__ */ new Map();
         conflicts = /* @__PURE__ */ new Set();
         shared = null;
       },
-      view({ basis = "asking", search = "", showUnpriced = false, now = Date.now() } = {}) {
-        if (!["asking", "sold"].includes(basis) || typeof search !== "string" || search.length > 100 || !Number.isFinite(now)) throw TypeError("View");
-        const out = [];
+      view({ basis = "asking", search = "", showUnpriced = false, now = Date.now(), referenceSource = "visited" } = {}) {
+        if (!["asking", "sold"].includes(basis) || !["visited", "basic"].includes(referenceSource) || typeof search !== "string" || search.length > 100 || !Number.isFinite(now)) throw TypeError("View");
+        const selected = shared || referenceSource === "visited" ? refs : basicRefs, out = [];
+        let pricedTypes = 0, basicCachedTypes = 0;
         for (const rule of rules.values()) {
-          const r = refs.get(rule.itemId);
-          let priceLexeme = conflicts.has(rule.itemId) ? null : (basis === "asking" ? r?.askingLexeme : r?.soldLexeme) ?? null;
+          const r = selected.get(rule.itemId), conflict = selected === refs && conflicts.has(rule.itemId);
+          if (r?.referenceKind === "selected_basic_cache") basicCachedTypes++;
+          let priceLexeme = conflict ? null : (basis === "asking" ? r?.askingLexeme : r?.soldLexeme) ?? null;
           if (r && Date.parse(r.capturedAt) > now) priceLexeme = null;
           if (priceLexeme !== null) {
             try {
@@ -4671,19 +4748,20 @@
               priceLexeme = null;
             }
           }
+          if (priceLexeme !== null) pricedTypes++;
           if (!rule.name.toLowerCase().includes(search.toLowerCase())) continue;
           if (priceLexeme === null && !showUnpriced) continue;
-          out.push({ ...rule, ...r || {}, priceLexeme, basis, conflict: conflicts.has(rule.itemId), seasonExpired: now >= Date.parse(registry.expiresAt), displayPerStamp: priceLexeme === null ? null : formatPerStamp(priceLexeme, rule.stamps), under30000: priceLexeme === null ? false : underSanityThreshold(priceLexeme, rule.stamps) });
+          out.push({ ...rule, ...r || {}, priceLexeme, basis, conflict, seasonExpired: now >= Date.parse(registry.expiresAt), displayPerStamp: priceLexeme === null ? null : formatPerStamp(priceLexeme, rule.stamps), under30000: priceLexeme === null ? false : underSanityThreshold(priceLexeme, rule.stamps) });
         }
         out.sort((a, b) => a.priceLexeme === null ? b.priceLexeme === null ? a.itemId - b.itemId : 1 : b.priceLexeme === null ? -1 : comparePerStamp(a, b));
-        return structuredClone({ rows: out, eligibleTypes: rules.size, pricedTypes: [...refs.keys()].filter((id2) => !conflicts.has(id2)).length, conflictedTypes: conflicts.size, verifiedTwoStampTypes: registry.verifiedTwoStampItemIds.length, cheapestActiveOfferCoverage: 0, individualTrades: 0, shared });
+        return structuredClone({ rows: out, eligibleTypes: rules.size, pricedTypes: selected === refs ? [...refs.keys()].filter((id2) => !conflicts.has(id2)).length : pricedTypes, basicCachedTypes, referenceSource: shared ? "shared" : referenceSource, conflictedTypes: selected === refs ? conflicts.size : 0, verifiedTwoStampTypes: registry.verifiedTwoStampItemIds.length, cheapestActiveOfferCoverage: 0, individualTrades: 0, shared });
       }
     });
   }
 
   // ui-src/nx-stamp/shared-client.mjs
   var HASH4 = /^"stamp-references-([a-f0-9]{64})"$/;
-  var integer3 = (v) => typeof v === "string" && /^[1-9][0-9]{0,15}$/.test(v) && Number.isSafeInteger(Number(v));
+  var integer4 = (v) => typeof v === "string" && /^[1-9][0-9]{0,15}$/.test(v) && Number.isSafeInteger(Number(v));
   function createStampReferenceClient({ available = false, isEnabled = () => true, fetcher = globalThis.fetch, now = Date.now, ttlMilliseconds = 6e4, timeoutMilliseconds = 8e3 } = {}) {
     const off = () => ({ status: "off", capture: null, mode: null, reason: null, blocked: false, nextCheckAt: Infinity });
     if (available !== true) return Object.freeze({ available: false, state: off, refresh: async () => off(), clear() {
@@ -4704,7 +4782,7 @@
       if (response.status === 404) throw Object.assign(Error("not_published"), { code: "not_published" });
       if (![200, 304].includes(response.status)) throw Object.assign(Error("unavailable"), { code: "unavailable" });
       const etag = response.headers.get("ETag"), match = HASH4.exec(etag ?? ""), mode = response.headers.get("X-Astra-Stamp-Mode"), at = response.headers.get("X-Astra-Stamp-Captured-At"), registry = response.headers.get("X-Astra-Stamp-Registry-Hash"), ordinalText = response.headers.get("X-Astra-Stamp-Publication-Ordinal");
-      if (!match || !["validated_cache", "retained"].includes(mode) || !stampIso(at) || registry !== definition2.registryArtifactSha256 || !integer3(ordinalText)) throw Object.assign(Error("invalid"), { code: "invalid" });
+      if (!match || !["validated_cache", "retained"].includes(mode) || !stampIso(at) || registry !== definition2.registryArtifactSha256 || !integer4(ordinalText)) throw Object.assign(Error("invalid"), { code: "invalid" });
       const ordinal = Number(ordinalText);
       if (response.status === 304) {
         if (!prior || prior.etag !== etag || prior.capture.source.capturedAt !== at || ordinal < prior.ordinal) throw Object.assign(Error("invalid"), { code: "invalid" });
@@ -4850,18 +4928,32 @@
   }
 
   // ui-src/nx-stamp/entry.mjs
-  function mountStampFinder(doc, host, { peek = () => window.AstraItemApiPreview?.peekCachedReferences?.() ?? { status: "unavailable", references: [] }, now = Date.now, sharedAvailable = doc.body.dataset.stampReferences === "available", sharedClient = null } = {}) {
+  function mountStampFinder(doc, host, { peek = () => window.AstraItemApiPreview?.peekCachedReferences?.() ?? { status: "unavailable", references: [] }, now = Date.now, sharedAvailable = doc.body.dataset.stampReferences === "available", sharedClient = null, peekBasic = null } = {}) {
     const store = createStampReferenceStore(registry_default), section = doc.createElement("section");
     section.className = "panel stamp-finder card";
     section.id = "nx-stamp-finder";
     let enabled = true, basis = "asking", search = "", unpriced = true, version = 0;
     const ownWindow = doc.defaultView, sharedActive = () => enabled && !doc.hidden && ownWindow?.navigator.onLine !== false && ownWindow?.location.hash === "#nx", shared = sharedClient ?? createStampReferenceClient({ available: sharedAvailable, isEnabled: sharedActive, fetcher: (...args) => ownWindow.fetch(...args), now });
     let sharedStatus = null;
-    const make = (tag, text) => {
-      const n = doc.createElement(tag);
+    const basicCapable = typeof peekBasic === "function" || typeof ownWindow?.AstraItemApiPreview?.peekCachedBasicReferences === "function", basicPeek = peekBasic ?? (() => ownWindow?.AstraItemApiPreview?.peekCachedBasicReferences?.() ?? { status: "disabled", references: [] });
+    let referenceSource = "visited", cacheStatus = "unavailable";
+    const deniedSources = /* @__PURE__ */ new Set();
+    if (!sharedAvailable && basicCapable) {
+      try {
+        const initial = basicPeek();
+        if (initial?.status === "cache_only") {
+          store.replaceBasicReferences(initial.references);
+          if (store.view({ referenceSource: "basic", basis: "asking", now: now() }).rows.length > 0) referenceSource = "basic";
+        }
+      } catch {
+        store.replaceBasicReferences([]);
+      }
+    }
+    const make = (tag2, text) => {
+      const n = doc.createElement(tag2);
       if (text !== void 0) n.textContent = text;
       return n;
-    }, title = make("h2", "Trash NX finder \xB7 Aurora Stamp candidates"), intro = make("p", "Conditional item types, not executable deals. Unequipped eligible Mystery Fashion Crate rewards yield one stamp. Verified unopened Signature outfit sets yield two; exact set IDs are not verified here."), toggle = make("button", "Stamp candidates: On"), select = make("select"), input = make("input"), check2 = make("input"), label = make("label", " Include unpriced eligible types"), status = make("p"), content = make("div"), note = make("p", "Observed asking MEDIAN per stamp is not the lowest listing or available stock. Both references use the source-reported 3-day window; exact bounds are unknown. Source listing/sale counts are not quantities. Tradeability, unequipped/unopened state and live availability are unknown. Required upfront purchase, lot quantity and minimum listing price are not supplied by these medians. Under 30,000 mesos/stamp is a sanity highlight, not an eligibility rule."), exits = make("p", "Season 1 expires (01-13-2027 07:59 UTC). Shop costs: Mystery Palette Exchange Coupon 5 stamps; Palette Cleanser Exchange Coupon 10; Aurora Mystery Fashion Crate 20. Stamps move within the same account/world. Exit quotes, fees and stock are unverified; no profit is calculated."), credit = make("a", "Official Aurora Stamp rules");
+    }, title = make("h2", "Trash NX finder \xB7 Aurora Stamp candidates"), intro = make("p", "Conditional item types, not executable deals. Unequipped eligible Mystery Fashion Crate rewards yield one stamp. Verified unopened Signature outfit sets yield two; exact set IDs are not verified here."), toggle = make("button", "Stamp candidates: On"), select = make("select"), sourceSelect = make("select"), input = make("input"), check2 = make("input"), label = make("label", " Include unpriced eligible types"), status = make("p"), content = make("div"), note = make("p", "Observed asking MEDIAN per stamp is not the lowest listing or available stock. Both references use the source-reported 3-day window; exact bounds are unknown. Source listing/sale counts are not quantities. Tradeability, unequipped/unopened state and live availability are unknown. Required upfront purchase, lot quantity and minimum listing price are not supplied by these medians. Under 30,000 mesos/stamp is a sanity highlight, not an eligibility rule."), exits = make("p", "Season 1 expires (01-13-2027 07:59 UTC). Shop costs: Mystery Palette Exchange Coupon 5 stamps; Palette Cleanser Exchange Coupon 10; Aurora Mystery Fashion Crate 20. Stamps move within the same account/world. Exit quotes, fees and stock are unverified; no profit is calculated."), credit = make("a", "Official Aurora Stamp rules");
     credit.href = registry_default.ruleUrl;
     credit.target = "_blank";
     credit.rel = "noreferrer";
@@ -4880,9 +4972,17 @@
       o.value = value;
       select.append(o);
     }
+    sourceSelect.setAttribute("aria-label", "Stamp reference source");
+    for (const [value, text] of basicCapable ? [["basic", "Shared price references"], ["visited", "Visited item references"]] : [["visited", "Visited item references"]]) {
+      const o = make("option", text);
+      o.value = value;
+      sourceSelect.append(o);
+    }
+    sourceSelect.value = referenceSource;
+    sourceSelect.hidden = sharedAvailable || !basicCapable;
     status.setAttribute("role", "status");
     content.className = "stamp-table-wrap";
-    section.append(title, intro, toggle, select, input, label, status, content, note, exits, credit);
+    section.append(title, intro, toggle, select, sourceSelect, input, label, status, content, note, exits, credit);
     host.append(section);
     function clock(at) {
       if (!at) return "Unknown retrieval";
@@ -4898,15 +4998,20 @@
       toggle.textContent = "Stamp candidates: " + (enabled ? "On" : "Off");
       toggle.setAttribute("aria-pressed", String(enabled));
       content.hidden = !enabled;
-      select.disabled = input.disabled = check2.disabled = !enabled;
+      select.disabled = sourceSelect.disabled = input.disabled = check2.disabled = !enabled;
       if (!enabled) {
         status.textContent = "Stamp candidates Off. No additional source requests were made.";
         return;
       }
-      const v = store.view({ basis, search, showUnpriced: unpriced, now: now() });
-      status.textContent = v.shared ? v.eligibleTypes + " verified conditional types; " + v.shared.coverage.verifiedIdentityTypes + " exact identities in the shared prices capture, " + v.shared.coverage.positiveAskingMedianTypes + " positive asking medians. Capture retrieved " + clock(v.shared.capturedAt) + (v.shared.mode === "retained" ? " \xB7 retained original input. " : ". ") + "Cheapest active offers, stock and upfront lots are not verified." : sharedAvailable ? "Shared stamp medians " + (sharedStatus?.status === "access_denied" ? "unavailable until access is restored" : sharedStatus?.status === "not_published" ? "not published" : sharedStatus?.reason === "paused" ? "paused while hidden/offline" : "not connected yet") + ". " + v.eligibleTypes + " conditional types; no missing price is inferred." : v.eligibleTypes + " verified conditional one-stamp item types (" + registry_default.held.length + " names held unresolved); " + v.pricedTypes + " visited-item cache inputs; " + v.verifiedTwoStampTypes + " verified two-stamp IDs. Cheapest active offers/stock: not connected. Cache coverage is partial, not the entire cash catalog.";
+      if (deniedSources.size) {
+        content.replaceChildren();
+        status.textContent = "Price references unavailable after access denial. Fresh accepted references are required; changing the source does not restore access.";
+        return;
+      }
+      const v = store.view({ basis, search, showUnpriced: unpriced, now: now(), referenceSource });
+      status.textContent = v.shared ? v.eligibleTypes + " verified conditional types; " + v.shared.coverage.verifiedIdentityTypes + " exact identities in the shared prices capture, " + v.shared.coverage.positiveAskingMedianTypes + " positive asking medians. Capture retrieved " + clock(v.shared.capturedAt) + (v.shared.mode === "retained" ? " \xB7 retained original input. " : ". ") + "Cheapest active offers, stock and upfront lots are not verified." : sharedAvailable ? "Shared stamp medians " + (sharedStatus?.status === "access_denied" ? "unavailable until access is restored" : sharedStatus?.status === "not_published" ? "not published" : sharedStatus?.reason === "paused" ? "paused while hidden/offline" : "not connected yet") + ". " + v.eligibleTypes + " conditional types; no missing price is inferred." : v.eligibleTypes + " verified conditional one-stamp item types (" + registry_default.held.length + " names held unresolved); " + v.pricedTypes + " " + (referenceSource === "basic" ? "shared-price" : "visited-item") + " cached median references; " + v.verifiedTwoStampTypes + " verified two-stamp IDs. Cheapest active offers/stock: not connected. Cache coverage is partial, not the entire cash catalog." + (referenceSource === "basic" ? " Shared price references are " + ({ cache_only: "available", access_denied: "unavailable after access denial", disabled: "Off or not published", paused: "paused", invalid: "unavailable after validation", unavailable: "unavailable" }[cacheStatus] ?? "unavailable") + ". Missing selected values never fall back to visited-item prices." : "");
       content.replaceChildren();
-      if (v.pricedTypes === 0) content.append(make("p", sharedAvailable ? "The shared feed supplies all defined types together when published; no individual item visit is required. Missing values remain unknown." : "For a cached price, open an eligible item and turn Item API details On. This does not scan the whole catalog."));
+      if (v.pricedTypes === 0) content.append(make("p", sharedAvailable ? "The shared feed supplies all defined types together when published; no individual item visit is required. Missing values remain unknown." : referenceSource === "basic" ? "Accepted Price check references appear here automatically. Item API details must be On and shared references published. This guide makes no individual item-price requests; missing values remain unknown." : "For a cached price, open an eligible item and turn Item API details On. This does not scan the whole catalog."));
       if (now() >= Date.parse(registry_default.expiresAt)) content.append(make("p", "This stamp season has expired; references are historical, not current conversion opportunities."));
       if (!v.rows.length) {
         content.append(make("p", "No matching validated cached reference. Open an eligible item with Item API details On, or include unpriced types. No fashion price is inferred from the fixed 29-item cash subset."));
@@ -4929,7 +5034,8 @@
         }
         name.append(link);
         const count = basis === "asking" ? r.reportedListingCount : r.reportedSalesCount;
-        row.append(name, make("td", String(r.stamps) + " \xB7 copy state unknown"), make("td", r.priceLexeme === null ? "Unknown" : formatPerStamp(r.priceLexeme)), make("td", r.displayPerStamp ?? "Unknown"), make("td", "Unknown / unknown"), make("td", count == null ? "Unknown" : count.toLocaleString("en-US") + (basis === "asking" ? " reported listings" : " reported sales")), make("td", clock(r.capturedAt) + (r.mode === "retained" ? " \xB7 retained" : "")));
+        row.append(name, make("td", String(r.stamps) + " \xB7 copy state unknown"), make("td", r.priceLexeme === null ? "Unknown" : formatPerStamp(r.priceLexeme)), make("td", r.displayPerStamp ?? "Unknown"), make("td", "Unknown / unknown"), make("td", count == null ? "Unknown" : count.toLocaleString("en-US") + (basis === "asking" ? " reported listings" : " reported sales")), make("td", clock(r.capturedAt) + (r.mode === "retained" ? " \xB7 retained" : "") + (r.referenceKind === "selected_basic_cache" ? " \xB7 shared aggregate median" : "")));
+        if (r.referenceKind) row.dataset.referenceKind = r.referenceKind;
         if (r.under30000) row.dataset.sanity = "under-30000";
         if (r.sourceUrl) {
           const a = make("a", "Source");
@@ -4967,11 +5073,75 @@
         if (own2 === version) draw();
         return;
       }
-      let value;
-      try {
-        value = peek();
-      } catch {
-        value = { status: "unavailable", references: [] };
+      const snapshot = (fn) => {
+        try {
+          return fn();
+        } catch {
+          return { status: "unavailable", references: [] };
+        }
+      };
+      let value = snapshot(peek), basic = snapshot(basicPeek);
+      for (const [name, source] of [["visited", value], ["basic", basic]]) if (source?.status === "access_denied") deniedSources.add(name);
+      if (value?.status === "access_denied" || basic?.status === "access_denied") {
+        store.clear();
+        cacheStatus = "access_denied";
+        draw();
+        return;
+      }
+      if (deniedSources.size) {
+        try {
+          let accepted = true;
+          if (deniedSources.has("basic")) {
+            if (basic?.status !== "cache_only") accepted = false;
+            else {
+              store.replaceBasicReferences(basic.references);
+              accepted = store.view({ referenceSource: "basic", showUnpriced: true, now: now() }).rows.some((r) => r.referenceKind === "selected_basic_cache" && r.mode === "validated_cache" && Date.parse(r.capturedAt) <= now());
+            }
+          }
+          if (deniedSources.has("visited")) {
+            if (value?.status !== "cache_only") accepted = false;
+            else {
+              await store.ingest(value.references);
+              accepted = accepted && store.view({ referenceSource: "visited", showUnpriced: true, now: now() }).rows.some((r) => r.mode === "validated_cache" && Date.parse(r.capturedAt) <= now());
+            }
+          }
+          if (own2 !== version || !enabled) return;
+          value = snapshot(peek);
+          basic = snapshot(basicPeek);
+          if (!accepted || deniedSources.has("basic") && basic?.status !== "cache_only" || deniedSources.has("visited") && value?.status !== "cache_only" || value?.status === "access_denied" || basic?.status === "access_denied") {
+            store.clear();
+            draw();
+            return;
+          }
+          deniedSources.clear();
+        } catch {
+          store.clear();
+          draw();
+          return;
+        }
+      }
+      if (referenceSource === "basic") {
+        try {
+          cacheStatus = basic?.status ?? "unavailable";
+          if (basic?.status !== "cache_only") {
+            store.clear();
+            draw();
+            return;
+          }
+          store.replaceBasicReferences(basic.references);
+          const closing = snapshot(basicPeek);
+          cacheStatus = closing?.status ?? "unavailable";
+          if (closing?.status === "access_denied") {
+            deniedSources.add("basic");
+            store.clear();
+          } else if (closing?.status !== "cache_only") store.clear();
+          else store.replaceBasicReferences(closing.references);
+        } catch {
+          store.clear();
+          cacheStatus = "invalid";
+        }
+        if (own2 === version && enabled) draw();
+        return;
       }
       if (value?.status !== "cache_only") {
         store.clear();
@@ -4987,8 +5157,16 @@
         }
         return;
       }
-      if (own2 === version) draw();
+      if (own2 === version && enabled) draw();
     }
+    sourceSelect.addEventListener("change", () => {
+      version++;
+      store.clear();
+      referenceSource = sourceSelect.value;
+      cacheStatus = "unavailable";
+      draw();
+      void refresh();
+    });
     toggle.addEventListener("click", () => {
       enabled = !enabled;
       version++;
@@ -5013,10 +5191,15 @@
       draw();
     });
     doc.addEventListener("astrapiitemcache", refresh);
+    const basicWake = () => {
+      if (!sharedAvailable) void refresh();
+    };
+    doc.addEventListener("astrabasicitemcache", basicWake);
     const wake = () => void refresh(), pause = () => {
       version++;
       shared.pause?.();
       sharedStatus = shared.state();
+      if (!sharedAvailable) store.replaceBasicReferences([]);
       draw();
     };
     doc.addEventListener("astracalculationcheck", wake);
@@ -5037,6 +5220,7 @@
       version++;
       store.clear();
       doc.removeEventListener("astrapiitemcache", refresh);
+      doc.removeEventListener("astrabasicitemcache", basicWake);
       doc.removeEventListener("astracalculationcheck", wake);
       doc.removeEventListener("visibilitychange", visibility);
       ownWindow?.removeEventListener("hashchange", wake);

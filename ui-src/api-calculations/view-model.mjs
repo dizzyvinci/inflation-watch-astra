@@ -45,7 +45,7 @@ export function calculationView(legacy,snapshot,selection={}){
   headline,index:snapshot.current.available?snapshot.current.index:null,rows,categories,
   currentReference:{capturedAt:snapshot.sources.prices?.capturedAt??null,reportedDays:3,exactStartAt:null,exactEndAt:null,sourceObservedAt:null,
    available:snapshot.current.available,availableItems:snapshot.current.availableItems,expectedItems:50},
-  daily:{...structuredClone(snapshot.daily),latestDay:latestDaily?.day??null},
+  daily:{...structuredClone(snapshot.daily),latestDay:latestDaily?.day??null,recordedDays:snapshot.daily.history.length,observedEligibleDays:snapshot.daily.history.filter(p=>p.status==='available'&&!p.partialCalendarDay&&Number.isFinite(p.index)&&p.observedWeight>=.8).length,latestObservedDay:snapshot.daily.history.filter(p=>p.status==='available'&&!p.partialCalendarDay&&Number.isFinite(p.index)&&p.observedWeight>=.8).at(-1)?.day??null},
   clocks:{currentPrices:snapshot.sources.prices?.capturedAt??null,dailyCapture:snapshot.sources.overview?.capturedAt??null,
    dailyPublisher:snapshot.sources.overview?.sourceGeneratedAt??null,legacyDaily:legacy.sourceUpdatedAt,sourceObservedAt:null},
   legacyDailyHistory:structuredClone(legacy.history),calibration:structuredClone(snapshot.calibration),dependencies:[...DEPENDENCIES]});

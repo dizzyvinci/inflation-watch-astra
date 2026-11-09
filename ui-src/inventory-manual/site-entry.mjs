@@ -9,7 +9,7 @@ export function mountInventoryPreview(doc){
  const make=(tag,text)=>{const n=doc.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
  const controls=make('div');controls.className='inventory-preview-options';controls.dataset.previewControls='manual-inventory';controls.setAttribute('role','group');controls.setAttribute('aria-label','Manual inventory workspace');
  const toggle=make('button');toggle.id='inventory-preview-toggle';toggle.type='button';toggle.setAttribute('aria-controls','view-inventory inventory-nav');
- controls.append(toggle,make('small','Off in each tab. Manual declarations only; explicit Refresh reads existing own-site cached references. No OCR or IGN lookup.'));options.append(controls);
+ controls.append(toggle,make('small','Off in each tab. Manual declarations only; explicit Refresh reads existing own-site cached references. Local screenshot review; no OCR or IGN lookup.'));options.append(controls);
  function verified(){try{const s=w.AstraPrivateWorkspace?.current?.();return s?.verified===true&&s.mode==='private_workspace'&&Number.isSafeInteger(s.expiresAt)&&s.expiresAt>w.Date.now()}catch{return false}}
  const onRoute=()=>w.location.hash==='#inventory',visibleOnline=()=>!doc.hidden&&w.navigator.onLine!==false;
  function desired(){return !disposed&&wanted&&onRoute()&&visibleOnline()&&verified()}

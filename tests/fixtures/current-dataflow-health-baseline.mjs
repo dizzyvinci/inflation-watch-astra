@@ -1,3 +1,4 @@
+import {privateNormalizedSourceReceiptHealth} from '../../ops/api-normalized-source-receipt-health.mjs';
 import {privateSearchIdentityHealth} from '../../ops/api-search-identity-health.mjs';
 import {privateFastCurrentVerificationHealth} from '../../ops/api-fast-current-verification-health.mjs';
 import {STAMP_DEFINITION_SHA256} from '../../ops/stamp-reference-definition.mjs';
@@ -114,6 +115,7 @@ export class ApiPrivateHealth{
     if(!this.enabled()||result?.status==='disabled')return{status:'skipped_off'};
     const checkedAt=new Date(this.core.clock()).toISOString();const source=this.core.health();
     const config=this.core.config();
+    const normalizedSourceReceipts=privateNormalizedSourceReceiptHealth(this.core,this.env,{checkedAt});
     const itemHourExport=await privateItemHourExportHealth(this.core,this.env,checkedAt);
     const sqliteStorage=privateSqliteStorageHealth(this.ctx,this.env,{checkedAt});
     const discoveryProgress=await privateItemDiscoveryProgressHealth(this.core,this.ctx.storage);
@@ -135,6 +137,7 @@ export class ApiPrivateHealth{
       configuredMinuteCeiling:integer(config.grantedPerMinute)?config.grantedPerMinute:null,
       configuredDailyCeiling:caps.length?Math.min(...caps):null,
       completedReceipts:this.completedReceipts(config),
+      ...(normalizedSourceReceipts===null?{}:{privateNormalizedSourceReceipts:normalizedSourceReceipts}),
       publicCashPublication:this.publicCashProgress(),
       ...(this.core.indexBridge?.active?{privateMarketCalculations:{...this.core.indexBridge.health(),verificationPins:committedCalculationVerificationPins(this.core,{checkedAt})}}:{}),
       privateNxOffers:privateNxHealth(this.core,this.env),

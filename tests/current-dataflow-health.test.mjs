@@ -81,7 +81,7 @@ test('actual private-health publication omits Off field and includes On SQL evid
   assert.equal(off.lastRawCapturedAt,on.lastRawCapturedAt);
 });
 
-test('historicallyOn thenOff actual publication body remains byte-identical to original production health',async t=>{
+test('historicallyOn thenOff actual publication body remains byte-identical to independent no-fairness baseline with current unrelated diagnostics',async t=>{
   const f=await fixture(t,options());completeBucketObjectInterface(f);f.env.API_PROVIDER_FAIRNESS_JSON='{"enabled":false}';
   const actual=f.owner.privateHealth,baseline=new BaselineHealth(f.owner.ctx,f.env,f.core);
   baseline.fastCurrentDelegate=actual.fastCurrentDelegate;baseline.searchIdentityDelegate=actual.searchIdentityDelegate;
@@ -90,4 +90,30 @@ test('historicallyOn thenOff actual publication body remains byte-identical to o
   f.exec('UPDATE api_private_health SET revision=?,body=?,pending=? WHERE id=1',initial.revision,initial.body,initial.pending);
   await actual.afterRun({status:'idle'});const after=f.row('SELECT body FROM api_private_health WHERE id=1').body;
   assert.equal(after,original);assert.equal(f.provider.length,0);
+});
+
+test('Fairness Off independently preserves full SQL row, wire seal and unrelated normalized diagnostics',async t=>{
+  const f=await fixture(t,options());completeBucketObjectInterface(f);f.env.API_PROVIDER_FAIRNESS_JSON='{"enabled":false}';
+
+  const KEY='_private/provider-api/v1/health.json',initial=f.row('SELECT revision,body,pending FROM api_private_health WHERE id=1'),priorObject=f.objects.get(KEY);
+  const actual=f.owner.privateHealth,baseline=new BaselineHealth(f.owner.ctx,f.env,f.core);
+  for(const name of ['fastCurrentDelegate','searchIdentityDelegate'])baseline[name]=actual[name];
+  await baseline.afterRun({status:'idle'});
+  const expected=f.row('SELECT revision,body,pending FROM api_private_health WHERE id=1'),expectedWire=f.objects.get(KEY).body;
+  const expectedBody=JSON.parse(expected.body);
+  assert(Object.hasOwn(expectedBody,'privateNormalizedSourceReceipts'));
+  assert.equal(expectedBody.privateNormalizedSourceReceipts.rawBodyRead,false);
+  assert.equal(expectedBody.privateNormalizedSourceReceipts.upstreamLatestInspected,false);
+  assert.equal(expectedBody.privateNormalizedSourceReceipts.operatorCheckedAt,expectedBody.checkedAt);
+  f.exec('UPDATE api_private_health SET revision=?,body=?,pending=? WHERE id=1',initial.revision,initial.body,initial.pending);
+  if(priorObject===undefined)f.objects.delete(KEY);else f.objects.set(KEY,priorObject);
+  await actual.afterRun({status:'idle'});
+  const got=f.row('SELECT revision,body,pending FROM api_private_health WHERE id=1'),wire=f.objects.get(KEY).body;
+  const {createHash}=await import('node:crypto'),digest=body=>createHash('sha256').update(body).digest('hex');
+  assert.deepEqual(got,expected);assert.equal(got.body,expected.body);assert.equal(digest(got.body),digest(expected.body));assert.equal(wire,expectedWire);
+  assert.equal(got.revision,initial.revision+1);assert.equal(got.pending,0);
+  const published=JSON.parse(wire);assert.equal(published.healthSha256,digest(got.body));assert.equal(published.revision,got.revision);
+  assert.equal(published.privateNormalizedSourceReceipts.operatorCheckedAt,published.checkedAt);
+  assert(!Object.hasOwn(published,'privateProviderService'));assert(!Object.hasOwn(published,'privateBasicCurrent'));
+  assert.equal(f.provider.length,0);
 });

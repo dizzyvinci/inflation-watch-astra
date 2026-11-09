@@ -36,6 +36,9 @@
     privateWorkspaceCandidate:()=>workspaceCandidate,
     onResponse(response) {
       const accessMode=response?.headers?.get?.('X-Astra-Preview');
+      // A browser-revalidated cached local JSON body can lack the session header.
+      // This is only a maintained-local hint; the strict status GET grants authority.
+      if(maintainedLocalPreview&&accessMode===null&&!workspaceCandidate&&ownedWorkspaceResponse(response)){workspaceCandidate=true;notifyWorkspaceCandidate();}
       if (accessMode !== 'password') {
         if(workspaceCandidate&&accessMode==='review'&&ownedWorkspaceResponse(response)){
           workspaceCandidate=false;form?.remove();form=undefined;localPasswordSession=false;notifyWorkspaceCandidate();
@@ -62,6 +65,6 @@
   if (window.caches?.keys) window.caches.keys().then(names => Promise.allSettled(
     names.filter(name => name.startsWith('inflation-watch-shell-')).map(name => window.caches.delete(name)))).catch(() => {});
   window.addEventListener('pageshow', event => {
-    if (event.persisted && (form || localPasswordSession)) lockDocument();
+    if (event.persisted && (form || localPasswordSession || maintainedLocalPreview&&workspaceCandidate)) lockDocument();
   });
 })();

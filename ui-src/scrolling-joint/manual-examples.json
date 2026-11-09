@@ -1,0 +1,18 @@
+{
+  "workGloves": {
+    "label": "Synthetic Work Gloves / GFA-like (2 Crit partial)",
+    "warning": "Every identity, stat, slot, rate, price, fee and stock below is a manual synthetic assumption. No MCW/GMS rule, obtainable stock or realizable sale is verified.",
+    "entries": [{"key":"partial","itemId":"WG_MANUAL","quality":"SYNTHETIC","stats":{"9":0,"14":2,"16":0},"slotsLeft":2,"upgrades":0,"cost":"4","stock":1}],
+    "scrolls": [{"key":"GFA_HYPOTHETICAL","itemIds":["WG_MANUAL"],"success":"1","gains":{"9":0,"14":0,"16":2},"destroyGivenFailure":"0","failureUsesSlot":true,"upgradeDeltaSuccess":1,"upgradeDeltaFailure":0,"cost":"1","stock":2}],
+    "budget":"6","feePercent":"0","fixedFee":"0","residuals":[{"itemId":"WG_MANUAL","gross":"0"}],"decisions":"2","resets":"0",
+    "quoteByState":[{"stats":{"9":0,"14":2,"16":0},"slotsLeft":2,"upgrades":0,"gross":"4"},{"stats":{"9":0,"14":2,"16":2},"slotsLeft":1,"upgrades":1,"gross":"5"},{"stats":{"9":0,"14":2,"16":4},"slotsLeft":0,"upgrades":2,"gross":"100"}]
+  },
+  "blueArten": {
+    "label": "Synthetic Blue Arten / GFMA-like — identity unverified",
+    "warning": "BlueArten_MANUAL and GFMA_HYPOTHETICAL are labels, not verified catalogue IDs or game mechanics. All base stats, slots, rates, prices, fees, stock and outcomes are synthetic.",
+    "entries": [{"key":"base","itemId":"BlueArten_MANUAL","quality":"SYNTHETIC","stats":{"9":1,"14":0,"16":0},"slotsLeft":1,"upgrades":0,"cost":"10","stock":1}],
+    "scrolls": [{"key":"GFMA_HYPOTHETICAL","itemIds":["BlueArten_MANUAL"],"success":"1/2","gains":{"9":2,"14":0,"16":0},"destroyGivenFailure":"0","failureUsesSlot":true,"upgradeDeltaSuccess":1,"upgradeDeltaFailure":0,"cost":"2","stock":1}],
+    "budget":"12","feePercent":"0","fixedFee":"0","residuals":[{"itemId":"BlueArten_MANUAL","gross":"0"}],"decisions":"1","resets":"0",
+    "quoteByState":[{"stats":{"9":1,"14":0,"16":0},"slotsLeft":1,"upgrades":0,"gross":"10"},{"stats":{"9":3,"14":0,"16":0},"slotsLeft":0,"upgrades":1,"gross":"30"},{"stats":{"9":1,"14":0,"16":0},"slotsLeft":0,"upgrades":0,"gross":"5"}]
+  }
+}

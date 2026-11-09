@@ -164,3 +164,6 @@ body[data-date-tone="plain"] :is(.market-highlight-date,.market-highlight-dates,
 
 /* Separate Basic aggregate evidence; full-variant/history typography unchanged. */
 .api-basic-section{font-size:16px!important;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}.api-basic-section p,.api-basic-section th,.api-basic-section td{font-size:16px!important;line-height:1.5}.api-basic-values{width:100%;min-width:420px}.api-basic-values td{font-variant-numeric:tabular-nums}.price-check-item-copy .price-check-basic-evidence,.price-check-suggestion-copy .price-check-basic-evidence{display:block;font-size:16px!important;line-height:1.45;white-space:normal}
+
+/* Keep cached client provenance readable on narrow calculator views. */
+#scrolling-lab-workspace .scrolling-client-reference{overflow-wrap:anywhere;word-break:normal}

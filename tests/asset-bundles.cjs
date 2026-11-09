@@ -46,9 +46,15 @@ async function open(html,{immediate=false,activeManifest=manifest,appFailure=fal
   const model=w.AstraRollingBenchmark.calculate(report);assert(model.available,model.reason);assert.equal(doc.getElementById('main-rate').textContent,model.rate.toFixed(2));
   // Current captured report stays current here; no historical fixture/golden.
   assert.equal(doc.getElementById('rate-kind').dataset.marketAt,report.sourceUpdatedAt);
+  assert(w.AstraJointScrollingPreview,'actual flat-bundled joint module initialized');assert.equal(w.AstraJointScrollingPreview.getState().enabled,false);assert.equal(doc.getElementById('scrolling-lab-nav').hidden,true);assert.equal(doc.querySelectorAll('#scrolling-lab-workspace input').length,0);
   const currentCpi=report.latest.cpi,delta=Math.abs(currentCpi-100).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
   assert(Number.isFinite(currentCpi));assert(doc.getElementById('mpi-explanation').textContent.includes(delta+'% '+(currentCpi>=100?'higher':'lower')));
 
+  const preset=doc.querySelector('[data-design-preset-choice="mesowatch"]'),personal=doc.querySelector('[data-design-preset-choice="custom"]');assert(preset&&personal);
+  const originalPresentation={rate:doc.getElementById('main-rate').textContent,source:doc.getElementById('rate-kind').dataset.marketAt,scenery:doc.body.dataset.sceneryMode,sceneOn:doc.body.classList.contains('scenery-on'),dial:doc.querySelector('#category-cards svg').outerHTML,requests:calls.fetch.length};
+  preset.click();assert.equal(doc.body.dataset.designPreset,'mesowatch');assert.equal(doc.body.dataset.designPresetBackdrop,'sky');const footerBrand=doc.querySelector('footer.community-footer .footer-brand');assert(footerBrand);assert.equal(w.getComputedStyle(footerBrand).fontFamily,w.getComputedStyle(doc.querySelector('header.masthead .brand')).fontFamily,'preset header/footer use the same rounded family');doc.querySelector('[data-design-preset-backdrop-choice="keep"]').click();assert.equal(doc.body.dataset.designPresetBackdrop,'keep');
+  personal.click();assert.equal(doc.body.dataset.designPreset,undefined);assert.equal(doc.body.dataset.designPresetBackdrop,undefined);assert.equal(doc.body.dataset.sceneryMode,originalPresentation.scenery);assert.equal(doc.body.classList.contains('scenery-on'),originalPresentation.sceneOn);
+  assert.equal(doc.getElementById('main-rate').textContent,originalPresentation.rate);assert.equal(doc.getElementById('rate-kind').dataset.marketAt,originalPresentation.source);assert.equal(doc.querySelector('#category-cards svg').outerHTML,originalPresentation.dial);assert.equal(calls.fetch.length,originalPresentation.requests,'design choices do not request data');
   assert.equal(doc.querySelectorAll('#category-cards .category-card').length,report.categories.length);
   assert(doc.querySelector('#category-cards .category-main img').getAttribute('src').startsWith('assets/'));
   assert.equal(doc.querySelectorAll('#basket-table tbody tr').length,50);assert.equal(doc.querySelectorAll('#cash-table tbody tr').length,29);

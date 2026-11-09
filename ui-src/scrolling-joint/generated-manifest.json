@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "kind": "generated_private_joint_scrolling_preview",
+  "buildVersion": "0.28.2",
+  "inputHashMode": "utf8_lf",
+  "entry": "ui-src/scrolling-joint/site-entry.mjs",
+  "inputs": [
+    {
+      "path": "ui-src/scrolling-joint/client-reference.mjs",
+      "sha256": "daf0e9c35f87bfc27d3bda5f7e1acf08c81e32c17d226db57d1330ae3944709e"
+    },
+    {
+      "path": "ui-src/scrolling-joint/manual-examples.json",
+      "sha256": "f250a22e6e71268de88c958b89e6fbc39ac3b967c1bcac94748b322b35554f70"
+    },
+    {
+      "path": "ui-src/scrolling-joint/page.mjs",
+      "sha256": "6d2d8d261d24b9b6f96c00e203f6306ebfa7215fec6dadc8f9e5a33b58ca4ea3"
+    },
+    {
+      "path": "ui-src/scrolling-joint/scenario-model.mjs",
+      "sha256": "83f7e175852a872c60fe0217ba67555bef9a98ff524975106f62d0018e8dba02"
+    },
+    {
+      "path": "ui-src/scrolling-joint/site-entry.mjs",
+      "sha256": "e9bf0d48c7d328b43b67991b2ab6a89cb77dd13482c839a80a3c89c9f9f51710"
+    },
+    {
+      "path": "ui-src/scrolling-joint/solver/joint-economics.mjs",
+      "sha256": "a9957c79c154cfe928374bef31e2df13f703d0ef289b5c42f6818cdbc9920495"
+    },
+    {
+      "path": "ui-src/scrolling-joint/solver/joint-manual-wire.mjs",
+      "sha256": "6964a7353e3b5dabfc931c474f81c067f27df27287a407b423e973918ab69bd6"
+    },
+    {
+      "path": "ui-src/scrolling-joint/solver/joint-mechanics.mjs",
+      "sha256": "a236ea4cc675becbed194c42cfe62324473271650d075dfce24427ae8b40c8b9"
+    },
+    {
+      "path": "ui-src/scrolling-joint/solver/joint-rational.mjs",
+      "sha256": "6ccd9b1dbb290584ff8d2955029393054bdba77b21c59ab44c1451e7942744a3"
+    }
+  ],
+  "output": {
+    "path": "web/scrolling-preview.js",
+    "bytes": 81214,
+    "sha256": "657f88ad7e2ca24f896f9d89ac44f3418532c4e2265dcb1c074a69c3ad766a15"
+  },
+  "defaultEnabled": false,
+  "manualOnly": true,
+  "requiresExistingPrivateWorkspace": true,
+  "sourceRequests": 0,
+  "newTimers": 0
+}

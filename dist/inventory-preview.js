@@ -889,6 +889,15 @@
         notify();
         return copy({ pageId, entry });
       },
+      updateEntry(entryId, input) {
+        need4(on && entries.some((e) => e.entry.entryId === entryId), "manual_entry");
+        need4(input && typeof input === "object" && !Array.isArray(input) && !Object.hasOwn(input, "entryId"), "manual_entry_fields");
+        const entry = sanitizeEntries([{ ...copy(input), entryId }])[0];
+        entries = entries.map((row) => row.entry.entryId === entryId ? { ...row, entry } : row);
+        reseed();
+        notify();
+        return copy(entry);
+      },
       removeEntry(entryId) {
         need4(on && entries.some((e) => e.entry.entryId === entryId), "manual_entry");
         entries = entries.filter((e) => e.entry.entryId !== entryId);
@@ -2055,6 +2064,413 @@
     });
   }
 
+  // ui-src/inventory-manual/screenshot-image.mjs
+  var need8 = (v, c) => {
+    if (!v) throw TypeError(c);
+  };
+  var be16 = (b, i) => b[i] << 8 | b[i + 1];
+  var be32 = (b, i) => b[i] * 16777216 + b[i + 1] * 65536 + b[i + 2] * 256 + b[i + 3];
+  var text = (b, i, n) => String.fromCharCode(...b.subarray(i, i + n));
+  var CRC = Uint32Array.from({ length: 256 }, (_, n) => {
+    for (let k = 0; k < 8; k++) n = n & 1 ? 3988292384 ^ n >>> 1 : n >>> 1;
+    return n >>> 0;
+  });
+  function crc(b, start, end) {
+    let c = 4294967295;
+    for (let i = start; i < end; i++) c = CRC[(c ^ b[i]) & 255] ^ c >>> 8;
+    return (c ^ 4294967295) >>> 0;
+  }
+  function dimensions(width, height) {
+    need8(Number.isInteger(width) && Number.isInteger(height) && width > 0 && height > 0 && width <= 8192 && height <= 8192 && width * height <= 12e6, "image_dimensions");
+    return { width, height };
+  }
+  function png(b) {
+    need8(b.length >= 45 && [137, 80, 78, 71, 13, 10, 26, 10].every((x, i) => b[i] === x), "png_signature");
+    let p = 8, count = 0, ihdr = false, idat = false, endIdat = false, plte = false, ended = false, d;
+    while (p < b.length) {
+      need8(++count <= 4096 && p + 12 <= b.length, "png_chunks_bound");
+      const n = be32(b, p), t = text(b, p + 4, 4);
+      need8(/^[A-Za-z]{4}$/.test(t) && t[2] === t[2].toUpperCase() && n <= b.length - p - 12, "png_chunk");
+      need8(crc(b, p + 4, p + 8 + n) === be32(b, p + 8 + n), "png_crc");
+      need8(!["acTL", "fcTL", "fdAT"].includes(t), "animated_image_unsupported");
+      need8(t !== "eXIf", "png_exif_orientation_held");
+      if (!ihdr) {
+        need8(t === "IHDR" && n === 13, "png_ihdr");
+        const w = be32(b, p + 8), h = be32(b, p + 12), bits = b[p + 16], color = b[p + 17];
+        d = dimensions(w, h);
+        need8({ 0: [1, 2, 4, 8, 16], 2: [8, 16], 3: [1, 2, 4, 8], 4: [8, 16], 6: [8, 16] }[color]?.includes(bits) && b[p + 18] === 0 && b[p + 19] === 0 && b[p + 20] <= 1, "png_profile");
+        d.color = color;
+        ihdr = true;
+      } else if (t === "IHDR") need8(false, "png_duplicate_ihdr");
+      else if (t === "PLTE") {
+        need8(!plte && !idat && n > 0 && n <= 768 && n % 3 === 0 && d.color !== 0 && d.color !== 4, "png_palette");
+        plte = true;
+      } else if (t === "IDAT") {
+        need8(!endIdat && (d.color !== 3 || plte), "png_idat_order");
+        idat = true;
+      } else if (t === "IEND") {
+        need8(idat && n === 0 && p + 12 === b.length, "png_iend");
+        ended = true;
+        p += 12;
+        break;
+      } else {
+        need8(t[0] === t[0].toLowerCase(), "png_unknown_critical");
+        if (idat) endIdat = true;
+      }
+      p += n + 12;
+    }
+    need8(ended && p === b.length, "png_incomplete");
+    return { ...dimensions(d.width, d.height), format: "png", mime: "image/png", orientation: "encoding_orientation_only" };
+  }
+  function exif(b, start, end) {
+    need8(end - start >= 14 && text(b, start, 6) === "Exif\0\0", "jpeg_app1_metadata_held");
+    const o = start + 6, le = text(b, o, 2) === "II";
+    need8(le || text(b, o, 2) === "MM", "jpeg_exif_profile");
+    const u16 = (i) => {
+      need8(i >= o && i + 2 <= end, "jpeg_exif_bounds");
+      return le ? b[i] + b[i + 1] * 256 : be16(b, i);
+    }, u32 = (i) => {
+      need8(i >= o && i + 4 <= end, "jpeg_exif_bounds");
+      return le ? b[i] + b[i + 1] * 256 + b[i + 2] * 65536 + b[i + 3] * 16777216 : be32(b, i);
+    };
+    need8(u16(o + 2) === 42, "jpeg_exif_profile");
+    const offset = u32(o + 4);
+    need8(offset >= 8, "jpeg_exif_bounds");
+    const p = o + offset, n = u16(p);
+    need8(n <= 128 && p + 2 + n * 12 + 4 <= end, "jpeg_exif_entries");
+    let seen = false;
+    for (let k = 0; k < n; k++) {
+      const q = p + 2 + k * 12;
+      if (u16(q) === 274) {
+        need8(!seen && u16(q + 2) === 3 && u32(q + 4) === 1, "jpeg_exif_orientation");
+        seen = true;
+        need8(u16(q + 8) === 1, "jpeg_orientation_held");
+      }
+    }
+    need8(u32(p + 2 + n * 12) === 0, "jpeg_exif_secondary_held");
+  }
+  function jpeg(b) {
+    need8(b.length >= 4 && b[0] === 255 && b[1] === 216, "jpeg_signature");
+    let p = 2, markers = 0, d = null, scans = 0, inScan = false, exifSeen = false, ended = false;
+    while (p < b.length) {
+      if (inScan) {
+        while (p < b.length) {
+          if (b[p++] !== 255) continue;
+          while (p < b.length && b[p] === 255) p++;
+          need8(p < b.length, "jpeg_truncated_scan");
+          if (b[p] === 0 || b[p] >= 208 && b[p] <= 215) {
+            p++;
+            continue;
+          }
+          p--;
+          break;
+        }
+        inScan = false;
+      }
+      need8(++markers <= 16384 && p + 2 <= b.length && b[p++] === 255, "jpeg_markers_bound");
+      while (p < b.length && b[p] === 255) p++;
+      need8(p < b.length, "jpeg_marker");
+      const m = b[p++];
+      if (m === 217) {
+        need8(d && scans > 0 && p === b.length, "jpeg_eoi");
+        ended = true;
+        break;
+      }
+      need8(m !== 0 && m !== 216 && m !== 1 && !(m >= 208 && m <= 215) && m !== 220, "jpeg_marker");
+      need8(p + 2 <= b.length, "jpeg_segment");
+      const n = be16(b, p);
+      need8(n >= 2 && n <= b.length - p, "jpeg_segment");
+      const s = p + 2, e = p + n;
+      if (m === 225) {
+        need8(!exifSeen, "jpeg_duplicate_exif");
+        exifSeen = true;
+        exif(b, s, e);
+      }
+      if (m === 226) need8(text(b, s, Math.min(4, e - s)) !== "MPF\0", "animated_image_unsupported");
+      if (m >= 192 && m <= 207 && ![196, 200, 204].includes(m)) {
+        need8([192, 193, 194].includes(m) && !d && n >= 8 && b[s] === 8, "jpeg_sof_profile");
+        const components = b[s + 5];
+        need8([1, 3, 4].includes(components) && n === 8 + components * 3, "jpeg_sof_components");
+        d = dimensions(be16(b, s + 3), be16(b, s + 1));
+        d.components = components;
+      }
+      if (m === 218) {
+        need8(d && n >= 6 && b[s] >= 1 && b[s] <= d.components && n === 6 + b[s] * 2, "jpeg_sos");
+        scans++;
+        inScan = true;
+      }
+      p = e;
+    }
+    need8(ended, "jpeg_incomplete");
+    return { ...dimensions(d.width, d.height), format: "jpeg", mime: "image/jpeg", orientation: "absent_or_explicit_identity_only" };
+  }
+  var screenshotLimits = Object.freeze({ maxBytes: 8e6, maxBatchBytes: 32e6, maxDimension: 4096, maxPixels: 8e6, maxTotalPixels: 16e6, maxPages: 10, maxPhysicalDecodes: 1 });
+  var typed2 = Object.getPrototypeOf(Uint8Array.prototype);
+  var nativeLength = Object.getOwnPropertyDescriptor(typed2, "byteLength").get;
+  var nativeOffset = Object.getOwnPropertyDescriptor(typed2, "byteOffset").get;
+  var nativeBuffer = Object.getOwnPropertyDescriptor(typed2, "buffer").get;
+  var nativeTag = Object.getOwnPropertyDescriptor(typed2, Symbol.toStringTag).get;
+  var abLength = Object.getOwnPropertyDescriptor(ArrayBuffer.prototype, "byteLength").get;
+  function ownScreenshotBytes(input) {
+    let n, o, buffer;
+    try {
+      need8(nativeTag.call(input) === "Uint8Array", "image_bytes");
+      n = nativeLength.call(input);
+      o = nativeOffset.call(input);
+      buffer = nativeBuffer.call(input);
+      abLength.call(buffer);
+    } catch {
+      throw TypeError("image_bytes");
+    }
+    need8(n > 0 && n <= screenshotLimits.maxBytes, "image_bytes");
+    const out = new Uint8Array(n);
+    out.set(new Uint8Array(buffer, o, n));
+    return out;
+  }
+  var le32 = (b, i) => b[i] + b[i + 1] * 256 + b[i + 2] * 65536 + b[i + 3] * 16777216;
+  var le24 = (b, i) => b[i] + b[i + 1] * 256 + b[i + 2] * 65536;
+  function webp(b) {
+    need8(b.length >= 20 && text(b, 0, 4) === "RIFF" && text(b, 8, 4) === "WEBP" && le32(b, 4) + 8 === b.length, "webp_riff");
+    let p = 12, count = 0, canvas = null, payload = null, alpha = false;
+    while (p < b.length) {
+      need8(++count <= 256 && p + 8 <= b.length, "webp_chunks");
+      const t = text(b, p, 4), n = le32(b, p + 4), s = p + 8;
+      need8(n <= b.length - s && s + n + n % 2 <= b.length, "webp_chunk_bound");
+      if (n % 2) need8(b[s + n] === 0, "webp_padding");
+      if (t === "VP8X") {
+        need8(count === 1 && n === 10 && !canvas && (b[s] & ~16) === 0 && b[s + 1] === 0 && b[s + 2] === 0 && b[s + 3] === 0, "webp_extended_profile");
+        canvas = dimensions(le24(b, s + 4) + 1, le24(b, s + 7) + 1);
+      } else if (t === "ALPH") {
+        need8(canvas && !payload && !alpha && n > 0, "webp_alpha");
+        alpha = true;
+      } else if (t === "VP8 ") {
+        need8(!payload && n >= 10 && (b[s] & 1) === 0 && b[s + 3] === 157 && b[s + 4] === 1 && b[s + 5] === 42, "webp_vp8");
+        payload = dimensions(b[s + 6] + b[s + 7] * 256 & 16383, b[s + 8] + b[s + 9] * 256 & 16383);
+      } else if (t === "VP8L") {
+        need8(!payload && !alpha && n >= 5 && b[s] === 47 && (b[s + 4] & 224) === 0, "webp_vp8l");
+        payload = dimensions(1 + b[s + 1] + ((b[s + 2] & 63) << 8), 1 + (b[s + 2] >> 6) + (b[s + 3] << 2) + ((b[s + 4] & 15) << 10));
+      } else need8(false, "webp_metadata_or_animation_unsupported");
+      p = s + n + n % 2;
+    }
+    need8(payload && p === b.length && (!canvas || canvas.width === payload.width && canvas.height === payload.height), "webp_dimensions");
+    return { ...payload, format: "webp", mime: "image/webp", orientation: "encoding_orientation_only" };
+  }
+  function inspectScreenshotBytes(bytes2, mime) {
+    const b = ownScreenshotBytes(bytes2);
+    try {
+      need8(["image/png", "image/jpeg", "image/webp"].includes(mime), "image_type_unsupported");
+      const d = mime === "image/png" ? png(b) : mime === "image/jpeg" ? jpeg(b) : webp(b);
+      need8(d.width <= 4096 && d.height <= 4096 && d.width * d.height <= 8e6, "image_dimensions");
+      return Object.freeze({ ...d, bytes: b.length, pixelCount: d.width * d.height, sourceCapturedAt: null, recognition: false });
+    } finally {
+      b.fill(0);
+    }
+  }
+
+  // ui-src/inventory-manual/screenshot-review.mjs
+  function mountScreenshotReview(root, { isEnabled, addPage, getPages, selectPage }) {
+    const d = root.ownerDocument, w = d.defaultView;
+    if (w.location.origin !== "http://127.0.0.1:8765") return Object.freeze({ sync() {
+    }, clear() {
+    }, state: () => Object.freeze({ images: 0, physicalPending: false, encodedBytes: 0, pixels: 0 }), dispose() {
+    } });
+    const make = (tag, text2) => {
+      const el = d.createElement(tag);
+      if (text2 !== void 0) el.textContent = text2;
+      return el;
+    };
+    let epoch = 0, disposed = false, busy = false, reader = null, queue = [], pages = [], serial = 0;
+    const active = () => {
+      try {
+        return !disposed && isEnabled() === true;
+      } catch {
+        return false;
+      }
+    };
+    const section = make("section");
+    section.className = "inventory-screenshot-review";
+    section.dataset.screenshotReview = "";
+    section.append(make("h2", "Review local inventory screenshots"), make("p", "Choose up to 10 PNG, JPEG or WebP screenshots. Each becomes a separate review page. Images stay in this tab; nothing is recognized automatically. Read the image and confirm each exact item, quantity and stat in the existing stack form. Correct mistakes before adding, or remove and replace a stack. Refresh cached prices remains a separate action."));
+    const label2 = make("label", "Choose local screenshots"), input = make("input");
+    input.type = "file";
+    input.multiple = true;
+    input.accept = "image/png,image/jpeg,image/webp";
+    input.autocomplete = "off";
+    input.dataset.screenshotFiles = "";
+    label2.append(input);
+    section.append(label2);
+    const clearButton = make("button", "Clear images only");
+    clearButton.type = "button";
+    clearButton.dataset.clearScreenshots = "";
+    section.append(clearButton);
+    const status = make("p", "No images selected. No upload, filename export, image saving or screenshot source clock.");
+    status.setAttribute("role", "status");
+    status.dataset.screenshotStatus = "";
+    section.append(status);
+    const gallery = make("div");
+    gallery.className = "inventory-screenshot-gallery";
+    section.append(gallery);
+    root.append(section);
+    const release = (p) => {
+      p.canvas.width = 0;
+      p.canvas.height = 0;
+      p.card.remove();
+    };
+    function draw() {
+      input.disabled = !active() || busy;
+      clearButton.disabled = pages.length === 0 && !busy;
+      for (const p of pages) p.select.disabled = !active();
+      section.dataset.physicalPending = String(busy);
+    }
+    function clear() {
+      epoch++;
+      queue.length = 0;
+      for (const p of pages) release(p);
+      pages = [];
+      input.value = "";
+      try {
+        if (reader?.readyState === 1) reader.abort();
+      } catch {
+      }
+      status.textContent = busy ? "Images cleared. An earlier native decode remains reserved until it physically settles; late pixels cannot return." : "Images cleared. Confirmed manual pages and stacks remain until you remove them or clear the workspace.";
+      draw();
+    }
+    function sync() {
+      if (!active()) {
+        if (pages.length || queue.length || reader || busy) clear();
+        else draw();
+        return;
+      }
+      const ids = new Set(getPages().map((p) => p.pageId));
+      pages = pages.filter((p) => {
+        if (ids.has(p.pageId)) return true;
+        release(p);
+        return false;
+      });
+      draw();
+    }
+    const read = (file) => new Promise((resolve, reject) => {
+      const r = new w.FileReader();
+      reader = r;
+      r.onload = () => resolve(r.result);
+      r.onerror = () => reject(TypeError("local_image_read_failed"));
+      r.onabort = () => reject(TypeError("local_image_read_cancelled"));
+      try {
+        r.readAsArrayBuffer(file);
+      } catch {
+        reject(TypeError("local_image_read_failed"));
+      }
+    });
+    async function importFiles(files) {
+      if (!active() || busy) return;
+      let count;
+      try {
+        count = files.length;
+        if (!Number.isSafeInteger(count) || count < 1 || count > 10) throw Error();
+        queue = Array.from(files);
+        if (queue.length !== count || count + getPages().length > 10) throw Error();
+      } catch {
+        queue = [];
+        status.textContent = "Choose 1 to 10 images within the remaining 10-page limit.";
+        return;
+      }
+      const ticket = epoch;
+      busy = true;
+      draw();
+      let bytes2 = null, bitmap = null, canvas = null, file = null;
+      const valid = () => ticket === epoch && active();
+      try {
+        const size = Object.getOwnPropertyDescriptor(w.Blob.prototype, "size").get, type = Object.getOwnPropertyDescriptor(w.Blob.prototype, "type").get;
+        let total = pages.reduce((n, p) => n + p.bytes, 0);
+        for (const f of queue) {
+          const n = size.call(f);
+          if (!(f instanceof w.File) || !Number.isSafeInteger(n) || n < 1 || n > screenshotLimits.maxBytes || !["image/png", "image/jpeg", "image/webp"].includes(type.call(f))) throw TypeError("local_image_profile");
+          total += n;
+        }
+        if (total > screenshotLimits.maxBatchBytes) throw TypeError("local_image_batch_bound");
+        while (queue.length && valid()) {
+          file = queue.shift();
+          const mime = type.call(file), expected = size.call(file);
+          status.textContent = "Reading and decoding one local image. No item identity or stats have been inferred.";
+          const buffer = await read(file);
+          reader = null;
+          bytes2 = new Uint8Array(buffer);
+          if (!valid()) break;
+          if (bytes2.length !== expected) throw TypeError("local_image_size_changed");
+          const info = inspectScreenshotBytes(bytes2, mime);
+          if (pages.reduce((n, p) => n + p.pixels, 0) + info.pixelCount > screenshotLimits.maxTotalPixels) throw TypeError("local_image_pixel_budget");
+          if (typeof w.createImageBitmap !== "function") throw TypeError("native_image_decoder_unavailable");
+          const pendingBitmap = w.createImageBitmap(new w.Blob([bytes2], { type: mime }), { imageOrientation: "from-image" });
+          bytes2.fill(0);
+          bytes2 = null;
+          file = null;
+          bitmap = await pendingBitmap;
+          if (!valid()) break;
+          if (!bitmap || typeof bitmap.close !== "function" || bitmap.width !== info.width || bitmap.height !== info.height) throw TypeError("native_image_dimensions_mismatch");
+          canvas = make("canvas");
+          canvas.width = info.width;
+          canvas.height = info.height;
+          canvas.setAttribute("aria-label", "Local screenshot for manual transcription");
+          const ctx = canvas.getContext("2d");
+          if (!ctx) throw TypeError("local_canvas_unavailable");
+          ctx.drawImage(bitmap, 0, 0);
+          bitmap.close();
+          bitmap = null;
+          if (!valid()) break;
+          const page = addPage({ label: "Screenshot review " + ++serial, sourceKind: "screenshot_transcription", sourceHash: null });
+          if (!valid()) break;
+          const card = make("article"), title = make("h3", page.label), select = make("button", "Review / enter stacks for this page"), remove = make("button", "Remove this image only");
+          select.type = remove.type = "button";
+          select.dataset.reviewScreenshot = page.pageId;
+          remove.dataset.removeScreenshot = page.pageId;
+          const row = { pageId: page.pageId, canvas, card, select, bytes: info.bytes, pixels: info.pixelCount };
+          select.addEventListener("click", () => {
+            if (active()) selectPage(page.pageId);
+          });
+          remove.addEventListener("click", () => {
+            release(row);
+            pages = pages.filter((p) => p !== row);
+            draw();
+          });
+          card.append(title, canvas, make("p", "Manually transcribed image; capture time, completeness, item identity and stack counts are not verified."), select, remove);
+          gallery.append(card);
+          pages.push(row);
+          canvas = null;
+          selectPage(page.pageId);
+        }
+        if (valid()) status.textContent = "Local images ready. Review each page and enter separate stacks; only explicit Refresh may request typed cached prices. No recognition or inventory completeness is claimed.";
+      } catch {
+        if (valid()) status.textContent = "Image could not be admitted. Use a nonanimated PNG, JPEG or WebP up to 8 MB, 4,096 pixels per side and 8 million pixels. All images together are limited to 32 MB and 16 million pixels. Some metadata or orientation profiles need a fresh plain screenshot. Earlier admitted pages remain separate.";
+      } finally {
+        bytes2?.fill(0);
+        try {
+          bitmap?.close();
+        } finally {
+          if (canvas) {
+            canvas.width = 0;
+            canvas.height = 0;
+          }
+          file = null;
+          reader = null;
+          queue.length = 0;
+          busy = false;
+          input.value = "";
+          draw();
+        }
+      }
+    }
+    input.addEventListener("change", () => {
+      void importFiles(input.files);
+    });
+    clearButton.addEventListener("click", clear);
+    draw();
+    return Object.freeze({ sync, clear, state: () => Object.freeze({ images: pages.length, physicalPending: busy, encodedBytes: pages.reduce((n, p) => n + p.bytes, 0), pixels: pages.reduce((n, p) => n + p.pixels, 0) }), dispose() {
+      clear();
+      disposed = true;
+      section.remove();
+    } });
+  }
+
   // ui-src/inventory-manual/page.mjs
   var label = (code) => ({ dated_reference_estimate: "Dated reference estimate", quantity_unknown: "Quantity unknown", tradeability_unknown: "Tradeability not confirmed", untradeable_excluded: "Declared not tradeable", unit_conversion_unknown: "Unit conversion not confirmed", reference_unavailable: "Cached price unknown", reported_variant_unavailable: "No qualified reported-stat match", qualified_reference_unavailable: "No qualified sale reference", variant_evidence_requires_equipment_review: "Variants need equipment review", declared_roll_fields_require_equipment_review: "Declared stats need equipment review", reported_stats_unknown_or_empty: "Reported stats unknown" })[code] ?? "Needs review";
   async function mountManualInventory(root, { now = Date.now, isAvailable = () => true, onToggle = () => {
@@ -2068,7 +2484,7 @@
       }
     };
     const model = await createManualPageWorkspace({ now }), d = root.ownerDocument, w = d.defaultView;
-    let controller = null, selectedPage = null, connection = null, update = null, nextSnapshot = null, disposed = false, ageTimer = null;
+    let controller = null, selectedPage = null, editing = null, connection = null, update = null, nextSnapshot = null, disposed = false, ageTimer = null, screenshots = null;
     const stopAgeTimer = () => {
       if (ageTimer !== null) {
         w.clearTimeout(ageTimer);
@@ -2085,14 +2501,14 @@
         safeDraw();
       }, 6e4);
     }
-    const node = (tag, text) => {
+    const node = (tag, text2) => {
       const n = d.createElement(tag);
-      if (text !== void 0) n.textContent = text;
+      if (text2 !== void 0) n.textContent = text2;
       return n;
     };
     root.replaceChildren();
     root.append(node("h1", "Manual inventory \xB7 cached reference workspace"));
-    root.append(node("p", "Manual workspace \xB7 Off by default. Review each page and physical stack yourself. No screenshot upload, OCR, game capture, IGN lookup, account setup or automatic saving."));
+    root.append(node("p", "Manual workspace \xB7 Off by default. Review each page and physical stack yourself. Local screenshot transcription is optional; no upload, OCR, game capture, IGN lookup, account setup or automatic saving."));
     const controls = node("section");
     controls.innerHTML = "<button data-enable>Enable manual workspace</button><button data-refresh disabled>Refresh cached prices</button><button data-remove-page disabled>Remove selected page and its stacks</button><button data-clear disabled>Clear workspace</button><button data-export disabled>Export manual entries locally</button>";
     root.append(controls);
@@ -2120,9 +2536,11 @@
     wrap.append(table);
     root.append(coverage, wrap);
     root.append(node("p", "Prices are dated source-reported references, not current lowest listings or executable sale proceeds. A mixed-roll item median is not a matched-stat quote. Unknown quantities, units, tradeability, missing prices and unmatched variants stay unknown, never zero. Different price generations have no common-snapshot total."));
-    root.append(node("p", "Privacy on this proposed page: quantities, stat details and page identities stay in this document\u2019s memory. Explicit Refresh sends item IDs to our cached-reference endpoints, where hosting logs may record them. This module adds no browser storage, analytics, automatic export, image bytes or account lookup. An explicit local export contains manual pages/entries only, without price bodies. Existing site privacy and optional performance choices still apply. Other same-origin code and already-loaded scripts can access document memory; this is not an isolated privacy guarantee."));
+    root.append(node("p", "Privacy on this proposed page: quantities, stat details and page identities stay in this document\u2019s memory. Explicit Refresh sends item IDs to our cached-reference endpoints, where hosting logs may record them. This module adds no browser storage, analytics, automatic export, image transmission or account lookup. An explicit local export contains manual pages/entries only, without price bodies. Existing site privacy and optional performance choices still apply. Other same-origin code and already-loaded scripts can access document memory; this is not an isolated privacy guarantee."));
     function safeDraw() {
       if (disposed) return;
+      if (editing && !model.getEntries().some((r) => r.entry.entryId === editing)) editing = null;
+      form.querySelector("button").textContent = editing ? "Save correction to this physical stack" : "Add separate stack";
       const value = model.view({ online: w.navigator.onLine !== false, visible: !d.hidden });
       const enabled = model.enabled, network = controller?.state(), busy = !!network && (network.actionPending || network.physical.actionPending || network.physical.physicalPending > 0);
       controls.querySelector("[data-enable]").textContent = enabled ? "Pause workspace; clear cached quotes" : "Enable manual workspace";
@@ -2185,12 +2603,30 @@
         const action = node("td"), remove = node("button", "Remove this physical stack");
         remove.type = "button";
         remove.addEventListener("click", () => model.removeEntry(r.entryId));
-        action.append(remove);
+        const review = node("button", "Review / correct declaration");
+        review.type = "button";
+        review.dataset.reviewEntry = r.entryId;
+        review.disabled = !enabled;
+        review.addEventListener("click", () => {
+          const row = model.getEntries().find((x) => x.entry.entryId === r.entryId);
+          if (!model.enabled || !available() || !row) return;
+          selectedPage = row.pageId;
+          editing = row.entry.entryId;
+          const e = form.elements, v = row.entry;
+          for (const k of ["itemId", "quantity", "tradeable", "kind", "unitFactor", "upgrades", "slots"]) e[k].value = v[k] ?? "";
+          e.stats.value = v.stats === null ? "" : JSON.stringify(v.stats);
+          e.unitConfirmed.checked = v.unitConfirmed;
+          e.reportedSignatureAcknowledged.checked = v.reportedSignatureAcknowledged;
+          safeDraw();
+          form.scrollIntoView?.({ block: "nearest" });
+        });
+        action.append(review, remove);
         tr.append(action);
         body.append(tr);
       }
       table.append(body);
       armAgeTimer();
+      screenshots?.sync();
     }
     async function applyLatest() {
       if (update) return update;
@@ -2239,12 +2675,18 @@
       } });
       safeDraw();
     }
+    screenshots = mountScreenshotReview(root, { isEnabled: () => model.enabled && !disposed && available(), getPages: () => model.getPages(), addPage: (input) => model.addPage(input), selectPage: (id2) => {
+      selectedPage = id2;
+      safeDraw();
+      form.scrollIntoView?.({ block: "nearest" });
+    } });
     const unsubscribe = model.subscribe(safeDraw);
     function setEnabled(value) {
       if (disposed || typeof value !== "boolean") return { enabled: model.enabled };
       if (value && !available()) return { enabled: model.enabled };
       if (value === model.enabled) return { enabled: model.enabled };
       if (!value) {
+        screenshots?.clear();
         controller?.clear();
         nextSnapshot = null;
         model.setEnabled(false);
@@ -2259,6 +2701,8 @@
       onToggle(model.enabled);
     });
     function clear() {
+      editing = null;
+      screenshots?.clear();
       pagesForm.reset();
       form.reset();
       controller?.clear();
@@ -2282,7 +2726,7 @@
       safeDraw();
     });
     controls.querySelector("[data-export]").addEventListener("click", () => {
-      const text = JSON.stringify(model.exportManual(), null, 2), blob = new w.Blob([text], { type: "application/json" }), url = w.URL.createObjectURL(blob), a = node("a");
+      const text2 = JSON.stringify(model.exportManual(), null, 2), blob = new w.Blob([text2], { type: "application/json" }), url = w.URL.createObjectURL(blob), a = node("a");
       a.href = url;
       a.download = "manual-inventory.json";
       a.click();
@@ -2302,7 +2746,12 @@
       event.preventDefault();
       try {
         const e = form.elements, int = (k) => e[k].value.trim() === "" ? null : Number(e[k].value);
-        model.addEntry(selectedPage, { itemId: Number(e.itemId.value), quantity: e.quantity.value.trim() || null, tradeable: e.tradeable.value, kind: e.kind.value, unitFactor: e.unitFactor.value.trim() || null, unitConfirmed: e.unitConfirmed.checked, upgrades: int("upgrades"), slots: int("slots"), stats: e.stats.value.trim() ? JSON.parse(e.stats.value) : null, reportedSignatureAcknowledged: e.reportedSignatureAcknowledged.checked });
+        const input = { itemId: Number(e.itemId.value), quantity: e.quantity.value.trim() || null, tradeable: e.tradeable.value, kind: e.kind.value, unitFactor: e.unitFactor.value.trim() || null, unitConfirmed: e.unitConfirmed.checked, upgrades: int("upgrades"), slots: int("slots"), stats: e.stats.value.trim() ? JSON.parse(e.stats.value) : null, reportedSignatureAcknowledged: e.reportedSignatureAcknowledged.checked };
+        if (editing) {
+          model.updateEntry(editing, input);
+          editing = null;
+          safeDraw();
+        } else model.addEntry(selectedPage, input);
       } catch {
         status.textContent = "Review exact ID, positive integer quantity, units and stat fields. Unknown is allowed; maximum200 stacks. Nothing was inferred or uploaded.";
       }
@@ -2318,6 +2767,7 @@
       return r;
     }, getConnection: () => connection ? { origin: connection.origin, priceProfile: connection.priceProfile ?? "legacy_dated" } : null, dispose() {
       disposed = true;
+      screenshots?.dispose();
       stopAgeTimer();
       controller?.disable();
       unsubscribe();
@@ -2331,9 +2781,9 @@
     const w = doc.defaultView, view = doc.getElementById("view-inventory"), host = doc.getElementById("inventory-workspace"), inactive = doc.getElementById("inventory-inactive"), note = doc.getElementById("inventory-access-note"), enable = doc.getElementById("inventory-enable-page"), nav = doc.getElementById("inventory-nav"), options = doc.getElementById("display-options");
     if (!w || !view || !host || !inactive || !note || !enable || !nav || !options) return null;
     let wanted = false, api = null, mounting = null, disposed = false, revoking = false, lastVerified = false;
-    const make = (tag, text) => {
+    const make = (tag, text2) => {
       const n = doc.createElement(tag);
-      if (text !== void 0) n.textContent = text;
+      if (text2 !== void 0) n.textContent = text2;
       return n;
     };
     const controls = make("div");
@@ -2345,7 +2795,7 @@
     toggle.id = "inventory-preview-toggle";
     toggle.type = "button";
     toggle.setAttribute("aria-controls", "view-inventory inventory-nav");
-    controls.append(toggle, make("small", "Off in each tab. Manual declarations only; explicit Refresh reads existing own-site cached references. No OCR or IGN lookup."));
+    controls.append(toggle, make("small", "Off in each tab. Manual declarations only; explicit Refresh reads existing own-site cached references. Local screenshot review; no OCR or IGN lookup."));
     options.append(controls);
     function verified() {
       try {
