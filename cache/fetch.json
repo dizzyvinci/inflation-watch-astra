@@ -1,5 +1,1 @@
-{
-  "checkedAt": null,
-  "detail": "Offline verification of a Root-admitted saved public feed; no network check or successful fetch time is asserted.",
-  "status": "cached"
-}
+{"status":"unchanged","checkedAt":"2026-11-09T09:05:08+00:00","etag":"W/\"102a19-1a1bf423a58\"","lastModified":"Mon, 09 Nov 2026 07:42:31 GMT","detail":"Public developer feed; source publishes daily aggregates.","lastSuccessfulFetchAt":"2026-11-09T09:05:08+00:00","nextAllowedAt":null}

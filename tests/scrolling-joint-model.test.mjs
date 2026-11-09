@@ -7,3 +7,31 @@ test('fullUI snapshot owns deeply frozen data and applies exact65536-byte gate',
 test('BigInt money display groups safely aboveNumberprecision and retains exactfraction',()=>{assert.deepEqual(money('123456789012345678901234567890/3'),{display:'41,152,263,004,115,226,300,411,522,630',exact:'123456789012345678901234567890/3'});assert.deepEqual(money('-1/8'),{display:'-0.13',exact:'-1/8'});assert.equal(money('11/2').display,'5.50');assert.equal(money(null).display,'Unknown');assert.equal(money('1/0').display,'Unknown');});
 test('explicit stock0 versus unknown and missingstat/fee remain distinct',()=>{assert.equal(stock(''),null);assert.equal(stock('0'),0);assert.throws(()=>stock('-1'));assert.equal(percent('60'),'3/5');assert.throws(()=>percent(''));assert.throws(()=>stats([['16','0'],['14','0']]));const w=base();delete w.entries[0].stats['9'];assert.throws(()=>admittedSnapshot(w),/joint_stats_explicit/);w.entries[0].stats['9']=0;w.entries[0].stock=0;assert.equal(admittedSnapshot(w).entries[0].stock,0);});
 test('quote identity containsquality/slots/upgrades/everyexplicitstat, not pooledATT',()=>{const q=base().quotes[0],k=quoteKey(q);for(const change of [x=>x.quality='other',x=>x.stats['14']++,x=>x.stats['9']++,x=>x.slotsLeft++,x=>x.upgrades++]){const copy=clone(q);change(copy);assert.notEqual(quoteKey(copy),k);}});
+
+
+// Synthetic cache records through the unchanged public producer/validator; no provider input.
+import cachedFixtures from './scrolling-joint-cache-fixture.cjs';
+import {reviewCachedScenarioReference,cachedReviewPresent,admitScenarioReference} from '../ui-src/scrolling-joint/cached-scenario-reference.mjs';
+const packetFor=v=>({status:'cache_only',references:[{mode:'retained',data:v}]});
+const manualState={itemId:'1082000',quality:'MANUAL_ROLL',stats:{'9':0,'14':2,'16':4},slotsLeft:0,upgrades:2};
+test('owned reference preserves sold/listed/clock/hash and refuses absent/conflicting modeled identity',async()=>{
+ const v=await cachedFixtures.reference({rows:[{stats:{'14':2,'16':4},slotsLeft:0,upgrades:2,price:100,basis:'listed'}]}),packet=packetFor(v),review=await reviewCachedScenarioReference(packet,1082000),row=review.candidates[0];
+ assert.equal(row.reportedStats['9'],undefined,'unreported MATT remains absent, not zero');assert.equal(row.mode,'retained');assert.equal(row.basis,'listed');assert.equal(row.exactWindowBoundsKnown,false);assert.equal(cachedReviewPresent(packet,review),true);
+ const use=admitScenarioReference(row,manualState,{unknownsAcknowledged:true,mechanicsAcknowledged:true});assert.equal(use.price,'100');assert.equal(use.evidence.kind,'saved_exact_reference_assumption');assert.equal(use.evidence.rawSha256,v.item.source.rawBodySha256);assert.equal(use.provenance.unreportedAndUnmodeledStatsUnknownAcknowledged,true);assert.equal(use.provenance.sourceCertifiesExactQuality,false);assert.equal(use.provenance.stockOrFillsInferred,false);
+ for(const change of [{itemId:'1082056'},{quality:''},{slotsLeft:1},{upgrades:1},{stats:{'14':2,'16':4}},{stats:{'9':0,'14':3,'16':4}}])assert.throws(()=>admitScenarioReference(row,{...manualState,...change},{unknownsAcknowledged:true,mechanicsAcknowledged:true}));
+ for(const ack of [{},{unknownsAcknowledged:true},{mechanicsAcknowledged:true}])assert.throws(()=>admitScenarioReference(row,manualState,ack));
+ assert.throws(()=>admitScenarioReference({...row},manualState,{unknownsAcknowledged:true,mechanicsAcknowledged:true}),/owned_reference_candidate/);assert.equal(cachedReviewPresent({status:'access_denied',references:packet.references},review),false);assert.equal(cachedReviewPresent({status:'disabled',references:packet.references},review),false);
+});
+test('every reported extra stat must match, aggregates/zero samples do not become equipment-state prices',async()=>{
+ const v=await cachedFixtures.reference({rows:[{stats:{'2':4,'14':2,'16':4},slotsLeft:0,upgrades:2,price:100},{stats:{'9':0,'14':2,'16':2},slotsLeft:1,upgrades:1,price:200,samples:0}],aggregate:{price:9000}}),review=await reviewCachedScenarioReference(packetFor(v),1082000);
+ assert.equal(review.candidates.length,2);assert.throws(()=>admitScenarioReference(review.candidates[0],manualState,{unknownsAcknowledged:true,mechanicsAcknowledged:true}),/reported_stat_missing_or_conflicting/);
+ assert.equal(admitScenarioReference(review.candidates[0],{...manualState,stats:{...manualState.stats,'2':4}},{unknownsAcknowledged:true,mechanicsAcknowledged:true}).price,'100');
+ assert.throws(()=>admitScenarioReference(review.candidates[1],manualState,{unknownsAcknowledged:true,mechanicsAcknowledged:true}),/reported_signature_required/);
+ await assert.rejects(cachedFixtures.reference({rows:[{stats:{'777':4},slotsLeft:0,upgrades:0,price:10}]}),/unknown_stat_code/);
+});
+test('cache-only boundary owns data before digest, closes late withdrawal and rejects accessors without invoking them',async()=>{
+ const v=await cachedFixtures.reference({rows:[{stats:{'14':2,'16':4},slotsLeft:0,upgrades:2,price:100}]}),packet=packetFor(v);let n=0;
+ await assert.rejects(reviewCachedScenarioReference(packet,1082000,{isCurrent:()=>++n===1}),/reference_withdrawn/);
+ let gets=0;const wrong={references:packet.references};Object.defineProperty(wrong,'status',{get(){gets++;return'cache_only';}});await assert.rejects(reviewCachedScenarioReference(wrong,1082000),/cached_own_data/);assert.equal(gets,0);
+ await assert.rejects(reviewCachedScenarioReference({status:'cache_only',references:Array(65).fill(packet.references[0])},1082000),/cached_list_bound/);await assert.rejects(reviewCachedScenarioReference({status:'disabled',references:packet.references},1082000),/visited_references_unavailable/);
+});

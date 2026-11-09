@@ -42,6 +42,10 @@
       "sha256": "96749f2d7700fef8373fe39fd4d6690afa034ca1d56520610aa24c3a2793d172"
     },
     {
+      "path": "ui-src/inventory-manual/game-window-capture.mjs",
+      "sha256": "516cb2519c495d047cae2cc6dbd1c3666c5f524400e8d26b67a59c0957d3cb9a"
+    },
+    {
       "path": "ui-src/inventory-manual/inventory.mjs",
       "sha256": "81e7c97d9baa0b9ff8ae1d8281e4d0f573943a8a3ce0fe08517f052d90cc7eb8"
     },
@@ -51,7 +55,7 @@
     },
     {
       "path": "ui-src/inventory-manual/page.mjs",
-      "sha256": "522eff352c9eaa5b5d010180a069f9c07d8b85ca3ccd042a8b3786e58777eaed"
+      "sha256": "ee8dfc68bbc387de6e018005170fc8f362550bb9893e4d0258ed1d46ed2ea2ec"
     },
     {
       "path": "ui-src/inventory-manual/physical-fetch.mjs",
@@ -67,7 +71,7 @@
     },
     {
       "path": "ui-src/inventory-manual/screenshot-review.mjs",
-      "sha256": "b1a1035ad3b907c08a627bcf55d03cedc7324f2d4b046461ea794bcb1a306d64"
+      "sha256": "d79d23b6484c048f26fd9f74adcb9eb75da11f8553a714337286dea1331d959d"
     },
     {
       "path": "ui-src/inventory-manual/site-entry.mjs",
@@ -96,12 +100,15 @@
   ],
   "output": {
     "path": "web/inventory-preview.js",
-    "bytes": 158697,
-    "sha256": "d61391b7f6de47a5eb9dc0ec0e862bfef2dea5b0b2111088be9d448fb348fe11"
+    "bytes": 175334,
+    "sha256": "10289c22811523dda5acda3a46cf510038651e9a529c0b549e4fc7073f646774"
   },
   "defaultEnabled": false,
   "automaticInventoryRequests": 0,
   "providerConsumer": false,
   "ocr": false,
-  "requiresExistingPrivateWorkspace": true
+  "requiresExistingPrivateWorkspace": true,
+  "capturePrototype": true,
+  "captureDefaultEnabled": false,
+  "nativeCaptureVerified": false
 }

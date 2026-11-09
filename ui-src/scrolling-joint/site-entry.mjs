@@ -19,7 +19,8 @@ import {evaluateManualScenario} from './solver/joint-economics.mjs';
  function withdraw(){wanted=false;invalidate();page?.clear();nav.hidden=true;host.hidden=true;toggle.checked=false;home();}
  function edit(){invalidate();}
  function guard(){if(!enabled()){withdraw();return false;}if(!onRoute()||!visible())return false;return true;}
- function mount(){if(page)return;page=createPage(host,{edit,calculate,clear(){invalidate();page.clear();},guard});}
+ function readCached(){const api=w.AstraItemApiPreview;try{if(api?.peekCachedBasicReferences?.().status==='access_denied')return{status:'access_denied',references:[]};return api?.peekCachedReferences?.()??{status:'disabled',references:[]};}catch{return{status:'unavailable',references:[]};}}
+ function mount(){if(page)return;page=createPage(host,{edit,calculate,clear(){invalidate();page.clear();},guard,readCached,readExpiry:workspace,now:()=>w.Date.now()});}
  function sync(){if(disposed)return;const privateOk=workspace()!==null;if(!privateOk&&wanted)withdraw();const on=wanted&&privateOk;nav.hidden=!on;host.hidden=!on;toggle.checked=on;toggle.disabled=!privateOk||!controls();wrap.hidden=!privateOk||!controls();if(on){mount();page.busy(!!pending);page.pause(!active()||!!pending);}else home();}
  function setEnabled(value){if(disposed)return false;if(value===false){withdraw();sync();return true;}if(value!==true||workspace()===null||!controls())return false;wanted=true;epoch++;mount();sync();return true;}
  toggle.addEventListener('change',()=>{if(!setEnabled(toggle.checked))toggle.checked=wanted;});
@@ -47,6 +48,7 @@ import {evaluateManualScenario} from './solver/joint-economics.mjs';
  Object.defineProperty(w,'AstraJointScrollingPreview',{value:api,writable:false,configurable:false});
  for(const type of ['beforeinput','paste','drop','click','submit'])host.addEventListener(type,event=>{if(!guard()){event.preventDefault();event.stopImmediatePropagation();}},true);
  for(const type of ['input','change'])host.addEventListener(type,event=>{if(!guard()){event.preventDefault();event.stopImmediatePropagation();}},true);
+ for(const type of ['astrapiitemcache','astrabasicitemcache'])d.addEventListener(type,()=>{page?.synchronizeReferences();});
  d.addEventListener('astraprivateworkspace',sync);d.addEventListener('astrapreviewcontrols',sync);
  d.addEventListener('visibilitychange',pause);w.addEventListener('online',pause);w.addEventListener('offline',pause);w.addEventListener('hashchange',pause);w.addEventListener('pagehide',()=>{withdraw();sync();});sync();
 })();

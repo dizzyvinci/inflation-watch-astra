@@ -2,7 +2,7 @@
 import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';import {createRequire} from 'node:module';import {createHash} from 'node:crypto';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),req=createRequire(import.meta.url),esbuild=req('esbuild'),sha=v=>createHash('sha256').update(v).digest('hex');
 if(esbuild.version!=='0.28.2')throw Error('expected_esbuild_0_28_2');
-const approved=['site-entry.mjs','page.mjs','client-reference.mjs','scenario-model.mjs','manual-examples.json','solver/joint-rational.mjs','solver/joint-mechanics.mjs','solver/joint-manual-wire.mjs','solver/joint-economics.mjs'].map(n=>'ui-src/scrolling-joint/'+n).sort();
+const approved=['site-entry.mjs','page.mjs','client-reference.mjs','cached-scenario-reference.mjs','scenario-model.mjs','manual-examples.json','solver/joint-rational.mjs','solver/joint-mechanics.mjs','solver/joint-manual-wire.mjs','solver/joint-economics.mjs'].map(n=>'ui-src/scrolling-joint/'+n).concat(['ops/api-item-reference-protocol.mjs','ops/api-price-item-dto.mjs']).sort();
 const built=await esbuild.build({absWorkingDir:root,entryPoints:['ui-src/scrolling-joint/site-entry.mjs'],bundle:true,write:false,format:'iife',platform:'browser',target:'es2022',metafile:true,logLevel:'silent'});
 const names=Object.keys(built.metafile.inputs).sort();if(JSON.stringify(names)!==JSON.stringify(approved))throw Error('unreviewed_or_missing_scrolling_input');
 const body=Buffer.concat([Buffer.from("(() => {\n'use strict';\n"),built.outputFiles[0].contents,Buffer.from('\n})();\n')]),inputs=[];

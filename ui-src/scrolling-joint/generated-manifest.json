@@ -6,6 +6,18 @@
   "entry": "ui-src/scrolling-joint/site-entry.mjs",
   "inputs": [
     {
+      "path": "ops/api-item-reference-protocol.mjs",
+      "sha256": "ff6544350f45f5b6da9b8121537d0d0dc68a382f6282740caaa84356f66ea31e"
+    },
+    {
+      "path": "ops/api-price-item-dto.mjs",
+      "sha256": "50ee059691225e183dcfb48aca061b0cb764c52cdd4faff6e0dade17538536d7"
+    },
+    {
+      "path": "ui-src/scrolling-joint/cached-scenario-reference.mjs",
+      "sha256": "4fe59f53bd63515b780c41f976615d11ac40bdd63590f6a88632ab0ee93689b4"
+    },
+    {
       "path": "ui-src/scrolling-joint/client-reference.mjs",
       "sha256": "daf0e9c35f87bfc27d3bda5f7e1acf08c81e32c17d226db57d1330ae3944709e"
     },
@@ -15,7 +27,7 @@
     },
     {
       "path": "ui-src/scrolling-joint/page.mjs",
-      "sha256": "6d2d8d261d24b9b6f96c00e203f6306ebfa7215fec6dadc8f9e5a33b58ca4ea3"
+      "sha256": "7930d5c1ae7c391018b67518c43dae7e2bafab686bc822e5aff96ba20cc87665"
     },
     {
       "path": "ui-src/scrolling-joint/scenario-model.mjs",
@@ -23,7 +35,7 @@
     },
     {
       "path": "ui-src/scrolling-joint/site-entry.mjs",
-      "sha256": "e9bf0d48c7d328b43b67991b2ab6a89cb77dd13482c839a80a3c89c9f9f51710"
+      "sha256": "f8212194932ea767a4e28fc8b6714facdc2ea75b14ecd8f6c4dd135403b39493"
     },
     {
       "path": "ui-src/scrolling-joint/solver/joint-economics.mjs",
@@ -44,8 +56,8 @@
   ],
   "output": {
     "path": "web/scrolling-preview.js",
-    "bytes": 81214,
-    "sha256": "657f88ad7e2ca24f896f9d89ac44f3418532c4e2265dcb1c074a69c3ad766a15"
+    "bytes": 114669,
+    "sha256": "1ace561fc62eada4d399ab1093107d9b492862592abeb75db0ad1cc8731ee068"
   },
   "defaultEnabled": false,
   "manualOnly": true,

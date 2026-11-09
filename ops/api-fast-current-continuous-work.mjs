@@ -83,7 +83,7 @@ export class ContinuousFastCurrentWork{
    else if(g?.manifest_sha&&this.writer.nextDue()!==null&&this.writer.nextDue()<=now)fastKind='writer';
    else if(g?.manifest_sha&&this.publication.nextDue()!==null&&this.publication.nextDue()<=now)fastKind='publication';
   }
-  const maintenance=this.maintenance();if(maintenance&&fastKind)fastKind=['archive','archive-skipped','release','prune'].includes(c.last_kind)?fastKind:maintenance;else fastKind??=maintenance;
+  const maintenance=this.maintenance();if(maintenance&&fastKind)fastKind=c.last_fast_kind==='maintenance'?fastKind:maintenance;else fastKind??=maintenance;
   if(!fastKind){const ready=[this.registryDue(),this.registryWork.nextDue()].some(v=>v!==null&&v<=now);return ready?this.drainOrdinary(beforeIO,frame):{status:'continuous_fast_idle'};}
   j.exec('UPDATE fast_v2_control SET last_kind=? WHERE id=1',fastKind);
   const kind=fastKind.startsWith('archive')?'archive':fastKind;let target=g;if(fastKind==='archive')target=j.archiveCandidate();else if(fastKind==='release')target=j.row("SELECT * FROM fast_v2_generations WHERE role IN ('recovery','historical') AND archive_done=1 AND payload_released=0 ORDER BY source_attempt LIMIT 1");else if(fastKind==='archive-skipped'||fastKind==='prune')target=null;

@@ -492,10 +492,10 @@
     if (typeof value !== "string" || value.trim() === "") fail("explicit_percentage_required");
     return text(div(parse(value.trim()), rational(100n)));
   }
-  function stats2(rows) {
+  function stats2(rows2) {
     const out = {};
-    if (rows.length > 16) fail("stat_row_bound");
-    for (const [code, value] of rows) {
+    if (rows2.length > 16) fail("stat_row_bound");
+    for (const [code, value] of rows2) {
       if (!/^\d{1,4}$/.test(code) || Object.hasOwn(out, code)) fail("unique_stat_code_required");
       out[code] = integer3(value, 1e4);
     }
@@ -842,8 +842,279 @@
     return panel;
   }
 
+  // ops/api-price-item-dto.mjs
+  var HASH = /^[0-9a-f]{64}$/;
+  var own2 = (v, k) => Object.prototype.hasOwnProperty.call(v, k);
+  var STAT_NAMES = Object.freeze({ "0": "STR", "1": "DEX", "2": "INT", "3": "LUK", "4": "Max HP", "5": "Max MP", "6": "Speed", "7": "Jump", "9": "Magic ATT", "10": "Weapon DEF", "11": "Magic DEF", "12": "Accuracy", "13": "Avoidability", "14": "Crit rate", "15": "Crit damage", "16": "Weapon ATT" });
+  var PROFILE = Object.freeze({ version: 1, kind: "market_api_price_item", sourceUrl: "https://maplestory.market/api/prices", statMapSourceUrl: "https://maplestory.market/assets/VDivider-1_mhy5kl.js", statMapSha256: "1d08886333ef15b7615efc9330c5cf673946256265caf19e672621e32a856cf7" });
+  var InvalidProfile = class extends Error {
+    constructor(code) {
+      super(code);
+      this.name = "InvalidProfile";
+    }
+  };
+  var fail2 = (code) => {
+    throw new InvalidProfile(code);
+  };
+  var DecimalToken = class {
+    constructor(lexeme) {
+      this.lexeme = lexeme;
+      Object.freeze(this);
+    }
+  };
+  async function sha256(raw) {
+    return [...new Uint8Array(await crypto.subtle.digest("SHA-256", raw))].map((v) => v.toString(16).padStart(2, "0")).join("");
+  }
+  var object = (v) => v !== null && typeof v === "object" && !Array.isArray(v) && !(v instanceof DecimalToken);
+  function shape(v, required, optional = []) {
+    if (!object(v) || required.some((k) => !own2(v, k)) || Object.keys(v).some((k) => !required.includes(k) && !optional.includes(k))) fail2("unexpected_fields");
+  }
+  function integer4(v, min = 0, max = Number.MAX_SAFE_INTEGER) {
+    if (!Number.isSafeInteger(v) || v < min || v > max) fail2("invalid_integer");
+    return v;
+  }
+  function id(v) {
+    return integer4(v, 1, 999999999);
+  }
+  function iso(v) {
+    if (typeof v !== "string" || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|\+00:00)$/.test(v) || !Number.isFinite(Date.parse(v))) fail2("invalid_clock");
+    const parts = /^(\d{4}-\d\d-\d\d)T(\d\d):(\d\d):(\d\d)/.exec(v), d = new Date(v);
+    if (d.toISOString().slice(0, 10) !== parts[1] || Number(parts[2]) > 23 || Number(parts[3]) > 59 || Number(parts[4]) > 59) fail2("invalid_clock");
+    return v;
+  }
+  var META_URLS = /* @__PURE__ */ new Set(["https://maplestory.io/api/MCW/1/item/list?cashFilter=true&count=10000", "https://maplestory.io/api/MCW/1/item/list?cashFilter=false&count=10000"]);
+  function assertSafeItemDto(dto) {
+    shape(dto, ["schemaVersion", "kind", "itemId", "identity", "source", "aggregate", "variants", "semantics"], ["sourceTypicalAttack"]);
+    if (dto.schemaVersion !== 1 || dto.kind !== PROFILE.kind) fail2("dto_profile");
+    id(dto.itemId);
+    shape(dto.identity, ["name", "status", "region", "clientVersion", "meaning", "evidence"]);
+    if (dto.identity.name !== null && (typeof dto.identity.name !== "string" || !dto.identity.name.trim() || dto.identity.name.length > 300)) fail2("dto_identity");
+    if (!["unique_client_id", "conflicting_client_id", "unknown_client_id"].includes(dto.identity.status) || dto.identity.region !== "MCW" || dto.identity.clientVersion !== "1" || dto.identity.meaning !== "client_presence_not_market_availability_or_release" || !Array.isArray(dto.identity.evidence) || dto.identity.evidence.length > 4) fail2("dto_identity");
+    if (dto.identity.status === "unique_client_id" !== (dto.identity.name !== null) || dto.identity.name !== null && dto.identity.evidence.length === 0) fail2("dto_identity_binding");
+    for (const v of dto.identity.evidence) {
+      shape(v, ["sourceUrl", "retainedMetadataSha256"]);
+      if (!META_URLS.has(v.sourceUrl) || !HASH.test(v.retainedMetadataSha256)) fail2("dto_identity_evidence");
+    }
+    shape(dto.source, ["provider", "operation", "sourceUrl", "rawBodySha256", "retrievedAt", "retrievalTimeKind", "sourceObservedAt", "window", "sourceWindowSemantics"]);
+    if (dto.source.provider !== "maplestory.market" || dto.source.operation !== "prices" || dto.source.sourceUrl !== PROFILE.sourceUrl || !HASH.test(dto.source.rawBodySha256) || dto.source.sourceObservedAt !== null || dto.source.retrievalTimeKind !== "http_response_completed" || dto.source.sourceWindowSemantics !== "primary_client_reported_window_not_exact_observation_bounds") fail2("dto_source");
+    iso(dto.source.retrievedAt);
+    shape(dto.source.window, ["reportedDays", "exactStartAt", "exactEndAt"]);
+    if (dto.source.window.reportedDays !== 3 || dto.source.window.exactStartAt !== null || dto.source.window.exactEndAt !== null) fail2("dto_window");
+    function money2(v, nullable = true) {
+      if (v === null && nullable) return;
+      if (typeof v !== "string" || v.length > 160 || !/^\d+(?:\.\d+)?$/.test(v)) fail2("dto_price");
+    }
+    function s(v) {
+      if (v === null) return;
+      shape(v, ["reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount", "averageUnitPrice", "medianUnitPrice", "basis", "dayCounterBoundsKnown"]);
+      for (const k of ["reportedSalesCount", "reportedUnitCount", "reportedDaySalesCount", "reportedDayUnitCount"]) integer4(v[k]);
+      money2(v.averageUnitPrice);
+      money2(v.medianUnitPrice);
+      if (v.basis !== "source_labelled_sold_not_independently_confirmed_transactions" || v.dayCounterBoundsKnown !== false) fail2("dto_sold");
+    }
+    function a(v) {
+      if (v === null) return;
+      shape(v, ["reportedListingCount", "reportedSellerCount", "medianUnitPrice", "p25UnitPrice", "p75UnitPrice", "basis", "currentAvailabilityVerified"]);
+      integer4(v.reportedListingCount);
+      integer4(v.reportedSellerCount);
+      for (const k of ["medianUnitPrice", "p25UnitPrice", "p75UnitPrice"]) money2(v[k]);
+      if (v.basis !== "source_seen_asking_prices" || v.currentAvailabilityVerified !== false) fail2("dto_asking");
+    }
+    function r(v, scopes, isItem = false) {
+      if (v === null) return;
+      shape(v, ["unitPrice", "basis", "reportedSamples", "scope", "aggregation", "exactVariantValue", "isNearFallback"]);
+      money2(v.unitPrice, false);
+      integer4(v.reportedSamples);
+      if (!["sold", "listed"].includes(v.basis) || !scopes.includes(v.scope) || v.aggregation !== (isItem ? v.basis === "sold" ? "average" : "median" : "unknown") || v.exactVariantValue !== false || v.isNearFallback !== (v.scope === "near")) fail2("dto_reference");
+    }
+    shape(dto.aggregate, ["sold", "asking", "reference"], ["dealReference"]);
+    s(dto.aggregate.sold);
+    a(dto.aggregate.asking);
+    r(dto.aggregate.reference, ["item"], true);
+    if (own2(dto.aggregate, "dealReference")) r(dto.aggregate.dealReference, ["item"], true);
+    shape(dto.variants, ["reportedStats", "successfulScrolls", "attackPools", "presence"]);
+    shape(dto.variants.presence, ["reportedStats", "successfulScrolls", "attackPools"]);
+    for (const value of Object.values(dto.variants.presence)) if (typeof value !== "boolean") fail2("dto_presence");
+    for (const [key, scopes] of [["reportedStats", ["stats"]], ["successfulScrolls", ["scrolls", "near"]], ["attackPools", ["attack", "near"]]]) {
+      if (!Array.isArray(dto.variants[key]) || dto.variants[key].length > 2e4 || !dto.variants.presence[key] && dto.variants[key].length) fail2("dto_groups");
+      const seen = /* @__PURE__ */ new Set();
+      for (const v of dto.variants[key]) {
+        const stats3 = key === "reportedStats", attack = key === "attackPools";
+        shape(v, attack ? ["groupKey", "reportedAttack", "sold", "asking", "reference", "qualityConstant", "matchSemantics"] : ["successfulUpgrades", "slotsLeft", "reference", "qualityConstant", "groupKey", "matchSemantics", ...stats3 ? ["reportedStats", "unreportedStats", "sourceComparisonMayIgnoreStats"] : []], stats3 ? [] : ["dealReference"]);
+        let expectedKey;
+        if (attack) {
+          integer4(v.reportedAttack);
+          s(v.sold);
+          a(v.asking);
+          expectedKey = `attack:${dto.itemId}:${v.reportedAttack}`;
+          if (v.matchSemantics !== "attack_only_pool_other_stats_not_constant") fail2("dto_match");
+        } else {
+          integer4(v.successfulUpgrades, 0, 100);
+          integer4(v.slotsLeft, 0, 100);
+          expectedKey = `${stats3 ? "stats" : "scrolls"}:${dto.itemId}:u${v.successfulUpgrades}:s${v.slotsLeft}`;
+          if (stats3) {
+            if (!object(v.reportedStats) || Object.keys(v.reportedStats).some((k) => !own2(STAT_NAMES, k))) fail2("dto_stats");
+            for (const n of Object.values(v.reportedStats)) integer4(n, -1e6, 1e6);
+            expectedKey += ":" + Object.entries(v.reportedStats).sort((a2, b) => Number(a2[0]) - Number(b[0])).map(([k, n]) => `${k}=${n}`).join(",");
+            if (v.unreportedStats !== "unknown_not_zero" || JSON.stringify(v.sourceComparisonMayIgnoreStats) !== '["10","11"]' || v.matchSemantics !== "reported_signature_not_certified_complete_roll") fail2("dto_match");
+          } else if (v.matchSemantics !== "successful_upgrades_and_slots_pool_all_stats") fail2("dto_match");
+        }
+        if (v.groupKey !== expectedKey || seen.has(v.groupKey) || v.qualityConstant !== false) fail2("dto_group_binding");
+        seen.add(v.groupKey);
+        r(v.reference, scopes);
+        if (own2(v, "dealReference")) r(v.dealReference, scopes);
+      }
+    }
+    shape(dto.semantics, ["moneyUnit", "counts", "sampleThresholdApplied", "exactVariantHistoryAvailable", "cleanStateInferred", "feesApplied", "publicationAuthorized", "statMapSha256"]);
+    if (dto.semantics.moneyUnit !== "source_unit_price_in_mesos" || dto.semantics.counts !== "source_reported_counts_not_independently_verified_trades" || dto.semantics.sampleThresholdApplied !== null || dto.semantics.statMapSha256 !== PROFILE.statMapSha256 || ["exactVariantHistoryAvailable", "cleanStateInferred", "feesApplied", "publicationAuthorized"].some((k) => dto.semantics[k] !== false)) fail2("dto_semantics");
+    if (own2(dto, "sourceTypicalAttack")) integer4(dto.sourceTypicalAttack);
+    return true;
+  }
+
+  // ops/api-item-reference-protocol.mjs
+  var HASH2 = /^[a-f0-9]{64}$/;
+  var enc = new TextEncoder();
+  var check2 = (v) => {
+    if (!v) throw TypeError("Invalid item reference");
+  };
+  async function validatePublicItemReference(v) {
+    v = structuredClone(v);
+    check2(enc.encode(JSON.stringify(v)).length <= 3e5);
+    const keys = ["schemaVersion", "kind", "itemId", "projectionGeneration", "dtoSha256", "sourceCapturedAt", "sourceObservedAt", "reportedWindowDays", "exactWindowBoundsKnown", "qualifiedIndividualTrades", "sourceCreditUrl", "item"];
+    check2(v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join(",") === keys.sort().join(","));
+    assertSafeItemDto(v.item);
+    check2(v.schemaVersion === 1 && v.kind === "api_item_price_reference" && v.itemId === v.item.itemId && HASH2.test(v.projectionGeneration) && HASH2.test(v.dtoSha256) && v.sourceCapturedAt === v.item.source.retrievedAt && v.sourceObservedAt === null && v.reportedWindowDays === 3 && v.exactWindowBoundsKnown === false && v.qualifiedIndividualTrades === 0 && v.sourceCreditUrl === `https://maplestory.market/items/${v.itemId}?ref=v6kkdvp6`);
+    check2(await sha256(enc.encode(JSON.stringify(v.item))) === v.dtoSha256);
+    return v;
+  }
+
+  // ui-src/scrolling-joint/cached-scenario-reference.mjs
+  var fail3 = (c) => {
+    throw Error(c);
+  };
+  var need4 = (v, c) => {
+    if (!v) fail3(c);
+  };
+  var knownStatLabels = Object.freeze({ "0": "STR", "1": "DEX", "2": "INT", "3": "LUK", "4": "Max HP", "5": "Max MP", "6": "Speed", "7": "Jump", "9": "MATT", "10": "Weapon DEF", "11": "Magic DEF", "12": "Accuracy", "13": "Avoidability", "14": "Crit", "15": "Crit damage", "16": "ATT" });
+  var rows = /* @__PURE__ */ new WeakSet();
+  var reviews = /* @__PURE__ */ new WeakSet();
+  var freeze5 = (v) => {
+    if (v && typeof v === "object" && !Object.isFrozen(v)) {
+      for (const x of Object.values(v)) freeze5(x);
+      Object.freeze(v);
+    }
+    return v;
+  };
+  function data(v, k) {
+    need4(v !== null && typeof v === "object", "cached_record");
+    const d = Object.getOwnPropertyDescriptor(v, k);
+    need4(d && Object.hasOwn(d, "value"), "cached_own_data");
+    return d.value;
+  }
+  function ownPublic(v) {
+    let nodes = 0, units = 0;
+    function copy(x, depth = 0) {
+      need4(depth <= 32 && ++nodes <= 4e4, "cached_reference_bound");
+      if (x === null || typeof x === "boolean") return x;
+      if (typeof x === "number") {
+        need4(Number.isSafeInteger(x), "cached_number");
+        return x;
+      }
+      if (typeof x === "string") {
+        units += x.length;
+        need4(x.length <= 2048 && units <= 3e5, "cached_reference_bound");
+        return x;
+      }
+      need4(x && typeof x === "object", "cached_own_data");
+      const keys = Reflect.ownKeys(x);
+      need4(keys.every((k) => typeof k === "string"), "cached_own_data");
+      if (Array.isArray(x)) {
+        const n = data(x, "length");
+        need4(Number.isSafeInteger(n) && n <= 2e4 && keys.length === n + 1, "cached_array");
+        return Array.from({ length: n }, (_, i) => copy(data(x, String(i)), depth + 1));
+      }
+      const proto = Object.getPrototypeOf(x);
+      need4(proto === null || Object.getPrototypeOf(proto) === null, "cached_plain_record");
+      const out2 = /* @__PURE__ */ Object.create(null);
+      for (const k of keys) {
+        units += k.length;
+        need4(units <= 3e5, "cached_reference_bound");
+        out2[k] = copy(data(x, k), depth + 1);
+      }
+      return out2;
+    }
+    const out = copy(v);
+    need4(new TextEncoder().encode(JSON.stringify(out)).byteLength <= 3e5, "cached_reference_bound");
+    return out;
+  }
+  function selected(packet, itemId) {
+    need4(data(packet, "status") === "cache_only", "visited_references_unavailable");
+    const list = data(packet, "references");
+    need4(Array.isArray(list) && list.length <= 64, "cached_list_bound");
+    let found = null;
+    for (let i = 0; i < list.length; i++) {
+      const r = data(list, String(i)), v = data(r, "data");
+      if (data(v, "itemId") === itemId) {
+        need4(found === null, "duplicate_cached_item");
+        found = r;
+      }
+    }
+    need4(found, "item_not_already_visited");
+    return found;
+  }
+  async function reviewCachedScenarioReference(packet, itemId, { isCurrent = () => true } = {}) {
+    need4(Number.isSafeInteger(itemId) && itemId >= 1 && itemId <= 999999999, "exact_cached_item_id");
+    need4(isCurrent() === true, "reference_withdrawn");
+    const saved = ownPublic(selected(packet, itemId));
+    need4(["validated_cache", "retained"].includes(saved.mode), "cached_mode");
+    const value = await validatePublicItemReference(saved.data);
+    need4(isCurrent() === true, "reference_withdrawn");
+    need4(value.itemId === itemId, "cached_item_binding");
+    const dto = value.item, source = dto.source, candidates = [];
+    function add2(kind, row, reference2) {
+      if (!reference2 || reference2.unitPrice === null || reference2.reportedSamples < 1 || reference2.isNearFallback) return;
+      need4(candidates.length < 256, "cached_candidate_bound");
+      const result2 = freeze5({ kind, itemId, name: dto.identity.name, mode: saved.mode, groupKey: row?.groupKey ?? "item_reference", reportedStats: row ? { ...row.reportedStats } : null, slotsLeft: row?.slotsLeft ?? null, upgrades: row?.successfulUpgrades ?? null, gross: reference2.unitPrice, basis: reference2.basis, samples: reference2.reportedSamples, aggregation: reference2.aggregation, capturedAt: value.sourceCapturedAt, sourceObservedAt: source.sourceObservedAt, rawSha256: source.rawBodySha256, dtoSha256: value.dtoSha256, generation: value.projectionGeneration, sourceUrl: source.sourceUrl, reportedWindowDays: value.reportedWindowDays, exactWindowBoundsKnown: false, qualityConstant: false, availabilityKnown: false, lowestListingKnown: false });
+      rows.add(result2);
+      candidates.push(result2);
+    }
+    for (const row of dto.variants.reportedStats) {
+      need4(Object.keys(row.reportedStats).every((k) => Object.hasOwn(knownStatLabels, k)), "unknown_reported_stat");
+      add2("reported_stats", row, row.reference);
+    }
+    add2("scroll_item_reference", null, dto.aggregate.reference);
+    const result = freeze5({ itemId, name: dto.identity.name, mode: saved.mode, dtoSha256: value.dtoSha256, generation: value.projectionGeneration, capturedAt: value.sourceCapturedAt, candidates });
+    reviews.add(result);
+    return result;
+  }
+  function cachedReviewPresent(packet, review) {
+    try {
+      need4(reviews.has(review), "owned_cached_review");
+      const r = selected(packet, review.itemId), v = data(r, "data");
+      return ["validated_cache", "retained"].includes(data(r, "mode")) && data(v, "dtoSha256") === review.dtoSha256 && data(v, "projectionGeneration") === review.generation && data(v, "sourceCapturedAt") === review.capturedAt;
+    } catch {
+      return false;
+    }
+  }
+  function admitScenarioReference(row, target, { unknownsAcknowledged = false, mechanicsAcknowledged = false, purpose = "gross_sale" } = {}) {
+    need4(rows.has(row), "owned_reference_candidate");
+    need4(unknownsAcknowledged === true && mechanicsAcknowledged === true, "manual_unknowns_and_rules_acknowledgment");
+    if (purpose === "scroll_cost") {
+      need4(row.kind === "scroll_item_reference" && target.key === String(row.itemId), "scroll_identity_must_equal_rule_key");
+    } else {
+      need4(["gross_sale", "buy_cost"].includes(purpose) && row.kind === "reported_stats", "reported_signature_required");
+      need4(target.itemId === String(row.itemId) && typeof target.quality === "string" && target.quality.length > 0, "manual_identity_quality_required");
+      need4(Number.isSafeInteger(target.slotsLeft) && target.slotsLeft === row.slotsLeft && Number.isSafeInteger(target.upgrades) && target.upgrades === row.upgrades, "reported_slots_or_upgrades_mismatch");
+      need4(target.stats && ["9", "14", "16"].every((k) => Object.hasOwn(target.stats, k) && Number.isSafeInteger(target.stats[k])), "explicit_joint_stats_required");
+      for (const [k, v] of Object.entries(row.reportedStats)) need4(Object.hasOwn(target.stats, k) && target.stats[k] === v, "reported_stat_missing_or_conflicting");
+    }
+    const evidence2 = freeze5({ kind: "saved_exact_reference_assumption", basis: row.basis, samples: row.samples, capturedAt: row.capturedAt, sourceObservedAt: row.sourceObservedAt, rawSha256: row.rawSha256 });
+    const provenance = freeze5({ ...row, purpose, modelTarget: JSON.parse(JSON.stringify(target)), unreportedAndUnmodeledStatsUnknownAcknowledged: true, qualityManuallyAssumed: true, serverMechanicsManuallyAssumed: true, referenceIsScenarioAssumption: true, sourceCertifiesExactQuality: false, stockOrFillsInferred: false });
+    return freeze5({ price: row.gross, evidence: evidence2, provenance });
+  }
+
   // ui-src/scrolling-joint/page.mjs
-  function createPage(host, { edit, calculate, clear, guard }) {
+  function createPage(host, { edit, calculate, clear, guard, readCached = () => ({ status: "disabled", references: [] }), readExpiry = () => null, now = () => 0 }) {
     const d = host.ownerDocument, el = (tag3, text2, cls) => {
       const n = d.createElement(tag3);
       if (text2 !== void 0) n.textContent = text2;
@@ -909,7 +1180,9 @@
     offers.append(offerRows);
     rules.append(ruleRows);
     book.append(el("p", "Blank means unknown, never zero. Keys include identity, quality, all stats, slots and upgrades. Mechanical generation may include states infeasible under your cash/stock limits; it supplies no prices."));
-    let quotes = [];
+    let quotes = [], presentationReferences = Object.freeze([]);
+    const sourceBindings = /* @__PURE__ */ new Map();
+    let reviewed = null, referenceEpoch = 0, referencePending = false;
     const val = (node, key) => node.querySelector(`[data-field="${key}"]`).value;
     function statFields(card, values = {}, gains = false) {
       const section = el("div", void 0, "scrolling-stats");
@@ -941,9 +1214,9 @@
       card.append(section);
     }
     function getStats(card) {
-      const section = card.querySelector(".scrolling-stats"), rows = ["9", "14", "16"].map((k) => [k, val(section, k)]);
-      for (const row of section.querySelectorAll(".scrolling-extra-row")) rows.push([val(row, "code"), val(row, "value")]);
-      return stats2(rows);
+      const section = card.querySelector(".scrolling-stats"), rows2 = ["9", "14", "16"].map((k) => [k, val(section, k)]);
+      for (const row of section.querySelectorAll(".scrolling-extra-row")) rows2.push([val(row, "code"), val(row, "value")]);
+      return stats2(rows2);
     }
     function offer(value = {}) {
       if (offerRows.children.length >= 4) return;
@@ -1029,13 +1302,13 @@
       const residuals = allResiduals.filter((r, i, a) => a.findIndex((x) => x.itemId === r.itemId) === i);
       return envelope({ entries, scrolls, quotes: quotes.flatMap((q, i) => {
         const gross = quoteRows.querySelector(`[data-quote="${i}"]`).value.trim();
-        return gross === "" ? [] : [{ ...q, gross, evidence: { kind: "manual" } }];
+        return gross === "" ? [] : [{ ...q, gross, evidence: sourceBindings.get(quoteRows.querySelector(`[data-quote="${i}"]`))?.evidence ?? { kind: "manual" } }];
       }), budget: val(finite, "budget").trim(), feePercent: val(finite, "feePercent"), fixedFee: val(finite, "fixedFee").trim(), residuals, decisions: decisions.value, resets: resets.value, acknowledged });
     }
-    function renderQuotes(rows, values = []) {
-      quotes = rows;
+    function renderQuotes(rows2, values = []) {
+      quotes = rows2;
       quoteRows.replaceChildren();
-      for (const [i, q] of rows.entries()) {
+      for (const [i, q] of rows2.entries()) {
         const row = el("label", void 0, "scrolling-quote"), key = el("span", matchedState(JSON.parse(quoteKey(q))).display), input = el("input");
         key.dataset.exactQuoteKey = quoteKey(q);
         key.title = "Exact manually matched state retained in the quote key";
@@ -1052,6 +1325,7 @@
     book.append(button("Generate exact-state quote grid", () => {
       if (!guard()) return;
       try {
+        revertReferences("Quote grid regenerated. Imported reference assumptions withdrawn; previous manual prices restored.");
         const w = wire2(true);
         renderQuotes(generateQuoteRows(w), w.quotes);
         edit();
@@ -1060,6 +1334,173 @@
         status("Cannot generate: check explicit identities/stats/rules/fees and bounded horizon. Nothing was truncated.");
       }
     }), quoteRows);
+    const referencePanel = el("section", void 0, "scrolling-reference-review");
+    referencePanel.dataset.cachedScenarioReference = "true";
+    referencePanel.append(el("h3", "Review already-visited price references"), el("p", "Reads only the item-detail references already in this tab. Visit the exact item through existing item details first if absent. This button never fetches, refreshes, supplies stock or finds the lowest listing. Shared aggregate medians are not equipment-state matches."));
+    const referenceId = field(referencePanel, "MCW item ID to review", "cachedItemId");
+    const referenceStatus = el("p", "No cached reference selected."), candidateSelect = el("select"), purpose = el("select"), targetSelect = el("select");
+    candidateSelect.dataset.cachedCandidate = "true";
+    targetSelect.dataset.cachedTarget = "true";
+    purpose.dataset.cachedPurpose = "true";
+    for (const [value, label] of [["gross_sale", "Resale quote assumption"], ["buy_cost", "Base / partial buy-cost assumption"], ["scroll_cost", "Scroll-cost assumption (rule key must equal MCW scroll ID)"]]) {
+      const n = el("option", label);
+      n.value = value;
+      purpose.append(n);
+    }
+    const candidateLabel = el("label", "Reported reference ");
+    candidateLabel.append(candidateSelect);
+    const purposeLabel = el("label", "Scenario use ");
+    purposeLabel.append(purpose);
+    const targetLabel = el("label", "Existing declared scenario target ");
+    targetLabel.append(targetSelect);
+    const unknownAck = field(referencePanel, "I explicitly accept that quality is manually assumed and all unreported / unmodeled stats remain UNKNOWN and can affect value", "referenceUnknowns", false, "checkbox");
+    const mechanicsAck = field(referencePanel, "I have entered the model-required stats, quality, remaining slots/upgrades and manually confirmed every server mechanic; cached client notes do not verify them", "referenceMechanics", false, "checkbox");
+    const referencePreview = el("div");
+    referencePreview.dataset.cachedReferencePreview = "true";
+    function sourceText(row) {
+      const signature = row.kind === "reported_stats" ? Object.entries(row.reportedStats).map(([k, v]) => (knownStatLabels[k] ?? "Unknown stat") + ": " + v).join(" / ") + " \xB7 Slots left: " + row.slotsLeft + " \xB7 Upgrades: " + row.upgrades : "Item-level reference; allowed only as a scroll-cost assumption";
+      return `${row.itemId} ${row.name ?? "Name unknown"} \xB7 ${signature} \xB7 ${row.basis === "sold" ? "Source-labelled sold" : "Source-listed asking"} reference ${row.gross} mesos \xB7 ${row.samples} reference samples (not units or stock) \xB7 ${row.mode === "retained" ? "Retained" : "Previously accepted"} \xB7 Reported ${row.reportedWindowDays}-day window; exact bounds unknown`;
+    }
+    function clockNode(row) {
+      const n = el("p"), date = new Date(row.capturedAt);
+      const t = el("time", Number.isFinite(date.getTime()) ? "Retrieved (" + date.toLocaleString("en-US", { timeZone: "UTC", month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }) + " UTC)" : "Retrieval clock unknown");
+      t.dateTime = row.capturedAt;
+      t.title = row.capturedAt;
+      n.append(t, el("span", " \xB7 Source observation clock: " + (row.sourceObservedAt ?? "Unknown") + " \xB7 Provider: " + row.sourceUrl));
+      return n;
+    }
+    function referenceFragment(row) {
+      const fragment = d.createDocumentFragment();
+      if (!row) return fragment;
+      fragment.append(el("p", sourceText(row)), clockNode(row), el("p", "Full equipment quality is not certified. Unreported stats are unknown, never zero. No fill probability, available units, lowest listing or realized sale is established."));
+      const proof = el("details"), summary = el("summary", "Original reference provenance");
+      proof.append(summary, el("p", "Raw aggregate body SHA256: " + row.rawSha256), el("p", "Public item DTO SHA256: " + row.dtoSha256), el("p", "Reported signature: " + row.groupKey));
+      fragment.append(proof);
+      return fragment;
+    }
+    function showReference() {
+      const row = reviewed?.candidates[Number(candidateSelect.value)], fragment = referenceFragment(row);
+      if (!guard() || !syncReferences() || !guard()) return;
+      referencePreview.replaceChildren(fragment);
+      unknownAck.checked = false;
+      mechanicsAck.checked = false;
+    }
+    function revertReferences(message) {
+      referenceEpoch++;
+      for (const [input, b] of sourceBindings) {
+        if (input.isConnected && input.value === b.price) input.value = b.prior;
+      }
+      sourceBindings.clear();
+      reviewed = null;
+      candidateSelect.replaceChildren();
+      targetSelect.replaceChildren();
+      referencePreview.replaceChildren();
+      unknownAck.checked = false;
+      mechanicsAck.checked = false;
+      referenceStatus.textContent = message;
+    }
+    function syncReferences() {
+      if (!reviewed && !sourceBindings.size) return true;
+      let packet;
+      try {
+        packet = readCached();
+      } catch {
+        packet = null;
+      }
+      const checks = new Set([...sourceBindings.values()].map((b) => b.review));
+      if (reviewed) checks.add(reviewed);
+      if ([...checks].every((v) => cachedReviewPresent(packet, v))) return true;
+      revertReferences("Cached reference withdrawn or changed. Previous manual prices restored; review again explicitly.");
+      edit();
+      return false;
+    }
+    const reviewButton = button("Review this visited item reference", async () => {
+      if (!guard() || referencePending) return;
+      const expiry = readExpiry(), started = now();
+      if (!Number.isSafeInteger(expiry) || started >= expiry) return;
+      const token = ++referenceEpoch;
+      referencePending = true;
+      reviewButton.disabled = true;
+      referenceStatus.textContent = "Validating the already-cached public reference; no request is sent.";
+      const current = () => token === referenceEpoch && guard() && now() < expiry;
+      try {
+        if (!/^[1-9][0-9]{0,8}$/.test(referenceId.value.trim())) throw Error("exact_cached_id");
+        const id2 = Number(referenceId.value.trim()), value = await reviewCachedScenarioReference(readCached(), id2, { isCurrent: current });
+        const options = d.createDocumentFragment();
+        for (const [i, row] of value.candidates.entries()) {
+          const n = el("option", sourceText(row));
+          n.value = String(i);
+          options.append(n);
+        }
+        const preview = referenceFragment(value.candidates[0]);
+        if (!cachedReviewPresent(readCached(), value) || !current()) return;
+        reviewed = value;
+        candidateSelect.replaceChildren(options);
+        referencePreview.replaceChildren(preview);
+        unknownAck.checked = false;
+        mechanicsAck.checked = false;
+        referenceStatus.textContent = value.candidates.length ? "Review a reported reference and choose a matching manually declared target." : "No usable reported-state or scroll-item reference with positive reference samples is cached.";
+      } catch {
+        if (token === referenceEpoch && guard()) referenceStatus.textContent = "Reference unavailable: check the exact already-visited item ID, cache access and complete accepted public record. No fallback or request was made.";
+      } finally {
+        referencePending = false;
+        reviewButton.disabled = false;
+      }
+    });
+    function currentTargets(kind = purpose.value) {
+      const w = admittedSnapshot(wire2(true));
+      if (kind === "gross_sale") return quotes.map((q, i) => ({ key: quoteKey(q), target: q, input: quoteRows.querySelector(`[data-quote="${i}"]`), label: matchedState(JSON.parse(quoteKey(q))).display }));
+      if (kind === "buy_cost") return w.entries.map((q, i) => ({ key: q.key, target: q, input: offerRows.children[i].querySelector("[data-field=cost]"), label: "Offer " + q.key + " \xB7 " + matchedState(JSON.parse(quoteKey(q))).display }));
+      return w.scrolls.map((q, i) => ({ key: q.key, target: q, input: ruleRows.children[i].querySelector("[data-field=cost]"), label: "Scroll rule " + q.key }));
+    }
+    function targets() {
+      targetSelect.replaceChildren();
+      try {
+        for (const row of currentTargets()) {
+          const n = el("option", row.label);
+          n.value = row.key;
+          targetSelect.append(n);
+        }
+        referenceStatus.textContent = "Targets read from your explicit scenario declarations. Nothing was filled automatically.";
+      } catch {
+        referenceStatus.textContent = "Complete the manual model fields and generate the quote grid first. No missing stat, quality or rule is inferred.";
+      }
+    }
+    const applyReference = button("Use as this scenario assumption", () => {
+      if (!guard() || !syncReferences()) return;
+      try {
+        const row = reviewed?.candidates[Number(candidateSelect.value)], target = currentTargets().find((r) => r.key === targetSelect.value);
+        if (!row || !target) throw Error("target_required");
+        const value = admitScenarioReference(row, target.target, { purpose: purpose.value, unknownsAcknowledged: unknownAck.checked, mechanicsAcknowledged: mechanicsAck.checked }), prior = sourceBindings.get(target.input)?.prior ?? target.input.value;
+        if (!syncReferences() || !guard()) return;
+        target.input.value = value.price;
+        sourceBindings.set(target.input, { ...value, prior, review: reviewed, candidate: row, purpose: purpose.value, targetKey: target.key });
+        referenceStatus.textContent = "Dated reference copied only as a scenario assumption. Unknown stats/quality, stock, fills and server rules remain unverified.";
+        edit();
+      } catch {
+        referenceStatus.textContent = "Not applied: every reported stat and slots/upgrades must match your explicit model; select the correct target and acknowledge unknowns and manual rules. Item aggregates cannot price equipment states.";
+      }
+    });
+    referenceId.addEventListener("input", () => {
+      referenceEpoch++;
+      reviewed = null;
+      candidateSelect.replaceChildren();
+      targetSelect.replaceChildren();
+      referencePreview.replaceChildren();
+      unknownAck.checked = false;
+      mechanicsAck.checked = false;
+      referenceStatus.textContent = "Item ID changed. Review the chosen visited reference explicitly; existing admitted assumptions remain separately recorded.";
+    });
+    candidateSelect.addEventListener("change", showReference);
+    purpose.addEventListener("change", targets);
+    for (const n of [unknownAck, mechanicsAck]) n.addEventListener("change", () => {
+      if (!n.checked && sourceBindings.size) {
+        revertReferences("Reference acknowledgments withdrawn; previous manual prices restored.");
+        edit();
+      }
+    });
+    referencePanel.append(reviewButton, candidateLabel, purposeLabel, button("Choose current scenario targets", targets), targetLabel, applyReference, referenceStatus, referencePreview);
+    form.append(referencePanel);
     const ack = field(form, "I understand all rules, quotes, fees, stock and realization are manual assumptions", "acknowledged", false, "checkbox");
     form.append(offers, rules, finite, book);
     const calc = el("button", "Calculate conditional policy");
@@ -1081,7 +1522,9 @@
       status("Inputs changed \u2014 previous result withdrawn. Calculate explicitly.");
     }
     form.addEventListener("input", (e) => {
+      if (sourceBindings.has(e.target)) sourceBindings.delete(e.target);
       if (e.target.dataset.mechanical === "true" || e.target === decisions) {
+        revertReferences("Model state changed; cached assumptions withdrawn and previous manual prices restored.");
         quotes = [];
         quoteRows.replaceChildren();
       }
@@ -1089,6 +1532,7 @@
     });
     form.addEventListener("change", () => edit());
     function load(x) {
+      revertReferences("Example loaded. Imported reference assumptions withdrawn.");
       offerRows.replaceChildren();
       ruleRows.replaceChildren();
       for (const row of x.entries) offer({ ...row, residual: x.residuals.find((r) => r.itemId === row.itemId)?.gross ?? "" });
@@ -1103,6 +1547,10 @@
       invalidate();
     }
     function clearData() {
+      revertReferences("No cached reference selected.");
+      referenceId.value = "";
+      purpose.value = "gross_sale";
+      presentationReferences = Object.freeze([]);
       presentationKeys = Object.freeze({ offers: Object.freeze([]), scrolls: Object.freeze([]) });
       offerRows.replaceChildren();
       ruleRows.replaceChildren();
@@ -1118,13 +1566,13 @@
       results.replaceChildren();
       status("Declarations cleared.");
     }
-    function table(title, headers, rows) {
+    function table(title, headers, rows2) {
       const section = el("section"), t = el("table"), thead = el("thead"), tr = el("tr");
       for (const h of headers) tr.append(el("th", h));
       thead.append(tr);
       t.append(thead);
       const tbody = el("tbody");
-      for (const row of rows) {
+      for (const row of rows2) {
         const r = el("tr");
         for (const value of row) {
           const cell = el("td");
@@ -1154,22 +1602,46 @@
       p.textContent = `Best known complete campaign net: ${known.display} mesos. `;
       p.title = known.exact;
       p.append(el("strong", result.optimalExpectedNet === null ? "Global model optimum unknown: missing feasible assumptions." : "Optimum only within declared finite manual model: " + money(result.optimalExpectedNet).display + " mesos."));
-      const selected = el("p", `Starting offer: ${result.selectedEntry ?? "none"}. First action: ${action(result.selectedAction).display}. Source capture Unknown/manual. No fill probability, turnover, volume or time-to-sale evidence.`);
-      selected.dataset.modelAction = result.selectedAction;
-      fragment.append(p, selected, el("p", "Campaign net includes the starting equipment purchase and all modeled later costs, fees and sale proceeds. State rows show the expected future net cash flow of the known policy from that point; money already spent is excluded. Budget left is unused gross spending allowance, not your meso balance. Sale proceeds do not replenish this budget."));
+      const selected2 = el("p", `Starting offer: ${result.selectedEntry ?? "none"}. First action: ${action(result.selectedAction).display}. ${presentationReferences.length ? "Source: explicitly reviewed dated cached references plus manual assumptions." : "Source capture Unknown/manual."} No fill probability, turnover, volume or time-to-sale evidence.`);
+      selected2.dataset.modelAction = result.selectedAction;
+      fragment.append(p, selected2, el("p", "Campaign net includes the starting equipment purchase and all modeled later costs, fees and sale proceeds. State rows show the expected future net cash flow of the known policy from that point; money already spent is excluded. Budget left is unused gross spending allowance, not your meso balance. Sale proceeds do not replenish this budget."));
       fragment.append(el("p", `Shown ${result.rows.length} state rows / ${result.evaluated} evaluated; projection ${result.projectionTruncated ? "truncated" : "not truncated"}. Up to 64 rows / 16 KiB output; exact recurrence is bounded, never sampled. Unknown stock is assumed obtainable only inside this scenario.`));
       fragment.append(table("Starting offers", ["Offer", "First action", "Campaign net after starting buy", "Unknown alternatives?"], result.entries.map((r) => [r.entry, action(r.action), money(r.knownNet), yesNo(r.unknown)])));
       fragment.append(table("Modeled policy states \u2014 not an observed ledger", ["Equipment state", "Budget left (spending allowance)", "Decisions / rebuy resets left", "Offers bought in campaign", "Scrolls consumed in campaign", "Chosen action", "Expected future net cash flow of known policy", "Unknown alternative?"], result.rows.map((r) => [fullState(r.item), money(r.grossCashRemaining), r.decisionsRemaining + " / " + r.resetsRemaining, quantities(r.purchases, presentationKeys.offers, "Offer"), quantities(r.scrollsUsed, presentationKeys.scrolls, "Scroll"), action(r.selectedAction), money(r.knownFutureNet), yesNo(r.unknownFeasibleAlternative)])));
       fragment.append(el("p", "Fixed-policy algebraic roots below are NOT a globally reoptimized price frontier. Recalculate after any price edit; affordability and chosen policy can change. Negative roots are outside the nonnegative input domain."));
       fragment.append(table("Fixed-policy break-even roots", ["Price being varied", "Offer, scroll or exactly matched equipment", "Break-even price (mesos)", "Expected quantity in this policy"], result.fixedPolicyBreakEven.map((r) => [{ display: r.kind === "buy" ? "Equipment buy price" : r.kind === "scroll" ? "Scroll buy price" : r.kind === "gross_sale" ? "Matched equipment gross sale" : "Unknown price", exact: r.kind }, r.kind === "gross_sale" ? matchedState(r.key) : { display: (r.kind === "buy" ? "Offer " : "Scroll ") + r.key, exact: typeof r.key === "string" ? r.key : JSON.stringify(r.key) }, money(r.value), money(r.expectedPolicyQuantity)])));
+      if (presentationReferences.length) {
+        const provenance = el("section");
+        provenance.dataset.scenarioReferenceProvenance = "true";
+        provenance.append(el("h3", "Dated reference assumptions used in this calculation"), el("p", "Unreported and unmodeled stats remain UNKNOWN and can affect value. Quality and server mechanics were manually assumed, not source-certified. Reference samples are not stock, units or verified fills."));
+        for (const row of presentationReferences.slice(0, 16)) {
+          provenance.append(el("p", row.purpose.replaceAll("_", " ") + " \xB7 " + sourceText(row)), clockNode(row), el("p", "Original raw body SHA256: " + row.rawSha256));
+        }
+        if (presentationReferences.length > 16) provenance.append(el("p", "Showing 16 of " + presentationReferences.length + " explicitly reviewed assumptions."));
+        fragment.append(provenance);
+      }
       return fragment;
     }
     clearData();
     return Object.freeze({ read: () => {
+      if (!syncReferences()) throw Error("reference_withdrawn");
+      for (const [input, b] of sourceBindings) {
+        if (input.value !== b.price) {
+          sourceBindings.delete(input);
+          continue;
+        }
+        const target = currentTargets(b.purpose).find((v) => v.input === input && v.key === b.targetKey);
+        if (!target || b.purpose !== "scroll_cost" && quoteKey(target.target) !== quoteKey(b.provenance.modelTarget)) {
+          revertReferences("Manual model state changed; review the reference assumptions again.");
+          throw Error("reference_target_changed");
+        }
+        admitScenarioReference(b.candidate, target.target, { purpose: b.purpose, unknownsAcknowledged: b.provenance.unreportedAndUnmodeledStatsUnknownAcknowledged, mechanicsAcknowledged: b.provenance.serverMechanicsManuallyAssumed });
+      }
       const value = wire2(ack.checked);
+      presentationReferences = Object.freeze([...sourceBindings.values()].map((r) => r.provenance));
       presentationKeys = Object.freeze({ offers: Object.freeze(value.entries.map((r) => r.key)), scrolls: Object.freeze(value.scrolls.map((r) => r.key)) });
       return value;
-    }, invalidate, clear: clearData, prepare, reveal: (fragment) => {
+    }, synchronizeReferences: syncReferences, invalidate, clear: clearData, prepare, reveal: (fragment) => {
       results.replaceChildren(fragment);
       status("Conditional result ready. Every declaration remains manual.");
     }, status, busy: (value) => {
@@ -1189,7 +1661,7 @@
   }
 
   // ui-src/scrolling-joint/solver/joint-economics.mjs
-  var need4 = (ok, code) => {
+  var need5 = (ok, code) => {
     if (!ok) throw Error(code);
   };
   var failures = new Set("rational_intermediate_bound rational_size_bound rational_input_bound owned_rational_required exact_decimal_or_rational_string rational_divide_by_zero rational_sum_bound bounded_rational_probability bounded_nonnegative_rational own_plain_record closed_own_data_fields own_plain_array array_bound_or_extra_fields array_own_data_only stat_vector_record bounded_stat_vector joint_stats_explicit owned_mechanics_context same_mechanics_state_context manual_contract_and_assumptions finite_mechanics_limits entry_mechanical_identity rule_item_eligibility explicit_slot_upgrade_rules gain_stat_missing_from_start rule_not_eligible_for_item attempt_horizon_bound branch_probability_sum destroyed_has_no_item_sale_quote distribution_attempt_bound known_entry_key distribution_evaluated_state_budget distribution_state_budget manual_body_bound invalid_json manual_string_bound manual_tree_bound duplicate_or_bounded_json_key manual_array_bound integer_or_exact_string_required bounded_integer own_plain_data own_data_only own_array_data manual_key_bound closed_manual_schema manual_counts stock_cap_or_unknown full_stat_vector quote_full_identity saved_reference_provenance quote_clock_order finite_policy_bounds node_cap unique_cost_keys scroll_item_eligibility explicit_slot_and_upgrade_rules_required invalid_stat_vector scroll_cost_decimal_lexeme unique_exact_quote explicit_destroyed_residuals state_budget_exceeded projection_header_bound manual_output_bound".split(" "));
@@ -1220,7 +1692,7 @@
       gross.set(encoded, r.gross);
       keyMeta.set(encoded, key);
     }
-    const entryCosts = new Map(entries.map((e) => [e.key, e.cost])), ruleCosts = new Map(rules.map((r) => [r.key, r.cost])), valueCache = /* @__PURE__ */ new WeakMap(), cache = /* @__PURE__ */ new Map(), rows = [];
+    const entryCosts = new Map(entries.map((e) => [e.key, e.cost])), ruleCosts = new Map(rules.map((r) => [r.key, r.cost])), valueCache = /* @__PURE__ */ new WeakMap(), cache = /* @__PURE__ */ new Map(), rows2 = [];
     let evaluated = 0;
     const netFactor = sub(ONE, a.fee);
     function value(f) {
@@ -1241,8 +1713,8 @@
     function solve(s, left, resets, cash, purchases, uses) {
       const key = JSON.stringify([stateKey(ctx, s), left, resets, text(cash), purchases, uses]);
       if (cache.has(key)) return cache.get(key);
-      need4(++evaluated <= a.limits.nodeCap, "state_budget_exceeded");
-      const index = rows.length < 64 ? rows.push(null) - 1 : -1, sale = sell(s), candidates = [{ action: "sell_stop", flow: sale, unknown: sale === null }];
+      need5(++evaluated <= a.limits.nodeCap, "state_budget_exceeded");
+      const index = rows2.length < 64 ? rows2.push(null) - 1 : -1, sale = sell(s), candidates = [{ action: "sell_stop", flow: sale, unknown: sale === null }];
       if (left) {
         for (let i = 0; i < rules.length; i++) {
           const r = rules[i];
@@ -1264,10 +1736,10 @@
           candidates.push({ action: "sell_rebuy:" + e.key, flow: f, unknown: future.unknown || f === null });
         }
       }
-      let selected = null;
-      for (const candidate of candidates) if (candidate.flow !== null && (selected === null || compare(value(candidate.flow), value(selected.flow)) > 0)) selected = candidate;
-      const unknown = candidates.some((c) => c.unknown || c.flow === null), result = { flow: selected?.flow ?? null, action: selected?.action ?? null, unknown };
-      if (index >= 0) rows[index] = { item: pyItem(s), decisionsRemaining: left, resetsRemaining: resets, grossCashRemaining: cash, purchases: [...purchases], scrollsUsed: [...uses], selectedAction: result.action, knownFutureNet: result.flow === null ? null : value(result.flow), unknownFeasibleAlternative: unknown, alternatives: candidates.map((c) => [c.action, c.flow === null ? null : value(c.flow)]), alternativeCoverageUnknown: candidates.map((c) => [c.action, c.unknown]) };
+      let selected2 = null;
+      for (const candidate of candidates) if (candidate.flow !== null && (selected2 === null || compare(value(candidate.flow), value(selected2.flow)) > 0)) selected2 = candidate;
+      const unknown = candidates.some((c) => c.unknown || c.flow === null), result = { flow: selected2?.flow ?? null, action: selected2?.action ?? null, unknown };
+      if (index >= 0) rows2[index] = { item: pyItem(s), decisionsRemaining: left, resetsRemaining: resets, grossCashRemaining: cash, purchases: [...purchases], scrollsUsed: [...uses], selectedAction: result.action, knownFutureNet: result.flow === null ? null : value(result.flow), unknownFeasibleAlternative: unknown, alternatives: candidates.map((c) => [c.action, c.flow === null ? null : value(c.flow)]), alternativeCoverageUnknown: candidates.map((c) => [c.action, c.unknown]) };
       cache.set(key, result);
       return result;
     }
@@ -1293,7 +1765,7 @@
         if (!equal(slope, ZERO)) thresholds.push({ kind, key: meta ? meta.get(key) : key, value: sub(values.get(key), div(best.knownNet, slope)), expectedPolicyQuantity: n });
       }
     }
-    return { status: incomplete ? "unavailable" : "conditional_model", reason: incomplete ? "reachable_exact_state_price_missing" : null, selectedEntry: best.entry, selectedAction: best.action, optimalExpectedNet: incomplete ? null : best.knownNet, bestKnownNet: best.knownNet, entries: results, rows, evaluated, projectionTruncated: evaluated > rows.length, fixedPolicyBreakEven: thresholds, breakEvenScope: "fixed_selected_policy_only_replan_after_price_or_budget_edits", quoteEvidence: a.quotes.map((q) => ({ key: q.key, gross: q.gross, evidence: q.evidence })), optimizationScope: { decisions: a.limits.decisions, resets: a.limits.resets, stateBudget: a.limits.nodeCap, allTimeOptimum: false }, assumptions: { feesVerified: false, realizationAssumed: true, fillProbability: null, turnover: null, timeToSale: null, entryStockCaps: entries.map((e) => e.stock), scrollStockCaps: rules.map((r) => r.stock), unknownStockAssumedObtainable: entries.some((e) => e.stock === null) || rules.some((r) => r.stock === null), saleProceedsReinvested: false, modeledContinuationsNotObservedLedger: true }, marketProfitClaim: false, defaultEnabled: false };
+    return { status: incomplete ? "unavailable" : "conditional_model", reason: incomplete ? "reachable_exact_state_price_missing" : null, selectedEntry: best.entry, selectedAction: best.action, optimalExpectedNet: incomplete ? null : best.knownNet, bestKnownNet: best.knownNet, entries: results, rows: rows2, evaluated, projectionTruncated: evaluated > rows2.length, fixedPolicyBreakEven: thresholds, breakEvenScope: "fixed_selected_policy_only_replan_after_price_or_budget_edits", quoteEvidence: a.quotes.map((q) => ({ key: q.key, gross: q.gross, evidence: q.evidence })), optimizationScope: { decisions: a.limits.decisions, resets: a.limits.resets, stateBudget: a.limits.nodeCap, allTimeOptimum: false }, assumptions: { feesVerified: false, realizationAssumed: true, fillProbability: null, turnover: null, timeToSale: null, entryStockCaps: entries.map((e) => e.stock), scrollStockCaps: rules.map((r) => r.stock), unknownStockAssumedObtainable: entries.some((e) => e.stock === null) || rules.some((r) => r.stock === null), saleProceedsReinvested: false, modeledContinuationsNotObservedLedger: true }, marketProfitClaim: false, defaultEnabled: false };
   }
   function fixedReason(error) {
     const reason = typeof error?.message === "string" ? error.message : "";
@@ -1305,7 +1777,7 @@
     if (Array.isArray(value)) return value.map(wire);
     return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, wire(v)]));
   }
-  var bytes = (object) => new TextEncoder().encode(JSON.stringify(object));
+  var bytes = (object2) => new TextEncoder().encode(JSON.stringify(object2));
   function project(result) {
     const out = Object.fromEntries(Object.entries(result).filter(([k]) => !["rows", "quoteEvidence", "entries", "fixedPolicyBreakEven"].includes(k)).map(([k, v]) => [k, wire(v)]));
     out.entries = (result.entries ?? []).map((e) => Object.fromEntries(Object.entries(e).filter(([k]) => k !== "flow").map(([k, v]) => [k, wire(v)])));
@@ -1321,7 +1793,7 @@
       }
       if (out[field].length < (result[field] ?? []).length) out.projectionTruncated = true;
     }
-    need4(bytes(out).length <= 15800, "projection_header_bound");
+    need5(bytes(out).length <= 15800, "projection_header_bound");
     return out;
   }
   function evaluate(input, enabled, decode) {
@@ -1330,7 +1802,7 @@
       const admitted = admitManualWire(decode ? decodeManualBytes(input) : input), result = solveModel(admitted), out = project(result);
       Object.assign(out, { schemaVersion: 1, kind: "private_joint_scrolling_model_result_v1", currency: "mesos", verification: "manual_assumptions_not_market_or_game_rules", websiteIntegrationImplemented: false });
       const raw = bytes(out);
-      need4(raw.length <= 16384, "manual_output_bound");
+      need5(raw.length <= 16384, "manual_output_bound");
       return raw;
     } catch (error) {
       return bytes({ status: "unavailable", reason: fixedReason(error), marketProfitClaim: false });
@@ -1412,12 +1884,21 @@
       if (!onRoute() || !visible()) return false;
       return true;
     }
+    function readCached() {
+      const api2 = w.AstraItemApiPreview;
+      try {
+        if (api2?.peekCachedBasicReferences?.().status === "access_denied") return { status: "access_denied", references: [] };
+        return api2?.peekCachedReferences?.() ?? { status: "disabled", references: [] };
+      } catch {
+        return { status: "unavailable", references: [] };
+      }
+    }
     function mount() {
       if (page) return;
       page = createPage(host, { edit, calculate, clear() {
         invalidate();
         page.clear();
-      }, guard });
+      }, guard, readCached, readExpiry: workspace, now: () => w.Date.now() });
     }
     function sync() {
       if (disposed) return;
@@ -1538,6 +2019,9 @@
         event.stopImmediatePropagation();
       }
     }, true);
+    for (const type of ["astrapiitemcache", "astrabasicitemcache"]) d.addEventListener(type, () => {
+      page?.synchronizeReferences();
+    });
     d.addEventListener("astraprivateworkspace", sync);
     d.addEventListener("astrapreviewcontrols", sync);
     d.addEventListener("visibilitychange", pause);

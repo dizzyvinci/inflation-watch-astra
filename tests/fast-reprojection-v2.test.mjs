@@ -155,3 +155,82 @@ test('continuous constructor defaultOff touches no config, SQL, registry or flag
 test('unsupported populated one-parse policy is rejected BEFORE any shared sink or owner epoch mutation',async t=>{
  const x=await setup(t),policy=JSON.parse(x.w.journal.control().policy_json);delete policy.contractRevision;delete policy.reprojectionDecisionSha256;x.f.exec('UPDATE fast_v2_control SET policy_json=? WHERE id=1',JSON.stringify(policy));const before={sink:x.f.row('SELECT * FROM fast_current_control'),journal:x.f.row('SELECT * FROM fast_v2_control'),write:x.f.row('SELECT * FROM fast_current_write_owner'),pub:x.f.row('SELECT * FROM fast_v2_publication_owner')};assert.throws(()=>new ContinuousFastCurrentWork(x.f.owner.ctx,x.f.core,x.f.owner.recurring,{enabled:true}),/migration_required/);assert.deepEqual({sink:x.f.row('SELECT * FROM fast_current_control'),journal:x.f.row('SELECT * FROM fast_v2_control'),write:x.f.row('SELECT * FROM fast_current_write_owner'),pub:x.f.row('SELECT * FROM fast_v2_publication_owner')},before);assert.equal(x.f.reads.length,0);assert.equal(x.f.puts.length,0);
 });
+
+test('foreground receives a quantum despite ordinary arrivals and renewable skipped-history debt',{timeout:20000},async t=>{
+ const f=await fixture(t,{fast:false});const w=new ContinuousFastCurrentWork(f.owner.ctx,f.core,f.owner.recurring,{enabled:true,isEnabled:()=>f.on[0]});f.owner.privateCash.recurringWork=w;
+ const step=()=>w.drainOne(noIO,f.owner.recurring.eventFrame());
+ async function until(check,max=70){for(let i=0;i<max;i++){if(check())return;await step();}assert(check(),'real finite fixture must reach its requested stage');}
+ const a=f.seed();await until(()=>!!f.row('SELECT 1 n FROM fast_current_outbox'));
+ let release,entered;const held=new Promise(r=>release=r),hit=new Promise(r=>entered=r);let didEnter=false,action;
+ f.hook(async(kind,key)=>{if(kind==='put'&&key.includes('/fast-current/v1/shards/')){didEnter=true;entered();await held;}});
+ try{
+  for(let i=0;i<20&&!didEnter;i++){const next=step();const r=await Promise.race([hit.then(()=>({hit:true})),next.then(value=>({value}))]);if(r.hit){action=next;break;}}
+  assert(didEnter,'actual writer PUT must be physically held');
+  const b=f.seed(f.prices(),'2026-11-06T12:01:00.000Z'),c=f.seed(f.prices(),'2026-11-06T12:02:00.000Z');
+  await until(()=>[b,c].every(v=>f.row('SELECT state FROM recurring_registry_jobs WHERE receipt_key=?',v.receiptKey)?.state==='complete'));
+  assert(w.journal.gate.task);assert.equal(f.row('SELECT COUNT(*)n FROM fast_v2_skipped_intents').n,1);
+  release();await action;f.hook(null);
+  const before=f.row('SELECT state,phase,next_index FROM fast_current_write_jobs WHERE receipt_key=?',a.receiptKey);assert.notEqual(before.state,'written');
+  const trace=[];
+  for(let i=0;i<4;i++){
+   // Real ordinary admission renews optional skipped-intent debt. No SQL state forged.
+   const d=f.seed(f.prices(),new Date(Date.parse('2026-11-06T12:03:00.000Z')+i*60000).toISOString());
+   await until(()=>f.row('SELECT state FROM recurring_registry_jobs WHERE receipt_key=?',d.receiptKey)?.state==='complete');
+   assert.equal(f.row('SELECT captured_at FROM stamp_reference_captures WHERE receipt_key=?',d.receiptKey).captured_at,d.e.capturedAt);assert.equal(f.row('SELECT captured_at FROM api_index_inputs WHERE receipt_key=?',d.receiptKey).captured_at,d.e.capturedAt);
+   trace.push(await step());
+  }
+  const after=f.row('SELECT state,phase,next_index FROM fast_current_write_jobs WHERE receipt_key=?',a.receiptKey);
+  assert.equal(f.provider.length,0);assert(f.objects.has(a.receiptKey));assert.equal(f.row('SELECT state FROM recurring_registry_jobs WHERE receipt_key=?',a.receiptKey).state,'complete');
+  t.diagnostic(JSON.stringify({before,after,results:trace.map(v=>v.status),lastKind:w.journal.control().last_kind,originalLedgerUnchanged:true,providerRequests:0}));
+  assert.notDeepEqual(after,before,'ordinary handoffs must not erase FAST foreground-v-maintenance fairness');
+ }finally{release();f.hook(null);if(action)await action.catch(()=>{});if(w.journal.gate.task)await w.journal.gate.task.catch(()=>{});}
+});
+
+
+// Independent scheduling dimensions: legacy last_kind remains ordinary/FAST;
+// last_fast_kind survives that handoff and cold owner reconstruction.
+import {FastCurrentContinuousJournal,fastV2Policy} from '../ops/api-fast-current-continuous-journal.mjs';
+import {IncrementalFastCurrentRegistrySink} from '../ops/api-fast-current-incremental-owner.mjs';
+const LEGACY_FAST_CONTROL="CREATE TABLE fast_v2_control(id INTEGER PRIMARY KEY CHECK(id=1),policy_json TEXT NOT NULL,epoch INTEGER NOT NULL DEFAULT 0,selected_receipt TEXT,selected_source TEXT,pending_source TEXT,last_kind TEXT NOT NULL DEFAULT 'ordinary',registry_turn TEXT NOT NULL DEFAULT 'fast',retry_at INTEGER NOT NULL DEFAULT 0,hold_reason TEXT,archive_head TEXT,action_token TEXT,action_generation TEXT,action_slot_epoch INTEGER,action_kind TEXT,action_started_at INTEGER,missing_profile_attempt INTEGER NOT NULL DEFAULT 0,missing_profile_receipt TEXT)";
+async function legacyPhaseFixture(t,lastKind='archive-skipped'){
+ const f=await fixture(t,{fast:false}),sink=new IncrementalFastCurrentRegistrySink(f.owner.ctx,f.core,f.registry,{enabled:true,isEnabled:()=>f.on[0]});
+ f.exec(LEGACY_FAST_CONTROL);f.exec("INSERT INTO fast_v2_control(id,policy_json,epoch,last_kind,registry_turn,action_token,action_kind,action_started_at,hold_reason)VALUES(1,?,7,?,'ordinary','prior-unsettled-action','archive',?,'protected_recovery_hold')",fastV2Policy(f.core.config()),lastKind,f.now[0]);
+ return {f,sink,make:()=>new FastCurrentContinuousJournal(f.owner.ctx,f.core,sink,{enabled:true,isEnabled:()=>f.on[0]})};
+}
+test('additive real SQLite legacy migration preserves every old column and unknown physical claim',async t=>{
+ for(const lastKind of ['archive-skipped','publication','ordinary'])await t.test(lastKind,async t=>{
+  const {f,make}=await legacyPhaseFixture(t,lastKind),before=f.row('SELECT * FROM fast_v2_control');const j=make(),after=j.control();
+  const {last_fast_kind,...old}=after;assert.deepEqual(old,{...before,epoch:8});assert.equal(last_fast_kind,lastKind==='archive-skipped'?'maintenance':'foreground');
+  let started=false;assert.equal((await j.runAction('writer',null,()=>{started=true})).status,'protected_recovery_hold');assert.equal(started,false);assert.equal(j.control().action_token,before.action_token);assert.equal(f.reads.length+f.puts.length+f.provider.length,0);
+ });
+});
+test('SQLite migration failure rolls back added column and old row without resetting claims',async t=>{
+ const {f,make}=await legacyPhaseFixture(t);const before=f.row('SELECT * FROM fast_v2_control');
+ f.exec("CREATE TRIGGER refuse_phase_migration BEFORE UPDATE ON fast_v2_control BEGIN SELECT RAISE(ABORT,'migration-cutpoint'); END");
+ assert.throws(make,/migration-cutpoint/);assert.deepEqual(f.row('SELECT * FROM fast_v2_control'),before);assert(!f.core.sql.exec('PRAGMA table_info(fast_v2_control)').toArray().some(v=>v.name==='last_fast_kind'));
+ assert.equal(f.reads.length+f.puts.length+f.provider.length,0);f.exec('DROP TRIGGER refuse_phase_migration');assert.equal(make().control().last_fast_kind,'maintenance');
+});
+test('cold restart retains FAST phase across genuine ordinary admission without changing ordinary turn state',async t=>{
+ const x=await setup(t);await x.w.journal.runAction('archive',null,async()=>({status:'settled-synthetic-local-action'}));
+ assert.equal(x.w.journal.control().last_fast_kind,'maintenance');const a=x.f.seed();await x.until(()=>x.f.row('SELECT state FROM recurring_registry_jobs WHERE receipt_key=?',a.receiptKey)?.state==='complete');
+ const before=x.w.journal.control();assert.equal(before.last_kind,'ordinary');assert.equal(before.last_fast_kind,'maintenance');await x.restart();const after=x.w.journal.control();assert.equal(after.last_fast_kind,'maintenance');assert.equal(after.last_kind,before.last_kind);assert.equal(after.registry_turn,before.registry_turn);
+ await x.w.journal.runAction('writer',null,async()=>({status:'settled-synthetic-local-action'}));assert.equal(x.w.journal.control().last_fast_kind,'foreground');await x.restart();assert.equal(x.w.journal.control().last_fast_kind,'foreground');assert.equal(x.f.provider.length,0);
+});
+test('phase claim is atomic with existing physical token and cannot advance on failed claim',async t=>{
+ const x=await setup(t),before=x.w.journal.control();let calls=0;
+ x.f.exec("CREATE TRIGGER refuse_phase_claim BEFORE UPDATE OF last_fast_kind ON fast_v2_control BEGIN SELECT RAISE(ABORT,'claim-cutpoint'); END");
+ await assert.rejects(x.w.journal.runAction('archive',null,()=>{calls++}),/claim-cutpoint/);assert.deepEqual(x.w.journal.control(),before);assert.equal(x.w.journal.gate.token,null);assert.equal(calls,0);
+ x.f.exec('DROP TRIGGER refuse_phase_claim');await x.w.journal.runAction('archive',null,async()=>{calls++;assert(x.w.journal.control().action_token);assert.equal(x.w.journal.control().last_fast_kind,'maintenance')});assert.equal(calls,1);assert.equal(x.w.journal.control().action_token,null);assert.equal(x.f.puts.length+x.f.reads.length+x.f.provider.length,0);
+});
+test('cold unknown action and selected Off retain phase and physical claim without another IO',async t=>{
+ const x=await setup(t);let release,hit;const held=new Promise(r=>release=r),entered=new Promise(r=>hit=r);let physical;
+ try{physical=x.w.journal.runAction('archive',null,async()=>{hit();await held;return {status:'settled-test-action'}});await entered;const before=x.w.journal.control();assert(before.action_token);await x.restart();let second=0;
+  assert.equal(x.w.journal.control().last_fast_kind,'maintenance');assert.equal((await x.w.journal.runAction('writer',null,()=>{second++})).status,'protected_recovery_hold');assert.equal(second,0);assert.equal(x.w.journal.control().action_token,before.action_token);
+  x.f.on[0]=false;assert.equal((await x.w.journal.runAction('writer',null,()=>{second++})).status,'disabled');assert.equal(x.w.journal.control().last_fast_kind,'maintenance');assert.equal(x.w.journal.control().action_token,before.action_token);assert.equal(second,0);assert.equal(x.f.provider.length+x.f.reads.length+x.f.puts.length,0);
+ }finally{release();if(physical)await physical;}
+});
+test('malformed selected FAST phase fails closed and unselected journal performs zero dependency reads',async t=>{
+ const x=await setup(t);x.f.exec('PRAGMA ignore_check_constraints=ON');x.f.exec("UPDATE fast_v2_control SET last_fast_kind='ordinary' WHERE id=1");x.f.exec('PRAGMA ignore_check_constraints=OFF');const before=x.w.journal.control();
+ assert.equal(x.w.journal.active,false);assert.equal((await x.w.journal.runAction('writer',null,()=>assert.fail('no action'))).status,'disabled');assert.throws(()=>new FastCurrentContinuousJournal(x.f.owner.ctx,x.f.core,x.w.sink,{enabled:true}),/policy_changed/);assert.deepEqual(x.w.journal.control(),before);
+ const poison=new Proxy({},{get(){throw Error('unselected touched dependency')}});assert.equal(new FastCurrentContinuousJournal(poison,poison,poison).enabled,false);assert.equal(x.f.provider.length+x.f.reads.length+x.f.puts.length,0);
+});

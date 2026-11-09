@@ -40,7 +40,16 @@ const flush = async () => { for (let i = 0; i < 200 && !published.length; i++) a
     assert(doc.getElementById('view-index').contains(doc.getElementById('smega-section')), 'seller/buyer offers remain upfront');
     assert(doc.getElementById('view-nx').contains(doc.getElementById('reported-section')), 'reported cash history stays on cash page');
     assert.equal(doc.querySelector('[data-smega-comparison-toggle]').getAttribute('aria-pressed'), 'false');
-    assert.equal(doc.querySelector('#comparison-card .comparison-row strong').textContent, '1:' + report.latest.nxRate.toFixed(1), 'cash page retains actual sale estimate');
+    const cashReference = doc.querySelector('#comparison-card [data-cash-reference-kind="legacy_cash_reference"]');
+    assert(cashReference, 'cash comparison retains the separately dated legacy cash estimate');
+    const cashRatio = /^1:(\d[\d,]*(?:\.\d)?)$/.exec(cashReference.querySelector('.comparison-row strong').textContent);
+    assert(cashRatio, 'cash estimate displays one NX to mesos, rounded to at most one decimal');
+    assert.equal(Number(cashRatio[1].replaceAll(',', '')), Number(report.latest.nxRate.toFixed(1)), 'cash page retains the actual cash estimate, independently of optional trailing zero');
+    assert.equal(cashReference.dataset.cashCapturedAt, report.sourceUpdatedAt, 'cash estimate retains its original daily source clock');
+    assert.equal(cashReference.dataset.cashReferenceStatus, 'dated_legacy');
+    assert.match(cashReference.querySelector('.comparison-row span').textContent, /Legacy cash-item sale estimate/);
+    assert.match(cashReference.querySelector('.comparison-method').textContent, /Gross estimate before fees; not an executable exchange quote/);
+    assert.match(doc.querySelector('#view-nx .page-heading').textContent, /fixed NX purchase prices/);
     const points = [...doc.querySelectorAll('#main-chart circle[data-chart-value]')];
     const expectedHistory = rollingApi.history(report).filter(p=>p.available);
     assert.equal(points.length, expectedHistory.length);

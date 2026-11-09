@@ -85,3 +85,62 @@ test('valid API29 observed conversion is independent of goods-API availability',
 test('HTML-enabled calculation route with failed client initialization never revives legacy goods',async()=>{const f=await fixture({missingRuntime:true,markupAvailable:true,refreshGoods:false});try{
  goodsUnavailable(f,'calculation_client_unavailable');const m=await f.cash();cashAmount(f,m.reference);goodsUnavailable(f);assert.deepEqual(f.errors,[]);
  }finally{f.close();}});
+
+
+// Dated actor-free saved public response: a presentation regression, never live prices.
+const frozenPartialBody=fs.readFileSync(path.join(project,'tests/fixtures/api-current-partial-20261109.json'));
+assert.equal(createHash('sha256').update(frozenPartialBody).digest('hex'),'d5716ef63e3866d5d18a991754f502a449203452867717ceb1f8529927754e92');
+const partialFixture=require('./api-partial-item-fixture.cjs').fixture;
+const partialOptions={generated:true,goodsMode:'provided',rawGoods:frozenPartialBody,clockAt:'2026-11-09T08:02:03.971Z'};
+
+test('dated cold33of50 shows qualified partial input clocks across headline, Method, Compare and Sources without an aggregate',async()=>{
+ const f=await partialFixture(partialOptions);try{
+  const s=f.runtime.state(),dto=s.evidenceSnapshot,detail=f.events.at(-1).report;
+  assert.equal(dto.current.availableItems,33);assert.equal(dto.current.expectedItems,50);assert.equal(s.snapshot,null);
+  assert.equal(f.runtime.getView(),null);assert.equal(f.w.__bindingTest.cpi(),null);assert.equal(f.w.__bindingTest.headline().available,false);
+  assert.equal(detail.apiCalculationUnavailable.reason,'partial_current_goods_coverage');
+  assert.equal(detail.apiCalculationUnavailable.pricesCapturedAt,'2026-11-09T07:11:53.516Z');
+  assert.equal(detail.apiCalculationUnavailable.overviewCapturedAt,'2026-11-09T07:34:53.167Z');
+  assert.match(f.d.getElementById('header-freshness').textContent,/33\/50 qualified/);
+  assert.equal(f.d.getElementById('status-dot').dataset.statusTone,'amber');
+  assert.equal(f.d.getElementById('status-dot').dataset.retrievalState,'aged');
+  for(const id of ['method-nx-benchmark','cash-goods-comparison','market-comparison-clock','sources-cards']){
+   const text=f.d.querySelector('#'+id+' [data-api-calculation-method]').textContent;
+   assert.match(text,/33\/50 qualified/);assert.match(text,/all 50 from one price capture/);
+   assert.match(text,/weights are not renormalized/);assert.doesNotMatch(text,/awaiting_accepted_complete_calculation/);
+  }
+  const card=f.d.querySelector('[data-status-key="api-calculations"]');
+  assert.equal(card.dataset.rawCapturedAt,dto.sources.prices.capturedAt);assert.equal(card.dataset.overviewCapturedAt,dto.sources.overview.capturedAt);
+  assert.doesNotMatch(card.textContent,/No validated reference available/);
+  assert.equal(detail.apiCalculationView,undefined);assert.equal(detail.apiDailyItems,undefined);
+  assert.equal(detail.sourceUpdatedAt,f.original.sourceUpdatedAt);assert.deepEqual(f.errors,[]);
+ }finally{f.close()}
+});
+
+test('partial error retains original provenance while actual denied access remains distinct and blocked',async()=>{
+ const f=await partialFixture(partialOptions);try{
+  const original=f.runtime.state().evidenceSnapshot;
+  await f.goods('failure');const failure=f.events.at(-1).report.apiCalculationUnavailable;
+  assert.equal(failure.reason,'own_reader_failed');assert.equal(failure.partialEvidence.status,'retained');
+  assert.equal(failure.pricesCapturedAt,original.sources.prices.capturedAt);
+  assert.match(f.d.querySelector('#method-nx-benchmark [data-api-calculation-method]').textContent,/Retained validated partial/);
+  assert.equal(f.d.getElementById('status-dot').dataset.statusTone,'red');
+  assert.match(f.d.querySelector('[data-status-key="api-calculations"]').textContent,/Retained reference/);
+  await f.goods('denied');const denied=f.events.at(-1).report.apiCalculationUnavailable;
+  assert.equal(denied.reason,'access_denied');assert.equal(denied.partialEvidence,null);
+  assert.equal(f.d.getElementById('status-dot').dataset.retrievalState,'access_blocked');
+  assert.equal(f.runtime.state().blocked,true);const before=f.requests.length;await f.runtime.refresh();assert.equal(f.requests.length,before);
+  assert.equal(f.w.__bindingTest.cpi(),null);assert.deepEqual(f.errors,[]);
+ }finally{f.close()}
+});
+
+test('new partial evidence never replaces a retained complete model or its original input clock',async()=>{
+ const f=await partialFixture({...partialOptions,goodsMode:'good'});try{
+  const original=f.runtime.state().snapshot;assert(original);const originalClock=original.sources.prices.capturedAt;
+  await f.goods('provided');assert.equal(f.runtime.state().evidenceSnapshot.current.availableItems,33);
+  assert.equal(f.runtime.state().snapshot.snapshotHash,original.snapshotHash);assert.equal(f.runtime.state().status,'retained');
+  assert.equal(f.runtime.getView().rows.length,50);assert.equal(f.events.at(-1).report.apiCalculationUnavailable,undefined);
+  assert.equal(f.runtime.getView().clocks.currentPrices,originalClock);
+  assert.equal(f.d.getElementById('rate-kind').dataset.marketAt,originalClock);assert.deepEqual(f.errors,[]);
+ }finally{f.close()}
+});

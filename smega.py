@@ -8,9 +8,11 @@ import statistics
 from pathlib import Path
 from engine import ROOT, UTC, atomic, read
 
-AMOUNT=r'(\d+(?:\.\d+)?)\s*([km]?)'
-EXPLICIT=re.compile(AMOUNT+r'\s*nx\s*(?:for|=|:|/)\s*'+AMOUNT+r'\s*(?:mesos?|meso)',re.I)
-REVERSE=re.compile(AMOUNT+r'\s*(?:mesos?|meso)\s*(?:for|=|:|/)\s*'+AMOUNT+r'\s*nx',re.I)
+# Match a whole ASCII quantity: ordinary/grouped digits or a leading decimal.
+# Never search inside a signed, scientific or malformed numeric token.
+AMOUNT=r'(?<![\w.,+\-\u2212\u2013\u2014$\u20ac\u00a3\u00a5])((?:(?:[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)(?:\.[0-9]+)?|\.[0-9]+))\s*([km]?)(?![0-9.,])'
+EXPLICIT=re.compile(AMOUNT+r'\s*nx\s*(?:for|=|:|/)\s*'+AMOUNT+r'\s*(?:mesos?|meso)\b',re.I)
+REVERSE=re.compile(AMOUNT+r'\s*(?:mesos?|meso)\s*(?:for|=|:|/)\s*'+AMOUNT+r'\s*nx\b',re.I)
 SELL=re.compile(r'(?:\bS\s*>|\bWTS\b|\bsell(?:ing)?\b)',re.I)
 BUY=re.compile(r'(?:\bB\s*>|\bWTB\b|\bbuy(?:ing)?\b)',re.I)
 
@@ -25,16 +27,45 @@ def offer_side(text, declared=None):
     return inferred
 
 def amount(value,suffix):
-    return float(value)*{'':1,'k':1000,'m':1000000}[suffix.lower()]
+    return float(value.replace(',',''))*{'':1,'k':1000,'m':1000000}[suffix.lower()]
+
+def ambiguous_numeric_prefix(text,end):
+    """Refuse a numeric continuation; ordinary word context is not a quantity.
+
+    Walk only backward through the preceding lexical tail. Whitespace around a
+    decimal/grouping/exponent marker never grants a new numeric-token boundary.
+    This classifies ambiguity; it does not repair or parse another amount.
+    """
+    digits='0123456789'
+    signs='+\u002d\u2212\u2013\u2014/$\u20ac\u00a3\u00a5'
+    numeric_chars=digits+'.,_eEkKmM'+signs
+    delimiters='()[]{}<>:;!?=\"\''
+    while end:
+        while end and text[end-1].isspace():end-=1
+        if not end:return False
+        if text[end-1] in signs:return True
+        start=end
+        while start and not text[start-1].isspace() and text[start-1] not in delimiters:start-=1
+        if start==end:return False
+        token=text[start:end]
+        if token[0] in digits+'.' and all(c in numeric_chars for c in token):return True
+        if all(c in numeric_chars for c in token):
+            if '.' in token:return True
+            end=start
+            continue
+        return False
+    return False
 
 def parse_rate(text):
     # Bare 1:20 is ambiguous; require explicit NX and meso units.
     match=EXPLICIT.search(text)
     if match:
+        if ambiguous_numeric_prefix(text,match.start()):return None
         a,b,c,d=match.groups();nx=amount(a,b);meso=amount(c,d)
     else:
         match=REVERSE.search(text)
         if not match:return None
+        if ambiguous_numeric_prefix(text,match.start()):return None
         a,b,c,d=match.groups();meso=amount(a,b);nx=amount(c,d)
     rate=meso/nx if nx else None
     return rate if rate and .01<=rate<=10000 else None

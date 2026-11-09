@@ -17,10 +17,11 @@ export function mountScreenshotReview(root,{isEnabled,addPage,getPages,selectPag
  function clear(){epoch++;queue.length=0;for(const p of pages)release(p);pages=[];input.value='';try{if(reader?.readyState===1)reader.abort()}catch{}status.textContent=busy?'Images cleared. An earlier native decode remains reserved until it physically settles; late pixels cannot return.':'Images cleared. Confirmed manual pages and stacks remain until you remove them or clear the workspace.';draw()}
  function sync(){if(!active()){if(pages.length||queue.length||reader||busy)clear();else draw();return}const ids=new Set(getPages().map(p=>p.pageId));pages=pages.filter(p=>{if(ids.has(p.pageId))return true;release(p);return false});draw()}
  const read=file=>new Promise((resolve,reject)=>{const r=new w.FileReader();reader=r;r.onload=()=>resolve(r.result);r.onerror=()=>reject(TypeError('local_image_read_failed'));r.onabort=()=>reject(TypeError('local_image_read_cancelled'));try{r.readAsArrayBuffer(file)}catch{reject(TypeError('local_image_read_failed'))}});
- async function importFiles(files){
-  if(!active()||busy)return;let count;try{count=files.length;if(!Number.isSafeInteger(count)||count<1||count>10)throw Error();queue=Array.from(files);if(queue.length!==count||count+getPages().length>10)throw Error()}catch{queue=[];status.textContent='Choose 1 to 10 images within the remaining 10-page limit.';return}
+ async function importFiles(files,{isCurrent=()=>true}={}){
+  if(typeof isCurrent!=='function')return;const callerCurrent=()=>{try{return isCurrent()===true}catch{return false}};
+  if(!active()||busy||!callerCurrent())return;let count;try{count=files.length;if(!Number.isSafeInteger(count)||count<1||count>10)throw Error();queue=Array.from(files);if(queue.length!==count||count+getPages().length>10)throw Error()}catch{queue=[];status.textContent='Choose 1 to 10 images within the remaining 10-page limit.';return}
   const ticket=epoch;busy=true;draw();let bytes=null,bitmap=null,canvas=null,file=null;
-  const valid=()=>ticket===epoch&&active();
+  const valid=()=>ticket===epoch&&active()&&callerCurrent();
   try{
    const size=Object.getOwnPropertyDescriptor(w.Blob.prototype,'size').get,type=Object.getOwnPropertyDescriptor(w.Blob.prototype,'type').get;
    let total=pages.reduce((n,p)=>n+p.bytes,0);for(const f of queue){const n=size.call(f);if(!(f instanceof w.File)||!Number.isSafeInteger(n)||n<1||n>screenshotLimits.maxBytes||!['image/png','image/jpeg','image/webp'].includes(type.call(f)))throw TypeError('local_image_profile');total+=n}if(total>screenshotLimits.maxBatchBytes)throw TypeError('local_image_batch_bound');
@@ -42,5 +43,5 @@ export function mountScreenshotReview(root,{isEnabled,addPage,getPages,selectPag
   finally{bytes?.fill(0);try{bitmap?.close()}finally{if(canvas){canvas.width=0;canvas.height=0}file=null;reader=null;queue.length=0;busy=false;input.value='';draw()}}
  }
  input.addEventListener('change',()=>{void importFiles(input.files)});clearButton.addEventListener('click',clear);draw();
- return Object.freeze({sync,clear,state:()=>Object.freeze({images:pages.length,physicalPending:busy,encodedBytes:pages.reduce((n,p)=>n+p.bytes,0),pixels:pages.reduce((n,p)=>n+p.pixels,0)}),dispose(){clear();disposed=true;section.remove()}});
+ return Object.freeze({sync,clear,importFiles,state:()=>Object.freeze({images:pages.length,physicalPending:busy,encodedBytes:pages.reduce((n,p)=>n+p.bytes,0),pixels:pages.reduce((n,p)=>n+p.pixels,0)}),dispose(){clear();disposed=true;section.remove()}});
 }
